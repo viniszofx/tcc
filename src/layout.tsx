@@ -1,27 +1,26 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/custom/app-sidebar";
-import { Button } from "./components/ui/button";
-import { Bell, Search } from "lucide-react";
+import React from "react";
+import Header from "./components/custom/header";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+const links = [
+  {
+    name: "Home",
+    url: "/",
+  },
+  {
+    name: "About",
+    url: "/about",
+  },
+  {
+    name: "Contact",
+    url: "/contact",
+  },
+];
+
+export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <main className="w-full">
-        <div className="w-full flex justify-between items-center">
-          <SidebarTrigger />
-          <h2 className="text-lg font-medium">Sistema Cadê</h2>
-          <div>
-            <Button variant={"secondary"}>
-              <Bell></Bell>
-            </Button>
-            <Button>
-              <Search></Search>
-            </Button>
-          </div>
-        </div>
-        {children}
-      </main>
-    </SidebarProvider>
+    <div className="bg-zinc-100 min-h-screen">
+      <Header name="Sistema Cadê" links={links}></Header>
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">{children}</main>
+    </div>
   );
 }

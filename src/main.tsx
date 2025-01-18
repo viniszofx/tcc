@@ -2,14 +2,14 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router";
 import "./index.css";
-import RootLayout from "./layout";
-import App from "./App";
+import { Layout } from "@/layout";
+import { Index } from "@/page";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<RootLayout children={<App />} />}></Route>
+        <Route path="/" element={<Layout children={<Index />} />}></Route>
       </Routes>
     </BrowserRouter>
   </StrictMode>

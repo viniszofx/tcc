@@ -13,7 +13,7 @@ app.whenReady().then(() => {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.mjs"),
       webSecurity: true,
       sandbox: true,
     },
