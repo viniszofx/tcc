@@ -1,5 +1,6 @@
 import React from "react";
 import Header from "./components/custom/header";
+import { Footer } from "./components/custom/footer";
 
 const links = [
   {
@@ -16,11 +17,14 @@ const links = [
   },
 ];
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-zinc-100 min-h-screen">
-      <Header name="Sistema Cadê" links={links}></Header>
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">{children}</main>
+    <div className="flex flex-col bg-zinc-100 antialiased min-h-screen overflow-y-hidden">
+      <Header name=" Cadê" links={links}></Header>
+      <main className=" flex-1  px-2 sm:px-2 lg:px-8 overflow-y-hidden">
+        {children}
+      </main>
+      <Footer></Footer>
     </div>
   );
 }

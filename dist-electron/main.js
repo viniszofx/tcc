@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -6,13 +6,34 @@ let isClosing = false;
 let win;
 app.whenReady().then(() => {
   win = new BrowserWindow({
-    title: "Main window",
+    title: "App Cadê",
+    icon: path.join("public", "logo.jpg"),
+    alwaysOnTop: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, "preload.mjs"),
       webSecurity: true,
       sandbox: true
+    }
+  });
+  win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        "Content-Security-Policy": [
+          "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://github.com https://avatars.githubusercontent.com;"
+        ]
+      }
+    });
+  });
+  ipcMain.handle("request-camera-access", async () => {
+    try {
+      const result = await navigator.mediaDevices.getUserMedia({ video: true });
+      return true;
+    } catch (error) {
+      console.error("Erro ao acessar a câmera", error);
+      return false;
     }
   });
   if (process.env.VITE_DEV_SERVER_URL) {

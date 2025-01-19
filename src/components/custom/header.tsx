@@ -14,7 +14,7 @@ interface HeaderProps {
 export default function header({ name, links }: HeaderProps) {
   return (
     <header className="flex justify-between items-center p-4 shadow-sm bg-zinc-50 mb-4">
-      <h1>{name}</h1>
+      <h1 className="text-lg font-bold">{name}</h1>
       <nav>
         <ul className=" space-x-4 hidden md:flex ">
           {links.map((link, index) => (
