@@ -25,6 +25,7 @@ export function Index() {
         (device) => device.kind === "videoinput"
       );
       setDevices(videoDevices);
+      console.log("Dispositivos de vídeo:", videoDevices);
 
       // Selecionar a primeira câmera disponível por padrão
       if (videoDevices.length > 0) {
@@ -36,8 +37,11 @@ export function Index() {
     }
   };
 
-  // Função para acessar a câmera com base no `deviceId`
-  const handleCameraAccess = async (deviceId: string | null) => {
+  // Função para acessar a câmera com base no `deviceId` e facingMode
+  const handleCameraAccess = async (
+    deviceId: string | null,
+    facingMode: string | undefined
+  ) => {
     try {
       if (stream) {
         // Parar o stream atual antes de acessar a nova câmera
@@ -45,13 +49,18 @@ export function Index() {
       }
 
       const videoStream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: deviceId || undefined },
+        video: {
+          deviceId: deviceId || undefined,
+          facingMode: facingMode, // Pode ser 'user' (frontal) ou 'environment' (traseira)
+        },
       });
       setStream(videoStream);
       setCameraModalOpen(true);
     } catch (error) {
       console.error("Erro ao acessar a câmera:", error);
-      alert("Permissão para acessar a câmera foi negada.");
+      alert(
+        "Não foi possível acessar a câmera. Verifique se você concedeu permissões corretamente."
+      );
     }
   };
 
@@ -96,12 +105,18 @@ export function Index() {
             cadastrar, editar, excluir e visualizar bens.
           </p>
         </CardContent>
-        <CardFooter className="space-x-2">
+        <CardFooter className="flex flex-wrap gap-2">
           <Button
-            onClick={() => handleCameraAccess(selectedDeviceId)}
+            onClick={() => handleCameraAccess(selectedDeviceId, "user")}
             disabled={devices.length === 0}
           >
-            <Camera />
+            Câmera Frontal
+          </Button>
+          <Button
+            onClick={() => handleCameraAccess(selectedDeviceId, "environment")}
+            disabled={devices.length === 0}
+          >
+            Câmera Traseira
           </Button>
           <Button>
             <a href="/auth">Login</a>
@@ -134,7 +149,7 @@ export function Index() {
                   onChange={(e) => {
                     const newDeviceId = e.target.value;
                     setSelectedDeviceId(newDeviceId);
-                    handleCameraAccess(newDeviceId);
+                    handleCameraAccess(newDeviceId, "environment");
                   }}
                 >
                   {devices.map((device, index) => (

@@ -59,7 +59,25 @@ export function CameraPage() {
         setError("Erro ao carregar dispositivos.");
       }
     };
-    fetchDevices();
+    // Função para acessar as câmeras disponíveis
+    const getAvailableDevices = async () => {
+      try {
+        const allDevices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = allDevices.filter(
+          (device) => device.kind === "videoinput"
+        );
+        setDevices(videoDevices);
+        console.log("Dispositivos de vídeo:", videoDevices);
+        // Selecionar a primeira câmera disponível por padrão
+        if (videoDevices.length > 0) {
+          setSelectedDeviceId(videoDevices[0].deviceId);
+        }
+      } catch (error) {
+        console.error("Erro ao listar dispositivos:", error);
+        alert("Não foi possível acessar as câmeras.");
+      }
+    };
+    getAvailableDevices();
   }, []);
 
   // Alterar a câmera ou parar a câmera ao selecionar "Nenhuma câmera"
