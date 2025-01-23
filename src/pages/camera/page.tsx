@@ -115,7 +115,7 @@ export function CameraPage() {
       {/* Dropdown para selecionar a câmera */}
       <Select
         onValueChange={setSelectedDeviceId}
-        value={selectedDeviceId || "none"}
+        value={selectedDeviceId || null || "none"}
       >
         <SelectTrigger className="w-full max-w-xs mb-4">
           <SelectValue placeholder="Selecione a Câmera" />

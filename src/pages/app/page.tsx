@@ -12,8 +12,8 @@ import { Camera, Download, Upload } from "lucide-react";
 import { Separator } from "../../components/ui/separator";
 
 export function AppPage() {
-  const [cameraModalOpen, setCameraModalOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [cameraModalOpen, setCameraModalOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
 
