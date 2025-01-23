@@ -6,7 +6,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button"; // Importe o Button do ShadcnUI
+import { Button } from "@/components/ui/button";
 
 export function CameraPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -17,12 +17,11 @@ export function CameraPage() {
   );
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraStatus, setCameraStatus] = useState<string>("Desativo");
-  const [photo, setPhoto] = useState<string | null>(null); // Armazena a foto
+  const [photo, setPhoto] = useState<string | null>(null);
 
   // Função para solicitar acesso à câmera e iniciar o fluxo de vídeo
   const requestCameraPermission = async (deviceId: string) => {
     try {
-      // Solicita permissão para acessar a câmera
       const newStream = await navigator.mediaDevices.getUserMedia({
         video: { deviceId },
       });
@@ -32,7 +31,7 @@ export function CameraPage() {
 
       if (videoRef.current) {
         videoRef.current.srcObject = newStream;
-        videoRef.current.play();
+        await videoRef.current.play();
       }
     } catch (err) {
       setError("Erro ao acessar a câmera.");
@@ -44,16 +43,20 @@ export function CameraPage() {
   // Carregar dispositivos de vídeo (câmeras)
   useEffect(() => {
     const fetchDevices = async () => {
-      const allDevices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = allDevices.filter(
-        (device) => device.kind === "videoinput"
-      );
-      setDevices(videoDevices);
+      try {
+        const allDevices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = allDevices.filter(
+          (device) => device.kind === "videoinput"
+        );
+        setDevices(videoDevices);
 
-      // Se não houver câmeras, marcar como "Nenhuma câmera"
-      if (videoDevices.length === 0) {
-        setSelectedDeviceId("none");
-        setCameraStatus("Desativo");
+        if (videoDevices.length === 0) {
+          setSelectedDeviceId("none");
+          setCameraStatus("Desativo");
+        }
+      } catch (err) {
+        console.error("Erro ao listar dispositivos:", err);
+        setError("Erro ao carregar dispositivos.");
       }
     };
     fetchDevices();
@@ -62,21 +65,18 @@ export function CameraPage() {
   // Alterar a câmera ou parar a câmera ao selecionar "Nenhuma câmera"
   useEffect(() => {
     if (selectedDeviceId === "none") {
-      // Se "Nenhuma câmera" for selecionada, interrompe o fluxo de vídeo
       if (stream) {
-        stream.getTracks().forEach((track) => track.stop()); // Parar o fluxo de vídeo
+        stream.getTracks().forEach((track) => track.stop());
         setStream(null);
         setCameraStatus("Desativo");
       }
     } else if (selectedDeviceId) {
-      // Se uma câmera foi selecionada, solicita permissão e inicia a captura
       requestCameraPermission(selectedDeviceId);
     }
 
     return () => {
-      // Limpeza quando o componente for desmontado ou a seleção for alterada
       if (stream) {
-        stream.getTracks().forEach((track) => track.stop()); // Parar o fluxo de vídeo
+        stream.getTracks().forEach((track) => track.stop());
         setStream(null);
       }
     };
@@ -88,16 +88,12 @@ export function CameraPage() {
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");
       if (context) {
-        // Define o tamanho do canvas para o mesmo tamanho da câmera
         canvas.width = videoRef.current.videoWidth;
         canvas.height = videoRef.current.videoHeight;
 
-        // Desenha o frame atual da câmera no canvas
         context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-
-        // Converte a imagem do canvas em uma URL e armazena em memória
         const imageUrl = canvas.toDataURL("image/png");
-        setPhoto(imageUrl); // Salva a imagem na memória
+        setPhoto(imageUrl);
       }
     }
   };
@@ -107,7 +103,6 @@ export function CameraPage() {
       <h1 className="text-xl font-bold mb-4">Câmera</h1>
       {error && <p className="text-red-600 mb-4">{error}</p>}
 
-      {/* Status da câmera */}
       <p>
         Status: <strong>{cameraStatus}</strong>
       </p>
@@ -115,24 +110,24 @@ export function CameraPage() {
       {/* Dropdown para selecionar a câmera */}
       <Select
         onValueChange={setSelectedDeviceId}
-        value={selectedDeviceId || null || "none"}
+        value={selectedDeviceId || "none"}
       >
         <SelectTrigger className="w-full max-w-xs mb-4">
           <SelectValue placeholder="Selecione a Câmera" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="none">Nenhuma câmera</SelectItem>
-          {devices.map((device) => (
-            <SelectItem key={device.deviceId} value={device.deviceId}>
-              {device.label || `Câmera ${devices.indexOf(device) + 1}`}
-            </SelectItem>
-          ))}
+          {devices
+            .filter((device) => device.deviceId) // Garante que deviceId não seja vazio ou undefined
+            .map((device, index) => (
+              <SelectItem key={device.deviceId} value={device.deviceId}>
+                {device.label || `Câmera ${index + 1}`}
+              </SelectItem>
+            ))}
         </SelectContent>
       </Select>
 
-      {/* Layout Grid para câmera e foto */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Câmera e botão */}
         <div className="flex flex-col items-center w-full">
           <div className="w-full max-w-xl mx-auto mb-4 border-2 border-gray-300 rounded-lg overflow-hidden">
             <video
@@ -143,7 +138,6 @@ export function CameraPage() {
               playsInline
             />
           </div>
-          {/* Botão para tirar foto */}
           <Button
             onClick={takePhoto}
             className="px-4 py-2 bg-blue-600 text-white rounded-md mb-4"
@@ -152,7 +146,6 @@ export function CameraPage() {
           </Button>
         </div>
 
-        {/* Foto tirada */}
         {photo && (
           <div className="flex justify-center items-center w-full">
             <div className="w-full max-w-xl">

@@ -12,22 +12,50 @@ import { Camera } from "lucide-react";
 
 export function Index() {
   const [cameraModalOpen, setCameraModalOpen] = useState(false);
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
 
-  const handleCameraAccess = async () => {
+  // Função para acessar as câmeras disponíveis
+  const getAvailableDevices = async () => {
     try {
+      const allDevices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = allDevices.filter(
+        (device) => device.kind === "videoinput"
+      );
+      setDevices(videoDevices);
+
+      // Selecionar a primeira câmera disponível por padrão
+      if (videoDevices.length > 0) {
+        setSelectedDeviceId(videoDevices[0].deviceId);
+      }
+    } catch (error) {
+      console.error("Erro ao listar dispositivos:", error);
+      alert("Não foi possível acessar as câmeras.");
+    }
+  };
+
+  // Função para acessar a câmera com base no `deviceId`
+  const handleCameraAccess = async (deviceId: string | null) => {
+    try {
+      if (stream) {
+        // Parar o stream atual antes de acessar a nova câmera
+        stream.getTracks().forEach((track) => track.stop());
+      }
+
       const videoStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: { deviceId: deviceId || undefined },
       });
       setStream(videoStream);
       setCameraModalOpen(true);
     } catch (error) {
-      console.error("Camera access denied:", error);
+      console.error("Erro ao acessar a câmera:", error);
       alert("Permissão para acessar a câmera foi negada.");
     }
   };
 
+  // Atualiza o vídeo no `<video>` sempre que o stream muda
   useEffect(() => {
     if (cameraModalOpen && videoRef.current && stream) {
       videoRef.current.srcObject = stream;
@@ -36,13 +64,18 @@ export function Index() {
       });
     }
 
-    // Cleanup: parar o stream ao fechar o modal
+    // Limpeza: parar o stream ao fechar o modal
     return () => {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
     };
   }, [cameraModalOpen, stream]);
+
+  // Carrega os dispositivos ao montar o componente
+  useEffect(() => {
+    getAvailableDevices();
+  }, []);
 
   return (
     <div className="mx-2 md:mx-auto md:max-w-2xl">
@@ -54,17 +87,20 @@ export function Index() {
             <h1 className="text-2xl font-bold">Plataforma Cadê</h1>
           </div>
           <CardDescription>
-            <p>Feito para invetariantes</p>
+            <p>Feito para inventariantes</p>
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p>
-            Cadê é um Plataforma de inventário de bens, onde você pode
+            Cadê é uma plataforma de inventário de bens, onde você pode
             cadastrar, editar, excluir e visualizar bens.
           </p>
         </CardContent>
         <CardFooter className="space-x-2">
-          <Button onClick={handleCameraAccess}>
+          <Button
+            onClick={() => handleCameraAccess(selectedDeviceId)}
+            disabled={devices.length === 0}
+          >
             <Camera />
           </Button>
           <Button>
@@ -80,7 +116,7 @@ export function Index() {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-4 rounded shadow-lg w-[90%] max-w-md">
             <h2 className="text-lg font-bold mb-4">Acesso à Câmera</h2>
-            <div className="relative">
+            <div className="relative mb-4">
               <video
                 ref={videoRef}
                 className="w-full h-auto rounded border"
@@ -88,7 +124,31 @@ export function Index() {
                 playsInline
               />
             </div>
-            <div className="flex justify-end mt-4">
+
+            {/* Botão para trocar entre câmeras */}
+            <div className="mb-4">
+              {devices.length > 0 ? (
+                <select
+                  className="w-full p-2 border rounded"
+                  value={selectedDeviceId || ""}
+                  onChange={(e) => {
+                    const newDeviceId = e.target.value;
+                    setSelectedDeviceId(newDeviceId);
+                    handleCameraAccess(newDeviceId);
+                  }}
+                >
+                  {devices.map((device, index) => (
+                    <option key={device.deviceId} value={device.deviceId}>
+                      {device.label || `Câmera ${index + 1}`}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <p>Nenhuma câmera encontrada.</p>
+              )}
+            </div>
+
+            <div className="flex justify-end">
               <Button onClick={() => setCameraModalOpen(false)}>Fechar</Button>
             </div>
           </div>
