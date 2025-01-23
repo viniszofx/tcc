@@ -1,6 +1,7 @@
 
 dist/
 dist-electron/
+*.pem
 
 # Logs
 logs

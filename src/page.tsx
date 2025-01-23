@@ -14,6 +14,7 @@ export function Index() {
   const [cameraModalOpen, setCameraModalOpen] = useState(false);
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user"); // Inicialização do modo de câmera
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
 
@@ -40,7 +41,7 @@ export function Index() {
   // Função para acessar a câmera com base no `deviceId` e facingMode
   const handleCameraAccess = async (
     deviceId: string | null,
-    facingMode: string | undefined
+    facingMode: "user" | "environment"
   ) => {
     try {
       if (stream) {
@@ -52,6 +53,8 @@ export function Index() {
         video: {
           deviceId: deviceId || undefined,
           facingMode: facingMode, // Pode ser 'user' (frontal) ou 'environment' (traseira)
+          width: { ideal: 1280 }, // Resolução ideal para ajustar proporcionalmente
+          height: { ideal: 960 }, // Resolução ideal para ajustar proporcionalmente
         },
       });
       setStream(videoStream);
@@ -105,18 +108,12 @@ export function Index() {
             cadastrar, editar, excluir e visualizar bens.
           </p>
         </CardContent>
-        <CardFooter className="flex flex-wrap gap-2">
+        <CardFooter className="space-x-2">
           <Button
-            onClick={() => handleCameraAccess(selectedDeviceId, "user")}
+            onClick={() => handleCameraAccess(selectedDeviceId, facingMode)} // Passando o facingMode
             disabled={devices.length === 0}
           >
-            Câmera Frontal
-          </Button>
-          <Button
-            onClick={() => handleCameraAccess(selectedDeviceId, "environment")}
-            disabled={devices.length === 0}
-          >
-            Câmera Traseira
+            <Camera />
           </Button>
           <Button>
             <a href="/auth">Login</a>
@@ -134,14 +131,14 @@ export function Index() {
             <div className="relative mb-4">
               <video
                 ref={videoRef}
-                className="w-full h-auto rounded border"
+                className="w-full h-auto rounded border object-cover"
                 autoPlay
                 playsInline
               />
             </div>
 
-            {/* Botão para trocar entre câmeras */}
-            <div className="mb-4">
+            {/* Seletor de câmeras visível apenas em telas grandes */}
+            <div className="mb-4 hidden lg:block">
               {devices.length > 0 ? (
                 <select
                   className="w-full p-2 border rounded"
@@ -149,7 +146,7 @@ export function Index() {
                   onChange={(e) => {
                     const newDeviceId = e.target.value;
                     setSelectedDeviceId(newDeviceId);
-                    handleCameraAccess(newDeviceId, "environment");
+                    handleCameraAccess(newDeviceId, facingMode); // Chamando para mudar a câmera selecionada
                   }}
                 >
                   {devices.map((device, index) => (
@@ -161,6 +158,26 @@ export function Index() {
               ) : (
                 <p>Nenhuma câmera encontrada.</p>
               )}
+            </div>
+
+            {/* Botões para trocar entre câmeras frontal e traseira, visíveis apenas em dispositivos móveis */}
+            <div className="mb-4 flex justify-between lg:hidden">
+              <Button
+                onClick={() => {
+                  setFacingMode("user");
+                  handleCameraAccess(selectedDeviceId, "user");
+                }}
+              >
+                Frontal
+              </Button>
+              <Button
+                onClick={() => {
+                  setFacingMode("environment");
+                  handleCameraAccess(selectedDeviceId, "environment");
+                }}
+              >
+                Traseira
+              </Button>
             </div>
 
             <div className="flex justify-end">
