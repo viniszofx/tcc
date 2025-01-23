@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "main": "dist-electron/main.js",
+  "homepage": "/",
   "scripts": {
     "dev": "vite",
     "start": "electron -r esbuild-register electron/main.ts",
