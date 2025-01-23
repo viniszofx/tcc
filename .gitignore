@@ -1,3 +1,7 @@
+
+dist/
+dist-electron/
+
 # Logs
 logs
 *.log
