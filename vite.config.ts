@@ -18,13 +18,13 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   server: {
-    https: {
-      key: fs.readFileSync("localhost-key.pem"),  // Caminho para a chave privada
-      cert: fs.readFileSync("localhost.pem"),     // Caminho para o certificado
-    },
-    host: '0.0.0.0',  // Isso permite que o servidor escute em todas as interfaces de rede
-    port: 3000,        // Porta padrão, mas pode ser alterada conforme necessário
-    strictPort: true,  // Garante que a porta escolhida seja obrigatoriamente usada
+    https: process.env.NODE_ENV === 'development' ? {
+      key: fs.readFileSync('localhost-key.pem'),  
+      cert: fs.readFileSync('localhost.pem'),     
+    } : undefined,  
+    host: '0.0.0.0',  
+    port: 3000,        
+    strictPort: true,  
   },
 
   plugins: [react(),
@@ -45,12 +45,12 @@ export default defineConfig({
           type: 'image/png'
         },
         {
-          src: '/logo.svg',
+          src: '/logo.png',
           sizes: '192x192',
           type: 'image/png'
         },
         {
-          src: '/logo.svg',
+          src: '/logo.png',
           sizes: '512x512',
           type: 'image/png'
         }
