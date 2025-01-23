@@ -23,7 +23,7 @@ export default defineConfig({
       description: 'Onde está meu item?',
       theme_color: '#ffffff',
       background_color: '#ffffff',
-      display: 'standalone',
+      display: 'fullscreen',
       icons: [
         {
           src: '/vite.svg',

@@ -1,50 +1,80 @@
-import { app as e, BrowserWindow as n, ipcMain as i } from "electron";
-import s from "path";
-import { fileURLToPath as l } from "url";
-const c = s.dirname(l(import.meta.url));
-let t = !1, o;
-e.whenReady().then(() => {
-  o = new n({
+import { app, BrowserWindow, ipcMain } from "electron";
+import path from "path";
+import { fileURLToPath } from "url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+let isClosing = false;
+let win;
+app.whenReady().then(() => {
+  win = new BrowserWindow({
     title: "App Cadê",
-    icon: s.join("public", "logo.jpg"),
-    alwaysOnTop: !0,
+    icon: path.join("public", "logo.jpg"),
+    alwaysOnTop: true,
     webPreferences: {
-      nodeIntegration: !1,
-      contextIsolation: !0,
-      preload: s.join(c, "preload.mjs"),
-      webSecurity: !0,
-      sandbox: !0
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, "preload.mjs"),
+      webSecurity: true,
+      sandbox: true
     }
-  }), o.webContents.session.webRequest.onHeadersReceived((r, a) => {
-    a({
+  });
+  win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
       responseHeaders: {
-        ...r.responseHeaders,
+        ...details.responseHeaders,
         "Content-Security-Policy": [
           "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://github.com https://avatars.githubusercontent.com;"
         ]
       }
     });
-  }), i.handle("request-camera-access", async () => {
+  });
+  ipcMain.handle("request-camera-access", async () => {
     try {
-      const r = await navigator.mediaDevices.getUserMedia({ video: !0 });
-      return !0;
-    } catch (r) {
-      return console.error("Erro ao acessar a câmera", r), !1;
+      const result = await navigator.mediaDevices.getUserMedia({ video: true });
+      return true;
+    } catch (error) {
+      console.error("Erro ao acessar a câmera", error);
+      return false;
     }
-  }), process.env.VITE_DEV_SERVER_URL ? o.loadURL(process.env.VITE_DEV_SERVER_URL) : o.loadURL("http://localhost:4173/"), o.on("close", (r) => {
-    t || (t = !0, console.log("Fechando a janela..."), r.preventDefault(), o && o.destroy(), setTimeout(() => {
-      e.isQuiting || e.quit();
-    }, 200));
-  }), e.on("window-all-closed", () => {
-    console.log("Fechando todos os processos..."), process.platform !== "darwin" && e.exit(0);
-  }), e.on("before-quit", () => {
+  });
+  if (process.env.VITE_DEV_SERVER_URL) {
+    win.loadURL(process.env.VITE_DEV_SERVER_URL);
+  } else {
+    win.loadURL("http://localhost:4173/");
+  }
+  win.on("close", (event) => {
+    if (isClosing) return;
+    isClosing = true;
+    console.log("Fechando a janela...");
+    event.preventDefault();
+    if (win) {
+      win.destroy();
+    }
+    setTimeout(() => {
+      if (!app.isQuiting) {
+        app.quit();
+      }
+    }, 200);
+  });
+  app.on("window-all-closed", () => {
+    console.log("Fechando todos os processos...");
+    if (process.platform !== "darwin") {
+      app.exit(0);
+    }
+  });
+  app.on("before-quit", () => {
     console.log("Electron está se preparando para encerrar...");
-  }), e.on("will-quit", () => {
+  });
+  app.on("will-quit", () => {
     console.log("Electron está prestes a encerrar...");
-  }), e.on("quit", () => {
+  });
+  app.on("quit", () => {
     console.log("Processo Electron encerrado com sucesso.");
   });
 });
-process.platform === "darwin" && e.on("activate", () => {
-  n.getAllWindows().length === 0 && createWindow();
-});
+if (process.platform === "darwin") {
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+}
