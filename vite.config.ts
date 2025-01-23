@@ -40,19 +40,19 @@ export default defineConfig({
       display: 'fullscreen',
       icons: [
         {
-          src: '/vite.svg',
+          src: '/logo.png',
           sizes: '144x144',
-          type: 'image/svg+xml'
+          type: 'image/png'
         },
         {
-          src: '/vite.svg',
+          src: '/logo.svg',
           sizes: '192x192',
-          type: 'image/svg+xml'
+          type: 'image/png'
         },
         {
-          src: '/vite.svg',
+          src: '/logo.svg',
           sizes: '512x512',
-          type: 'image/svg+xml'
+          type: 'image/png'
         }
       ]
     }
