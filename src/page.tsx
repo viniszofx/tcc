@@ -51,5 +51,6 @@ export function Index() {
         <CameraComponent onClose={() => setCameraModalOpen(false)} />
       )}
     </div>
+
   );
 }
