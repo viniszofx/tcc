@@ -1,16 +1,16 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
-import React from 'react'
 
 export default function AuthPage() {
     return (
-        <div>
+        <div className='flex flex-col items-center justify-center min-h-screen p-4'>
+            <img className="mx-auto w-72 h-auto md:hidden" src="/Logotipo.svg" alt="logo" />
             <Card className="mx-auto max-w-2xl w-full mt-4">
-                <CardHeader>
+                <CardHeader className="w-full flex flex-col items-start md:items-center text-left md:text-center">
+                    <img className="w-88 h-auto hidden md:block mb-6" src="/Logotipo.svg" alt="logo" />
                     <CardTitle className='text-4xl font-bold'>Login</CardTitle>
-                    <CardDescription>O Controle de inventário na palma das as mãos</CardDescription>
+                    <CardDescription className='mt-2'>O Controle de inventário na palma das as mãos</CardDescription>
                 </CardHeader>
                 <CardContent className='space-y-2'>
                     <Input placeholder='Email' type='email' />
