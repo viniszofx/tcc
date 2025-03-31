@@ -1,9 +1,7 @@
 @import 'tailwindcss';
-
 @plugin 'tailwindcss-animate';
 
-@custom-variant dark (&:is(.dark *));
-
+/* Definição de variáveis e tema */
 @theme {
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
@@ -81,17 +79,7 @@
   --cartinha-color: #eae0d5;
 }
 
-@layer base {
-
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
-  }
-}
-
+/* Definindo variáveis base */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -128,7 +116,10 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+}
 
+/* Definindo a variante dark */
+@layer base {
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
@@ -162,9 +153,38 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Dark theme specific variables */
+    --primary-color: #5e503f;
+    --secondary-color: #0f171b;
+    --bg-simple: #0a0908;
+    --bg-secondary: #18181b;
+    --border-color: #57595f;
+    --border-input: #eae0d5;
+
+    --button-color: #5e503f;
+    --button-2-color: #c10007;
+    --button-3-color: #6c5d4a;
+
+    --card-color: #3f362b;
+
+    --font-color: #ffffff;
+    --font-color2: #ffffff;
+
+    --small-font-size: 10px;
+    --normal-font-size: 14px;
+    --md-font-size: 18px;
+    --lg-font-size: 22px;
+    --2lg-font-size: 26px;
+    --3lg-font-size: 30px;
+    --4lg-font-size: 34px;
+
+    --perfil-color: #0f171b;
+    --cartinha-color: #ffffff;
   }
 }
 
+/* Aplicando o estilo geral */
 @layer base {
   * {
     @apply border-border;
