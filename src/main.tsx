@@ -9,6 +9,8 @@ import AuthLayout from "./pages/auth/layout";
 import AuthPage from "./pages/auth/page";
 import { DashboardLayout } from "./pages/dashboard/layout";
 import DashboardPage from "./pages/dashboard/page";
+import EmailCheckLayout from "./pages/email-check/layout";
+import EmailCheckPage from "./pages/email-check/page";
 import RecoverPasswordLayout from "./pages/recover-password/layout";
 import RecoverPasswordPage from "./pages/recover-password/page";
 
@@ -19,6 +21,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/" element={<RootLayout children={<Index />} />}></Route>
         <Route path="/auth" element={<AuthLayout children={<AuthPage />} />}></Route>
         <Route path="/recover-password" element={<RecoverPasswordLayout children={<RecoverPasswordPage />} />}></Route>
+        <Route path="/email-check" element={<EmailCheckLayout children={<EmailCheckPage />} />}></Route>
         <Route path="/dashboard" element={
           <SidebarProvider>
             <DashboardLayout children={<DashboardPage />} />
