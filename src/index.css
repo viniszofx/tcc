@@ -51,17 +51,38 @@
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  /* Additional variables */
+  --primary-color: #c6ac8f;
+  --secondary-color: #22333b;
+  --bg-simple: #f4f4f5;
+  --bg-secondary: #eae0d5;
+  --border-color: #c6ac8f;
+  --border-input: #22333b;
+
+  --button-color: #0a0908;
+  --button-2-color: #fb2c36;
+  --button-3-color: #2c2b3f;
+
+  --card-color: #eae0d5;
+
+  --font-color: #22333b;
+  --font-color2: #ffffff;
+
+  --small-font-size: 10px;
+  --normal-font-size: 14px;
+  --md-font-size: 18px;
+  --lg-font-size: 22px;
+  --2lg-font-size: 26px;
+  --3lg-font-size: 30px;
+  --4lg-font-size: 34px;
+
+  --perfil-color: #22333b;
+  --cartinha-color: #eae0d5;
 }
 
-/*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
 @layer base {
+
   *,
   ::after,
   ::before,
@@ -105,7 +126,7 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
@@ -140,7 +161,7 @@
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
