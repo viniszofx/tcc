@@ -20,7 +20,7 @@ export default function AuthPage() {
                     <a className='block w-full text-sm text-end text-[var(--font-color)]' href="/recover-password">Esqueceu a senha?</a>
                     </div>
                 </CardContent>
-                <div className="relative text-center text-sm after:absolute after:left-8 after:right-8 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-[var(--border-color)] w-full md:w-112 mx-auto mt-6">
+                <div className="relative text-center text-sm after:absolute after:left-8 after:right-8 md:after:left-0 md:after:right-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-[var(--border-color)] w-full md:w-112 mx-auto mt-6">
                     <span className="relative z-10 bg-[var(--bg-simple)] px-2 text-[var(--font-color)]">
                         ou
                     </span>
