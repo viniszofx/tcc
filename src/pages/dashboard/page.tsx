@@ -5,9 +5,9 @@ import { Switch } from "@/components/ui/switch";
 
 export default function DashboardPage() {
     return (
-        //sugestão de layout
-        <div className="flex min-h-[calc(100vh-var(--header-height))] flex-col items-center justify-center px-4">
-            <Card className="w-full max-w-[95%] md:max-w-[calc(100%-var(--sidebar-width))] min-h-[60vh] md:min-h-[70vh] mx-auto p-6 bg-white shadow-md rounded-lg">
+
+        <div className="flex-1 flex min-h-[calc(100vh-var(--header-height))] flex-col items-center justify-center px-4">
+            <Card className="w-full max-w-[95%] md:max-w-[calc(100%-var(--sidebar-width))] min-h-[60vh] md:min-h-[70vh] mx-auto p-6 shadow-md rounded-lg ">
                 <CardHeader>
                     <CardTitle className="text-center md:text-left">
                         Arraste seu arquivo CSV ou Excel
