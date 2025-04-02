@@ -6,7 +6,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { Separator } from "@radix-ui/react-separator";
 import React from "react";
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
+export function ProfileLayout({ children }: { children: React.ReactNode }) {
     const usuario = {
         nome: "João Silva",
         email: "joao@email.com",
@@ -24,7 +24,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                         <Separator orientation="vertical" className="mr-2 h-4 hidden md:block" />
                         
                         <div className="flex-1">
-                            <p className="md:text-lg md:ml-8 font-bold text-[var(--font-color)]">Processamento</p>
+                            <p className="md:text-lg md:ml-8 font-bold text-[var(--font-color)]">Perfil</p>
                         </div>
                         
                         <div className="flex items-center gap-4 md:mr-40">

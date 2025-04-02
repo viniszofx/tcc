@@ -11,6 +11,8 @@ import { DashboardLayout } from "./pages/dashboard/layout";
 import DashboardPage from "./pages/dashboard/page";
 import EmailCheckLayout from "./pages/email-check/layout";
 import EmailCheckPage from "./pages/email-check/page";
+import { ProfileLayout } from "./pages/profile/layout";
+import ProfilePage from "./pages/profile/page";
 import RecoverPasswordLayout from "./pages/recover-password/layout";
 import RecoverPasswordPage from "./pages/recover-password/page";
 
@@ -25,6 +27,11 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/dashboard" element={
           <SidebarProvider>
             <DashboardLayout children={<DashboardPage />} />
+          </SidebarProvider>
+        }></Route>
+        <Route path="/profile" element={
+          <SidebarProvider>
+            <ProfileLayout children={<ProfilePage />} />
           </SidebarProvider>
         }></Route>
       </Routes>

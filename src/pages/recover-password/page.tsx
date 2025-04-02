@@ -1,3 +1,4 @@
+import DarkModeToggle from '@/components/custom/darkmodetoggle'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -5,6 +6,9 @@ import { Input } from '@/components/ui/input'
 export default function RecoverPasswordPage() {
     return (
         <div className='flex flex-col items-center justify-center h-screen p-4'>
+            <div className="absolute top-2 left-2 md:bottom-4 md:right-4 md:top-auto">
+                <DarkModeToggle />
+            </div>
             <img className="mx-auto w-72 h-auto md:hidden" src="/Logotipo.svg" alt="logo" />
             <Card className="mx-auto max-w-3xl w-full mt-4 max-h-full md:p-8 border-[var(--border-color)] bg-[var(--bg-simple)]">
                 <CardHeader className="flex flex-col items-start md:items-center text-left md:text-center">
@@ -15,7 +19,7 @@ export default function RecoverPasswordPage() {
                 <CardContent className='space-y-4 flex flex-col items-center'>
                     <div className='w-full md:w-112 space-y-3'>
                         <Input className='border-[var(--border-input)]' placeholder='Email' type='email' />
-                        <Button className='w-full border-[var(--border-color)] bg-[var(--bg-simple)]' variant={'outline'}>Enviar link de redefinição</Button>
+                        <Button className='w-full border-[var(--border-color)] bg-[var(--bg-simple)] cursor-pointer hover:!bg-[var(--hover-color)] hover:!text-white transition-all' variant={'outline'}>Enviar link de redefinição</Button>
                     </div>
                 </CardContent>
                 <CardFooter className='flex justify-center text-center mt-6'>
