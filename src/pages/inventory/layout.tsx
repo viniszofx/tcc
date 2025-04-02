@@ -10,7 +10,11 @@ import {
 import { Separator } from "@radix-ui/react-separator";
 import React from "react";
 
-export function ProfileLayout({ children }: { children: React.ReactNode }) {
+export default function InventoryLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const usuario = {
     nome: "João Silva",
     email: "joao@email.com",
@@ -32,7 +36,7 @@ export function ProfileLayout({ children }: { children: React.ReactNode }) {
 
             <div className="flex-1">
               <p className="md:text-lg md:ml-8 font-bold text-[var(--font-color)]">
-                Perfil
+                Processamento
               </p>
             </div>
 
