@@ -23,16 +23,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="mt-4">
-              <li className="p-2 gap-2 text-[var(--font-color2)] flex items-center justify-center">
-                <Button className="bg-[var(--secondary-color)]" asChild>
+              <li className="p-2 gap-2 flex items-center justify-center">
+                <Button className="bg-[var(--secondary-color)] text-[var(--font-color2)]" asChild>
                   <a href="/dashboard" className="flex items-center gap-2">
-                    <Home className="text-[var(--font-color2)]" />
+                    <Home className="text-[var(--font-color2)]"/>
                     Dashboard
                   </a>
                 </Button>
               </li>
-              <li className="p-2 gap-2 text-[var(--font-color2)] flex items-center justify-center md:hidden">
-                <Button className="bg-[var(--secondary-color)]" asChild>
+              <li className="p-2 gap-2 flex items-center justify-center md:hidden">
+                <Button className="bg-[var(--secondary-color)] text-[var(--font-color2)]" asChild>
                   <a href="/comission" className="flex items-center gap-2">
                     <File className="text-[var(--font-color2)]" />
                     Abrir Comissão
@@ -42,8 +42,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <div className="p-2 gap-2 text-[var(--font-color2)] flex items-center justify-center mt-auto mb-12">
-          <Button className="bg-[var(--secondary-color)]" asChild>
+        <div className="p-2 gap-2 flex items-center justify-center mt-auto mb-12">
+          <Button className="bg-[var(--secondary-color)] text-[var(--font-color2)]" asChild>
             <a href="/settings" className="flex items-center gap-2">
               <Settings className="text-[var(--font-color2)]" />
               Configurações
