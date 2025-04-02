@@ -7,7 +7,7 @@ interface AvatarProps {
 export default function ProfileAvatar({foto}: AvatarProps) {
   return (
     <div>
-      <Avatar className="w-40 h-40 cursor-pointer border">
+      <Avatar className="md:w-40 md:h-40 w-28 h-28 cursor-pointer border">
           <AvatarImage src={foto} alt="Foto do usuário" />
           <AvatarFallback></AvatarFallback>
         </Avatar>

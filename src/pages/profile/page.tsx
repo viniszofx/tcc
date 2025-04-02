@@ -1,4 +1,5 @@
 import ProfileAvatar from "@/components/custom/profile-avatar";
+import RoleProfile from "@/components/custom/profile-role";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,12 +11,15 @@ export default function ProfilePage() {
             <Card className="bg-[var(--bg-simple)] w-full max-w-[98%] xs:max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[calc(100%-var(--sidebar-width)-2rem)] mx-auto p-4 sm:p-6 lg:p-8 shadow-md rounded-lg flex flex-col min-h-[85vh] xs:min-h-[80vh] sm:min-h-[75vh] md:min-h-[70vh]">
                 <div className="flex flex-col items-center w-full gap-4 xs:gap-5 sm:gap-6 md:gap-8 lg:gap-10 flex-grow">
                     <CardHeader className="w-full px-0 pt-0 text-center">
+                        <RoleProfile cargo="admin" />
                         <ProfileAvatar foto="./logo.svg" />
                     </CardHeader>
                     
                     <Card className="bg-[var(--card-color)] w-full max-w-xs xs:max-w-sm sm:max-w-md md:max-w-lg shadow-sm rounded-lg p-3 sm:p-5 md:p-6 border-dashed border-[var(--border-input)] flex-1 flex flex-col">
                         <CardHeader className="w-full px-0 pt-0">
-                            <CardTitle className="text-center text-sm xs:text-base sm:text-lg md:text-lg lg:text-xl text-[var(--font-color)]"></CardTitle>
+                            <CardTitle className="text-center text-sm xs:text-base sm:text-lg md:text-lg lg:text-xl text-[var(--font-color)]">
+                                
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="w-full flex flex-col items-center justify-center gap-2 xs:gap-3 sm:gap-4 px-0 pb-0 flex-grow">
                             <Input
