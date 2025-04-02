@@ -1,48 +1,57 @@
-import * as React from "react"
-import { Home, Settings } from "lucide-react"
-import { Button } from "../ui/button"
-
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarRail,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
+import { File, Home, Settings } from "lucide-react";
+import * as React from "react";
+import { Button } from "../ui/button";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar {...props}>
       <SidebarHeader className="bg-[var(--secondary-color)]">
-        <div>
+        <div className="mt-4">
           <img className="mx-auto h-auto" src="/Logotipo.svg" alt="logo" />
         </div>
       </SidebarHeader>
       <SidebarContent className="bg-[var(--secondary-color)] flex flex-col justify-between h-full">
         <SidebarGroup>
-          <SidebarGroupLabel></SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="mt-4">
               <li className="p-2 gap-2 text-[var(--font-color2)] flex items-center justify-center">
-                <Home />
                 <Button className="bg-[var(--secondary-color)]" asChild>
-                  <a href="/dashboard">Dashboard</a>
+                  <a href="/dashboard" className="flex items-center gap-2">
+                    <Home className="text-[var(--font-color2)]" />
+                    Dashboard
+                  </a>
+                </Button>
+              </li>
+              <li className="p-2 gap-2 text-[var(--font-color2)] flex items-center justify-center md:hidden">
+                <Button className="bg-[var(--secondary-color)]" asChild>
+                  <a href="/comission" className="flex items-center gap-2">
+                    <File className="text-[var(--font-color2)]" />
+                    Abrir Comissão
+                  </a>
                 </Button>
               </li>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <div className="p-2 gap-2 text-[var(--font-color2)] flex items-center justify-center mb-12">
-          <Settings />
+        <div className="p-2 gap-2 text-[var(--font-color2)] flex items-center justify-center mt-auto mb-12">
           <Button className="bg-[var(--secondary-color)]" asChild>
-            <a href="/settings">Configurações</a>
+            <a href="/settings" className="flex items-center gap-2">
+              <Settings className="text-[var(--font-color2)]" />
+              Configurações
+            </a>
           </Button>
         </div>
       </SidebarContent>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }
