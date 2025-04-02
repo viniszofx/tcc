@@ -7,6 +7,12 @@ import { Separator } from "@radix-ui/react-separator";
 import React from "react";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
+    const usuario = {
+        nome: "João Silva",
+        email: "joao@email.com",
+        cargo: "admin" as "admin", 
+        foto: "/logo.svg"
+      };
 
     return (
         <div className="flex flex-1 items-center justify-center h-screen bg-[var(--card-color)]">
@@ -26,7 +32,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                                 <a href="/comission">Abrir Comissão</a>
                             </Button>
                             <DarkModeToggle />
-                            <UserAvatar />
+                            <UserAvatar {...usuario} />
                         </div>
                     </header>
                     <main className="flex-1 bg-[var(--card-color)] overflow-auto py-4">

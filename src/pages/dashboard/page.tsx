@@ -38,7 +38,7 @@ export default function DashboardPage() {
                 </div>
                 
                 <div className="w-full flex mt-6 xs:mt-7 sm:mt-8 md:mt-10 lg:mt-12 pt-3 xs:pt-4 border-t justify-end">
-                    <Button className="w-full xs:w-[180px] sm:w-[200px] h-10 xs:h-11 sm:h-12 bg-[var(--button-color)] text-sm xs:text-base cursor-pointer text-[var(--font-color2)]">
+                    <Button className="w-full xs:w-[180px] sm:w-[200px] h-10 xs:h-11 sm:h-12 bg-[var(--button-color)] text-sm xs:text-base cursor-pointer text-[var(--font-color2)] hover:!bg-[var(--hover-3-color)] hover:!text-white transition-all">
                         Processar
                     </Button>
                 </div>

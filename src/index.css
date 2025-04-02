@@ -58,6 +58,9 @@
   --border-color: #c6ac8f;
   --border-input: #22333b;
   --header-color: #f4f4f5;
+  --hover-color: #0a0908;
+  --hover-2-color: #c6ac8f;
+  --hover-3-color: #c6ac8f;
 
   --button-color: #0a0908;
   --button-2-color: #fb2c36;
@@ -163,6 +166,9 @@
     --border-color: #57595f;
     --border-input: #eae0d5;
     --header-color: #0f171b;
+    --hover-color: #5e503f;
+    --hover-2-color: #0a0908;
+    --hover-3-color: #22333b;
 
     --button-color: #5e503f;
     --button-2-color: #c10007;

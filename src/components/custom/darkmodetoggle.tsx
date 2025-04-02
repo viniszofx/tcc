@@ -33,8 +33,8 @@ export default function DarkModeToggle() {
     };
 
     return (
-        <Button onClick={toggleDarkMode} className="md:p-4 p-3 bg-[var(--button-color)] cursor-pointer">
-            {darkMode ? <Sun /> : <Moon />}
+        <Button onClick={toggleDarkMode} className="md:p-4 p-3 bg-[var(--button-color)] hover:!bg-[var(--hover-2-color)] hover:!text-white transition-all cursor-pointer">
+            {darkMode ? <Sun className="text-[var(--font-color2)]" /> : <Moon className="text-[var(--font-color2)]" />}
         </Button>
     );
 }
