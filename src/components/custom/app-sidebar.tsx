@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -9,7 +10,6 @@ import {
 } from "@/components/ui/sidebar";
 import { File, Home, Settings } from "lucide-react";
 import * as React from "react";
-import { Button } from "../ui/button";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
