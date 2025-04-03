@@ -28,7 +28,7 @@ export default function ProfileAvatar({ foto }: AvatarProps) {
             </Avatar>
             <a>
                 <Button
-                    className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[var(--button-color)] hover:bg-[var(--hover-3-color)] text-[var(--font-color2)] px-4 py-1 text-xs cursor-pointer rounded-full shadow-md transition-all opacity-100 sm:opacity-100"
+                    className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[var(--button-color)] text-[var(--font-color2)] hover:!bg-[var(--hover-3-color)] hover:!text-white transition-all px-4 py-1 text-xs cursor-pointer rounded-full shadow-md transition-all opacity-100 sm:opacity-100"
                     size="sm"
                 >
                     Alterar

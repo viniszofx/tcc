@@ -17,6 +17,8 @@ import RecoverPasswordLayout from "./pages/recover-password/layout";
 import RecoverPasswordPage from "./pages/recover-password/page";
 import InventoryLayout from "./pages/inventory/layout";
 import Inventory from "./pages/inventory/page";
+import { SettingsLayout } from "./pages/settings/layout";
+import SettingsPage from "./pages/settings/page";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -56,6 +58,14 @@ createRoot(document.getElementById("root")!).render(
           element={
             <SidebarProvider>
               <InventoryLayout children={<Inventory />} />
+            </SidebarProvider>
+          }
+        ></Route>
+        <Route
+          path="/settings"
+          element={
+            <SidebarProvider>
+              <SettingsLayout children={<SettingsPage />} />
             </SidebarProvider>
           }
         ></Route>
