@@ -1,45 +1,53 @@
-import { AppSidebar } from "@/components/custom/app-sidebar";
-import DarkModeToggle from "@/components/custom/darkmodetoggle";
-import { UserAvatar } from "@/components/custom/user-avatar";
-import { Button } from "@/components/ui/button";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@radix-ui/react-separator";
-import React from "react";
+import { AppSidebar } from "@/components/custom/app-sidebar"
+import DarkModeToggle from "@/components/custom/darkmodetoggle"
+import { UserAvatar } from "@/components/custom/user-avatar"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import type React from "react"
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-    const usuario = {
-        nome: "João Silva",
-        email: "joao@email.com",
-        cargo: "admin" as "admin", 
-        foto: "/logo.svg"
-      };
+  const usuario = {
+    nome: "João Silva",
+    email: "joao@email.com",
+    cargo: "admin" as const,
+    foto: "/logo.svg",
+  }
 
-    return (
-        <div className="flex flex-1 items-center justify-center h-screen bg-[var(--card-color)]">
-            <SidebarProvider>
-                <AppSidebar />
-                <SidebarInset>
-                    <header className="bg-[var(--header-color)] flex md:h-18 h-16 shrink-0 items-center md:gap-12 border-b px-4 md:justify-between sticky top-0 z-10">
-                        <SidebarTrigger className="-ml-1" />
-                        <Separator orientation="vertical" className="mr-2 h-4 hidden md:block" />
-                        
-                        <div className="flex-1">
-                            <p className="md:text-lg md:ml-8 font-bold text-[var(--font-color)]">Processamento</p>
-                        </div>
-                        
-                        <div className="flex items-center gap-4 md:mr-40">
-                        <Button className="bg-[var(--button-color)] hover:!bg-[var(--hover-2-color)] hover:!text-white transition-all cursor-pointer hidden md:flex">
-                            <a href="/comission" className="text-[var(--font-color2)]">Abrir Comissão</a>
-                        </Button>
-                            <DarkModeToggle />
-                            <UserAvatar {...usuario} />
-                        </div>
-                    </header>
-                    <main className="flex-1 bg-[var(--card-color)] overflow-auto py-4">
-                        {children}
-                    </main>
-                </SidebarInset>
-            </SidebarProvider>
-        </div>
-    );
+  return (
+    <div className="flex h-screen w-full overflow-hidden bg-[var(--card-color)]">
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset className="flex flex-col">
+          <header className="sticky top-0 z-10 flex h-16 items-center border-b bg-[var(--header-color)]">
+            <div className="w-full px-4 md:px-6 lg:px-8 flex items-center">
+              <SidebarTrigger className="text-[var(--font-color)] -ml-2" />
+              <Separator orientation="vertical" className="h-6 hidden md:block mx-2" />
+
+              <div className="flex w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto items-center justify-between">
+                  <h1 className="text-lg font-semibold text-[var(--font-color)]">Processamento</h1>
+
+                <div className="flex items-center gap-4">
+                  <Button
+                    className="hidden bg-[var(--button-color)] text-[var(--font-color2)] transition-all hover:bg-[var(--hover-2-color)] hover:text-white md:flex"
+                    asChild
+                  >
+                    <a href="/comission">Abrir Comissão</a>
+                  </Button>
+                  <DarkModeToggle />
+                  <UserAvatar {...usuario} />
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <main className="flex-1 overflow-auto bg-[var(--card-color)] p-0">
+            <div className="container mx-auto flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-4 md:px-6 md:py-6 lg:px-8 lg:py-8">
+              {children}
+            </div>
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
+  )
 }
