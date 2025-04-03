@@ -14,16 +14,14 @@ export default function ProfilePage() {
     });
 
     return (
-        <div className="flex-1 w-full p-3 xs:p-4 sm:p-5 md:p-6 lg:p-8 flex items-start justify-center">
-            <Card className="bg-[var(--bg-simple)] w-full max-w-[98%] xs:max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[calc(100%-var(--sidebar-width)-2rem)] mx-auto p-4 sm:p-6 lg:p-8 shadow-md rounded-lg flex flex-col min-h-fit my-4 sm:my-6 mt-80">
-                
-                <div className="flex flex-col md:flex-row gap-4 xs:gap-5 sm:gap-6 md:gap-8 lg:gap-10 flex-grow">
+        <div className="w-full p-3 xs:p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center">
+            <Card className="bg-[var(--bg-simple)] w-full max-w-[98%] xs:max-w-[95%] sm:max-w-[90%] md:max-w-[85%] overflow-auto lg:max-w-[calc(100%-var(--sidebar-width)-2rem)] mx-auto p-4 sm:p-6 lg:p-8 shadow-md rounded-lg flex flex-col h-full xs:min-h-[80vh] sm:min-h-[75vh] md:min-h-[70vh]">
+                <div className="flex flex-col md:mt-20 sm:mt-10 md:flex-row gap-4 xs:gap-5 sm:gap-6 md:gap-8 lg:gap-10 flex-grow">
                     <div className="w-full md:w-1/3 flex flex-col items-center px-2 sm:px-4">
                         <div className="w-full flex flex-col items-center gap-4 xs:gap-5">
                             <RoleProfile cargo="admin" />
                             <ProfileAvatar foto="./logo.svg" />
                         </div>
-                        
                         <div className="w-full mt-4 xs:mt-5 sm:mt-6">
                             <p className="text-sm xs:text-base font-medium text-[var(--text-color)] mb-2">Descrição:</p>
                             <div className="p-3 xs:p-4 bg-[var(--bg-simple)] rounded-md min-h-20 border border-[var(--border-color)] text-sm xs:text-base">
@@ -47,7 +45,7 @@ export default function ProfilePage() {
                     </div>
                 </div>
                 
-                <div className="w-full flex mt-6 xs:mt-7 sm:mt-8 md:mt-10 lg:mt-12 pt-3 xs:pt-4 border-t justify-end gap-4">
+                <div className="w-full md:pt-40 pt-4 flex xs:mt-7 sm:mt-8 md:mt-10 lg:mt-12 xs:pt-4 border-t justify-end gap-4">
                     <Button className="w-full xs:w-[180px] sm:w-[200px] h-10 xs:h-11 bg-[var(--button-color)] text-sm xs:text-base text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] cursor-pointer">
                         Voltar
                     </Button>
