@@ -1,6 +1,6 @@
 import React from "react";
-import Header from "./components/custom/header";
 import { Footer } from "./components/custom/footer";
+import Header from "./components/custom/header";
 
 const links = [
   {

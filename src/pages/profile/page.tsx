@@ -38,17 +38,19 @@ export default function ProfilePage() {
                             email={perfil.email}
                             campus={perfil.campus}
                             descricao={perfil.descricao}
-                            onNomeChange={(value) => setPerfil({...perfil, nome: value})}
-                            onEmailChange={(value) => setPerfil({...perfil, email: value})}
-                            onDescricaoChange={(value) => setPerfil({...perfil, descricao: value})}
+                            onNomeChange={(value) => setPerfil({ ...perfil, nome: value })}
+                            onEmailChange={(value) => setPerfil({ ...perfil, email: value })}
+                            onDescricaoChange={(value) => setPerfil({ ...perfil, descricao: value })}
                         />
                     </div>
                 </div>
-                
+
                 <div className="w-full md:pt-30 pt-4 flex xs:mt-7 sm:mt-8 md:mt-10 lg:mt-12 xs:pt-4 border-t justify-end gap-4">
-                    <Button className="w-full xs:w-[180px] sm:w-[200px] h-10 xs:h-11 bg-[var(--button-color)] text-sm xs:text-base text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] cursor-pointer">
-                        Voltar
-                    </Button>
+                    <a href="/dashboard" className="w-full xs:w-[180px] sm:w-[200px]">
+                        <Button className="w-full h-10 xs:h-11 bg-[var(--button-color)] text-sm xs:text-base text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] cursor-pointer">
+                            Voltar
+                        </Button>
+                    </a>
                     <Button className="w-full xs:w-[180px] sm:w-[200px] h-10 xs:h-11 bg-[var(--button-color)] text-sm xs:text-base text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] cursor-pointer">
                         Salvar Alterações
                     </Button>

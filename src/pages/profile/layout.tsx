@@ -3,9 +3,9 @@ import DarkModeToggle from "@/components/custom/darkmodetoggle";
 import { UserAvatar } from "@/components/custom/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
-    SidebarInset,
-    SidebarProvider,
-    SidebarTrigger,
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Separator } from "@radix-ui/react-separator";
 import React from "react";

@@ -1,7 +1,7 @@
-import { Menu, Sun, Moon } from "lucide-react";
+import { Menu, Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { Drawer, DrawerContent, DrawerTrigger } from "../ui/drawer";
-import { useEffect, useState } from "react";
 
 interface HeaderProps {
   children?: React.ReactNode;
@@ -15,7 +15,6 @@ interface HeaderProps {
 export default function Header({ name, links }: HeaderProps) {
   const [darkMode, setDarkMode] = useState(false);
 
-  // Verificar a preferência do usuário ou salvar a configuração
   useEffect(() => {
     const userPrefersDark = localStorage.getItem("theme") === "dark";
     setDarkMode(userPrefersDark);
