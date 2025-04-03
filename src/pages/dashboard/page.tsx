@@ -42,7 +42,7 @@ export default function DashboardPage() {
               </div>
               <Switch
                 id="hardware"
-                className="!bg-[var(--button-color)] scale-[1.1] xs:scale-[1.2] sm:scale-[1.3] md:scale-[1.4] lg:scale-[1.5] "
+                className="data-[state=checked]:bg-[var(--button-color)] scale-[1.1] xs:scale-[1.2] sm:scale-[1.3] md:scale-[1.4] lg:scale-[1.5]"
               />
             </div>
           </div>
