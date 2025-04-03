@@ -1,7 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { Card } from "@/components/ui/card";
 
 export default function Inventory() {
   return (
