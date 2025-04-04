@@ -4,7 +4,6 @@ import { UserAvatar } from "@/app/custom/user-avatar"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import type React from "react"
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const usuario = {
