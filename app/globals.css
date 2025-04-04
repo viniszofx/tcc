@@ -36,6 +36,37 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
+
+  --primary-color: #c6ac8f;
+  --secondary-color: #22333b;
+  --bg-simple: #f4f4f5;
+  --bg-secondary: #eae0d5;
+  --border-color: #c6ac8f;
+  --border-input: #22333b;
+  --header-color: #f4f4f5;
+  --hover-color: #0a0908;
+  --hover-2-color: #c6ac8f;
+  --hover-3-color: #c6ac8f;
+
+  --button-color: #0a0908;
+  --button-2-color: #fb2c36;
+  --button-3-color: #2c2b3f;
+
+  --card-color: #eae0d5;
+
+  --font-color: #22333b;
+  --font-color2: #ffffff;
+
+  --small-font-size: 10px;
+  --normal-font-size: 14px;
+  --md-font-size: 18px;
+  --lg-font-size: 22px;
+  --2lg-font-size: 26px;
+  --3lg-font-size: 30px;
+  --4lg-font-size: 34px;
+
+  --perfil-color: #22333b;
+  --cartinha-color: #eae0d5;
 }
 
 .dark {
@@ -70,6 +101,37 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
+
+  --primary-color: #5e503f;
+  --secondary-color: #0f171b;
+  --bg-simple: #0a0908;
+  --bg-secondary: #18181b;
+  --border-color: #57595f;
+  --border-input: #eae0d5;
+  --header-color: #0f171b;
+  --hover-color: #5e503f;
+  --hover-2-color: #0a0908;
+  --hover-3-color: #22333b;
+
+  --button-color: #5e503f;
+  --button-2-color: #c10007;
+  --button-3-color: #6c5d4a;
+
+  --card-color: #3f362b;
+
+  --font-color: #ffffff;
+  --font-color2: #ffffff;
+
+  --small-font-size: 10px;
+  --normal-font-size: 14px;
+  --md-font-size: 18px;
+  --lg-font-size: 22px;
+  --2lg-font-size: 26px;
+  --3lg-font-size: 30px;
+  --4lg-font-size: 34px;
+
+  --perfil-color: #0f171b;
+  --cartinha-color: #ffffff;
 }
 
 @theme inline {
@@ -115,6 +177,7 @@
     from {
       height: 0;
     }
+
     to {
       height: var(--radix-accordion-content-height);
     }
@@ -124,6 +187,7 @@
     from {
       height: var(--radix-accordion-content-height);
     }
+
     to {
       height: 0;
     }
@@ -134,6 +198,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
