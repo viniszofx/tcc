@@ -10,6 +10,7 @@ const HeaderTitle = () => {
     "/dashboard/comission": "Comissão",
     "/dashboard/settings": "Configurações",
     "/dashboard": "Dashboard",
+    "/dashboard/about": "Sobre",
   };
 
   const title = pageTitles[pathname] || "Dashboard";

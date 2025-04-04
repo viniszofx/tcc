@@ -8,7 +8,7 @@ import {
     SidebarMenu,
     SidebarRail,
 } from "@/components/ui/sidebar";
-import { File, Home, Settings } from "lucide-react";
+import { File, Home, Info, Settings } from "lucide-react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return (
@@ -41,7 +41,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
-                <div className="p-2 gap-2 flex items-center justify-center mt-auto mb-12">
+                <div className="flex flex-col gap-2 p-4 mt-auto mb-6">
+                    <Button className="bg-[var(--secondary-color)] text-[var(--font-color2)] mb-4" asChild>
+                        <a href="/dashboard/about" className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white">
+                            <Info className="text-[var(--font-color2)]" />
+                            Sobre
+                        </a>
+                    </Button>
                     <Button className="bg-[var(--secondary-color)] text-[var(--font-color2)]" asChild>
                         <a href="/dashboard/settings" className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white">
                             <Settings className="text-[var(--font-color2)]" />
