@@ -21,7 +21,7 @@ export default function AuthPage() {
             <Input className='border-[var(--border-input)]' placeholder='Email' type='email' />
             <Input className='border-[var(--border-input)]' placeholder='Senha' type='password' />
             <Button className='w-full border-[var(--border-color)] bg-[var(--bg-simple)] cursor-pointer hover:!bg-[var(--hover-color)] hover:!text-white transition-all' variant={'outline'}>Entrar</Button>
-            <a className='block w-full text-sm text-end text-[var(--font-color)]' href="/auth/recover">Esqueceu a senha?</a>
+            <a className='block w-full text-sm text-end text-[var(--font-color)] hover:underline' href="/auth/recover">Esqueceu a senha?</a>
           </div>
         </CardContent>
         <div className="relative text-center text-sm after:absolute after:left-8 after:right-8 md:after:left-0 md:after:right-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-[var(--border-color)] w-full md:w-112 mx-auto mt-6">
