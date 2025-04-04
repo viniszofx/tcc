@@ -24,7 +24,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         <SidebarMenu className="mt-4">
                             <li className="p-2 gap-2 flex items-center justify-center">
                                 <Button className="bg-[var(--secondary-color)] text-[var(--font-color2)]" asChild>
-                                    <a href="/dashboard/home" className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white">
+                                    <a href="/dashboard" className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white">
                                         <Home className="text-[var(--font-color2)]" />
                                         Dashboard
                                     </a>
@@ -43,7 +43,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </SidebarGroup>
                 <div className="p-2 gap-2 flex items-center justify-center mt-auto mb-12">
                     <Button className="bg-[var(--secondary-color)] text-[var(--font-color2)]" asChild>
-                        <a href="/dashoboard/settings" className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white">
+                        <a href="/dashboard/settings" className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white">
                             <Settings className="text-[var(--font-color2)]" />
                             Configurações
                         </a>

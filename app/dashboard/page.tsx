@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Upload } from "lucide-react"
 
-export default function DashboardPage() {
+export default function Page() {
   return (
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-md lg:max-w-5xl xl:max-w-6xl">
       <CardHeader className="pb-2 text-center">

@@ -64,7 +64,7 @@ export default function ProfilePage() {
           </div>
         </CardContent>
 
-        <CardFooter className="w-full px-6 sm:px-8 py-4 md:py-5 border-t flex flex-row justify-end gap-2 sm:gap-4">
+        <CardFooter className="w-full px-6 sm:px-8 py-4 md:py-5 border-t flex flex-row justify-end gap-6 sm:gap-4">
           <Button
             className="w-[45%] xs:w-[160px] sm:w-[180px] md:w-[200px] h-10 xs:h-11 bg-[var(--button-color)] text-sm xs:text-base text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] cursor-pointer"
           >
@@ -73,7 +73,7 @@ export default function ProfilePage() {
           <Button
             className="w-[45%] xs:w-[160px] sm:w-[180px] md:w-[200px] h-10 xs:h-11 bg-[var(--button-color)] text-sm xs:text-base text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] cursor-pointer"
           >
-            Salvar Alterações
+            Salvar
           </Button>
         </CardFooter>
       </Card>
