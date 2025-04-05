@@ -1,9 +1,9 @@
 "use client"
 
-import { AdvancedSettings } from "@/app/custom/settings-advanced"
-import { AppearanceSettings } from "@/app/custom/settings-apaerence"
-import { NotificationSettings } from "@/app/custom/settings-notification"
-import { SecuritySettings } from "@/app/custom/settings-security"
+import { AdvancedSettings } from "@/components/settings/settings-advanced"
+import { AppearanceSettings } from "@/components/settings/settings-apaerence"
+import { NotificationSettings } from "@/components/settings/settings-notification"
+import { SecuritySettings } from "@/components/settings/settings-security"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useState } from "react"

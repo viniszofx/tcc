@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
 
-// Define the profile type
 type ProfileType = {
   id: string
   nome: string
@@ -11,7 +10,6 @@ type ProfileType = {
   foto: string
 }
 
-// Mock database - in a real app, you would use a database
 const profiles: Record<string, ProfileType> = {
   "1": {
     id: "1",
@@ -34,7 +32,7 @@ const profiles: Record<string, ProfileType> = {
 }
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id
+  const { id } = await params
   console.log(id)
 
   await new Promise((resolve) => setTimeout(resolve, 500))
@@ -46,9 +44,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   return NextResponse.json(profiles[id])
 }
 
-// PUT handler to update a profile
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id
+  const { id } = await params
 
   if (!profiles[id]) {
     return NextResponse.json({ error: "Profile not found" }, { status: 404 })
@@ -57,16 +54,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   try {
     const updatedProfile = await request.json()
 
-    // Validate the data (simplified)
     if (!updatedProfile.nome || !updatedProfile.email) {
       return NextResponse.json({ error: "Nome and email are required" }, { status: 400 })
     }
 
-    // Update the profile
     profiles[id] = {
       ...profiles[id],
       ...updatedProfile,
-      id, // Ensure ID doesn't change
+      id,
     }
 
     return NextResponse.json(profiles[id])

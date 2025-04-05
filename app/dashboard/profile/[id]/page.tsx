@@ -3,14 +3,12 @@
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
-import ProfileAvatar from "@/app/custom/profile-avatar"
-import ProfileForm from "@/app/custom/profile-form"
-import RoleProfile from "@/app/custom/profile-role"
-import { Button } from "@/components/ui/button"
+import ProfileActions from "@/components/profile/profile-actions"
+import ProfileEditor from "@/components/profile/profile-editor"
+import ProfileSidebar from "@/components/profile/profile-sidebar"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 
-// Define the profile type for better type safety
 type ProfileType = {
   nome: string
   email: string
@@ -27,6 +25,7 @@ export default function ProfilePage() {
 
   const [perfil, setPerfil] = useState<ProfileType | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
 
   const fetchProfileData = async (id: string): Promise<ProfileType> => {
     const response = await fetch(`/api/profile/${id}`)
@@ -58,7 +57,14 @@ export default function ProfilePage() {
   const handleSave = async () => {
     if (!perfil) return
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(perfil.email)) {
+      alert("Por favor, insira um e-mail válido antes de salvar.")
+      return
+    }
+
     try {
+      setIsSaving(true)
       const response = await fetch(`/api/profile/${profileId}`, {
         method: "PUT",
         headers: {
@@ -75,6 +81,8 @@ export default function ProfilePage() {
     } catch (error) {
       console.error("Error saving profile:", error)
       alert("Erro ao salvar perfil. Tente novamente.")
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -111,59 +119,31 @@ export default function ProfilePage() {
       <Card className="bg-[var(--bg-simple)] w-full max-w-[98%] xs:max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[calc(100%-var(--sidebar-width)-2rem)] mx-auto shadow-md rounded-lg flex flex-col h-full md:h-auto flex-grow">
         <CardContent className="flex-grow p-0">
           <div className="flex flex-col md:flex-row h-full p-6 sm:p-8 gap-8">
-            <div className="w-full md:w-1/3 flex flex-col space-y-6">
-              <div className="flex flex-col items-center space-y-4 bg-[var(--bg-simple)] rounded-lg p-4 border border-[var(--border-color)] shadow-sm">
-                <RoleProfile cargo={perfil.cargo} />
-                <ProfileAvatar foto={perfil.foto} />
-                <h3 className="font-medium text-[var(--font-color)]">{perfil.nome}</h3>
-                <p className="text-sm text-[var(--font-color)]/70">{perfil.email}</p>
-              </div>
-
-              <div className="bg-[var(--bg-simple)] rounded-lg p-4 border border-[var(--border-color)] shadow-sm">
-                <h3 className="text-sm font-medium text-[var(--font-color)] mb-3">Sobre mim</h3>
-                <div className="p-3 bg-[var(--bg-simple)] rounded-md border border-[var(--border-input)] min-h-24 text-sm text-[var(--font-color)]">
-                  {perfil.descricao || "Nenhuma descrição informada"}
-                </div>
-              </div>
-
-              <div className="bg-[var(--bg-simple)] rounded-lg p-4 border border-[var(--border-color)] shadow-sm">
-                <h3 className="text-sm font-medium text-[var(--font-color)] mb-3">Campus</h3>
-                <p className="text-sm text-[var(--font-color)]">{perfil.campus}</p>
-              </div>
-            </div>
+            <ProfileSidebar
+              nome={perfil.nome}
+              email={perfil.email}
+              campus={perfil.campus}
+              descricao={perfil.descricao}
+              cargo={perfil.cargo}
+              foto={perfil.foto}
+            />
 
             <Separator orientation="vertical" className="hidden md:block" />
 
-            <div className="w-full md:w-2/3">
-              <div className="bg-[var(--bg-simple)] rounded-lg p-6 border border-[var(--border-color)] shadow-sm h-auto md:h-full">
-                <h3 className="text-lg font-medium text-[var(--font-color)] mb-6">Editar Perfil</h3>
-                <ProfileForm
-                  nome={perfil.nome}
-                  email={perfil.email}
-                  campus={perfil.campus}
-                  descricao={perfil.descricao}
-                  onNomeChange={(value) => setPerfil({ ...perfil, nome: value })}
-                  onEmailChange={(value) => setPerfil({ ...perfil, email: value })}
-                  onDescricaoChange={(value) => setPerfil({ ...perfil, descricao: value })}
-                />
-              </div>
-            </div>
+            <ProfileEditor
+              nome={perfil.nome}
+              email={perfil.email}
+              campus={perfil.campus}
+              descricao={perfil.descricao}
+              onNomeChange={(value) => setPerfil({ ...perfil, nome: value })}
+              onEmailChange={(value) => setPerfil({ ...perfil, email: value })}
+              onDescricaoChange={(value) => setPerfil({ ...perfil, descricao: value })}
+            />
           </div>
         </CardContent>
 
-        <CardFooter className="w-full px-6 sm:px-8 py-4 md:py-5 border-t flex flex-row justify-end gap-6 sm:gap-4">
-          <Button
-            onClick={handleBack}
-            className="w-[45%] xs:w-[160px] sm:w-[180px] md:w-[200px] h-10 xs:h-11 bg-[var(--button-color)] text-sm xs:text-base text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] cursor-pointer"
-          >
-            Voltar
-          </Button>
-          <Button
-            onClick={handleSave}
-            className="w-[45%] xs:w-[160px] sm:w-[180px] md:w-[200px] h-10 xs:h-11 bg-[var(--button-color)] text-sm xs:text-base text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] cursor-pointer"
-          >
-            Salvar
-          </Button>
+        <CardFooter className="p-0">
+          <ProfileActions onSave={handleSave} onBack={handleBack} isSaving={isSaving} />
         </CardFooter>
       </Card>
     </div>
