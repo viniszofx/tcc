@@ -35,9 +35,9 @@ const profiles: Record<string, ProfileType> = {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  const { id } = await context.params;
 
   if (!profiles[id]) {
     return NextResponse.json({ error: "Profile not found" }, { status: 404 });
@@ -49,9 +49,9 @@ export async function GET(
 // PUT handler to update a profile
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  const { id } = await context.params;
 
   if (!profiles[id]) {
     return NextResponse.json({ error: "Profile not found" }, { status: 404 });
