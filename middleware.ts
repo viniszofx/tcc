@@ -6,7 +6,7 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
 
   // Para fins de teste, usar variável booleana simulando autenticação
-  const isAuthenticated = false; // <- Mude para false para simular usuário não logado
+  const isAuthenticated = true; // <- Mude para false para simular usuário não logado
 
   // const supabase = createMiddlewareClient({ req, res });
   // const {
