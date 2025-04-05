@@ -1,14 +1,14 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server";
 
 type ProfileType = {
-  id: string
-  nome: string
-  email: string
-  campus: string
-  descricao: string
-  cargo: "admin" | "operador" | "presidente"
-  foto: string
-}
+  id: string;
+  nome: string;
+  email: string;
+  campus: string;
+  descricao: string;
+  cargo: "admin" | "operador" | "presidente";
+  foto: string;
+};
 
 const profiles: Record<string, ProfileType> = {
   "1": {
@@ -29,43 +29,50 @@ const profiles: Record<string, ProfileType> = {
     cargo: "operador",
     foto: "/logo.svg",
   },
-}
+};
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = await params
+  const id = params.id
   console.log(id)
 
   await new Promise((resolve) => setTimeout(resolve, 500))
 
   if (!profiles[id]) {
-    return NextResponse.json({ error: "Profile not found" }, { status: 404 })
+    return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   }
 
-  return NextResponse.json(profiles[id])
+  return NextResponse.json(profiles[id]);
 }
 
+// PUT handler to update a profile
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = await params
+  const id = params.id
 
   if (!profiles[id]) {
-    return NextResponse.json({ error: "Profile not found" }, { status: 404 })
+    return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   }
 
   try {
-    const updatedProfile = await request.json()
+    const updatedProfile = await request.json();
 
     if (!updatedProfile.nome || !updatedProfile.email) {
-      return NextResponse.json({ error: "Nome and email are required" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Nome and email are required" },
+        { status: 400 }
+      );
     }
 
     profiles[id] = {
       ...profiles[id],
       ...updatedProfile,
-      id,
+      id, // Ensure ID doesn't change
     }
 
-    return NextResponse.json(profiles[id])
+    return NextResponse.json(profiles[id]);
   } catch (error) {
-    return NextResponse.json({ error: "Invalid request data" }, { status: 400 })
+    return NextResponse.json(
+      { error: "Invalid request data" },
+      { status: 400 }
+    );
   }
 }
