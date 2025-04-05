@@ -1,27 +1,114 @@
-﻿"use client";
+"use client"
 
-import ProfileAvatar from "@/app/custom/profile-avatar";
-import ProfileForm from "@/app/custom/profile-form";
-import RoleProfile from "@/app/custom/profile-role";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
+import { useParams, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+
+import ProfileAvatar from "@/app/custom/profile-avatar"
+import ProfileForm from "@/app/custom/profile-form"
+import RoleProfile from "@/app/custom/profile-role"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+
+// Define the profile type for better type safety
+type ProfileType = {
+  nome: string
+  email: string
+  campus: string
+  descricao: string
+  cargo: "admin" | "operador" | "presidente"
+  foto: string
+}
 
 export default function ProfilePage() {
-  const [perfil, setPerfil] = useState({
-    nome: "João Silva",
-    email: "joao@email.com",
-    campus: "IFMS Corumbá",
-    descricao: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    cargo: "admin" as "admin" | "operador" | "presidente",
-    foto: "/logo.svg",
-  });
+  const params = useParams()
+  const router = useRouter()
+  const profileId = params.id as string
+
+  const [perfil, setPerfil] = useState<ProfileType | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  const fetchProfileData = async (id: string): Promise<ProfileType> => {
+    const response = await fetch(`/api/profile/${id}`)
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch profile: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setIsLoading(true)
+
+        const profileData = await fetchProfileData(profileId)
+        setPerfil(profileData)
+      } catch (error) {
+        console.error("Failed to fetch profile:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchProfile()
+  }, [profileId])
+
+  const handleSave = async () => {
+    if (!perfil) return
+
+    try {
+      const response = await fetch(`/api/profile/${profileId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(perfil),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to save profile: ${response.statusText}`)
+      }
+
+      alert("Perfil salvo com sucesso!")
+    } catch (error) {
+      console.error("Error saving profile:", error)
+      alert("Erro ao salvar perfil. Tente novamente.")
+    }
+  }
+
+  const handleBack = () => {
+    router.back()
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 w-full p-3 xs:p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center">
+        <Card className="bg-[var(--bg-simple)] w-full max-w-[98%] xs:max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[calc(100%-var(--sidebar-width)-2rem)] mx-auto shadow-md rounded-lg p-8">
+          <div className="flex items-center justify-center">
+            <p className="text-[var(--font-color)]">Carregando perfil...</p>
+          </div>
+        </Card>
+      </div>
+    )
+  }
+
+  if (!perfil) {
+    return (
+      <div className="flex-1 w-full p-3 xs:p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center">
+        <Card className="bg-[var(--bg-simple)] w-full max-w-[98%] xs:max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[calc(100%-var(--sidebar-width)-2rem)] mx-auto shadow-md rounded-lg p-8">
+          <div className="flex items-center justify-center">
+            <p className="text-[var(--font-color)]">Perfil não encontrado</p>
+          </div>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 w-full p-3 xs:p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center">
       <Card className="bg-[var(--bg-simple)] w-full max-w-[98%] xs:max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[calc(100%-var(--sidebar-width)-2rem)] mx-auto shadow-md rounded-lg flex flex-col h-full md:h-auto flex-grow">
-
         <CardContent className="flex-grow p-0">
           <div className="flex flex-col md:flex-row h-full p-6 sm:p-8 gap-8">
             <div className="w-full md:w-1/3 flex flex-col space-y-6">
@@ -66,11 +153,13 @@ export default function ProfilePage() {
 
         <CardFooter className="w-full px-6 sm:px-8 py-4 md:py-5 border-t flex flex-row justify-end gap-6 sm:gap-4">
           <Button
+            onClick={handleBack}
             className="w-[45%] xs:w-[160px] sm:w-[180px] md:w-[200px] h-10 xs:h-11 bg-[var(--button-color)] text-sm xs:text-base text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] cursor-pointer"
           >
             Voltar
           </Button>
           <Button
+            onClick={handleSave}
             className="w-[45%] xs:w-[160px] sm:w-[180px] md:w-[200px] h-10 xs:h-11 bg-[var(--button-color)] text-sm xs:text-base text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] cursor-pointer"
           >
             Salvar
@@ -78,5 +167,5 @@ export default function ProfilePage() {
         </CardFooter>
       </Card>
     </div>
-  );
+  )
 }

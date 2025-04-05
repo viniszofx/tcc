@@ -1,8 +1,7 @@
 "use client"
 
-import type React from "react"
-
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
 interface ProfileFormProps {
@@ -25,34 +24,53 @@ export default function ProfileForm({
   onDescricaoChange,
 }: ProfileFormProps) {
   return (
-    <div className="w-full flex flex-col gap-4">
-      <div>
-        <label className="text-sm font-medium">Nome</label>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <Label htmlFor="nome" className="text-sm font-medium text-[var(--font-color)]">
+          Nome
+        </Label>
         <Input
+          id="nome"
           value={nome}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onNomeChange(e.target.value)}
-          className="mt-1 border-[var(--border-input)]"
+          onChange={(e) => onNomeChange(e.target.value)}
+          className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)]"
         />
       </div>
-      <div>
-        <label className="text-sm font-medium">Email</label>
+
+      <div className="space-y-2">
+        <Label htmlFor="email" className="text-sm font-medium text-[var(--font-color)]">
+          Email
+        </Label>
         <Input
+          id="email"
+          type="email"
           value={email}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onEmailChange(e.target.value)}
-          className="mt-1 border-[var(--border-input)]"
+          onChange={(e) => onEmailChange(e.target.value)}
+          className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)]"
         />
       </div>
-      <div>
-        <label className="text-sm font-medium">Campus</label>
-        <Input disabled value={campus} className="mt-1 border-[var(--border-input)]" />
+
+      <div className="space-y-2">
+        <Label htmlFor="campus" className="text-sm font-medium text-[var(--font-color)]">
+          Campus
+        </Label>
+        <Input
+          id="campus"
+          value={campus}
+          disabled
+          className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] opacity-70"
+        />
       </div>
-      <div>
-        <label className="text-sm font-medium">Descrição</label>
+
+      <div className="space-y-2">
+        <Label htmlFor="descricao" className="text-sm font-medium text-[var(--font-color)]">
+          Descrição
+        </Label>
         <Textarea
+          id="descricao"
           value={descricao}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onDescricaoChange(e.target.value)}
-          placeholder="Digite sua descrição"
-          className="mt-1 min-h-[120px] border-[var(--border-input)]"
+          onChange={(e) => onDescricaoChange(e.target.value)}
+          className="min-h-[120px] bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)]"
         />
       </div>
     </div>
