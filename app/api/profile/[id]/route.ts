@@ -1,15 +1,15 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server";
 
 // Define the profile type
 type ProfileType = {
-  id: string
-  nome: string
-  email: string
-  campus: string
-  descricao: string
-  cargo: "admin" | "operador" | "presidente"
-  foto: string
-}
+  id: string;
+  nome: string;
+  email: string;
+  campus: string;
+  descricao: string;
+  cargo: "admin" | "operador" | "presidente";
+  foto: string;
+};
 
 // Mock database - in a real app, you would use a database
 const profiles: Record<string, ProfileType> = {
@@ -31,35 +31,41 @@ const profiles: Record<string, ProfileType> = {
     cargo: "operador",
     foto: "/logo.svg",
   },
-}
+};
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id
-  console.log(id)
-
-  await new Promise((resolve) => setTimeout(resolve, 500))
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id } = await params;
 
   if (!profiles[id]) {
-    return NextResponse.json({ error: "Profile not found" }, { status: 404 })
+    return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   }
 
-  return NextResponse.json(profiles[id])
+  return NextResponse.json(profiles[id]);
 }
 
 // PUT handler to update a profile
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id } = await params;
 
   if (!profiles[id]) {
-    return NextResponse.json({ error: "Profile not found" }, { status: 404 })
+    return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   }
 
   try {
-    const updatedProfile = await request.json()
+    const updatedProfile = await request.json();
 
     // Validate the data (simplified)
     if (!updatedProfile.nome || !updatedProfile.email) {
-      return NextResponse.json({ error: "Nome and email are required" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Nome and email are required" },
+        { status: 400 }
+      );
     }
 
     // Update the profile
@@ -67,10 +73,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       ...profiles[id],
       ...updatedProfile,
       id, // Ensure ID doesn't change
-    }
+    };
 
-    return NextResponse.json(profiles[id])
+    return NextResponse.json(profiles[id]);
   } catch (error) {
-    return NextResponse.json({ error: "Invalid request data" }, { status: 400 })
+    return NextResponse.json(
+      { error: "Invalid request data" },
+      { status: 400 }
+    );
   }
 }
