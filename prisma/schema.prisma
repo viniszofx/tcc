@@ -1,0 +1,248 @@
+// Prisma schema for Supabase
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EstadoConservacao {
+  NOVO
+  BOM
+  REGULAR
+  RUIM
+  INSERVIVEL
+}
+
+enum StatusBem {
+  ATIVO
+  EM_USO
+  BAIXA_SOLICITADA
+  BAIXADO
+}
+
+model usuarios {
+  usuario_id          String    @id @default(uuid())
+  nome                String
+  papel               String
+  email               String    @unique
+  senha_hash          String?
+  habilitado          Boolean
+  organizacao_id      String
+  campus_id           String?
+  comissao_id         String?
+  data_inicio         DateTime?
+  data_fim            DateTime?
+  metodo_autenticacao String
+
+  organizacao          organizacoes          @relation(fields: [organizacao_id], references: [organizacao_id])
+  campus               campus?               @relation(fields: [campus_id], references: [campus_id])
+  comissao             comissoes?            @relation(fields: [comissao_id], references: [comissao_id])
+  inventarios          inventarios[]         @relation("ResponsavelInventario")
+  papeis               user_roles[]
+  autenticacoes        autenticacao_social[]
+  comissoesPresididas  comissoes[]           @relation("PresidenteComissao")
+  historico_bens       historico_bens[]
+  inventarios_abertos  inventarios[]         @relation("InventarioAbertoPor")
+  inventarios_fechados inventarios[]         @relation("InventarioFechadoPor")
+  bens_copias          bens_copias[]
+}
+
+model comissoes {
+  comissao_id    String   @id @default(uuid())
+  nome           String
+  data_inicio    DateTime
+  data_fim       DateTime
+  presidente_id  String
+  organizacao_id String
+
+  organizacao organizacoes  @relation(fields: [organizacao_id], references: [organizacao_id])
+  presidente  usuarios      @relation("PresidenteComissao", fields: [presidente_id], references: [usuario_id])
+  inventarios inventarios[]
+  membros     usuarios[]
+}
+
+model organizacoes {
+  organizacao_id String @id @default(uuid())
+  nome           String
+
+  campus    campus[]
+  usuarios  usuarios[]
+  comissoes comissoes[]
+}
+
+model campus {
+  campus_id      String @id @default(uuid())
+  nome           String
+  campus_codigo  String @unique
+  organizacao_id String
+
+  organizacao organizacoes     @relation(fields: [organizacao_id], references: [organizacao_id])
+  usuarios    usuarios[]
+  bens        bens_originais[]
+  bens_copias bens_copias[]
+  responsavel responsaveis?
+}
+
+model responsaveis {
+  responsavel_id String @id @default(uuid())
+  nome           String
+  setor          String
+  campus_id      String @unique
+
+  campus campus @relation(fields: [campus_id], references: [campus_id])
+}
+
+model bens_originais {
+  bem_id                   String @id @default(uuid())
+  campus_id                String
+  NUMERO                   String
+  STATUS                   String
+  ED                       String
+  DESCRICAO                String
+  ROTULOS                  String
+  RESPONSABILIDADE_ATUAL   String
+  SETOR_DO_RESPONSAVEL     String
+  CAMPUS_DA_LOTACAO_DO_BEM String
+  SALA                     String
+  ESTADO_DE_CONSERVACAO    String
+  DESCRICAO_PRINCIPAL      String
+  MARCA_MODELO             String
+
+  campus campus        @relation(fields: [campus_id], references: [campus_id])
+  copias bens_copias[]
+}
+
+model bens_copias {
+  bem_id                   String            @id @default(uuid())
+  inventario_id            String
+  grupo_id                 String
+  campus_id                String
+  NUMERO                   String
+  STATUS                   StatusBem
+  ED                       String
+  DESCRICAO                String
+  ROTULOS                  String
+  RESPONSABILIDADE_ATUAL   String
+  SETOR_DO_RESPONSAVEL     String
+  CAMPUS_DA_LOTACAO_DO_BEM String
+  SALA                     String
+  ESTADO_DE_CONSERVACAO    EstadoConservacao
+  DESCRICAO_PRINCIPAL      String
+  MARCA_MODELO             String
+  ultimo_atualizado_por    String
+  data_ultima_atualizacao  DateTime
+  observacoes              String?
+
+  campus         campus           @relation(fields: [campus_id], references: [campus_id])
+  inventario     inventarios      @relation(fields: [inventario_id], references: [inventario_id])
+  grupo          grupos           @relation(fields: [grupo_id], references: [grupo_id])
+  bem_original   bens_originais   @relation(fields: [bem_id], references: [bem_id])
+  atualizado_por usuarios         @relation(fields: [ultimo_atualizado_por], references: [usuario_id])
+  historico      historico_bens[]
+}
+
+model inventarios {
+  inventario_id   String    @id @default(uuid())
+  comissao_id     String
+  responsavel_id  String
+  data_inicio     DateTime
+  data_fim        DateTime
+  status          String
+  aberto_por      String
+  fechado_por     String?
+  data_abertura   DateTime
+  data_fechamento DateTime?
+
+  comissao    comissoes        @relation(fields: [comissao_id], references: [comissao_id])
+  responsavel usuarios         @relation("ResponsavelInventario", fields: [responsavel_id], references: [usuario_id])
+  abertoPor   usuarios         @relation("InventarioAbertoPor", fields: [aberto_por], references: [usuario_id])
+  fechadoPor  usuarios?        @relation("InventarioFechadoPor", fields: [fechado_por], references: [usuario_id])
+  bens        bens_copias[]
+  historico   historico_bens[]
+}
+
+model historico_bens {
+  evento_id     String   @id @default(uuid())
+  bem_id        String
+  inventario_id String
+  usuario_id    String
+  acao          String
+  observacao    String?
+  data_evento   DateTime @default(now())
+
+  bem        bens_copias @relation(fields: [bem_id], references: [bem_id])
+  inventario inventarios @relation(fields: [inventario_id], references: [inventario_id])
+  usuario    usuarios    @relation(fields: [usuario_id], references: [usuario_id])
+}
+
+model grupos {
+  grupo_id  String  @id @default(uuid())
+  nome      String
+  descricao String?
+
+  bens bens_copias[]
+}
+
+model roles {
+  role_id   String @id @default(uuid())
+  role_name String @unique
+
+  permissoes role_permissions[]
+  usuarios   user_roles[]
+}
+
+model permissions {
+  permission_id   String @id @default(uuid())
+  permission_name String @unique
+  description     String
+
+  roles role_permissions[]
+}
+
+model role_permissions {
+  role_id       String
+  permission_id String
+
+  role       roles       @relation(fields: [role_id], references: [role_id])
+  permission permissions @relation(fields: [permission_id], references: [permission_id])
+
+  @@id([role_id, permission_id])
+}
+
+model user_roles {
+  usuario_id String
+  role_id    String
+
+  usuario usuarios @relation(fields: [usuario_id], references: [usuario_id])
+  role    roles    @relation(fields: [role_id], references: [role_id])
+
+  @@id([usuario_id, role_id])
+}
+
+model autenticacao_social {
+  autenticacao_id String   @id @default(uuid())
+  usuario_id      String
+  provedor        String
+  provedor_id     String
+  email           String
+  nome            String
+  avatar_url      String?
+  access_token    String?
+  refresh_token   String?
+  data_criacao    DateTime
+
+  usuario usuarios @relation(fields: [usuario_id], references: [usuario_id])
+}
+
+model settings {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  updated_at  DateTime @updatedAt
+  created_at  DateTime @default(now())
+}
