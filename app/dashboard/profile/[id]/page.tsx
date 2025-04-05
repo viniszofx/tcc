@@ -10,6 +10,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 
 type ProfileType = {
+  id: string
   nome: string
   email: string
   campus: string
