@@ -4,6 +4,10 @@ import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Upload } from "lucide-react"
 
+export const metadata = {
+  title: 'Processamento de Arquivo - KDÊ',
+};
+
 export default function Page() {
   return (
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-md lg:max-w-5xl xl:max-w-6xl">

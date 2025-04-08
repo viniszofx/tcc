@@ -3,6 +3,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 
+export const metadata = {
+  title: 'Login - KDÊ',
+};
+
 export default function AuthPage() {
   return (
     <div className='flex flex-col items-center justify-center h-screen p-4'>

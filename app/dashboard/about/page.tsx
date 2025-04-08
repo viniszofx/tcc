@@ -2,6 +2,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 
+export const metadata = {
+  title: 'Sobre - KDÊ',
+};
+
 export default function Page() {
   return (
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-md lg:max-w-5xl xl:max-w-6xl">

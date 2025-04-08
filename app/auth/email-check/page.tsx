@@ -1,12 +1,16 @@
 import DarkModeToggle from '@/app/custom/dark-mode-toggle'
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
+export const metadata = {
+    title: 'Verificar e-mail - KDÊ',
+};
+
 export default function EmailCheckPage() {
     return (
         <div className='flex flex-col items-center justify-center h-screen p-4'>
             <div className="absolute top-2 left-2 md:bottom-4 md:right-4 md:top-auto">
-                            <DarkModeToggle />
-                        </div>
+                <DarkModeToggle />
+            </div>
             <img className="mx-auto w-72 h-auto md:hidden" src="/e-mail.svg" alt="logo" />
             <Card className="mx-auto max-w-4xl w-full mt-4 max-h-full md:p-8 border-[var(--border-color)] bg-[var(--bg-simple)]">
                 <CardHeader className="flex flex-col items-start md:items-center text-left md:text-center">
