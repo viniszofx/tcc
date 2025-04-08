@@ -5,18 +5,20 @@ import { usePathname } from "next/navigation";
 const HeaderTitle = () => {
   const pathname = usePathname();
 
-  const pageTitles: { [key: string]: string } = {
-    "/dashboard/profile": "Perfil",
-    "/dashboard/comission": "Comissão",
-    "/dashboard/settings": "Configurações",
-    "/dashboard": "Dashboard",
-    "/dashboard/about": "Sobre",
-  };
+  const routes = [
+    { prefix: "/dashboard/profile", title: "Perfil" },
+    { prefix: "/dashboard/comission", title: "Comissão" },
+    { prefix: "/dashboard/settings", title: "Configurações" },
+    { prefix: "/dashboard/inventories", title: "Inventário" },
+    { prefix: "/dashboard/about", title: "Sobre" },
+    { prefix: "/dashboard", title: "Dashboard" },
+  ];
 
-  const title = pageTitles[pathname] || "Dashboard";
+  const matchedRoute = routes.find(route => pathname.startsWith(route.prefix));
+  const title = matchedRoute?.title || "Dashboard";
 
   return (
-    <h1 className="text-lg font-bold text-[var(--font-color)]">
+    <h1 className="font-bold text-[var(--font-color)]">
       {title}
     </h1>
   );

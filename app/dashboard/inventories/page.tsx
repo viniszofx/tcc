@@ -1,5 +1,15 @@
-﻿import MainSection from "@/components/MainSection"
+﻿import InventoryList from "@/components/inventories/inventory-list"
+import type { Metadata } from "next"
 
-export default function Page() {
-  return <MainSection title="inventories" />
+export const metadata: Metadata = {
+  title: "Inventário - KDÊ",
 }
+
+export default function InventoryPage() {
+  return (
+    <div className="w-full">
+      <InventoryList />
+    </div>
+  )
+}
+
