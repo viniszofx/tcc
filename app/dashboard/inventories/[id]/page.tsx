@@ -1,53 +1,72 @@
-﻿export const dynamic = 'force-dynamic'
+﻿export const dynamic = "force-dynamic";
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { getItemById } from "@/lib/getItemById"
-import { ArrowLeft, Edit, Trash2 } from "lucide-react"
-import type { Metadata } from "next"
-import Link from "next/link"
-import { notFound } from "next/navigation"
-import { formatDate } from "../data/copy-data"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { getItemById } from "@/lib/getItemById";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { formatDate } from "../data/copy-data";
+import { JSX } from "react";
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const item = await getItemById(params.id)
+type InventoryItemPageProps = {
+  params: {
+    id: string;
+  };
+};
+
+// --- Metadata ---
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const item = await getItemById(id);
 
   if (!item) {
     return {
       title: "Item não encontrado - KDÊ",
-    }
+    };
   }
 
   return {
-      title: `${item.DESCRICAO} - Inventário - KDÊ`,
-  }
+    title: `${item.DESCRICAO} - Inventário - KDÊ`,
+  };
 }
 
-export default async function InventoryItemPage({ params }: { params: { id: string } }) {
-  const item = await getItemById(params.id)
+// --- Page Component ---
+export default async function InventoryItemPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<JSX.Element> {
+  const { id } = await params;
+  const item = await getItemById(id);
 
   if (!item) {
-    notFound()
+    notFound();
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Ativo":
-        return "bg-green-500"
+        return "bg-green-500";
       case "Em Manutenção":
-        return "bg-amber-500"
+        return "bg-amber-500";
       case "Inativo":
-        return "bg-gray-500"
+        return "bg-gray-500";
       case "Baixado":
-        return "bg-red-500"
+        return "bg-red-500";
       case "Transferido":
-        return "bg-blue-500"
+        return "bg-blue-500";
       default:
-        return "bg-gray-500"
+        return "bg-gray-500";
     }
-  }
+  };
 
   return (
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-md lg:max-w-5xl xl:max-w-6xl mx-auto">
@@ -81,7 +100,9 @@ export default async function InventoryItemPage({ params }: { params: { id: stri
         </div>
         <CardTitle className="mt-4 text-xl font-bold text-[var(--font-color)] md:text-2xl lg:text-3xl">
           {item.DESCRICAO}
-          <Badge className={`ml-4 ${getStatusColor(item.STATUS)} text-white`}>{item.STATUS}</Badge>
+          <Badge className={`ml-4 ${getStatusColor(item.STATUS)} text-white`}>
+            {item.STATUS}
+          </Badge>
         </CardTitle>
       </CardHeader>
 
@@ -89,7 +110,9 @@ export default async function InventoryItemPage({ params }: { params: { id: stri
         <div className="grid gap-6 md:grid-cols-2">
           <Card className="border-[var(--border-input)] bg-[var(--card-color)]">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-semibold text-[var(--font-color)]">Informações Básicas</CardTitle>
+              <CardTitle className="text-lg font-semibold text-[var(--font-color)]">
+                Informações Básicas
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-[var(--font-color)]">
               <div className="flex justify-between">
@@ -148,7 +171,9 @@ export default async function InventoryItemPage({ params }: { params: { id: stri
 
         <Card className="border-[var(--border-input)] bg-[var(--card-color)]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold text-[var(--font-color)]">Descrição e Detalhes</CardTitle>
+            <CardTitle className="text-lg font-semibold text-[var(--font-color)]">
+              Descrição e Detalhes
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-[var(--font-color)]">
             <div className="space-y-4">
@@ -156,14 +181,11 @@ export default async function InventoryItemPage({ params }: { params: { id: stri
                 <h3 className="font-medium mb-1">Descrição Principal</h3>
                 <p>{item.DESCRICAO_PRINCIPAL}</p>
               </div>
-
               <Separator className="bg-[var(--border-input)]" />
-
               <div>
                 <h3 className="font-medium mb-1">Rótulos</h3>
                 <p>{item.ROTULOS}</p>
               </div>
-
               {item.observacoes && (
                 <>
                   <Separator className="bg-[var(--border-input)]" />
@@ -179,7 +201,9 @@ export default async function InventoryItemPage({ params }: { params: { id: stri
 
         <Card className="border-[var(--border-input)] bg-[var(--card-color)]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold text-[var(--font-color)]">Informações do Sistema</CardTitle>
+            <CardTitle className="text-lg font-semibold text-[var(--font-color)]">
+              Informações do Sistema
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-[var(--font-color)]">
             <div className="flex justify-between">
@@ -202,5 +226,5 @@ export default async function InventoryItemPage({ params }: { params: { id: stri
         </Card>
       </CardContent>
     </Card>
-  )
+  );
 }
