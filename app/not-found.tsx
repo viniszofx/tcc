@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6 text-center">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--card-color)] p-6 text-center">
             <div className="max-w-md mx-auto space-y-6">
                 <div className="text-8xl" aria-hidden="true">
                     🙈

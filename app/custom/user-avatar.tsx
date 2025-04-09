@@ -2,12 +2,12 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Building, History, LogOut, User, Users } from "lucide-react"
 
@@ -71,11 +71,11 @@ export function UserAvatar({ nome, email, cargo, foto }: UserAvatarProps) {
 
         <DropdownMenuSeparator className="bg-[var(--font-color2)]" />
 
-        <a href="/auth/login">
-        <DropdownMenuItem className="flex items-center gap-2 text-[var(--button-2-color)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
-          <LogOut size={16} className="text-[var(--button-2-color)]" />
-          <span>Sair</span>
-        </DropdownMenuItem>
+        <a href="/auth">
+          <DropdownMenuItem className="flex items-center gap-2 text-[var(--button-2-color)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
+            <LogOut size={16} className="text-[var(--button-2-color)]" />
+            <span>Sair</span>
+          </DropdownMenuItem>
         </a>
       </DropdownMenuContent>
     </DropdownMenu>
