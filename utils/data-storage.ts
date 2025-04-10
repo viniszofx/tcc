@@ -471,11 +471,11 @@ export async function addInventoryItem(item: BemCopia): Promise<void> {
     const usedAcceleration = false;
 
     const updatedMetadata: InventoryMetadata = {
-      recordCount: data.length,
+      recordCount: updatedData.length,
       timestamp: new Date().toISOString(),
-      fileName: "",
+      fileName: metadata?.fileName || "arquivo_desconhecido.json",
       usedAcceleration,
-    }    
+    }
 
     await storeProcessedData(updatedData, updatedMetadata)
 

@@ -196,7 +196,7 @@ export default function InventoriesPage() {
   const handleExport = (format: "csv" | "json" | "pdf") => {
     let dataToExport = filteredItems
 
-    if (filteredItems.length > 10000) {
+    if (filteredItems.length > 5000) {
       if (format === "pdf") {
         const confirmExport = window.confirm(
           `Exportar ${filteredItems.length.toLocaleString()} itens para PDF pode ser lento e consumir muita memória. ` +
@@ -204,7 +204,7 @@ export default function InventoriesPage() {
         )
 
         if (!confirmExport) return
-        dataToExport = filteredItems.slice(0, 1000)
+        dataToExport = filteredItems.slice(0, 20000)
       } else {
         const confirmExport = window.confirm(
           `Exportar ${filteredItems.length.toLocaleString()} itens pode ser lento e consumir muita memória. Deseja continuar?`,
@@ -242,7 +242,7 @@ export default function InventoriesPage() {
       link.click()
       document.body.removeChild(link)
     } else if (format === "pdf") {
-      const pdfData = format === "pdf" && dataToExport.length > 10000 ? dataToExport.slice(0, 1000) : dataToExport
+      const pdfData = format === "pdf" && dataToExport.length > 20000 ? dataToExport.slice(0, 20000) : dataToExport
 
       exportToPdf(pdfData, `inventario_${new Date().toISOString().split("T")[0]}`)
     }
