@@ -1,55 +1,46 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Download, FileJson, FilePlus, Upload } from "lucide-react"
+import { FileJson, FilePlus, FileSpreadsheet, FileText } from "lucide-react"
 
-export default function InventoryActions() {
-  // Função para lidar com exportação (placeholder)
-  const handleExport = (format: "pdf" | "json") => {
-    alert(`Exportando inventário como ${format.toUpperCase()}`)
-    // Implementar funcionalidade real de exportação aqui
-  }
+interface InventoryActionsProps {
+  onExport: (format: "csv" | "json" | "pdf") => void
+  onNewItem: () => void
+  hasData: boolean
+}
 
-  // Função para lidar com a criação de novo item (placeholder)
-  const handleCreateNew = () => {
-    alert("Criando novo item de inventário")
-    // Implementar funcionalidade real de criação aqui
-  }
-
-  // Função para lidar com o upload de CSV (placeholder)
-  const handleUploadCSV = () => {
-    alert("Importando arquivo CSV")
-    // Implementar funcionalidade real de importação aqui
-  }
-
+export default function InventoryActions({ onExport, onNewItem, hasData }: InventoryActionsProps) {
   return (
     <div className="flex flex-wrap gap-2">
       <Button
-        onClick={() => handleExport("pdf")}
+        onClick={() => onExport("csv")}
         variant="outline"
-        className="flex items-center gap-2 border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] hover:text-white"
+        disabled={!hasData}
+        className="flex items-center gap-2 border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] hover:text-white disabled:opacity-50"
       >
-        <Download className="h-4 w-4" />
-        <span className="hidden sm:inline">Exportar</span> PDF
+        <FileSpreadsheet className="h-4 w-4" />
+        <span className="hidden sm:inline">Exportar</span> CSV
       </Button>
       <Button
-        onClick={() => handleExport("json")}
+        onClick={() => onExport("json")}
         variant="outline"
-        className="flex items-center gap-2 border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] hover:text-white"
+        disabled={!hasData}
+        className="flex items-center gap-2 border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] hover:text-white disabled:opacity-50"
       >
         <FileJson className="h-4 w-4" />
         <span className="hidden sm:inline">Exportar</span> JSON
       </Button>
       <Button
-        onClick={handleUploadCSV}
+        onClick={() => onExport("pdf")}
         variant="outline"
-        className="flex items-center gap-2 border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] hover:text-white"
+        disabled={!hasData}
+        className="flex items-center gap-2 border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] hover:text-white disabled:opacity-50"
       >
-        <Upload className="h-4 w-4" />
-        <span className="hidden sm:inline">Importar</span> CSV
+        <FileText className="h-4 w-4" />
+        <span className="hidden sm:inline">Exportar</span> PDF
       </Button>
       <Button
-        onClick={handleCreateNew}
+        onClick={onNewItem}
         className="flex items-center gap-2 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white"
       >
         <FilePlus className="h-4 w-4" />

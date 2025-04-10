@@ -3,32 +3,35 @@
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react"
 
-interface InventoryNavigationProps {
+interface InventoryPaginationProps {
   currentPage: number
   totalPages: number
   showAll: boolean
-  goToPrevPage: () => void
-  goToNextPage: () => void
-  toggleShowAll: () => void
-  totalItems: number
+  onPageChange: (page: number) => void
+  onShowAllToggle: () => void
+  totalItems?: number
+  itemsPerPage?: number
 }
 
-export default function InventoryNavigation({
+export default function InventoryPagination({
   currentPage,
   totalPages,
   showAll,
-  goToPrevPage,
-  goToNextPage,
-  toggleShowAll,
+  onPageChange,
+  onShowAllToggle,
   totalItems,
-}: InventoryNavigationProps) {
+  itemsPerPage,
+}: InventoryPaginationProps) {
+  const startItem = currentPage * (itemsPerPage || 0) + 1
+  const endItem = Math.min((currentPage + 1) * (itemsPerPage || 0), totalItems || 0)
+
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
           size="icon"
-          onClick={goToPrevPage}
+          onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 0 || showAll}
           className="h-8 w-8 border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] hover:text-white disabled:opacity-50"
         >
@@ -38,14 +41,19 @@ export default function InventoryNavigation({
 
         {!showAll && (
           <span className="text-sm text-[var(--font-color)]">
-            Página {currentPage + 1} de {totalPages} ({totalItems} itens)
+            Página {currentPage + 1} de {totalPages || 1}
+            {totalItems && itemsPerPage && (
+              <span className="ml-2 text-xs text-[var(--font-color)]/70">
+                ({startItem}-{endItem} de {totalItems.toLocaleString()} registros)
+              </span>
+            )}
           </span>
         )}
 
         <Button
           variant="outline"
           size="icon"
-          onClick={goToNextPage}
+          onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages - 1 || showAll}
           className="h-8 w-8 border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] hover:text-white disabled:opacity-50"
         >
@@ -56,7 +64,7 @@ export default function InventoryNavigation({
 
       <Button
         variant="outline"
-        onClick={toggleShowAll}
+        onClick={onShowAllToggle}
         className="flex items-center gap-2 border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] hover:text-white"
       >
         <LayoutGrid className="h-4 w-4" />

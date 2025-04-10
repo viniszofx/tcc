@@ -7,9 +7,9 @@ import ProcessButton from "@/components/dashboard/process-button"
 import ProcessingIndicator from "@/components/dashboard/processing-indicator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useFileProcessor } from "@/hooks/use-file-processor"
+import { storeProcessedData } from "@/utils/data-storage"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { storeProcessedData } from "../utils/data-storage"
 
 export default function ProcessingPage() {
   const [file, setFile] = useState<File | null>(null)

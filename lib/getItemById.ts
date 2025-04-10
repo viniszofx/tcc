@@ -1,8 +1,8 @@
-// lib/getItemById.ts
-import { bemCopiaItems } from "@/app/dashboard/inventories/data/copy-data"
+import type { BemCopia } from "@/lib/interface"
+import { getProcessedData } from "@/utils/data-storage"
 
 export async function getItemById(id: string) {
-  // Simula delay (se quiser)
-  // await new Promise((r) => setTimeout(r, 100))
-  return bemCopiaItems.find((item) => item.bem_id === id)
+  const { data } = await getProcessedData()
+
+  return data.find((item: BemCopia) => item.bem_id === id || item.NUMERO === id)
 }

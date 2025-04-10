@@ -1,4 +1,6 @@
-import { AlertCircle } from "lucide-react"
+"use client"
+
+import { AlertCircle, AlertTriangle } from "lucide-react"
 
 interface ErrorDisplayProps {
   type: "error" | "warning"
@@ -8,45 +10,26 @@ interface ErrorDisplayProps {
 }
 
 export default function ErrorDisplay({ type, title, message, suggestion }: ErrorDisplayProps) {
-  const styles = {
-    error: {
-      bg: "bg-red-50 dark:bg-red-900/20",
-      icon: "text-red-600 dark:text-red-400",
-      iconBg: "bg-red-100 dark:bg-red-800/30",
-      title: "text-red-800 dark:text-red-200",
-      message: "text-red-700 dark:text-red-300",
-      border: "border-red-100 dark:border-red-800/30",
-      footerBg: "bg-red-50/50 dark:bg-red-900/10",
-    },
-    warning: {
-      bg: "bg-amber-50 dark:bg-amber-900/20",
-      icon: "text-amber-600 dark:text-amber-400",
-      iconBg: "bg-amber-100 dark:bg-amber-800/30",
-      title: "text-amber-800 dark:text-amber-200",
-      message: "text-amber-700 dark:text-amber-300",
-      border: "border-amber-100 dark:border-amber-800/30",
-      footerBg: "bg-amber-50/50 dark:bg-amber-900/10",
-    },
-  }
-
-  const style = styles[type]
-
   return (
-    <div className={`mt-4 overflow-hidden rounded-xl ${style.bg} shadow-md`}>
-      <div className="flex items-start gap-3 p-4">
-        <div className={`rounded-full ${style.iconBg} p-2`}>
-          <AlertCircle className={`h-5 w-5 ${style.icon}`} />
+    <div
+      className={`rounded-lg p-4 ${
+        type === "error" ? "bg-red-500/10 border border-red-500/20" : "bg-amber-500/10 border border-amber-500/20"
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full ${
+            type === "error" ? "bg-red-500/20 text-red-500" : "bg-amber-500/20 text-amber-500"
+          }`}
+        >
+          {type === "error" ? <AlertCircle className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
         </div>
         <div>
-          <p className={`font-medium ${style.title}`}>{title}</p>
-          <p className={`mt-1 text-sm ${style.message}`}>{message}</p>
+          <h3 className={`font-medium ${type === "error" ? "text-red-500" : "text-amber-500"}`}>{title}</h3>
+          <p className="mt-1 text-sm text-[var(--font-color)]/90">{message}</p>
+          {suggestion && <p className="mt-2 text-xs text-[var(--font-color)]/70">{suggestion}</p>}
         </div>
       </div>
-      {suggestion && (
-        <div className={`border-t ${style.border} ${style.footerBg} px-4 py-3`}>
-          <p className={`text-xs ${style.message}`}>{suggestion}</p>
-        </div>
-      )}
     </div>
   )
 }

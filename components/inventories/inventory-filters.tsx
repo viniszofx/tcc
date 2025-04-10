@@ -1,32 +1,29 @@
 "use client"
 
-import { bemCopiaItems } from "@/app/dashboard/inventories/data/copy-data"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Filter, Layers } from "lucide-react"
+import { Filter, Layers, Search } from "lucide-react"
 import { useState } from "react"
-
-// Obter valores únicos para os campos de filtro
-const getUniqueValues = (field: string) => {
-  const values = bemCopiaItems.map((item) => item[field as keyof typeof item])
-  return [...new Set(values)].filter(Boolean).sort()
-}
 
 interface InventoryFiltersProps {
   onFilterChange: (field: string, value: string) => void
   selectedFilters: Record<string, string>
   onDisplayFieldsChange: (fields: string[]) => void
   displayFields: string[]
+  onSearchChange: (value: string) => void
+  searchTerm: string
+  uniqueValues: Record<string, string[]>
 }
 
 export default function InventoryFilters({
@@ -34,10 +31,12 @@ export default function InventoryFilters({
   selectedFilters,
   onDisplayFieldsChange,
   displayFields,
+  onSearchChange,
+  searchTerm,
+  uniqueValues,
 }: InventoryFiltersProps) {
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false)
 
-  // Campos disponíveis para exibição nos cards
   const availableFields = [
     { id: "NUMERO", label: "Número" },
     { id: "MARCA_MODELO", label: "Marca/Modelo" },
@@ -51,15 +50,13 @@ export default function InventoryFilters({
     { id: "ROTULOS", label: "Rótulos" },
   ]
 
-  // Campos para filtrar
   const filterFields = [
-    { id: "STATUS", label: "Status" },
+    { id: "SALA", label: "Sala" },
     { id: "CAMPUS_DA_LOTACAO_DO_BEM", label: "Campus" },
     { id: "SETOR_DO_RESPONSAVEL", label: "Setor" },
     { id: "ESTADO_DE_CONSERVACAO", label: "Estado de Conservação" },
   ]
 
-  // Alternar campo de exibição
   const toggleDisplayField = (fieldId: string) => {
     if (displayFields.includes(fieldId)) {
       onDisplayFieldsChange(displayFields.filter((id) => id !== fieldId))
@@ -68,7 +65,6 @@ export default function InventoryFilters({
     }
   }
 
-  // Limpar todos os filtros
   const clearFilters = () => {
     filterFields.forEach((field) => {
       onFilterChange(field.id, "")
@@ -78,7 +74,16 @@ export default function InventoryFilters({
 
   return (
     <div className="flex flex-wrap gap-2 items-center">
-      {/* Filtro de itens */}
+      <div className="relative flex w-full sm:w-auto">
+        <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--font-color)]/70" />
+        <Input
+          placeholder="Buscar itens..."
+          className="pl-8 bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)]"
+          value={searchTerm}
+          onChange={(e) => onSearchChange(e.target.value)}
+        />
+      </div>
+
       <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
         <DialogTrigger asChild>
           <Button
@@ -112,7 +117,7 @@ export default function InventoryFilters({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
-                      {getUniqueValues(field.id).map((value) => (
+                      {uniqueValues[field.id]?.map((value) => (
                         <SelectItem key={`${field.id}-${value}`} value={String(value)}>
                           {String(value)}
                         </SelectItem>
@@ -141,7 +146,6 @@ export default function InventoryFilters({
         </DialogContent>
       </Dialog>
 
-      {/* Seleção de campos para exibição */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
