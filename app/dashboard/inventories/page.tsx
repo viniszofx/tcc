@@ -14,6 +14,11 @@ import { Filter } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 
+import NewItemModal from "@/components/inventories/new-item-modal"
+import { addInventoryItem } from "@/utils/data-storage"
+
+import { BemCopia } from "@/lib/interface"
+
 export default function InventoriesPage() {
   const router = useRouter()
   const [inventoryData, setInventoryData] = useState<any[]>([])
@@ -32,6 +37,8 @@ export default function InventoriesPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
 
   const [itemsPerPage, setItemsPerPage] = useState(9)
+
+  const [isNewItemModalOpen, setIsNewItemModalOpen] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -138,18 +145,17 @@ export default function InventoriesPage() {
     return filteredItems.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage)
   }, [filteredItems, currentPage, itemsPerPage, showAll])
 
-  // Manipuladores de eventos
   const handleFilterChange = (field: string, value: string) => {
     setSelectedFilters((prev) => ({
       ...prev,
       [field]: value,
     }))
-    setCurrentPage(0) 
+    setCurrentPage(0)
   }
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value)
-    setCurrentPage(0)
+    setCurrentPage(0) 
   }
 
   const handlePageChange = (page: number) => {
@@ -172,14 +178,29 @@ export default function InventoriesPage() {
     setCurrentPage(0)
   }
 
+  const handleSaveNewItem = async (item: BemCopia) => {
+    try {
+      await addInventoryItem(item)
+      const { data, metadata } = await getProcessedData()
+      setInventoryData(data)
+      setMetadata(metadata)
+    } catch (error) {
+      console.error("Error saving new item:", error)
+    }
+  }
+
+  const handleNewItem = () => {
+    setIsNewItemModalOpen(true)
+  }
+
   const handleExport = (format: "csv" | "json" | "pdf") => {
     let dataToExport = filteredItems
 
-    if (filteredItems.length > 5000) {
+    if (filteredItems.length > 10000) {
       if (format === "pdf") {
         const confirmExport = window.confirm(
           `Exportar ${filteredItems.length.toLocaleString()} itens para PDF pode ser lento e consumir muita memória. ` +
-            `Apenas os primeiros 1000 itens serão exportados. Deseja continuar?`,
+            `Apenas os primeiros 15000 itens serão exportados. Deseja continuar?`,
         )
 
         if (!confirmExport) return
@@ -221,14 +242,10 @@ export default function InventoriesPage() {
       link.click()
       document.body.removeChild(link)
     } else if (format === "pdf") {
-      const pdfData = format === "pdf" && dataToExport.length > 2000 ? dataToExport.slice(0, 1000) : dataToExport
+      const pdfData = format === "pdf" && dataToExport.length > 10000 ? dataToExport.slice(0, 1000) : dataToExport
 
       exportToPdf(pdfData, `inventario_${new Date().toISOString().split("T")[0]}`)
     }
-  }
-
-  const handleNewItem = () => {
-    router.push("/dashboard")
   }
 
   if (isLoading) {
@@ -336,6 +353,11 @@ export default function InventoriesPage() {
             itemsPerPage={itemsPerPage}
           />
         )}
+        <NewItemModal
+          isOpen={isNewItemModalOpen}
+          onClose={() => setIsNewItemModalOpen(false)}
+          onSave={handleSaveNewItem}
+        />
       </CardContent>
     </Card>
   )

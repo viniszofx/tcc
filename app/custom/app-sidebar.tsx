@@ -15,14 +15,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return (
         <Sidebar {...props}>
             <SidebarHeader className="bg-[var(--secondary-color)]">
-                <div className="mt-4">
-                    <Image className="mx-auto h-auto" src="/logotipo.svg" alt="logo" />
+                <div className="relative w-60 h-32 mx-auto">
+                    <Image fill className="object-contain" src="/logotipo.svg" alt="logo" />
                 </div>
             </SidebarHeader>
             <SidebarContent className="bg-[var(--secondary-color)] flex flex-col justify-between h-full">
                 <SidebarGroup>
                     <SidebarGroupContent>
-                        <SidebarMenu className="mt-4">
+                        <SidebarMenu>
                             <li className="p-2 gap-2 flex items-center justify-center">
                                 <Button className="bg-[var(--secondary-color)] text-[var(--font-color2)]" asChild>
                                     <a href="/dashboard" className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white">

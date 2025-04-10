@@ -461,3 +461,27 @@ export function canStoreInLocalStorage(data: any[]): boolean {
 export function getMaxItemCount(): number {
   return 50000
 }
+
+export async function addInventoryItem(item: BemCopia): Promise<void> {
+  try {
+    const { data, metadata } = await getProcessedData()
+
+    const updatedData = [...data, item]
+
+    const usedAcceleration = false;
+
+    const updatedMetadata: InventoryMetadata = {
+      recordCount: data.length,
+      timestamp: new Date().toISOString(),
+      fileName: "",
+      usedAcceleration,
+    }    
+
+    await storeProcessedData(updatedData, updatedMetadata)
+
+    return Promise.resolve()
+  } catch (error) {
+    console.error("Error adding inventory item:", error)
+    return Promise.reject(error)
+  }
+}

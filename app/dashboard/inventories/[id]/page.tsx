@@ -1,10 +1,9 @@
 ﻿import { getItemById } from "@/lib/getItemById";
 import type { Metadata } from "next";
-import InventoryItemClient from "./inventory-item-client";
 import { notFound } from "next/navigation";
 import { JSX } from "react";
+import InventoryItemClient from "./inventory-item-client";
 
-// Metadata dinâmico
 export async function generateMetadata({
   params,
 }: {
@@ -20,7 +19,6 @@ export async function generateMetadata({
   };
 }
 
-// Página
 export default async function Page({
   params,
 }: {
