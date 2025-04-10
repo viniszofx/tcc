@@ -1,48 +1,52 @@
-"use client"
+"use client";
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import type { BemCopia } from "@/lib/interface"
-import { getProcessedData } from "@/utils/data-storage"
-import { formatDate } from "@/utils/data-utils"
-import { ArrowLeft, Edit, Trash2 } from "lucide-react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import type { BemCopia } from "@/lib/interface";
+import { getProcessedData } from "@/utils/data-storage";
+import { formatDate } from "@/utils/data-utils";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { JSX, useEffect, useState } from "react";
 
 interface InventoryItemClientProps {
-  id: string
+  id: string;
 }
 
-export default function InventoryItemClient({ id }: InventoryItemClientProps) {
-  const router = useRouter()
-  const [item, setItem] = useState<BemCopia | null>(null)
-  const [loading, setLoading] = useState(true)
+export default function InventoryItemClient({
+  id,
+}: InventoryItemClientProps): JSX.Element {
+  const router = useRouter();
+  const [item, setItem] = useState<BemCopia | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadItem() {
-      setLoading(true)
+      setLoading(true);
       try {
-        const { data } = await getProcessedData()
-        const foundItem = data.find((item) => item.bem_id === id || item.NUMERO === id)
+        const { data } = await getProcessedData();
+        const foundItem = data.find(
+          (item) => item.bem_id === id || item.NUMERO === id
+        );
 
         if (foundItem) {
-          setItem(foundItem)
+          setItem(foundItem);
         } else {
-          router.push("/dashboard/inventories")
+          router.push("/dashboard/inventories");
         }
       } catch (error) {
-        console.error("Error loading item:", error)
-        router.push("/dashboard/inventories")
+        console.error("Error loading item:", error);
+        router.push("/dashboard/inventories");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    loadItem()
-  }, [id, router])
+    loadItem();
+  }, [id, router]);
 
   if (loading) {
     return (
@@ -56,14 +60,16 @@ export default function InventoryItemClient({ id }: InventoryItemClientProps) {
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (!item) {
     return (
       <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-md lg:max-w-5xl xl:max-w-6xl mx-auto">
         <CardContent className="p-8 text-center">
-          <h2 className="text-xl font-bold text-[var(--font-color)]">Item não encontrado</h2>
+          <h2 className="text-xl font-bold text-[var(--font-color)]">
+            Item não encontrado
+          </h2>
           <p className="text-[var(--font-color)]/70 mt-2">
             O item que você está procurando não existe ou foi removido.
           </p>
@@ -74,29 +80,29 @@ export default function InventoryItemClient({ id }: InventoryItemClientProps) {
           </Link>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ATIVO":
       case "Ativo":
-        return "bg-green-500"
+        return "bg-green-500";
       case "EM_USO":
       case "Em Manutenção":
-        return "bg-amber-500"
+        return "bg-amber-500";
       case "BAIXA_SOLICITADA":
       case "Inativo":
-        return "bg-gray-500"
+        return "bg-gray-500";
       case "BAIXADO":
       case "Baixado":
-        return "bg-red-500"
+        return "bg-red-500";
       case "Transferido":
-        return "bg-blue-500"
+        return "bg-blue-500";
       default:
-        return "bg-gray-500"
+        return "bg-gray-500";
     }
-  }
+  };
 
   return (
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-md lg:max-w-5xl xl:max-w-6xl mx-auto">
@@ -130,7 +136,9 @@ export default function InventoryItemClient({ id }: InventoryItemClientProps) {
         </div>
         <CardTitle className="mt-4 text-xl font-bold text-[var(--font-color)] md:text-2xl lg:text-3xl">
           {item.DESCRICAO}
-          <Badge className={`ml-4 ${getStatusColor(item.STATUS)} text-white`}>{item.STATUS}</Badge>
+          <Badge className={`ml-4 ${getStatusColor(item.STATUS)} text-white`}>
+            {item.STATUS}
+          </Badge>
         </CardTitle>
       </CardHeader>
 
@@ -138,7 +146,9 @@ export default function InventoryItemClient({ id }: InventoryItemClientProps) {
         <div className="grid gap-6 md:grid-cols-2">
           <Card className="border-[var(--border-input)] bg-[var(--card-color)]">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-semibold text-[var(--font-color)]">Informações Básicas</CardTitle>
+              <CardTitle className="text-lg font-semibold text-[var(--font-color)]">
+                Informações Básicas
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-[var(--font-color)]">
               <div className="flex justify-between">
@@ -197,7 +207,9 @@ export default function InventoryItemClient({ id }: InventoryItemClientProps) {
 
         <Card className="border-[var(--border-input)] bg-[var(--card-color)]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold text-[var(--font-color)]">Descrição e Detalhes</CardTitle>
+            <CardTitle className="text-lg font-semibold text-[var(--font-color)]">
+              Descrição e Detalhes
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-[var(--font-color)]">
             <div className="space-y-4">
@@ -225,7 +237,9 @@ export default function InventoryItemClient({ id }: InventoryItemClientProps) {
 
         <Card className="border-[var(--border-input)] bg-[var(--card-color)]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold text-[var(--font-color)]">Informações do Sistema</CardTitle>
+            <CardTitle className="text-lg font-semibold text-[var(--font-color)]">
+              Informações do Sistema
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-[var(--font-color)]">
             <div className="flex justify-between">
@@ -248,5 +262,5 @@ export default function InventoryItemClient({ id }: InventoryItemClientProps) {
         </Card>
       </CardContent>
     </Card>
-  )
+  );
 }
