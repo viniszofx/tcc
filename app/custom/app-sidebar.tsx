@@ -9,13 +9,14 @@ import {
     SidebarRail,
 } from "@/components/ui/sidebar";
 import { File, Home, Info, Settings } from "lucide-react";
+import Image from "next/image";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return (
         <Sidebar {...props}>
             <SidebarHeader className="bg-[var(--secondary-color)]">
                 <div className="mt-4">
-                    <img className="mx-auto h-auto" src="/Logotipo.svg" alt="logo" />
+                    <Image className="mx-auto h-auto" src="/logotipo.svg" alt="logo" />
                 </div>
             </SidebarHeader>
             <SidebarContent className="bg-[var(--secondary-color)] flex flex-col justify-between h-full">
