@@ -2,19 +2,36 @@
 
 import { Button } from "@/components/ui/button"
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { EstadoConservacao, StatusBem, type BemCopia } from "@/lib/interface"
 import { useState } from "react"
+import { EstadoConservacao, StatusBem, type BemCopia } from "@/lib/interface"
+
+const ED_OPTIONS = [
+  "ED001",
+  "ED002",
+  "ED003",
+  "ED004",
+  "ED005",
+  "ED006",
+  "ED007",
+  "ED008",
+  "ED009",
+  "ED010",
+  "ED011",
+  "ED012",
+  "ED013",
+  "ED014",
+  "ED015",
+]
 
 interface NewItemModalProps {
   isOpen: boolean
@@ -35,11 +52,11 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
     STATUS: StatusBem.ATIVO,
     ED: "",
     ROTULOS: "",
-    observacoes: "",
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [edFilter, setEdFilter] = useState("")
 
   const handleChange = (field: keyof BemCopia, value: string) => {
     setFormData((prev) => ({
@@ -47,6 +64,7 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
       [field]: value,
     }))
 
+    // Clear error for this field if it exists
     if (errors[field]) {
       setErrors((prev) => {
         const newErrors = { ...prev }
@@ -59,11 +77,17 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
 
-    if (!formData.NUMERO) newErrors.NUMERO = "Número é obrigatório"
+    if (!formData.NUMERO) {
+      newErrors.NUMERO = "Número é obrigatório"
+    } else if (!/^\d+$/.test(formData.NUMERO)) {
+      newErrors.NUMERO = "Número deve conter apenas dígitos"
+    }
+
     if (!formData.DESCRICAO) newErrors.DESCRICAO = "Descrição é obrigatória"
     if (!formData.RESPONSABILIDADE_ATUAL) newErrors.RESPONSABILIDADE_ATUAL = "Responsável é obrigatório"
     if (!formData.SETOR_DO_RESPONSAVEL) newErrors.SETOR_DO_RESPONSAVEL = "Setor é obrigatório"
     if (!formData.SALA) newErrors.SALA = "Sala é obrigatória"
+    if (!formData.ED) newErrors.ED = "ED é obrigatório"
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -93,7 +117,6 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
       DESCRICAO_PRINCIPAL: formData.DESCRICAO || "",
       ultimo_atualizado_por: "Usuário",
       data_ultima_atualizacao: new Date(),
-      observacoes: formData.observacoes || "",
     }
 
     onSave(newItem)
@@ -110,11 +133,12 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
       STATUS: StatusBem.ATIVO,
       ED: "",
       ROTULOS: "",
-      observacoes: "",
     })
     setIsSubmitting(false)
     onClose()
   }
+
+  const filteredEDs = ED_OPTIONS.filter((ed) => ed.toLowerCase().includes(edFilter.toLowerCase()))
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -135,24 +159,48 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
               <Input
                 id="numero"
                 value={formData.NUMERO}
-                onChange={(e) => handleChange("NUMERO", e.target.value)}
-                className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${
-                  errors.NUMERO ? "border-red-500" : ""
-                }`}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "")
+                  handleChange("NUMERO", value)
+                }}
+                className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${errors.NUMERO ? "border-red-500" : ""
+                  }`}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
               />
               {errors.NUMERO && <p className="text-xs text-red-500">{errors.NUMERO}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="ed" className="text-[var(--font-color)]">
-                ED
+                ED <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="ed"
-                value={formData.ED}
-                onChange={(e) => handleChange("ED", e.target.value)}
-                className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)]"
-              />
+              <div className="relative">
+                <Input
+                  id="ed-filter"
+                  value={edFilter}
+                  onChange={(e) => setEdFilter(e.target.value)}
+                  className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] mb-1"
+                  placeholder="Filtrar EDs..."
+                />
+                <Select value={formData.ED} onValueChange={(value) => handleChange("ED", value)}>
+                  <SelectTrigger
+                    className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${errors.ED ? "border-red-500" : ""
+                      }`}
+                  >
+                    <SelectValue placeholder="Selecione o ED" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredEDs.map((ed) => (
+                      <SelectItem key={ed} value={ed}>
+                        {ed}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {errors.ED && <p className="text-xs text-red-500">{errors.ED}</p>}
             </div>
           </div>
 
@@ -164,9 +212,8 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
               id="descricao"
               value={formData.DESCRICAO}
               onChange={(e) => handleChange("DESCRICAO", e.target.value)}
-              className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${
-                errors.DESCRICAO ? "border-red-500" : ""
-              }`}
+              className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${errors.DESCRICAO ? "border-red-500" : ""
+                }`}
             />
             {errors.DESCRICAO && <p className="text-xs text-red-500">{errors.DESCRICAO}</p>}
           </div>
@@ -192,9 +239,8 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
                 id="responsavel"
                 value={formData.RESPONSABILIDADE_ATUAL}
                 onChange={(e) => handleChange("RESPONSABILIDADE_ATUAL", e.target.value)}
-                className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${
-                  errors.RESPONSABILIDADE_ATUAL ? "border-red-500" : ""
-                }`}
+                className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${errors.RESPONSABILIDADE_ATUAL ? "border-red-500" : ""
+                  }`}
               />
               {errors.RESPONSABILIDADE_ATUAL && <p className="text-xs text-red-500">{errors.RESPONSABILIDADE_ATUAL}</p>}
             </div>
@@ -207,9 +253,8 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
                 id="setor"
                 value={formData.SETOR_DO_RESPONSAVEL}
                 onChange={(e) => handleChange("SETOR_DO_RESPONSAVEL", e.target.value)}
-                className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${
-                  errors.SETOR_DO_RESPONSAVEL ? "border-red-500" : ""
-                }`}
+                className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${errors.SETOR_DO_RESPONSAVEL ? "border-red-500" : ""
+                  }`}
               />
               {errors.SETOR_DO_RESPONSAVEL && <p className="text-xs text-red-500">{errors.SETOR_DO_RESPONSAVEL}</p>}
             </div>
@@ -236,9 +281,8 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
                 id="sala"
                 value={formData.SALA}
                 onChange={(e) => handleChange("SALA", e.target.value)}
-                className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${
-                  errors.SALA ? "border-red-500" : ""
-                }`}
+                className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${errors.SALA ? "border-red-500" : ""
+                  }`}
               />
               {errors.SALA && <p className="text-xs text-red-500">{errors.SALA}</p>}
             </div>
@@ -293,19 +337,6 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
               value={formData.ROTULOS}
               onChange={(e) => handleChange("ROTULOS", e.target.value)}
               className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)]"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="observacoes" className="text-[var(--font-color)]">
-              Observações
-            </Label>
-            <Textarea
-              id="observacoes"
-              value={formData.observacoes ?? ""}
-              onChange={(e) => handleChange("observacoes", e.target.value)}
-              className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)]"
-              rows={3}
             />
           </div>
         </div>

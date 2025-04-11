@@ -3,8 +3,8 @@ import { formatDate } from "@/utils/data-utils"
 
 /**
  * Generate a PDF from inventory data
- * @param items
- * @param fileName 
+ * @param items Inventory items to include in the PDF
+ * @param fileName Name for the downloaded file
  */
 export function exportToPdf(items: BemCopia[], fileName = "inventario"): void {
   import("jspdf").then(({ default: jsPDF }) => {
@@ -29,6 +29,8 @@ export function exportToPdf(items: BemCopia[], fileName = "inventario"): void {
         { header: "Campus", dataKey: "CAMPUS_DA_LOTACAO_DO_BEM" },
         { header: "Sala", dataKey: "SALA" },
         { header: "Conservação", dataKey: "ESTADO_DE_CONSERVACAO" },
+        { header: "ED", dataKey: "ED" },
+        { header: "Rótulos", dataKey: "ROTULOS" },
       ]
 
       const BATCH_SIZE = 1000
@@ -53,6 +55,8 @@ export function exportToPdf(items: BemCopia[], fileName = "inventario"): void {
             CAMPUS_DA_LOTACAO_DO_BEM: item.CAMPUS_DA_LOTACAO_DO_BEM || "",
             SALA: item.SALA || "",
             ESTADO_DE_CONSERVACAO: item.ESTADO_DE_CONSERVACAO || "",
+            ED: item.ED || "",
+            ROTULOS: item.ROTULOS || "",
           }
         })
 
