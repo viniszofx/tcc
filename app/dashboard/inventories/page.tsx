@@ -275,7 +275,7 @@ export default function InventoriesPage() {
             <h3 className="text-lg font-medium text-[var(--font-color)]">Erro ao carregar dados</h3>
             <p className="text-sm text-[var(--font-color)]/70 mt-2 mb-6 max-w-md">{loadError}</p>
             <Button
-              onClick={() => router.push("/dashboard/processing")}
+              onClick={() => router.push("/dashboard")}
               className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white"
             >
               Processar Novo Arquivo
