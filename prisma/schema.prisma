@@ -49,6 +49,7 @@ model usuarios {
   inventarios_abertos  inventarios[]         @relation("InventarioAbertoPor")
   inventarios_fechados inventarios[]         @relation("InventarioFechadoPor")
   bens_copias          bens_copias[]
+  settings             settings[]
 }
 
 model comissoes {
@@ -240,9 +241,13 @@ model autenticacao_social {
 
 model settings {
   id          String   @id @default(uuid())
+  usuario_id  String
   key         String   @unique
   value       String
   description String?
   updated_at  DateTime @updatedAt
   created_at  DateTime @default(now())
+  user        usuarios @relation(fields: [usuario_id], references: [usuario_id])
+
+  @@index([usuario_id])
 }

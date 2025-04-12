@@ -1,6 +1,6 @@
-import { AppSidebar } from "@/app/custom/app-sidebar";
-import DarkModeToggle from "@/app/custom/dark-mode-toggle";
-import { UserAvatar } from "@/app/custom/user-avatar";
+import { AppSidebar } from "@/components/custom/app-sidebar";
+import DarkModeToggle from "@/components/custom/dark-mode-toggle";
+import { UserAvatar } from "@/components/custom/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -8,7 +8,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import HeaderTitle from "../custom/header-title";
+import HeaderTitle from "../../components/custom/header-title";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const usuario = {
@@ -26,7 +26,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           <header className="sticky top-0 z-10 flex h-16 items-center border-b bg-[var(--header-color)]">
             <div className="w-full px-4 md:px-6 lg:px-8 flex items-center">
               <SidebarTrigger className="text-[var(--font-color)] -ml-2" />
-              <Separator orientation="vertical" className="h-6 hidden md:block mx-2" />
+              <Separator
+                orientation="vertical"
+                className="h-6 hidden md:block mx-2"
+              />
 
               <div className="flex w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto items-center justify-between">
                 <HeaderTitle />
