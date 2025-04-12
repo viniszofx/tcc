@@ -1,34 +1,33 @@
-﻿import { getItemById } from "@/lib/getItemById";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { JSX } from "react";
+﻿import { notFound } from "next/navigation";
+import { Metadata } from "next";
 import InventoryItemClient from "./inventory-item-client";
+import { JSX } from "react";
 
 export async function generateMetadata({
   params,
 }: {
-  params: any;
+  params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const item = await getItemById(params.id);
+  const resolvedParams = await params;
+  const { id } = resolvedParams;
 
   return {
-    title: item ? `Item: ${item.DESCRICAO}` : "Item não encontrado",
-    description: item
-      ? `Detalhes do item ${item.NUMERO}`
-      : "Detalhes do item de inventário",
+    title: `Item: ${id}`,
+    description: "Detalhes do item de inventário",
   };
 }
 
 export default async function Page({
   params,
 }: {
-  params: any;
+  params: Promise<{ id: string }>;
 }): Promise<JSX.Element> {
-  const item = await getItemById(params.id);
+  const resolvedParams = await params;
+  const { id } = resolvedParams;
 
-  if (!item) {
+  if (!id) {
     notFound();
   }
 
-  return <InventoryItemClient id={params.id} />;
+  return <InventoryItemClient id={id} />;
 }
