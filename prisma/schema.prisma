@@ -37,6 +37,7 @@ model usuarios {
   data_inicio         DateTime?
   data_fim            DateTime?
   metodo_autenticacao String
+  imagem_url          String?
 
   organizacao          organizacoes          @relation(fields: [organizacao_id], references: [organizacao_id])
   campus               campus?               @relation(fields: [campus_id], references: [campus_id])
