@@ -10,6 +10,7 @@ export const user: Usuario[] = [
     habilitado: true,
     organizacao_id: "org-001",
     campus_id: "camp-001",
+    foto: "/default-avatar.jpg",
     comissao_id: "com-001",
   },
   {
@@ -22,6 +23,7 @@ export const user: Usuario[] = [
     organizacao_id: "org-001",
     campus_id: "camp-001",
     comissao_id: "com-001",
+    foto: "/default-avatar.jpg",
   },
   {
     usuario_id: "dev-pres-001",
@@ -34,5 +36,18 @@ export const user: Usuario[] = [
     campus_id: "camp-001",
     comissao_id: "com-001",
     data_inicio: "2023-07-01",
+    foto: "/default-avatar.jpg",
+  },
+  {
+    usuario_id: "dev-user-002",
+    nome: "Operador Teste 2",
+    papel: "operador",
+    email: "operador2@teste.local",
+    senha_hash: "senha_fake_user_123",
+    habilitado: true,
+    organizacao_id: "org-001",
+    campus_id: "camp-001",
+    comissao_id: "com-001",
+    foto: "/default-avatar.jpg",
   },
 ];

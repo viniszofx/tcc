@@ -20,6 +20,7 @@ export interface Usuario {
   nome: string;
   papel: string;
   email: string;
+  foto?: string;
   senha_hash?: string | null;
   habilitado: boolean;
   organizacao_id: string;
