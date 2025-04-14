@@ -1,31 +1,34 @@
 "use client"
 
+import type React from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type React from "react"
-import { useState } from "react"
+import type { Usuario } from "@/lib/interface"
 
 interface AddUserModalProps {
   isOpen: boolean
   onClose: () => void
-  onAddUser: (user: any) => void
+  onAddUser: (user: Partial<Usuario>) => void
+  campusList: { id: string; nome: string }[]
 }
 
-export function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModalProps) {
+export function AddUserModal({ isOpen, onClose, onAddUser, campusList }: AddUserModalProps) {
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
     senha: "",
+    campus_id: "",
     papel: "",
     foto: "/default-avatar.jpg",
   })
@@ -34,7 +37,6 @@ export function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModalProps) 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
-    // Clear error when user types
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }))
     }
@@ -42,7 +44,6 @@ export function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModalProps) 
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }))
-    // Clear error when user selects
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }))
     }
@@ -71,6 +72,10 @@ export function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModalProps) 
       newErrors.papel = "Papel é obrigatório"
     }
 
+    if (!formData.campus_id) {
+      newErrors.campus_id = "Campus é obrigatório"
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -81,13 +86,14 @@ export function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModalProps) 
     if (validateForm()) {
       onAddUser({
         ...formData,
+        senha_hash: formData.senha,
       })
 
-      // Reset form
       setFormData({
         nome: "",
         email: "",
         senha: "",
+        campus_id: "",
         papel: "",
         foto: "/default-avatar.jpg",
       })
@@ -153,6 +159,25 @@ export function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModalProps) 
             </div>
 
             <div className="grid gap-2">
+              <Label htmlFor="campus_id" className="text-[var(--font-color)]">
+                Campus
+              </Label>
+              <Select value={formData.campus_id} onValueChange={(value) => handleSelectChange("campus_id", value)}>
+                <SelectTrigger className="border-[var(--border-input)]">
+                  <SelectValue placeholder="Selecione um campus" />
+                </SelectTrigger>
+                <SelectContent className="bg-[var(--bg-simple)]">
+                  {campusList.map((campus) => (
+                    <SelectItem key={campus.id} value={campus.id}>
+                      {campus.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.campus_id && <p className="text-xs text-red-500">{errors.campus_id}</p>}
+            </div>
+
+            <div className="grid gap-2">
               <Label htmlFor="papel" className="text-[var(--font-color)]">
                 Papel
               </Label>
@@ -170,18 +195,18 @@ export function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModalProps) 
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="border-[var(--border-color)] bg-[var(--bg-simple)] hover:bg-[var(--hover-color)] hover:text-white"
+              className="border-[var(--border-color)] bg-[var(--bg-simple)] hover:bg-[var(--hover-color)] hover:text-white w-full sm:w-auto"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white"
+              className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white w-full sm:w-auto"
             >
               Adicionar
             </Button>

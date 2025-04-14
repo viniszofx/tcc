@@ -9,7 +9,7 @@ export const user: Usuario[] = [
     senha_hash: "senha_fake_admin_123",
     habilitado: true,
     organizacao_id: "org-001",
-    campus_id: "camp-001",
+    campus_id: "1",
     foto: "/default-avatar.jpg",
     comissao_id: "com-001",
   },
@@ -21,8 +21,8 @@ export const user: Usuario[] = [
     senha_hash: "senha_fake_user_123",
     habilitado: true,
     organizacao_id: "org-001",
-    campus_id: "camp-001",
-    comissao_id: "com-001",
+    campus_id: "2",
+    comissao_id: "Campus Campo Grande",
     foto: "/default-avatar.jpg",
   },
   {
@@ -33,9 +33,8 @@ export const user: Usuario[] = [
     senha_hash: "senha_fake_pres_123",
     habilitado: true,
     organizacao_id: "org-001",
-    campus_id: "camp-001",
+    campus_id: "5",
     comissao_id: "com-001",
-    data_inicio: "2023-07-01",
     foto: "/default-avatar.jpg",
   },
   {
@@ -46,8 +45,27 @@ export const user: Usuario[] = [
     senha_hash: "senha_fake_user_123",
     habilitado: true,
     organizacao_id: "org-001",
-    campus_id: "camp-001",
+    campus_id: "4",
     comissao_id: "com-001",
     foto: "/default-avatar.jpg",
   },
 ];
+
+export const campusMap: Record<string, string> = {
+  "1": "Campus Central",
+  "2": "Campus Norte",
+  "3": "Campus Sul",
+  "4": "Campus Leste",
+  "5": "Campus Oeste",
+};
+
+// Lista de campus para os selects
+export const campusList = Object.entries(campusMap).map(([id, nome]) => ({
+  id,
+  nome,
+}));
+
+// Função para obter o nome do campus pelo ID
+export function getCampusNameById(campusId: string): string {
+  return campusMap[campusId] || "Sem campus";
+}

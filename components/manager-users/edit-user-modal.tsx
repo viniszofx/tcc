@@ -1,33 +1,35 @@
 "use client"
 
+import type React from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type React from "react"
-import { useEffect, useState } from "react"
 
 interface EditUserModalProps {
   isOpen: boolean
   onClose: () => void
   user: any
   onEditUser: (user: any) => void
+  campusList: { id: string; nome: string }[]
 }
 
-export function EditUserModal({ isOpen, onClose, user, onEditUser }: EditUserModalProps) {
+export function EditUserModal({ isOpen, onClose, user, onEditUser, campusList }: EditUserModalProps) {
   const [formData, setFormData] = useState({
     usuario_id: "",
     nome: "",
     email: "",
     papel: "",
+    campus_id: "",
     foto: "",
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -39,6 +41,7 @@ export function EditUserModal({ isOpen, onClose, user, onEditUser }: EditUserMod
         nome: user.nome,
         email: user.email,
         papel: user.papel,
+        campus_id: user.campus_id || "",
         foto: user.foto || "/default-avatar.jpg",
       })
     }
@@ -76,6 +79,10 @@ export function EditUserModal({ isOpen, onClose, user, onEditUser }: EditUserMod
 
     if (!formData.papel) {
       newErrors.papel = "Papel é obrigatório"
+    }
+
+    if (!formData.campus_id) {
+      newErrors.campus_id = "Campus é obrigatório"
     }
 
     setErrors(newErrors)
@@ -133,6 +140,25 @@ export function EditUserModal({ isOpen, onClose, user, onEditUser }: EditUserMod
             </div>
 
             <div className="grid gap-2">
+              <Label htmlFor="campus_id" className="text-[var(--font-color)]">
+                Campus
+              </Label>
+              <Select value={formData.campus_id} onValueChange={(value) => handleSelectChange("campus_id", value)}>
+                <SelectTrigger className="border-[var(--border-input)]">
+                  <SelectValue placeholder="Selecione um campus" />
+                </SelectTrigger>
+                <SelectContent className="bg-[var(--bg-simple)]">
+                  {campusList.map((campus) => (
+                    <SelectItem key={campus.id} value={campus.id}>
+                      {campus.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.campus_id && <p className="text-xs text-red-500">{errors.campus_id}</p>}
+            </div>
+
+            <div className="grid gap-2">
               <Label htmlFor="papel" className="text-[var(--font-color)]">
                 Papel
               </Label>
@@ -150,18 +176,18 @@ export function EditUserModal({ isOpen, onClose, user, onEditUser }: EditUserMod
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="border-[var(--border-color)] bg-[var(--bg-simple)] hover:bg-[var(--hover-color)] hover:text-white"
+              className="border-[var(--border-color)] bg-[var(--bg-simple)] hover:bg-[var(--hover-color)] hover:text-white w-full sm:w-auto"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white"
+              className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white w-full sm:w-auto"
             >
               Salvar
             </Button>
