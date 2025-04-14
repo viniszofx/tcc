@@ -12,26 +12,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useState } from "react"
 import { EstadoConservacao, StatusBem, type BemCopia } from "@/lib/interface"
-
-const ED_OPTIONS = [
-  "ED001",
-  "ED002",
-  "ED003",
-  "ED004",
-  "ED005",
-  "ED006",
-  "ED007",
-  "ED008",
-  "ED009",
-  "ED010",
-  "ED011",
-  "ED012",
-  "ED013",
-  "ED014",
-  "ED015",
-]
+import { useState } from "react"
 
 interface NewItemModalProps {
   isOpen: boolean
@@ -56,7 +38,6 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [edFilter, setEdFilter] = useState("")
 
   const handleChange = (field: keyof BemCopia, value: string) => {
     setFormData((prev) => ({
@@ -64,7 +45,6 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
       [field]: value,
     }))
 
-    // Clear error for this field if it exists
     if (errors[field]) {
       setErrors((prev) => {
         const newErrors = { ...prev }
@@ -138,8 +118,6 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
     onClose()
   }
 
-  const filteredEDs = ED_OPTIONS.filter((ed) => ed.toLowerCase().includes(edFilter.toLowerCase()))
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
@@ -176,30 +154,13 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
               <Label htmlFor="ed" className="text-[var(--font-color)]">
                 ED <span className="text-red-500">*</span>
               </Label>
-              <div className="relative">
                 <Input
-                  id="ed-filter"
-                  value={edFilter}
-                  onChange={(e) => setEdFilter(e.target.value)}
-                  className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] mb-1"
-                  placeholder="Filtrar EDs..."
-                />
-                <Select value={formData.ED} onValueChange={(value) => handleChange("ED", value)}>
-                  <SelectTrigger
+                    id="ed"
+                    value={formData.ED}
+                    onChange={(e) => handleChange("ED", e.target.value)}
                     className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${errors.ED ? "border-red-500" : ""
                       }`}
-                  >
-                    <SelectValue placeholder="Selecione o ED" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredEDs.map((ed) => (
-                      <SelectItem key={ed} value={ed}>
-                        {ed}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  />
               {errors.ED && <p className="text-xs text-red-500">{errors.ED}</p>}
             </div>
           </div>
