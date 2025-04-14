@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -14,6 +12,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import type React from "react"
+import { useEffect, useState } from "react"
 
 interface EditUserModalProps {
   isOpen: boolean
@@ -50,7 +50,6 @@ export function EditUserModal({ isOpen, onClose, user, onEditUser, campusList }:
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
-    // Clear error when user types
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }))
     }
@@ -58,7 +57,6 @@ export function EditUserModal({ isOpen, onClose, user, onEditUser, campusList }:
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }))
-    // Clear error when user selects
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }))
     }

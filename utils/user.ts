@@ -59,13 +59,11 @@ export const campusMap: Record<string, string> = {
   "5": "Campus Oeste",
 };
 
-// Lista de campus para os selects
 export const campusList = Object.entries(campusMap).map(([id, nome]) => ({
   id,
   nome,
 }));
 
-// Função para obter o nome do campus pelo ID
 export function getCampusNameById(campusId: string): string {
   return campusMap[campusId] || "Sem campus";
 }
