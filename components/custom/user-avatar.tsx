@@ -1,6 +1,7 @@
-"use client"
+"use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { signOut } from "@/app/(auth)/auth/_action";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,14 +9,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Building, History, LogOut, User, Users } from "lucide-react"
+} from "@/components/ui/dropdown-menu";
+import { Building, History, LogOut, User, Users } from "lucide-react";
 
 interface UserAvatarProps {
-  nome: string
-  email: string
-  cargo: "admin" | "operador" | "presidente"
-  foto?: string
+  nome: string;
+  email: string;
+  cargo: "admin" | "operador" | "presidente";
+  foto?: string;
 }
 
 export function UserAvatar({ nome, email, cargo, foto }: UserAvatarProps) {
@@ -23,16 +24,24 @@ export function UserAvatar({ nome, email, cargo, foto }: UserAvatarProps) {
     <DropdownMenu>
       <DropdownMenuTrigger className="focus:outline-none">
         <Avatar className="w-10 h-10 cursor-pointer border">
-          <AvatarImage src={foto || "/default-avatar.jpg"} alt="Foto do usuário" />
+          <AvatarImage
+            src={foto || "/default-avatar.jpg"}
+            alt="Foto do usuário"
+          />
           <AvatarFallback>{nome.charAt(0)}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-56 bg-[var(--perfil-color)]">
+      <DropdownMenuContent
+        align="end"
+        className="w-56 bg-[var(--perfil-color)]"
+      >
         <DropdownMenuLabel className="flex flex-col">
           <span className="font-bold text-[var(--font-color2)]">{nome}</span>
           <span className="text-sm text-[var(--font-color2)]">{email}</span>
-          <span className="text-xs text-[var(--font-color2)]">{cargo.toUpperCase()}</span>
+          <span className="text-xs text-[var(--font-color2)]">
+            {cargo.toUpperCase()}
+          </span>
         </DropdownMenuLabel>
 
         <DropdownMenuSeparator className="bg-[var(--font-color2)]" />
@@ -46,17 +55,17 @@ export function UserAvatar({ nome, email, cargo, foto }: UserAvatarProps) {
 
         {cargo === "admin" && (
           <>
-          <a href="/dashboard/manager/campuses">
-            <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
-              <Building size={16} className="text-[var(--font-color2)]" />
-              <span>Gerenciar Campus</span>
-            </DropdownMenuItem>
+            <a href="/dashboard/manager/campuses">
+              <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
+                <Building size={16} className="text-[var(--font-color2)]" />
+                <span>Gerenciar Campus</span>
+              </DropdownMenuItem>
             </a>
             <a href="/dashboard/manager/users">
-            <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
-              <Users size={16} className="text-[var(--font-color2)]" />
-              <span>Gerenciar Usuários</span>
-            </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
+                <Users size={16} className="text-[var(--font-color2)]" />
+                <span>Gerenciar Usuários</span>
+              </DropdownMenuItem>
             </a>
           </>
         )}
@@ -75,13 +84,18 @@ export function UserAvatar({ nome, email, cargo, foto }: UserAvatarProps) {
 
         <DropdownMenuSeparator className="bg-[var(--font-color2)]" />
 
-        <a href="/auth">
-          <DropdownMenuItem className="flex items-center gap-2 text-[var(--button-2-color)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
-            <LogOut size={16} className="text-[var(--button-2-color)]" />
-            <span>Sair</span>
+        <form>
+          <DropdownMenuItem asChild>
+            <button
+              formAction={signOut}
+              className="w-full flex items-center gap-2 text-[var(--button-2-color)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer"
+            >
+              <LogOut size={16} className="text-[var(--button-2-color)]" />
+              <span>Sair</span>
+            </button>
           </DropdownMenuItem>
-        </a>
+        </form>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
