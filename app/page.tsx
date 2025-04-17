@@ -2,37 +2,24 @@ import Link from "next/link";
 import Image from "next/image";
 
 const dashboardPages = [
-  "home",
-  "profile",
-  "users",
-  "committees",
-  "campuses",
-  "organizations",
-  "assets/originals",
-  "assets/copies",
+  "/",
+  "about",
   "inventories",
-  "groups",
-  "roles",
-  "permissions",
-  "user-roles",
-  "role-permissions",
+  "manager/campuses",
+  "manager/committees",
+  "manager/organizations",
+  "manager/users",
 ];
 
 const dynamicPages = [
-  "committees",
-  "campuses",
-  "organizations",
-  "assets/originals",
-  "assets/copies",
   "inventories",
-  "groups",
-  "roles",
-  "permissions",
-  "user-roles",
-  "role-permissions",
+  "manager/campuses",
+  "manager/committees",
+  "manager/organizations",
+  "manager/users",
 ];
 
-const authPages = ["login", "signup", "recover", "callback"];
+const authPages = ["sign-in", "sign-up", "verify-email"];
 
 export default function Home() {
   return (

@@ -26,18 +26,18 @@ enum StatusBem {
 
 model usuarios {
   usuario_id          String    @id @default(uuid())
-  nome                String
-  papel               String
+  nome                String?
+  papel               String    @default("operador")
   email               String    @unique
   senha_hash          String?
-  habilitado          Boolean
+  habilitado          Boolean   @default(true)
   organizacao_id      String
   campus_id           String?
   comissao_id         String?
   data_inicio         DateTime?
   data_fim            DateTime?
   metodo_autenticacao String
-  imagem_url          String?
+  avatar_url          String?
 
   organizacao          organizacoes          @relation(fields: [organizacao_id], references: [organizacao_id])
   campus               campus?               @relation(fields: [campus_id], references: [campus_id])
@@ -51,6 +51,16 @@ model usuarios {
   inventarios_fechados inventarios[]         @relation("InventarioFechadoPor")
   bens_copias          bens_copias[]
   settings             settings[]
+  usuariosPermitidos   usuariosPermitidos[]
+}
+
+model usuariosPermitidos {
+  usuarios_permitidos_id String   @id @default(uuid())
+  usuario_id             String
+  permission             String
+  usuario                usuarios @relation(fields: [usuario_id], references: [usuario_id])
+  data_criacao           DateTime @default(now())
+  data_atualizacao       DateTime @updatedAt
 }
 
 model comissoes {
@@ -68,12 +78,11 @@ model comissoes {
 }
 
 model organizacoes {
-  organizacao_id String @id @default(uuid())
+  organizacao_id String      @id @default(uuid())
   nome           String
-
-  campus    campus[]
-  usuarios  usuarios[]
-  comissoes comissoes[]
+  campus         campus[]
+  usuarios       usuarios[]
+  comissoes      comissoes[]
 }
 
 model campus {
