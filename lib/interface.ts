@@ -74,6 +74,7 @@ export interface Campus {
   nome: string;
   campus_codigo: string;
   organizacao_id: string;
+  campus_ativo: boolean;
 
   // Relations
   organizacao?: Organizacao;
