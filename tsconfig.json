@@ -28,6 +28,6 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "app/(auth)/auth"
-  ],
+, "app/error"  ],
   "exclude": ["node_modules"]
 }
