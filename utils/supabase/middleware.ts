@@ -6,6 +6,18 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    !process.env.NEXT_PUBLIC_BASE_URL
+  ) {
+    throw new Error("Supabase environment variables are missing.");
+  }
+
+  console.log("Base URL:", process.env.NEXT_PUBLIC_BASE_URL);
+  console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+  console.log("Supabase ANON KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL! || "",
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! || "",
