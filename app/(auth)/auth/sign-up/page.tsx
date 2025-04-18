@@ -43,31 +43,8 @@ export default function AuthPage() {
       },
       body: JSON.stringify({ email, password }),
     });
-
-    // const { data, error } = await supabase.auth.signUp({
-    //   email,
-    //   password,
-    // });
-
     setIsLoading(false);
-
-    // if (error) {
-    //   alert("Erro ao criar usuário: " + error.message);
-    // } else {
-    //   alert("Usuário criado! Verifique seu email para confirmar.");
-    //   router.push("/dashboard");
-    // }
   };
-
-  // const handleGoogleLogin = async () => {
-  //   const { error } = await supabase.auth.signInWithOAuth({
-  //     provider: "google",
-  //   });
-
-  //   if (error) {
-  //     alert("Erro ao entrar com Google: " + error.message);
-  //   }
-  // };
 
   return (
     <div className="flex flex-col items-center justify-center h-screen p-4">
@@ -76,7 +53,7 @@ export default function AuthPage() {
       </div>
       <Image
         className="mx-auto w-72 h-auto md:hidden"
-        src="/Logotipo.svg"
+        src="/logotipo.svg"
         alt="logo"
         width={288}
         height={100}
@@ -85,7 +62,7 @@ export default function AuthPage() {
         <CardHeader className="w-full flex flex-col items-start md:items-center text-left md:text-center">
           <Image
             className="w-88 h-auto hidden md:block mb-6"
-            src="/Logotipo.svg"
+            src="/logotipo.svg"
             alt="logo"
             width={352}
             height={100}
@@ -141,14 +118,6 @@ export default function AuthPage() {
           </div>
 
           <CardFooter className="mt-6 flex flex-col items-center">
-            {/* <Button
-              className="w-full md:w-112 bg-[var(--button-color)] text-[var(--font-color2)] cursor-pointer hover:!bg-[var(--hover-3-color)] hover:!text-white transition-all"
-              type="button"
-              onClick={handleGoogleLogin}
-            >
-              <FaGoogle className="h-4 w-4 mr-2" />
-              <span>Criar com Google</span>
-            </Button> */}
             <p className="text-sm mt-2 text-center text-[var(--font-color)]">
               Entre em contato com o campus para acesso ao sistema
             </p>
