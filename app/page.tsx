@@ -74,7 +74,7 @@ export default function Home() {
             <li key={page}>
               <Link
                 className="text-blue-600 hover:underline"
-                href={`/auth/${page}`}
+                href={`/auth/${page} `}
               >
                 /auth/{page}
               </Link>
