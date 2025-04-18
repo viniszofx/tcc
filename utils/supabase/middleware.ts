@@ -51,6 +51,7 @@ export async function updateSession(request: NextRequest) {
   const RoutesAllowed = [
     "/",
     "/auth/sign-in",
+    "/auth/forget-password",
     "/api/v1/auth/callback",
     "/api/v1/auth/confirm",
   ];
