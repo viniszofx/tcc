@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
 
-export default function PageError({
+export default function Error({
   error,
   reset,
 }: {
