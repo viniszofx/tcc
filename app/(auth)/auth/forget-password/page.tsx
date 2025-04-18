@@ -31,14 +31,14 @@ export default function RecoverPasswordPage() {
       </div>
       <img
         className="mx-auto w-72 h-auto md:hidden"
-        src="/Logotipo.svg"
+        src="/logotipo.svg"
         alt="logo"
       />
       <Card className="mx-auto max-w-3xl w-full mt-4 max-h-full md:p-8 border-[var(--border-color)] bg-[var(--bg-simple)]">
         <CardHeader className="flex flex-col items-start md:items-center text-left md:text-center">
           <img
             className="w-88 h-auto hidden md:block mb-6"
-            src="/Logotipo.svg"
+            src="/logotipo.svg"
             alt="logo"
           />
           <CardTitle className="text-4xl font-bold mb-6 md:mb-2 text-[var(--font-color)]">
