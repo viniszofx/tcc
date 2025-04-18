@@ -93,17 +93,26 @@ export async function signOut() {
 }
 
 async function signInWith({ provider }: { provider: string }) {
+  const ServerUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  console.log("ServerUrl", ServerUrl);
+  if (!ServerUrl) {
+    console.error(
+      "NEXT_PUBLIC_BASE_URL is not defined in the environment variables."
+    );
+    redirect("/error?message=missing_url");
+  }
+
   console.log("signInWith called", provider);
   const supabase = await createClient();
 
   const { error, data } = await supabase.auth.signInWithOAuth({
     provider: provider as any,
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_URL}/api/v1/auth/callback`,
+      redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/api/v1/auth/callback`,
     },
   });
 
-  console.log("signInWith result data:", data);
+  console.log("signInWith result data:", data.provider, data.url);
   console.log("signInWith result error:", error);
 
   if (error) {
@@ -117,5 +126,7 @@ async function signInWith({ provider }: { provider: string }) {
 
 export async function signInWithGoogle() {
   console.log("signInWithGoogle called");
-  return await signInWith({ provider: "google" });
+  return await signInWith({
+    provider: "google",
+  });
 }
