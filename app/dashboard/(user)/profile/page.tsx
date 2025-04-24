@@ -7,19 +7,24 @@ import ProfileActions from "@/components/profile/profile-actions"
 import ProfileEditor from "@/components/profile/profile-editor"
 import ProfileSidebar from "@/components/profile/profile-sidebar"
 import { Card } from "@/components/ui/card"
+import { user, getCampusNameById } from "@/utils/user"
 
-export default function StaticProfilePage() {
+export default function ProfilePage() {
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
 
+  // Usando o primeiro usuário como exemplo para a página principal
+  // Isso deve ser substituído por uma chamada de API real para obter o usuário logado
+  const defaultUser = user[0]
+
   const [perfil, setPerfil] = useState({
-    id: "static-profile",
-    nome: "João Silva",
-    email: "joao@email.com",
-    campus: "Campus Corumbá",
+    id: defaultUser.usuario_id,
+    nome: defaultUser.nome,
+    email: defaultUser.email,
+    campus: getCampusNameById(defaultUser.campus_id || ""),
     descricao: "Administrador do sistema com experiência em gestão de comissões e processos acadêmicos.",
-    cargo: "admin" as const,
-    foto: "/logo.svg",
+    cargo: defaultUser.papel as "admin" | "operador" | "presidente",
+    foto: defaultUser.imagem_url || "/logo.svg",
   })
 
   const handleSave = async () => {
@@ -43,7 +48,7 @@ export default function StaticProfilePage() {
   }
 
   const handleBack = () => {
-    router.back()
+    router.push("/")
   }
 
   return (
@@ -77,3 +82,4 @@ export default function StaticProfilePage() {
     </div>
   )
 }
+

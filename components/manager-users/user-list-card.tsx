@@ -52,14 +52,14 @@ export function UserListCard({ users, onEditUser }: UserListCardProps) {
                                 >
                                     <div className="col-span-1 hidden md:block">
                                         <Avatar className="h-10 w-10 border">
-                                            <AvatarImage src={usuario.foto || "/placeholder.svg?height=40&width=40"} alt={usuario.nome} />
+                                            <AvatarImage src={usuario.imagem_url || "/placeholder.svg?height=40&width=40"} alt={usuario.nome} />
                                             <AvatarFallback>{usuario.nome.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                     </div>
                                     <div className="col-span-4 md:col-span-2 truncate">
                                         <div className="flex items-center gap-2 md:hidden">
                                             <Avatar className="h-8 w-8 border">
-                                                <AvatarImage src={usuario.foto || "/placeholder.svg?height=32&width=32"} alt={usuario.nome} />
+                                                <AvatarImage src={usuario.imagem_url || "/placeholder.svg?height=32&width=32"} alt={usuario.nome} />
                                                 <AvatarFallback>{usuario.nome.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                             <span>{usuario.nome}</span>

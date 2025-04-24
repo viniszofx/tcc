@@ -79,7 +79,7 @@ export default function UserDetailsPage() {
       </CardHeader>
 
       <CardContent className="flex flex-col gap-6 p-6">
-        <UserProfileCard nome={userData.nome} papel={userData.papel} foto={userData.foto} />
+        <UserProfileCard nome={userData.nome} papel={userData.papel} foto={userData.imagem_url} />
 
         <UserDetailsCard
           id={userData.usuario_id}

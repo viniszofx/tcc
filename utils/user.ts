@@ -10,7 +10,7 @@ export const user: Usuario[] = [
     habilitado: true,
     organizacao_id: "org-001",
     campus_id: "1",
-    foto: "/default-avatar.jpg",
+    imagem_url: "/logo.svg",
     comissao_id: "com-001",
   },
   {
@@ -23,7 +23,7 @@ export const user: Usuario[] = [
     organizacao_id: "org-001",
     campus_id: "2",
     comissao_id: "Campus Campo Grande",
-    foto: "/default-avatar.jpg",
+    imagem_url: "/logo.svg",
   },
   {
     usuario_id: "dev-pres-001",
@@ -35,7 +35,7 @@ export const user: Usuario[] = [
     organizacao_id: "org-001",
     campus_id: "5",
     comissao_id: "com-001",
-    foto: "/default-avatar.jpg",
+    imagem_url: "/logo.svg",
   },
   {
     usuario_id: "dev-user-002",
@@ -47,7 +47,7 @@ export const user: Usuario[] = [
     organizacao_id: "org-001",
     campus_id: "4",
     comissao_id: "com-001",
-    foto: "/default-avatar.jpg",
+    imagem_url: "/logo.svg",
   },
 ];
 

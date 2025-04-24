@@ -30,7 +30,7 @@ export function AddUserModal({ isOpen, onClose, onAddUser, campusList }: AddUser
     senha: "",
     campus_id: "",
     papel: "",
-    foto: "/default-avatar.jpg",
+    foto: "/logo.svg",
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -95,7 +95,7 @@ export function AddUserModal({ isOpen, onClose, onAddUser, campusList }: AddUser
         senha: "",
         campus_id: "",
         papel: "",
-        foto: "/default-avatar.jpg",
+        foto: "/logo.svg",
       })
 
       onClose()

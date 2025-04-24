@@ -8,6 +8,10 @@ import ProfileEditor from "@/components/profile/profile-editor"
 import ProfileSidebar from "@/components/profile/profile-sidebar"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { user, getCampusNameById } from "@/utils/user"
+
+import ProfileLoading from "./loading"
+import NotFound from "./not-found"
 
 type ProfileType = {
   id: string
@@ -28,25 +32,48 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
 
-  const fetchProfileData = async (id: string): Promise<ProfileType> => {
-    const response = await fetch(`/api/profile/${id}`)
+  // Função para simular a busca de dados do usuário
+  // Em produção, isso seria substituído por uma chamada de API real
+  const fetchProfileData = async (id: string): Promise<ProfileType | null> => {
+    // Simulando um atraso de rede
+    await new Promise((resolve) => setTimeout(resolve, 500))
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch profile: ${response.statusText}`)
+    // Encontrando o usuário pelo ID
+    const foundUser = user.find((u) => u.usuario_id === id)
+
+    // Se não encontrar o usuário, retorne null
+    if (!foundUser) {
+      return null
     }
 
-    return response.json()
+    return {
+      id: foundUser.usuario_id,
+      nome: foundUser.nome,
+      email: foundUser.email,
+      campus: getCampusNameById(foundUser.campus_id || ""),
+      descricao: "Descrição do usuário não disponível.", // Placeholder, já que não temos esse campo no modelo
+      cargo: foundUser.papel as "admin" | "operador" | "presidente",
+      foto: foundUser.imagem_url || "/logo.svg",
+    }
   }
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         setIsLoading(true)
-
         const profileData = await fetchProfileData(profileId)
+
+        if (!profileData) {
+          // Se não encontrar o perfil, use o componente not-found
+          NotFound()
+          return
+        }
+
         setPerfil(profileData)
       } catch (error) {
         console.error("Failed to fetch profile:", error)
+        // Erros serão capturados pelo componente error.tsx
+        throw new Error("Falha ao carregar o perfil")
       } finally {
         setIsLoading(false)
       }
@@ -66,17 +93,18 @@ export default function ProfilePage() {
 
     try {
       setIsSaving(true)
-      const response = await fetch(`/api/profile/${profileId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(perfil),
-      })
 
-      if (!response.ok) {
-        throw new Error(`Failed to save profile: ${response.statusText}`)
-      }
+      // Simulando uma chamada de API
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      // Aqui você implementaria a chamada real para a API
+      // const response = await fetch(`/api/profile/${profileId}`, {
+      //   method: "PUT",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify(perfil),
+      // })
 
       alert("Perfil salvo com sucesso!")
     } catch (error) {
@@ -88,32 +116,15 @@ export default function ProfilePage() {
   }
 
   const handleBack = () => {
-    router.back()
+    router.push("/profile")
   }
 
+  // Mostrar o componente de carregamento enquanto os dados estão sendo buscados
   if (isLoading) {
-    return (
-      <div className="flex-1 w-full p-3 xs:p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center">
-        <Card className="bg-[var(--bg-simple)] w-full max-w-[98%] xs:max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[calc(100%-var(--sidebar-width)-2rem)] mx-auto shadow-md rounded-lg p-8">
-          <div className="flex items-center justify-center">
-            <p className="text-[var(--font-color)]">Carregando perfil...</p>
-          </div>
-        </Card>
-      </div>
-    )
+    return <ProfileLoading />
   }
 
-  if (!perfil) {
-    return (
-      <div className="flex-1 w-full p-3 xs:p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center">
-        <Card className="bg-[var(--bg-simple)] w-full max-w-[98%] xs:max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[calc(100%-var(--sidebar-width)-2rem)] mx-auto shadow-md rounded-lg p-8">
-          <div className="flex items-center justify-center">
-            <p className="text-[var(--font-color)]">Perfil não encontrado</p>
-          </div>
-        </Card>
-      </div>
-    )
-  }
+  // O caso de perfil não encontrado agora é tratado pelo componente not-found.tsx
 
   return (
     <div className="flex-1 w-full p-3 xs:p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center">
@@ -121,24 +132,24 @@ export default function ProfilePage() {
         <CardContent className="flex-grow p-0">
           <div className="flex flex-col md:flex-row h-full p-6 sm:p-8 gap-8">
             <ProfileSidebar
-              nome={perfil.nome}
-              email={perfil.email}
-              campus={perfil.campus}
-              descricao={perfil.descricao}
-              cargo={perfil.cargo}
-              foto={perfil.foto}
+              nome={perfil!.nome}
+              email={perfil!.email}
+              campus={perfil!.campus}
+              descricao={perfil!.descricao}
+              cargo={perfil!.cargo}
+              foto={perfil!.foto}
             />
 
             <Separator orientation="vertical" className="hidden md:block" />
 
             <ProfileEditor
-              nome={perfil.nome}
-              email={perfil.email}
-              campus={perfil.campus}
-              descricao={perfil.descricao}
-              onNomeChange={(value) => setPerfil({ ...perfil, nome: value })}
-              onEmailChange={(value) => setPerfil({ ...perfil, email: value })}
-              onDescricaoChange={(value) => setPerfil({ ...perfil, descricao: value })}
+              nome={perfil!.nome}
+              email={perfil!.email}
+              campus={perfil!.campus}
+              descricao={perfil!.descricao}
+              onNomeChange={(value) => setPerfil({ ...perfil!, nome: value })}
+              onEmailChange={(value) => setPerfil({ ...perfil!, email: value })}
+              onDescricaoChange={(value) => setPerfil({ ...perfil!, descricao: value })}
             />
           </div>
         </CardContent>

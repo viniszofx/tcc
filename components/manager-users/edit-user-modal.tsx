@@ -42,7 +42,7 @@ export function EditUserModal({ isOpen, onClose, user, onEditUser, campusList }:
         email: user.email,
         papel: user.papel,
         campus_id: user.campus_id || "",
-        foto: user.foto || "/default-avatar.jpg",
+        foto: user.foto || "/logo.svg",
       })
     }
   }, [user])

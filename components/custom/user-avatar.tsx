@@ -25,7 +25,7 @@ export function UserAvatar({ nome, email, cargo, foto }: UserAvatarProps) {
       <DropdownMenuTrigger className="focus:outline-none">
         <Avatar className="w-10 h-10 cursor-pointer border">
           <AvatarImage
-            src={foto || "/default-avatar.jpg"}
+            src={foto || "/logo.svg"}
             alt="Foto do usuário"
           />
           <AvatarFallback>{nome.charAt(0)}</AvatarFallback>

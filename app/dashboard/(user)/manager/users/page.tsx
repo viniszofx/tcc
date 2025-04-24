@@ -32,7 +32,7 @@ export default function UsersPage() {
     const userToAdd: Usuario = {
       ...(newUser as Usuario),
       usuario_id: newUserId,
-      foto: newUser.foto || "/default-avatar.jpg",
+      imagem_url: newUser.imagem_url || "/logo.svg",
       habilitado: true,
       organizacao_id: "org-001",
     }

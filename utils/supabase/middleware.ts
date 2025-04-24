@@ -50,8 +50,8 @@ export async function updateSession(request: NextRequest) {
   console.log("User:", user);
   const RoutesAllowed = [
     "/",
-    "/dashboard/manager/campuses",
-    "/dashboard/manager/campuses/1",
+    "/dashboard/profile",
+    "/dashboard/profile/dev-user-001",
     "/auth/sign-in",
     "/auth/forget-password",
     "/api/v1/auth/callback",
