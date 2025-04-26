@@ -8,8 +8,7 @@ import ProcessingIndicator from "@/components/dashboard/processing-indicator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFileProcessor } from "@/hooks/use-file-processor";
 import { storeProcessedData } from "@/utils/data-storage";
-import { createClient } from "@/utils/supabase/server";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function ProcessingPage() {

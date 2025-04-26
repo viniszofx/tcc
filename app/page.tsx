@@ -1,134 +1,185 @@
-import Link from "next/link";
+"use client";
+
+import { CameraComponent } from "@/components/camera/camera";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
-
-const dashboardPages = [
-  "/",
-  "about",
-  "inventories",
-  "manager/campuses",
-  "manager/committees",
-  "manager/organizations",
-  "manager/users",
-];
-
-const dynamicPages = [
-  "inventories",
-  "manager/campuses",
-  "manager/committees",
-  "manager/organizations",
-  "manager/users",
-];
-
-const authPages = ["sign-in", "sign-up", "verify-email"];
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function Home() {
+  const router = useRouter();
+  const [cameraModalOpen, setCameraModalOpen] = useState(false);
+
+  const handleStartNow = () => {
+    router.push("/auth/sign-in");
+  };
+
+  const handleLearnMore = () => {
+    // Scroll suave até a seção de features
+    document.querySelector("#features")?.scrollIntoView({
+      behavior: "smooth",
+    });
+  };
+
+  const handleContact = () => {
+    // Você pode substituir isso pelo seu email de contato
+    window.location.href = "mailto:contato@gestaopatrimonial.com";
+  };
+
+  const handleDemoScanner = async () => {
+    try {
+      // Solicita permissão da câmera antes de abrir
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+      });
+      stream.getTracks().forEach((track) => track.stop());
+      setCameraModalOpen(true);
+    } catch (error) {
+      console.error("Erro ao acessar câmera:", error);
+      alert("Por favor, permita o acesso à câmera para usar esta função.");
+    }
+  };
+
+  const features = [
+    {
+      title: "Gestão de Inventário",
+      description: "Controle total sobre seus bens patrimoniais com QR Code",
+      icon: "📦",
+    },
+    {
+      title: "Multi-organizacional",
+      description: "Gerencie múltiplas organizações e câmpus em um só lugar",
+      icon: "🏢",
+    },
+    {
+      title: "Comissões",
+      description: "Organize comissões de inventário e desfazimento",
+      icon: "👥",
+    },
+    {
+      title: "Scanner QR Code",
+      description: "Leitura rápida e precisa de patrimônios via câmera",
+      icon: "📱",
+    },
+  ];
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="relative h-[600px] flex items-center justify-center bg-[var(--primary-color)]">
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="relative z-10 text-center text-white p-8">
+          {/* Logo addition */}
+          <div className="mb-8 flex justify-center">
+            <Image
+              src="/logotipo.svg"
+              alt="Logo"
+              width={200}
+              height={100}
+              priority
+            />
+          </div>
 
-        <h2 className="text-xl font-semibold text-center sm:text-left">
-          Dashboard Pages
-        </h2>
-        <ul className="list-disc pl-4">
-          {dashboardPages.map((page) => (
-            <li key={page}>
-              <Link
-                className="text-blue-600 hover:underline"
-                href={`/dashboard/${page}`}
-              >
-                /dashboard/{page}
-              </Link>
-            </li>
-          ))}
-        </ul>
+          <h1 className="text-5xl font-bold mb-4">
+            Sistema de Gestão Patrimonial
+          </h1>
+          <p className="text-xl mb-8 max-w-2xl mx-auto">
+            Simplifique o controle do seu patrimônio com nossa solução completa
+            de gestão de inventário
+          </p>
+          <Button
+            size="lg"
+            className="mr-4 bg-white text-[var(--primary-color)] hover:bg-gray-100"
+            onClick={handleStartNow}
+          >
+            Começar Agora
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className="border-white bg-[var([--secondary-color]) text-white hover:bg-white/10"
+            onClick={handleLearnMore}
+          >
+            Saiba Mais
+          </Button>
+        </div>
+      </section>
 
-        <h2 className="text-xl font-semibold text-center sm:text-left mt-6">
-          Dynamic Pages (sample ID: 123)
-        </h2>
-        <ul className="list-disc pl-4">
-          {dynamicPages.map((page) => (
-            <li key={page}>
-              <Link
-                className="text-blue-600 hover:underline"
-                href={`/dashboard/${page}/123`}
-              >
-                /dashboard/{page}/123
-              </Link>
-            </li>
-          ))}
-        </ul>
+      {/* Features Section */}
+      <section
+        id="features"
+        className="py-20 px-6 bg-[var(--bg-simple)] scroll-mt-20"
+      >
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12">
+            Funcionalidades Principais
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature) => (
+              <Card key={feature.title} className="text-center">
+                <CardHeader>
+                  <div className="text-4xl mb-4">{feature.icon}</div>
+                  <CardTitle>{feature.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
 
-        <h2 className="text-xl font-semibold text-center sm:text-left mt-6">
-          Auth Pages
-        </h2>
-        <ul className="list-disc pl-4">
-          {authPages.map((page) => (
-            <li key={page}>
-              <Link
-                className="text-blue-600 hover:underline"
-                href={`/auth/${page} `}
-              >
-                /auth/{page}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </main>
+      {/* Demo Section */}
+      <section className="py-20 px-6">
+        <div className="max-w-6xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-12">Demonstração do Scanner</h2>
+          <div className="flex justify-center">
+            {cameraModalOpen ? (
+              <CameraComponent onClose={() => setCameraModalOpen(false)} />
+            ) : (
+              <Button size="lg" onClick={handleDemoScanner}>
+                Testar Scanner QR Code
+              </Button>
+            )}
+          </div>
+        </div>
+      </section>
 
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+      {/* CTA Section */}
+      <section className="py-20 px-6 bg-[var(--primary-color)] text-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-4">
+            Pronto para modernizar sua gestão patrimonial?
+          </h2>
+          <p className="mb-8 text-lg">
+            Entre em contato conosco e descubra como podemos ajudar sua
+            instituição
+          </p>
+          <Button
+            size="lg"
+            className="bg-white text-[var(--primary-color)] hover:bg-gray-100"
+            onClick={handleContact}
+          >
+            Entrar em Contato
+          </Button>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-8 px-6 bg-[var(--secondary-color)] text-white">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
+          <div className="mb-4 md:mb-0">
+            <Image src="/logotipo.svg" alt="Logo" width={120} height={40} />
+          </div>
+          <div className="text-center md:text-right">
+            <p>
+              &copy; 2024 Sistema de Gestão Patrimonial. Todos os direitos
+              reservados.
+            </p>
+          </div>
+        </div>
       </footer>
     </div>
   );
