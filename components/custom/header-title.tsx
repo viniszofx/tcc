@@ -6,20 +6,16 @@ const HeaderTitle = () => {
   const pathname = usePathname()
 
   const routes = [
-    { prefix: "/dashboard/profile", title: "Perfil" },
-    { prefix: "/dashboard/manager/committees", title: "Comissão" },
-    { prefix: "/dashboard/settings", title: "Configurações" },
-    { prefix: "/dashboard/inventories", title: "Inventário" },
-    { prefix: "/dashboard/about", title: "Sobre" },
-    { prefix: "/dashboard", title: "Dashboard" },
-    { prefix: "/dashboard/manager/users", title: "Gerenciamento de Usuários" },
-    { prefix: "/dashboard/manager/campuses", title: "Gerenciamento de Campus" },
-    { prefix: "/dashboard/manager/organizations", title: "Gerenciamento de Organizações" },
+    { prefix: "/dashboard/campus/[comission_id]/commissions", title: "Comissões" },
+    { prefix: "/dashboard/campus", title: "Câmpus" },
   ]
 
-  const sortedRoutes = [...routes].sort((a, b) => b.prefix.length - a.prefix.length)
+  const convertToRegex = (prefix: string) => {
+    const regexString = "^" + prefix.replace(/\[.*?\]/g, "[^/]+")
+    return new RegExp(regexString)
+  }
 
-  const matchedRoute = sortedRoutes.find((route) => pathname.startsWith(route.prefix))
+  const matchedRoute = routes.find((route) => convertToRegex(route.prefix).test(pathname))
   const title = matchedRoute?.title || "Dashboard"
 
   console.log("Current pathname:", pathname)
