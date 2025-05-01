@@ -7,10 +7,10 @@ interface UserDetailsCardProps {
     id: string
     email: string
     campus: string
-    papel: string
+    role: string // Changed from papel to match db.json
 }
 
-export function UserDetailsCard({ id, email, campus, papel }: UserDetailsCardProps) {
+export function UserDetailsCard({ id, email, campus, role }: UserDetailsCardProps) {
     return (
         <Card className="border-[var(--border-color)] bg-[var(--bg-simple)]">
             <CardHeader className="p-4 pb-0">
@@ -45,8 +45,8 @@ export function UserDetailsCard({ id, email, campus, papel }: UserDetailsCardPro
                     <div className="flex items-center gap-3 p-3 rounded-md border border-[var(--border-color)]">
                         <UserCircle className="h-5 w-5 text-[var(--font-color)] opacity-70" />
                         <div>
-                            <p className="text-sm font-medium text-[var(--font-color)]">Papel</p>
-                            <p className="text-[var(--font-color)]">{papel}</p>
+                            <p className="text-sm font-medium text-[var(--font-color)]">Função</p>
+                            <p className="text-[var(--font-color)]">{role}</p>
                         </div>
                     </div>
                 </div>

@@ -108,7 +108,7 @@ export default function InventoryItemClient({
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-md lg:max-w-5xl xl:max-w-6xl mx-auto">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <Link href="/dashboard/inventories">
+          <Link href="/dashboard/org/inventories">
             <Button
               variant="ghost"
               className="flex items-center gap-2 text-[var(--font-color)] hover:bg-[var(--hover-2-color)] hover:text-white cursor-pointer"

@@ -1,16 +1,16 @@
 "use client"
 
-import { user, campusList, getCampusNameById } from "@/utils/user"
-import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import type { Usuario } from "@/lib/interface"
-import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { ArrowLeft, Trash2, Pencil } from "lucide-react"
 import { DeleteUserDialog } from "@/components/manager-users/delete-user-dialog"
 import { EditUserModal } from "@/components/manager-users/edit-user-modal"
-import { UserProfileCard } from "@/components/manager-users/user-profile-card"
 import { UserDetailsCard } from "@/components/manager-users/user-details-card"
+import { UserProfileCard } from "@/components/manager-users/user-profile-card"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import type { Usuario } from "@/lib/interface"
+import { campusList, getCampusNameById, user } from "@/utils/user"
+import { ArrowLeft, Pencil, Trash2 } from "lucide-react"
+import { useParams, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export default function UserDetailsPage() {
   const params = useParams()
@@ -84,9 +84,7 @@ export default function UserDetailsPage() {
         <UserDetailsCard
           id={userData.usuario_id}
           email={userData.email}
-          campus={getCampusNameById(userData.campus_id || "")}
-          papel={userData.papel}
-        />
+          campus={getCampusNameById(userData.campus_id || "")} role={""} />
       </CardContent>
 
       <CardFooter className="flex flex-col sm:flex-row sm:justify-between gap-2 p-6 pt-0">

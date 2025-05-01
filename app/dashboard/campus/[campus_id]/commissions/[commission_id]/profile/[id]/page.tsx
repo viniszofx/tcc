@@ -1,5 +1,6 @@
 "use client"
 
+import data from "@/data/db.json"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
@@ -8,7 +9,6 @@ import ProfileEditor from "@/components/profile/profile-editor"
 import ProfileSidebar from "@/components/profile/profile-sidebar"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { user, getCampusNameById } from "@/utils/user"
 
 import ProfileLoading from "./loading"
 import NotFound from "./not-found"
@@ -32,28 +32,24 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
 
-  // Função para simular a busca de dados do usuário
-  // Em produção, isso seria substituído por uma chamada de API real
   const fetchProfileData = async (id: string): Promise<ProfileType | null> => {
-    // Simulando um atraso de rede
     await new Promise((resolve) => setTimeout(resolve, 500))
 
-    // Encontrando o usuário pelo ID
-    const foundUser = user.find((u) => u.usuario_id === id)
-
-    // Se não encontrar o usuário, retorne null
+    const foundUser = data.users.find((u) => u.id === id)
     if (!foundUser) {
       return null
     }
 
+    const userCampus = data.campuses.find(c => c.id === foundUser.campus_id)
+
     return {
-      id: foundUser.usuario_id,
-      nome: foundUser.nome,
+      id: foundUser.id,
+      nome: foundUser.name,
       email: foundUser.email,
-      campus: getCampusNameById(foundUser.campus_id || ""),
-      descricao: "Descrição do usuário não disponível.", // Placeholder, já que não temos esse campo no modelo
-      cargo: foundUser.papel as "admin" | "operador" | "presidente",
-      foto: foundUser.imagem_url || "/logo.svg",
+      campus: userCampus?.name || "",
+      descricao: foundUser.profile.description,
+      cargo: foundUser.role as "admin" | "operador" | "presidente",
+      foto: foundUser.profile.image
     }
   }
 
@@ -64,7 +60,6 @@ export default function ProfilePage() {
         const profileData = await fetchProfileData(profileId)
 
         if (!profileData) {
-          // Se não encontrar o perfil, use o componente not-found
           NotFound()
           return
         }
@@ -72,7 +67,6 @@ export default function ProfilePage() {
         setPerfil(profileData)
       } catch (error) {
         console.error("Failed to fetch profile:", error)
-        // Erros serão capturados pelo componente error.tsx
         throw new Error("Falha ao carregar o perfil")
       } finally {
         setIsLoading(false)
@@ -94,17 +88,7 @@ export default function ProfilePage() {
     try {
       setIsSaving(true)
 
-      // Simulando uma chamada de API
       await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Aqui você implementaria a chamada real para a API
-      // const response = await fetch(`/api/profile/${profileId}`, {
-      //   method: "PUT",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify(perfil),
-      // })
 
       alert("Perfil salvo com sucesso!")
     } catch (error) {
@@ -116,15 +100,12 @@ export default function ProfilePage() {
   }
 
   const handleBack = () => {
-    router.push("/profile")
+    router.push(`/dashboard/org/${params.slug}/campus/${params.campus_id}/commissions/${params.commission_id}`)
   }
 
-  // Mostrar o componente de carregamento enquanto os dados estão sendo buscados
   if (isLoading) {
     return <ProfileLoading />
   }
-
-  // O caso de perfil não encontrado agora é tratado pelo componente not-found.tsx
 
   return (
     <div className="flex-1 w-full p-3 xs:p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center">

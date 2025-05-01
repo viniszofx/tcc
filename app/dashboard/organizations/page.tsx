@@ -7,54 +7,38 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getOrganizations } from '@/lib/data-service';
 import Link from "next/link";
 
 export default function OrganizationsPage() {
+  const organizations = getOrganizations();
+
   return (
     <div className="p-6 space-y-6">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Organizações</h1>
-        <p className="text-muted-foreground">
-          Lista de organizações cadastradas
-        </p>
+        <p className="text-muted-foreground">Lista de organizações cadastradas</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Instituto Federal de Mato Grosso do Sul</CardTitle>
-            <CardDescription>IFMS</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Detalhes sobre o Instituto Federal de Mato Grosso do Sul e suas
-              unidades
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Link href="/dashboard/org/ifms/campus/" className="w-full">
-              <Button className="w-full">Ver Câmpus</Button>
-            </Link>
-          </CardFooter>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Instituto Federal de Santa Catarina</CardTitle>
-            <CardDescription>IFSC</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Detalhes sobre o Instituto Federal de Santa Catarina e suas
-              unidades
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Link href="/dashboard/org/ifsc/campus/" className="w-full">
-              <Button className="w-full">Ver Câmpus</Button>
-            </Link>
-          </CardFooter>
-        </Card>
+        {organizations.map((org) => (
+          <Card key={org.id}>
+            <CardHeader>
+              <CardTitle>{org.name}</CardTitle>
+              <CardDescription>{org.shortName}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Detalhes sobre o {org.name} e suas unidades
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Link href={`/dashboard/org/${org.id}/campus/`} className="w-full">
+                <Button className="w-full">Ver Câmpus</Button>
+              </Link>
+            </CardFooter>
+          </Card>
+        ))}
       </div>
     </div>
   );

@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -10,20 +12,25 @@ import {
 } from "@/components/ui/sidebar";
 import { File, Home, Info, Settings } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const params = useParams();
+  const campusId = params?.campus_id || 'corumba';
+
   return (
     <Sidebar {...props}>
       <SidebarHeader className="bg-[var(--secondary-color)]">
         <div className="relative w-60 h-32 mx-auto">
-          <a href="/dashboard/organizations">
+          <Link href={`/dashboard/campus/${campusId}`}>
             <Image
               fill
               className="object-contain"
               src="/logotipo.svg"
               alt="logo"
             />
-          </a>
+          </Link>
         </div>
       </SidebarHeader>
       <SidebarContent className="bg-[var(--secondary-color)] flex flex-col justify-between h-full">
@@ -35,13 +42,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
                   asChild
                 >
-                  <a
-                    href="/dashboard/organizations"
+                  <Link
+                    href={`/dashboard/campus/${campusId}`}
                     className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                   >
                     <Home className="text-[var(--font-color2)]" />
                     Dashboard
-                  </a>
+                  </Link>
                 </Button>
               </li>
               <li className="p-2 gap-2 flex items-center justify-center md:hidden">
@@ -49,13 +56,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
                   asChild
                 >
-                  <a
-                    href="/dashboard/committees"
+                  <Link
+                    href={`/dashboard/campus/${campusId}/commissions`}
                     className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                   >
                     <File className="text-[var(--font-color2)]" />
                     Abrir Comissão
-                  </a>
+                  </Link>
                 </Button>
               </li>
             </SidebarMenu>
@@ -66,25 +73,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             className="bg-[var(--secondary-color)] text-[var(--font-color2)] mb-4"
             asChild
           >
-            <a
-              href="/dashboard/about"
+            <Link
+              href={`/dashboard/campus/${campusId}/about`}
               className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
             >
               <Info className="text-[var(--font-color2)]" />
               Sobre
-            </a>
+            </Link>
           </Button>
           <Button
-            className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
+            className="bg-[var-sidebar-color)] text-[var(--font-color2)]"
             asChild
           >
-            <a
-              href="/dashboard/settings"
+            <Link
+              href={`/dashboard/campus/${campusId}/settings`}
               className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
             >
               <Settings className="text-[var(--font-color2)]" />
               Configurações
-            </a>
+            </Link>
           </Button>
         </div>
       </SidebarContent>

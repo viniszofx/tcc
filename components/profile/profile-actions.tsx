@@ -6,9 +6,10 @@ interface ProfileActionsProps {
   onSave: () => void
   onBack: () => void
   isSaving: boolean
+  currentRoute?: string
 }
 
-export default function ProfileActions({ onSave, onBack, isSaving }: ProfileActionsProps) {
+export default function ProfileActions({ onSave, onBack, isSaving, currentRoute }: ProfileActionsProps) {
   return (
     <div className="w-full px-6 sm:px-8 py-4 md:py-5 border-t flex flex-row justify-end gap-6 sm:gap-4">
       <Button

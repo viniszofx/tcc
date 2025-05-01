@@ -18,7 +18,7 @@ export default function NotFound() {
         </p>
       </CardContent>
       <CardFooter className="flex justify-center">
-        <Link href="/dashboard/inventories">
+        <Link href="/dashboard/">
           <Button className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white cursor-pointer">
             Voltar para Inventário
           </Button>
