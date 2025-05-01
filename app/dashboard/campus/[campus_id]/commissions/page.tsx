@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,14 +12,15 @@ import data from "@/data/db.json";
 import Link from "next/link";
 
 interface CommissionsPageProps {
-  params: {
+  params: Promise<{
     campus_id: string;
-  };
+  }>;
 }
 
-export default function CommissionsPage({ params }: CommissionsPageProps) {
+export default async function CommissionsPage({ params }: CommissionsPageProps) {
+  const resolvedParams = await params;
   const commissions = data.commissions.filter(
-    (commission) => commission.campus_id === params.campus_id
+    (commission) => commission.campus_id === resolvedParams.campus_id
   );
 
   return (
@@ -29,7 +31,7 @@ export default function CommissionsPage({ params }: CommissionsPageProps) {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {commissions.map((commission) => (
+        {commissions.map(async (commission) => (
           <Card key={commission.id}>
             <CardHeader>
               <CardTitle>{commission.name}</CardTitle>
@@ -42,7 +44,7 @@ export default function CommissionsPage({ params }: CommissionsPageProps) {
             </CardContent>
             <CardFooter>
               <Link
-                href={`/dashboard/campus/${params.campus_id}/commissions/${commission.id}`}
+                href={`/dashboard/campus/${(await params).campus_id}/commissions/${commission.id}`}
                 className="w-full"
               >
                 <Button className="w-full">Ver Comissão</Button>

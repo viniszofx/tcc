@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Card,
   CardContent,
@@ -10,20 +12,17 @@ import { Database, FileText, Info, Settings, Users2 } from "lucide-react";
 import Link from "next/link";
 
 interface CommissionPageProps {
-  params: {
-    campus_id: string;
-    commission_id: string;
-  };
+  params: any;
 }
 
 export default function CommissionPage({ params }: CommissionPageProps) {
-  const commission = data.commissions.find((c) => c.id === params.commission_id);
+  const commission = data.commissions.find((c: any) => c.id === params.commission_id);
 
   if (!commission) {
     return <div>Comissão não encontrada</div>;
   }
 
-  const routes = [
+  const routes: any[] = [
     {
       title: "Inventário",
       description: "Gerenciar itens do inventário",
@@ -64,7 +63,7 @@ export default function CommissionPage({ params }: CommissionPageProps) {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {routes.map((route) => (
+        {routes.map((route: any) => (
           <Card key={route.href}>
             <Link
               href={`/dashboard/campus/${params.campus_id}/commissions/${params.commission_id}/${route.href}`}

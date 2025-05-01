@@ -1,6 +1,6 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default function NotFound() {
     return (
@@ -20,7 +20,7 @@ export default function NotFound() {
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Button asChild variant="default" className="gap-2 bg-[var(--button-color)] px-8 py-6 text-[var(--font-color2)] transition-all hover:bg-[var(--hover-3-color)] hover:text-white">
-                        <Link href="/dashboard">
+                        <Link href="/dashboard/campus">
                             <ArrowLeft className="w-4 h-4" />
                             Voltar para a página inicial
                         </Link>

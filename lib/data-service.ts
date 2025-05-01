@@ -4,10 +4,7 @@ export const getOrganizations = () => {
   return data.organizations;
 };
 
-export const getCampuses = (orgId?: string) => {
-  if (orgId) {
-    return data.campuses.filter((campus) => campus.org_id === orgId);
-  }
+export const getCampuses = () => {
   return data.campuses;
 };
 

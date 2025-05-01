@@ -1,32 +1,44 @@
-import { type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "./utils/supabase/middleware";
 
-if (process.env.NODE_ENV !== "production") {
+const isDevelopment = process.env.NODE_ENV === "development";
+const publicRoutes = [
+  "/",
+  "/auth/sign-in",
+  "/auth/forget-password",
+  "/api/v1/auth/callback",
+  "/api/v1/auth/confirm",
+  "/manifest.webmanifest",
+];
+
+if (isDevelopment) {
   // eslint-disable-next-line no-console
-  console.log("Middleware loaded in development mode.");
+  console.log("Middleware loaded in development mode - all routes are public");
 }
 
 export async function middleware(request: NextRequest) {
-  // Check if the request is for a specific path
   const { pathname } = request.nextUrl;
 
-  // Update session for all requests except for the ones starting with _next/static, _next/image, and favicon.ico
-  if (!pathname.startsWith("/_next") && !pathname.startsWith("/favicon.ico")) {
-    await updateSession(request);
+  // In development mode, allow all routes
+  if (isDevelopment) {
+    return NextResponse.next();
   }
 
-  return null; // No response needed, just run the middleware
+  // In production, check public routes and static assets
+  if (
+    publicRoutes.includes(pathname) ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon.ico")
+  ) {
+    return NextResponse.next();
+  }
+
+  // Handle authentication for protected routes
+  return await updateSession(request);
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
-     */
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
