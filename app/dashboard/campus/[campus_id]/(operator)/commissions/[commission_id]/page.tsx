@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Card,
   CardContent,
@@ -11,18 +9,29 @@ import data from "@/data/db.json";
 import { Database, FileText, Info, Settings, Users2 } from "lucide-react";
 import Link from "next/link";
 
-interface CommissionPageProps {
-  params: any;
+interface Route {
+  title: string;
+  description: string;
+  icon: any;
+  href: string;
 }
 
-export default function CommissionPage({ params }: CommissionPageProps) {
-  const commission = data.commissions.find((c: any) => c.id === params.commission_id);
+interface CommissionPageProps {
+  params: Promise<{
+    campus_id: string;
+    commission_id: string;
+  }>;
+}
+
+export default async function CommissionPage({ params }: CommissionPageProps) {
+  const resolvedParams = await params;
+  const commission = data.commissions.find((c) => c?.id === resolvedParams.commission_id);
 
   if (!commission) {
     return <div>Comissão não encontrada</div>;
   }
 
-  const routes: any[] = [
+  const routes: Route[] = [
     {
       title: "Inventário",
       description: "Gerenciar itens do inventário",
@@ -37,7 +46,7 @@ export default function CommissionPage({ params }: CommissionPageProps) {
     },
     {
       title: "Relatórios",
-      description: "Visualizar e gerar relatórios",
+      description: "Visualizar e gerar relatatórios",
       icon: FileText,
       href: `reports`,
     },
@@ -63,10 +72,10 @@ export default function CommissionPage({ params }: CommissionPageProps) {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {routes.map((route: any) => (
+        {routes.map((route) => (
           <Card key={route.href}>
             <Link
-              href={`/dashboard/campus/${params.campus_id}/commissions/${params.commission_id}/${route.href}`}
+              href={`/dashboard/campus/${resolvedParams.campus_id}/commissions/${resolvedParams.commission_id}/${route.href}`}
               className="block h-full hover:bg-accent/50 transition-colors"
             >
               <CardHeader>
