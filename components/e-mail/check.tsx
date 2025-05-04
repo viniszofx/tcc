@@ -44,7 +44,7 @@ export default function EmailCheck({
         </CardHeader>
         <CardFooter className="flex justify-center text-center mt-6">
           <a
-            href="/auth"
+            href="/auth/sign-in"
             className="w-full text-center underline text-[var(--font-color)]"
           >
             Entrar

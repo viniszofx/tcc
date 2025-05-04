@@ -104,7 +104,7 @@ export default function AuthPage() {
               </Button>
               <a
                 className="block w-full text-sm text-end text-[var(--font-color)] hover:underline"
-                href="/auth/login"
+                href="/auth/sign-in"
               >
                 Já tem conta? Entrar
               </a>
