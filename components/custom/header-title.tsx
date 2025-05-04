@@ -11,7 +11,7 @@ const HeaderTitle = () => {
   ]
 
   const convertToRegex = (prefix: string) => {
-    const regexString = "^" + prefix.replace(/[.*?]/g, "[^/]+")
+    const regexString = "^" + prefix.replace(/\[.*?\]/g, "[^/]+")
     return new RegExp(regexString)
   }
 
