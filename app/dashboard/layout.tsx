@@ -8,15 +8,16 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { users } from "@/data/db.json";
 import HeaderTitle from "../../components/custom/header-title";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
-  const usuario = {
-    nome: "João Silva",
-    email: "joao@email.com",
-    cargo: "admin" as const,
-    foto: "/logo.svg",
-  };
+  const usuarioData = users.find((u) => u.role === "admin");
+
+  if (!usuarioData) {
+    return <div>Usuário não encontrado</div>;
+  }
+
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[var(--card-color)]">
@@ -42,7 +43,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                     <a href="/comission">Abrir Comissão</a>
                   </Button>
                   <DarkModeToggle />
-                  <UserAvatar {...usuario} />
+                  <UserAvatar 
+                    nome={usuarioData.name}
+                    email={usuarioData.email}
+                    foto={usuarioData.profile.image} cargo={"admin"}
+                  />
                 </div>
               </div>
             </div>
