@@ -23,7 +23,7 @@ export default async function CommissionPage({ params }: CommissionPageProps) {
 
   if (!commission) {
     return (
-      <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
+      <Card className="w-full max-w-3xl bg-[var(--bg-simple)] lg:max-w-5xl xl:max-w-6xl">
         <CardContent className="flex flex-col items-center justify-center py-12">
           <h2 className="text-xl font-bold text-[var(--font-color)]">Comissão não encontrada</h2>
           <p className="text-muted-foreground mt-2">A comissão solicitada não existe ou foi removida.</p>
