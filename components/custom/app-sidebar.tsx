@@ -18,6 +18,7 @@ import { useParams } from "next/navigation";
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const params = useParams();
   const campusId = params?.campus_id || 'corumba';
+  const commissionId = params?.commission_id || 'comissao';
 
   return (
     <Sidebar {...props}>
@@ -43,7 +44,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   asChild
                 >
                   <Link
-                    href={`/dashboard/campus/${campusId}`}
+                    href={`/dashboard`}
                     className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                   >
                     <Home className="text-[var(--font-color2)]" />
@@ -74,7 +75,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             asChild
           >
             <Link
-              href={`/dashboard/campus/${campusId}/about`}
+              href={`/dashboard/campus/${campusId}/commissions/${commissionId}/about`}
               className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
             >
               <Info className="text-[var(--font-color2)]" />
@@ -86,7 +87,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             asChild
           >
             <Link
-              href={`/dashboard/campus/${campusId}/settings`}
+              href={`/dashboard/campus/${campusId}/commissions/${commissionId}/settings`}
               className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
             >
               <Settings className="text-[var(--font-color2)]" />

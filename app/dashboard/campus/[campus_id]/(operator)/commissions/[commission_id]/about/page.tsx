@@ -27,7 +27,7 @@ export default function Page() {
         </p>
 
         <p className="text-base md:text-lg">
-          Desenvolvido por <strong>João Silva</strong>, este projeto visa proporcionar uma experiência moderna, segura e eficiente.
+          Desenvolvido por <strong>Osiris Vinicius, Pedro Ernesto e Bruno Wagler</strong>, este projeto visa proporcionar uma experiência moderna, rápida e intuitiva.
         </p>
 
         <div className="flex justify-end border-t pt-4 lg:pt-6">
