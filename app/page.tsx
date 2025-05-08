@@ -67,9 +67,9 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[600px] flex items-center justify-center bg-[var(--primary-color)]">
-        <div className="absolute inset-0 bg-black/50" />
-        <div className="relative z-10 text-center text-white p-8">
+      <section className="relative h-[600px] flex items-center justify-center bg-[var(--secondary-color)]">
+        <div className="absolute inset-0" />
+        <div className="relative z-10 text-center text-[var(--primary-color)] p-8">
           {/* Logo addition */}
           <div className="mb-8 flex justify-center">
             <Image
@@ -90,7 +90,7 @@ export default function Home() {
           </p>
           <Button
             size="lg"
-            className="mr-4 bg-white text-[var(--primary-color)] hover:bg-gray-100"
+            className="mr-4 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-gray-400"
             onClick={handleStartNow}
           >
             Começar Agora
@@ -98,7 +98,7 @@ export default function Home() {
           <Button
             size="lg"
             variant="outline"
-            className="border-white bg-[var([--secondary-color]) text-white hover:bg-white/10"
+            className="border-white bg-[var([--secondary-color]) text-[var(--font-color2)] hover:bg-white/10"
             onClick={handleLearnMore}
           >
             Saiba Mais
@@ -139,7 +139,9 @@ export default function Home() {
             {cameraModalOpen ? (
               <CameraComponent onClose={() => setCameraModalOpen(false)} />
             ) : (
-              <Button size="lg" onClick={handleDemoScanner}>
+              <Button size="lg"
+                className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-gray-400"
+                onClick={handleDemoScanner}>
                 Testar Scanner QR Code
               </Button>
             )}
@@ -148,7 +150,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-6 bg-[var(--primary-color)] text-white">
+      <section className="py-20 px-6 bg-[var(--primary-color)] text-[var(--font-color2)]">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">
             Pronto para modernizar sua gestão patrimonial?
@@ -159,7 +161,7 @@ export default function Home() {
           </p>
           <Button
             size="lg"
-            className="bg-white text-[var(--primary-color)] hover:bg-gray-100"
+            className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-gray-400"
             onClick={handleContact}
           >
             Entrar em Contato
@@ -168,7 +170,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-6 bg-[var(--secondary-color)] text-white">
+      <footer className="py-8 px-6 bg-[var(--secondary-color)] text-[var(--font-color2)]">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0">
             <Image src="/logotipo.svg" alt="Logo" width={120} height={40} />
