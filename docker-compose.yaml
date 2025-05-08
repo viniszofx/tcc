@@ -1,16 +1,17 @@
 services:
   db:
-    image: postgres:16-alpine
+    image: mysql
     container_name: tcc_dev_db
     environment:
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: dev
-      POSTGRES_DB: tcc_dev
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=tcc_dev
+      - MYSQL_USER=tcc_dev
+      - MYSQL_PASSWORD=tcc_dev
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - ./postgres:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
 
 volumes:
-  postgres:
-    name: tcc_dev_data
+  mysql_data:

@@ -4,66 +4,67 @@ import { hash } from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Limpar todas as tabelas em ordem reversa de dependência
-  await prisma.$transaction([
-    prisma.role_permissions.deleteMany(),
-    prisma.user_roles.deleteMany(),
-    prisma.permissions.deleteMany(),
-    prisma.roles.deleteMany(),
-    prisma.autenticacao_social.deleteMany(),
-    prisma.settings.deleteMany(),
-    prisma.historico_bens.deleteMany(),
-    prisma.bens_copias.deleteMany(),
-    prisma.bens_originais.deleteMany(),
-    prisma.inventarios.deleteMany(),
-    prisma.comissoes.deleteMany(),
-    prisma.responsaveis.deleteMany(),
-    prisma.campus.deleteMany(),
-    prisma.usuarios.deleteMany(), // MOVIDO PARA CIMA
-    prisma.organizacoes.deleteMany(),
-    prisma.grupos.deleteMany(),
-  ]);
+  try {
+    console.log("Iniciando seed do banco de dados...");
 
-  console.log("Banco de dados limpo com sucesso.");
+    // Limpar banco de dados
+    console.log("Limpando banco de dados...");
+    await prisma.$transaction([
+      prisma.user_roles.deleteMany(),
+      prisma.roles.deleteMany(),
+      prisma.users.deleteMany(),
+      prisma.organizacoes.deleteMany(),
+    ]);
 
-  // Criar role ADMIN
-  const adminRole = await prisma.roles.create({
-    data: {
-      role_name: "ADMIN",
-    },
-  });
-
-  // Criar organização e usuário administrador
-  const adminUser = await prisma.usuarios.create({
-    data: {
-      nome: "Administrador",
-      email: "admin@ecco.app",
-      senha_hash: await hash("admin123", 10),
-      habilitado: true,
-      papel: "ADMIN",
-      organizacao: {
-        create: {
-          nome: "Organização Padrão",
-        },
+    // Criar organização
+    console.log("Criando organização padrão...");
+    const org = await prisma.organizacoes.create({
+      data: {
+        nome: "IFMS",
       },
-      metodo_autenticacao: "EMAIL",
-    },
-  });
+    });
 
-  // Relacionar usuário à role ADMIN
-  await prisma.user_roles.create({
-    data: {
-      usuario_id: adminUser.usuario_id,
-      role_id: adminRole.role_id,
-    },
-  });
+    // Criar role admin
+    console.log("Criando role admin...");
+    const adminRole = await prisma.roles.create({
+      data: {
+        role_name: "ADMIN",
+      },
+    });
 
-  console.log("Usuário administrador criado com sucesso.");
+    // Criar usuário admin
+    console.log("Criando usuário admin...");
+    const adminUser = await prisma.users.create({
+      data: {
+        nome: "Administrador",
+        email: "admin@ifms.edu.br",
+        senha_hash: await hash("admin123", 10),
+        habilitado: true,
+        papel: "ADMIN",
+        organizacao_id: org.organizacao_id,
+        metodo_autenticacao: "EMAIL",
+      },
+    });
+
+    // Relacionar usuário com role
+    console.log("Vinculando usuário à role admin...");
+    await prisma.user_roles.create({
+      data: {
+        usuario_id: adminUser.usuario_id,
+        role_id: adminRole.role_id,
+      },
+    });
+
+    console.log("Seed concluído com sucesso!");
+  } catch (error) {
+    console.error("Erro durante o seed:", error);
+    throw error;
+  }
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error("Erro fatal durante o seed:", e);
     process.exit(1);
   })
   .finally(async () => {

@@ -24,7 +24,7 @@ enum StatusBem {
   BAIXADO
 }
 
-model usuarios {
+model users {
   usuario_id          String    @id @default(uuid())
   nome                String?
   papel               String    @default("operador")
@@ -39,26 +39,26 @@ model usuarios {
   metodo_autenticacao String
   avatar_url          String?
 
-  organizacao          organizacoes          @relation(fields: [organizacao_id], references: [organizacao_id])
-  campus               campus?               @relation(fields: [campus_id], references: [campus_id])
-  comissao             comissoes?            @relation(fields: [comissao_id], references: [comissao_id])
-  inventarios          inventarios[]         @relation("ResponsavelInventario")
+  organizacao          organizacoes     @relation(fields: [organizacao_id], references: [organizacao_id])
+  campus               campus?          @relation(fields: [campus_id], references: [campus_id])
+  comissao             comissoes?       @relation(fields: [comissao_id], references: [comissao_id])
+  inventarios          inventarios[]    @relation("ResponsavelInventario")
   papeis               user_roles[]
-  autenticacoes        autenticacao_social[]
-  comissoesPresididas  comissoes[]           @relation("PresidenteComissao")
+  autenticacoes        social_auth[]
+  comissoesPresididas  comissoes[]      @relation("PresidenteComissao")
   historico_bens       historico_bens[]
-  inventarios_abertos  inventarios[]         @relation("InventarioAbertoPor")
-  inventarios_fechados inventarios[]         @relation("InventarioFechadoPor")
+  inventarios_abertos  inventarios[]    @relation("InventarioAbertoPor")
+  inventarios_fechados inventarios[]    @relation("InventarioFechadoPor")
   bens_copias          bens_copias[]
   settings             settings[]
-  usuariosPermitidos   usuariosPermitidos[]
+  usuariosPermitidos   allowed_users[]
 }
 
-model usuariosPermitidos {
+model allowed_users {
   usuarios_permitidos_id String   @id @default(uuid())
   usuario_id             String
   permission             String
-  usuario                usuarios @relation(fields: [usuario_id], references: [usuario_id])
+  usuario                users    @relation(fields: [usuario_id], references: [usuario_id])
   data_criacao           DateTime @default(now())
   data_atualizacao       DateTime @updatedAt
 }
@@ -72,16 +72,16 @@ model comissoes {
   organizacao_id String
 
   organizacao organizacoes  @relation(fields: [organizacao_id], references: [organizacao_id])
-  presidente  usuarios      @relation("PresidenteComissao", fields: [presidente_id], references: [usuario_id])
+  presidente  users         @relation("PresidenteComissao", fields: [presidente_id], references: [usuario_id])
   inventarios inventarios[]
-  membros     usuarios[]
+  membros     users[]
 }
 
 model organizacoes {
   organizacao_id String      @id @default(uuid())
   nome           String
   campus         campus[]
-  usuarios       usuarios[]
+  usuarios       users[]
   comissoes      comissoes[]
 }
 
@@ -92,7 +92,7 @@ model campus {
   organizacao_id String
 
   organizacao organizacoes     @relation(fields: [organizacao_id], references: [organizacao_id])
-  usuarios    usuarios[]
+  usuarios    users[]
   bens        bens_originais[]
   bens_copias bens_copias[]
   responsavel responsaveis?
@@ -150,9 +150,9 @@ model bens_copias {
 
   campus         campus           @relation(fields: [campus_id], references: [campus_id])
   inventario     inventarios      @relation(fields: [inventario_id], references: [inventario_id])
-  grupo          grupos           @relation(fields: [grupo_id], references: [grupo_id])
+  grupo          groups           @relation(fields: [grupo_id], references: [grupo_id])
   bem_original   bens_originais   @relation(fields: [bem_id], references: [bem_id])
-  atualizado_por usuarios         @relation(fields: [ultimo_atualizado_por], references: [usuario_id])
+  atualizado_por users            @relation(fields: [ultimo_atualizado_por], references: [usuario_id])
   historico      historico_bens[]
 }
 
@@ -169,9 +169,9 @@ model inventarios {
   data_fechamento DateTime?
 
   comissao    comissoes        @relation(fields: [comissao_id], references: [comissao_id])
-  responsavel usuarios         @relation("ResponsavelInventario", fields: [responsavel_id], references: [usuario_id])
-  abertoPor   usuarios         @relation("InventarioAbertoPor", fields: [aberto_por], references: [usuario_id])
-  fechadoPor  usuarios?        @relation("InventarioFechadoPor", fields: [fechado_por], references: [usuario_id])
+  responsavel users            @relation("ResponsavelInventario", fields: [responsavel_id], references: [usuario_id])
+  abertoPor   users            @relation("InventarioAbertoPor", fields: [aberto_por], references: [usuario_id])
+  fechadoPor  users?           @relation("InventarioFechadoPor", fields: [fechado_por], references: [usuario_id])
   bens        bens_copias[]
   historico   historico_bens[]
 }
@@ -187,10 +187,10 @@ model historico_bens {
 
   bem        bens_copias @relation(fields: [bem_id], references: [bem_id])
   inventario inventarios @relation(fields: [inventario_id], references: [inventario_id])
-  usuario    usuarios    @relation(fields: [usuario_id], references: [usuario_id])
+  usuario    users       @relation(fields: [usuario_id], references: [usuario_id])
 }
 
-model grupos {
+model groups {
   grupo_id  String  @id @default(uuid())
   nome      String
   descricao String?
@@ -228,13 +228,13 @@ model user_roles {
   usuario_id String
   role_id    String
 
-  usuario usuarios @relation(fields: [usuario_id], references: [usuario_id])
-  role    roles    @relation(fields: [role_id], references: [role_id])
+  usuario users @relation(fields: [usuario_id], references: [usuario_id])
+  role    roles @relation(fields: [role_id], references: [role_id])
 
   @@id([usuario_id, role_id])
 }
 
-model autenticacao_social {
+model social_auth {
   autenticacao_id String   @id @default(uuid())
   usuario_id      String
   provedor        String
@@ -246,7 +246,7 @@ model autenticacao_social {
   refresh_token   String?
   data_criacao    DateTime
 
-  usuario usuarios @relation(fields: [usuario_id], references: [usuario_id])
+  usuario users @relation(fields: [usuario_id], references: [usuario_id])
 }
 
 model settings {
@@ -257,7 +257,7 @@ model settings {
   description String?
   updated_at  DateTime @updatedAt
   created_at  DateTime @default(now())
-  user        usuarios @relation(fields: [usuario_id], references: [usuario_id])
+  user        users    @relation(fields: [usuario_id], references: [usuario_id])
 
   @@index([usuario_id])
 }
