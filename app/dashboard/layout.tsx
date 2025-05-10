@@ -43,7 +43,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                     <a href="/comission">Abrir Comissão</a>
                   </Button>
                   <DarkModeToggle />
-                  <UserAvatar 
+                  <UserAvatar
                     nome={usuarioData.name}
                     email={usuarioData.email}
                     foto={usuarioData.profile.image} cargo={"admin"}
