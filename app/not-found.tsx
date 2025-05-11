@@ -1,3 +1,5 @@
+// Error page for 404 Not Found
+
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";

@@ -1,14 +1,9 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Urbanist } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const urbanist = Urbanist({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-urbanist",
 });
 
 
@@ -21,7 +16,7 @@ export default function RootLayout({
     <html lang="en">
       <link rel="icon" href="/logo.svg" type="image/svg+xml" />
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${urbanist.variable} font-sans antialiased`}
       >
         {children}
       </body>

@@ -1,5 +1,7 @@
 ﻿"use client";
 
+// Essa página somente sera acessada pelo presidente da comissão
+
 import ErrorDisplay from "@/components/dashboard/error-display";
 import FileUploadArea from "@/components/dashboard/file-update-area";
 import HardwareAccelerationToggle from "@/components/dashboard/hardware-acceleration-toggle";

@@ -1,3 +1,5 @@
+// Landing Page
+
 "use client";
 
 import { CameraComponent } from "@/components/camera/camera";
