@@ -3,6 +3,7 @@
 "use client";
 
 import { CameraComponent } from "@/components/camera/camera";
+// import Show from "@/components/show";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
@@ -10,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function Home() {
+
   const router = useRouter();
   const [cameraModalOpen, setCameraModalOpen] = useState(false);
 
@@ -74,6 +76,10 @@ export default function Home() {
         <div className="relative z-10 text-center text-[var(--primary-color)] p-8">
           {/* Logo addition */}
           <div className="mb-8 flex justify-center">
+
+            {/* show all users */}
+            {/* <Show /> */}
+
             <Image
               src="/logotipo.svg"
               alt="Logo"

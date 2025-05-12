@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function ProcessingPage() {
+  const isPresident = true; // Você pode substituir isso pela lógica real de verificação
   const [file, setFile] = useState<File | null>(null);
   const [hardwareAcceleration, setHardwareAcceleration] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
@@ -69,46 +70,59 @@ export default function ProcessingPage() {
       </CardHeader>
 
       <CardContent className="flex flex-col gap-8">
-        <FileUploadArea file={file} onFileChange={handleFileChange} />
+        {isPresident ? (
+          <>
+            <FileUploadArea file={file} onFileChange={handleFileChange} />
 
-        <HardwareAccelerationToggle
-          enabled={hardwareAcceleration}
-          onToggle={setHardwareAcceleration}
-          description="Acelera o processamento usando algoritmos otimizados e processamento em lotes"
-        />
+            <HardwareAccelerationToggle
+              enabled={hardwareAcceleration}
+              onToggle={setHardwareAcceleration}
+              description="Acelera o processamento usando algoritmos otimizados e processamento em lotes"
+            />
 
-        <div className="flex justify-end border-t pt-4 lg:pt-6">
-          <ProcessButton
-            onClick={handleProcess}
-            disabled={!file || isProcessing}
-            isProcessing={isProcessing}
-          />
-        </div>
+            <div className="flex justify-end border-t pt-4 lg:pt-6">
+              <ProcessButton
+                onClick={handleProcess}
+                disabled={!file || isProcessing}
+                isProcessing={isProcessing}
+              />
+            </div>
 
-        {isProcessing && (
-          <ProcessingIndicator
-            progress={progress}
-            hardwareAcceleration={hardwareAcceleration}
-            fileName={file?.name}
-          />
-        )}
+            {isProcessing && (
+              <ProcessingIndicator
+                progress={progress}
+                hardwareAcceleration={hardwareAcceleration}
+                fileName={file?.name}
+              />
+            )}
 
-        {error && (
-          <ErrorDisplay
-            type="error"
-            title="Erro no processamento"
-            message={error}
-            suggestion="Tente novamente ou entre em contato com o suporte se o problema persistir."
-          />
-        )}
+            {error && (
+              <ErrorDisplay
+                type="error"
+                title="Erro no processamento"
+                message={error}
+                suggestion="Tente novamente ou entre em contato com o suporte se o problema persistir."
+              />
+            )}
 
-        {storageError && (
-          <ErrorDisplay
-            type="warning"
-            title="Aviso de armazenamento"
-            message={storageError}
-            suggestion="Tente processar um arquivo menor ou com menos colunas."
-          />
+            {storageError && (
+              <ErrorDisplay
+                type="warning"
+                title="Aviso de armazenamento"
+                message={storageError}
+                suggestion="Tente processar um arquivo menor ou com menos colunas."
+              />
+            )}
+          </>
+        ) : (
+          <div className="text-center py-8">
+            <h2 className="text-xl font-semibold text-[var(--font-color)]">
+              Olá Mundo!
+            </h2>
+            <p className="text-muted-foreground mt-2">
+              Você não tem permissão para acessar esta página.
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>

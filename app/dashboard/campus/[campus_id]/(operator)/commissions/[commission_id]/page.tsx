@@ -37,31 +37,31 @@ export default async function CommissionPage({ params }: CommissionPageProps) {
       title: "Inventário",
       description: "Gerenciar itens do inventário",
       icon: Database,
-      href: `inventories`,
+      href: `/dashboard/campus/${resolvedParams.campus_id}/commissions/${resolvedParams.commission_id}/inventory`,
     },
     {
       title: "Membros",
       description: "Gerenciar membros da comissão",
       icon: Users2,
-      href: `manager/users`,
+      href: `/dashboard/campus/${resolvedParams.campus_id}/commissions/${resolvedParams.commission_id}/members`,
     },
     {
       title: "Relatórios",
       description: "Visualizar e gerar relatatórios",
       icon: FileText,
-      href: `reports`,
+      href: `/dashboard/campus/${resolvedParams.campus_id}/commissions/${resolvedParams.commission_id}/reports`,
     },
     {
       title: "Configurações",
       description: "Configurações da comissão",
       icon: Settings,
-      href: `settings`,
+      href: `/dashboard/campus/${resolvedParams.campus_id}/commissions/${resolvedParams.commission_id}/settings`,
     },
     {
       title: "Sobre",
       description: "Informações sobre a comissão",
       icon: Info,
-      href: `about`,
+      href: `/dashboard/campus/${resolvedParams.campus_id}/commissions/${resolvedParams.commission_id}/about`,
     },
   ]
 
@@ -79,7 +79,7 @@ export default async function CommissionPage({ params }: CommissionPageProps) {
           {routes.map((route) => (
             <Card key={route.href} className="transition-all hover:bg-[var(--hover-3-color)] group">
               <Link
-                href={`/dashboard/campus/${resolvedParams.campus_id}/commissions/${resolvedParams.commission_id}/${route.href}`}
+                href={route.href}
                 className="block h-full w-full"
               >
                 <CardHeader>

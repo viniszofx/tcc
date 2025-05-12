@@ -1,10 +1,11 @@
-import { signIn, signInWithGoogle } from "@/app/(auth)/auth/_action"
+import { signIn, signInWithGoogle, } from "@/app/(auth)/auth/_action"
 import { FaGoogle } from "react-icons/fa"
 import { Button } from "../ui/button"
 import { CardContent, CardFooter } from "../ui/card"
 import { Input } from "../ui/input"
 
 export default function AuthForm() {
+
   return (
     <div className="w-full flex justify-start md:justify-center">
       <div className="w-full md:max-w-[28rem]">
