@@ -9,20 +9,33 @@ const publicRoutes = [
   "/auth/forget-password",
   "/api/v1/auth/callback",
   "/api/v1/auth/confirm",
-  "/api/v1/setup/status", // Adicionar a rota de status
+  "/api/v1/setup/status",
   "/manifest.webmanifest",
 ];
 
+// Paths to ignore in development logs
+const ignoredPaths = [
+  'manifest.webmanifest',
+  '.well-known/appspecific/com.chrome.devtools.json'
+];
+
 if (isDevelopment) {
-  // eslint-disable-next-line no-console
   console.log("Middleware loaded in development mode - all routes are public");
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // In development mode, allow all routes
+  // In development mode, allow all routes but filter logs
   if (isDevelopment) {
+    const shouldLog = !ignoredPaths.some(path => pathname.includes(path));
+    
+    if (shouldLog) {
+      console.log("Development mode - all routes are public");
+      console.log("Request URL:", request.url);
+      console.log("Request Pathname:", pathname);
+    }
+    
     return NextResponse.next();
   }
 
