@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import DarkModeToggle from "@/components/custom/dark-mode-toggle";
 import { Button } from "@/components/ui/button";

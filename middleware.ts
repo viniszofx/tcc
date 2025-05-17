@@ -5,9 +5,11 @@ const isDevelopment = process.env.NODE_ENV === "development";
 const publicRoutes = [
   "/",
   "/auth/sign-in",
+  "/auth/sign-up",
   "/auth/forget-password",
   "/api/v1/auth/callback",
   "/api/v1/auth/confirm",
+  "/api/v1/setup/status", // Adicionar a rota de status
   "/manifest.webmanifest",
 ];
 
@@ -24,7 +26,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // In production, check public routes and static assets
+  // Check if it's the login page
+  if (pathname === "/auth/sign-in") {
+    try {
+      const response = await fetch(new URL("/api/v1/setup/status", request.url));
+      const data = await response.json();
+      
+      if (data.status === "first_user") {
+        return NextResponse.redirect(new URL("/auth/register", request.url));
+      }
+    } catch (error) {
+      console.error("Error checking setup status:", error);
+    }
+  }
+
+  // Continue with existing middleware logic
   if (
     publicRoutes.includes(pathname) ||
     pathname.startsWith("/_next") ||

@@ -3,7 +3,6 @@
 "use client";
 
 import { CameraComponent } from "@/components/camera/camera";
-import Show from "@/components/show";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
@@ -11,12 +10,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function Home() {
-
   const router = useRouter();
   const [cameraModalOpen, setCameraModalOpen] = useState(false);
 
   const handleStartNow = () => {
-    router.push("/auth/sign-in");
+    console.log("Iniciando o processo de registro...");
+    router.push("/auth/setup");
   };
 
   const handleLearnMore = () => {
@@ -76,7 +75,6 @@ export default function Home() {
         <div className="relative z-10 text-center text-[var(--primary-color)] p-8">
           {/* Logo addition */}
           <div className="mb-8 flex justify-center">
-            <Show/>
             <Image
               src="/logotipo.svg"
               alt="Logo"
@@ -144,9 +142,11 @@ export default function Home() {
             {cameraModalOpen ? (
               <CameraComponent onClose={() => setCameraModalOpen(false)} />
             ) : (
-              <Button size="lg"
+              <Button
+                size="lg"
                 className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-gray-400"
-                onClick={handleDemoScanner}>
+                onClick={handleDemoScanner}
+              >
                 Testar Scanner QR Code
               </Button>
             )}
