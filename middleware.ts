@@ -6,6 +6,7 @@ const isDevelopment = process.env.NODE_ENV === "development";
 console.log("Middleware loaded in", isDevelopment ? "development" : "production", "mode");
 const publicRoutes = [
   "/",
+  "/auth/setup",
   "/auth/sign-in",
   "/auth/sign-up",
   "/auth/forget-password",
