@@ -58,30 +58,6 @@ export function UserAvatar({ nome, email, cargo, foto }: UserAvatarProps) {
           </DropdownMenuItem>
         </a>
 
-        {cargo === "admin" && (
-          <>
-            <a href="/dashboard/manager/campuses">
-              <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
-                <Building size={16} className="text-[var(--font-color2)]" />
-                <span>Gerenciar Campus</span>
-              </DropdownMenuItem>
-            </a>
-            <a href="/dashboard/manager/users">
-              <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
-                <Users size={16} className="text-[var(--font-color2)]" />
-                <span>Gerenciar Usuários</span>
-              </DropdownMenuItem>
-            </a>
-          </>
-        )}
-
-        {cargo === "presidente" && (
-          <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
-            <Users size={16} className="text-[var(--font-color2)]" />
-            <span>Gerenciar Comissão</span>
-          </DropdownMenuItem>
-        )}
-
         <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
           <History size={16} className="text-[var(--font-color2)]" />
           <span>Histórico</span>

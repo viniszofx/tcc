@@ -10,12 +10,16 @@ import {
   SidebarMenu,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { File, Home, Info, Settings } from "lucide-react";
+import { File, Home, Info, Settings, Users, Building2, Landmark, Clock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  cargo?: "admin" | "operador" | "presidente";
+}
+
+export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
   const params = useParams();
   const campusId = params?.campus_id || 'corumba';
   const commissionId = params?.commission_id || 'comissao';
@@ -52,26 +56,74 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </Link>
                 </Button>
               </li>
-              <li className="p-2 gap-2 flex items-center justify-center md:hidden">
+              <hr className="my-2 border-[var(--border-color)]" />
+              {cargo === "admin" && (
+                <>
+                  <li className="p-2 gap-2 flex items-center justify-center">
+                    <Button
+                      className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
+                      asChild
+                    >
+                      <Link
+                        href="/dashboard/manager/users"
+                        className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
+                      >
+                        <Users className="text-[var(--font-color2)]" />
+                        Gerenciar Usuários
+                      </Link>
+                    </Button>
+                  </li>
+                  <li className="p-2 gap-2 flex items-center justify-center">
+                    <Button
+                      className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
+                      asChild
+                    >
+                      <Link
+                        href="/dashboard/manager/campuses"
+                        className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
+                      >
+                        <Building2 className="text-[var(--font-color2)]" />
+                        Gerenciar Campus
+                      </Link>
+                    </Button>
+                  </li>
+                  <li className="p-2 gap-2 flex items-center justify-center">
+                    <Button
+                      className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
+                      asChild
+                    >
+                      <Link
+                        href="/dashboard/manager/organizations"
+                        className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
+                      >
+                        <Landmark className="text-[var(--font-color2)]" />
+                        Gerenciar Organizações
+                      </Link>
+                    </Button>
+                  </li>
+                </>
+              )}
+              <li className="p-2 gap-2 flex items-center justify-center">
                 <Button
                   className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
                   asChild
                 >
                   <Link
-                    href={`/dashboard/campus/${campusId}/commissions`}
+                    href="/dashboard/history"
                     className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                   >
-                    <File className="text-[var(--font-color2)]" />
-                    Abrir Comissão
+                    <Clock className="text-[var(--font-color2)]" />
+                    Histórico
                   </Link>
                 </Button>
               </li>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <div className="flex flex-col gap-2 p-4 mt-auto mb-6">
+        <div className="flex flex-col gap-2 p-4 mt-auto mb-6 [var(--border-color)]">
+          <hr className="my-2 border-[var(--border-color)]" />
           <Button
-            className="bg-[var(--secondary-color)] text-[var(--font-color2)] mb-4"
+            className="bg-[var(--secondary-color)] text-[var(--font-color2)] mb-2"
             asChild
           >
             <Link
@@ -83,7 +135,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </Link>
           </Button>
           <Button
-            className="bg-[var-sidebar-color)] text-[var(--font-color2)]"
+            className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
             asChild
           >
             <Link

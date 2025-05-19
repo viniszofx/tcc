@@ -36,7 +36,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[var(--card-color)]">
       <SidebarProvider>
-        <AppSidebar />
+        <AppSidebar cargo="admin"/>
         <SidebarInset className="flex flex-col">
           <header className="sticky top-0 z-10 flex h-16 items-center border-b bg-[var(--header-color)]">
             <div className="w-full px-4 md:px-6 lg:px-8 flex items-center">
@@ -50,12 +50,6 @@ export default async function Layout({ children }: { children: React.ReactNode }
                 <HeaderTitle />
 
                 <div className="flex items-center gap-4">
-                  <Button
-                    className="hidden bg-[var(--button-color)] text-[var(--font-color2)] transition-all hover:bg-[var(--hover-2-color)] hover:text-white md:flex"
-                    asChild
-                  >
-                    <a href="/comission">Abrir Comissão</a>
-                  </Button>
                   <DarkModeToggle />
                   <UserAvatar
                     nome={usuarioData.name}
