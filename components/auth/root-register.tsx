@@ -20,9 +20,10 @@ import { useState } from "react";
 //   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
 // );
 
-export default function SetupSettingsPage() {
-  const [orgs, setOrgs] = useState("");
-  const [campus, setCampus] = useState("");
+export default function RootRegisterPage() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
@@ -30,7 +31,7 @@ export default function SetupSettingsPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    if (!orgs || !campus) {
+    if (!email || !password) {
       alert("Preencha todos os campos.");
       setIsLoading(false);
       return;
@@ -41,7 +42,7 @@ export default function SetupSettingsPage() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ orgs, campus }),
+      body: JSON.stringify({name, email, password }),
     });
     setIsLoading(false);
   };
@@ -68,37 +69,47 @@ export default function SetupSettingsPage() {
             height={100}
           />
           <CardTitle className="text-4xl font-bold text-[var(--font-color)]">
-            Configurações Iniciais
+            Registro Administrativo
           </CardTitle>
-          <div className="w-full md:w-112">
           <CardDescription className="mt-2 text-[var(--font-color)]">
-            Agora vamos configurar o sistema, adicione abaixo a organização e o campus que você deseja.
+            Você é o primeiro usuário do sistema, crie sua conta de administrador.
           </CardDescription>
-          </div>
         </CardHeader>
 
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4 flex flex-col items-center">
             <div className="w-full md:w-112 space-y-3">
               <div className="flex flex-col space-y-1">
-                <label className="text-md font-medium text-[var(--font-color)]">Nome da organização:</label>
+                <label className="text-md font-medium text-[var(--font-color)]">Nome:</label>
                 <Input
                   className="border-[var(--border-input)]"
-                  placeholder="Ex: IFMS"
+                  placeholder="Nome"
                   type="text"
-                  value={orgs}
-                  onChange={(e) => setOrgs(e.target.value)}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   required
                 />
               </div>
               <div className="flex flex-col space-y-1">
-                <label className="text-md font-medium text-[var(--font-color)]">Nome do Campus:</label>
+                <label className="text-md font-medium text-[var(--font-color)]">E-mail:</label>
                 <Input
                   className="border-[var(--border-input)]"
-                  placeholder="Ex: Campo Grande"
-                  type="text"
-                  value={campus}
-                  onChange={(e) => setCampus(e.target.value)}
+                  placeholder="E-mail"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col space-y-1">
+                <label className="text-md font-medium text-[var(--font-color)]">Senha:</label>
+                <Input
+                  className="border-[var(--border-input)]"
+                  placeholder="Senha"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>
