@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "./utils/supabase/middleware";
 
 const isDevelopment = process.env.NODE_ENV === "development";
+
+console.log("Middleware loaded in", isDevelopment ? "development" : "production", "mode");
 const publicRoutes = [
   "/",
   "/auth/sign-in",
@@ -21,6 +23,7 @@ export async function middleware(request: NextRequest) {
 
   // In development mode, allow all routes
   if (isDevelopment) {
+    console.log("Development mode - all routes are public");
     return NextResponse.next();
   }
 

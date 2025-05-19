@@ -1,10 +1,19 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import data from "@/data/db.json"
+import { createClient } from "@/utils/supabase/client"
 import Link from "next/link"
 
-export default function CampusPage() {
-  const campuses = data.campuses
+export default async function CampusPage() {
+  // const campuses = data.campuses
+  const supabase = await createClient()
+  const { data , error} = await supabase.from("campus").select("*")
+  console.log("campus", data)
+  if (error) {
+    return <div>Error loading campuses: {error.message}</div>
+  }
+  if (!data || data.length === 0) {
+    return <div>No campuses found</div>
+  }
 
   return (
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
@@ -15,7 +24,7 @@ export default function CampusPage() {
 
       <CardContent className="flex flex-col gap-6">
         <div className="grid gap-6 md:grid-cols-2">
-          {campuses.map((campus) => (
+          {data.map((campus) => (
             <Card key={campus.id}>
               <CardHeader>
                 <CardTitle>{campus.name}</CardTitle>

@@ -9,10 +9,24 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { users } from "@/data/db.json";
+import { createClient } from "@/utils/supabase/client";
 import HeaderTitle from "../../components/custom/header-title";
 
-const Layout = ({ children }: { children: React.ReactNode }) => {
+export default async function Layout({ children }: { children: React.ReactNode }){
   const usuarioData = users.find((u) => u.role === "admin");
+
+  const supabase = createClient();
+
+  const { data, error } = await supabase.auth.getSession();
+
+  const session = data.session;
+
+  console.log("session", session);
+
+  if (error) {
+    console.error("Erro ao obter sessão:", error);
+    return <div>Erro ao obter sessão</div>;
+  }
 
   if (!usuarioData) {
     return <div>Usuário não encontrado</div>;
@@ -64,4 +78,4 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export default Layout;
+
