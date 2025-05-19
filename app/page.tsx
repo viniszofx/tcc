@@ -10,11 +10,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function Home() {
-
   const router = useRouter();
   const [cameraModalOpen, setCameraModalOpen] = useState(false);
 
   const handleStartNow = () => {
+    console.log("Iniciando o processo de registro...");
     router.push("/auth/sign-in");
   };
 
@@ -142,9 +142,11 @@ export default function Home() {
             {cameraModalOpen ? (
               <CameraComponent onClose={() => setCameraModalOpen(false)} />
             ) : (
-              <Button size="lg"
+              <Button
+                size="lg"
                 className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-gray-400"
-                onClick={handleDemoScanner}>
+                onClick={handleDemoScanner}
+              >
                 Testar Scanner QR Code
               </Button>
             )}
