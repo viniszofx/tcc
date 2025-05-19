@@ -30,9 +30,7 @@ export async function middleware(request: NextRequest) {
 
   // In development mode, allow all routes but filter logs
   if (isDevelopment) {
-<<<<<<< HEAD
     console.log("Development mode - all routes are public");
-=======
     const shouldLog = !ignoredPaths.some(path => pathname.includes(path));
     
     if (shouldLog) {
@@ -41,7 +39,6 @@ export async function middleware(request: NextRequest) {
       console.log("Request Pathname:", pathname);
     }
     
->>>>>>> 13a8d33cb1a4ea5eec1a9b2101d16b003d77b045
     return NextResponse.next();
   }
 
