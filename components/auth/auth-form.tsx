@@ -11,7 +11,12 @@ export default function AuthForm() {
       <div className="w-full md:max-w-[28rem]">
         <CardContent className="space-y-4 text-center p-0">
           <form className="w-full space-y-3 text-left">
-            <Input className="border-[var(--border-input)]" placeholder="Email" name="email" type="email" />
+            <div className="flex flex-col space-y-1">
+              <label className="text-md font-medium text-[var(--font-color)]">E-mail:</label>
+                <Input className="border-[var(--border-input)]" placeholder="Email" name="email" type="email" />
+            </div>
+            <div className="flex flex-col space-y-1">
+                <label className="text-md font-medium text-[var(--font-color)]">Senha:</label>    
             <Input
               className="border-[var(--border-input)]"
               placeholder="Senha"
@@ -19,6 +24,7 @@ export default function AuthForm() {
               type="password"
               required
             />
+            </div>
             <Button
               formAction={signIn}
               className="w-full border-[var(--border-color)] bg-[var(--bg-simple)] cursor-pointer hover:!bg-[var(--hover-color)] hover:!text-white transition-all"

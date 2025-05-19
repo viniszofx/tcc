@@ -51,6 +51,8 @@ export default function RecoverPasswordPage() {
         </CardHeader>
         <CardContent className="space-y-4 flex flex-col items-center">
           <form onSubmit={handleSubmit} className="w-full md:w-112 space-y-3">
+            <div className="flex flex-col space-y-1">
+              <label className="text-md font-medium text-[var(--font-color)]">E-mail:</label>
             <Input
               className="border-[var(--border-input)]"
               placeholder="Email"
@@ -58,6 +60,7 @@ export default function RecoverPasswordPage() {
               value={email}
               onChange={handleEmailChange}
             />
+            </div>
             <Button
               type="submit"
               className="w-full border-[var(--border-color)] bg-[var(--bg-simple)] cursor-pointer hover:!bg-[var(--hover-color)] hover:!text-white transition-all"
