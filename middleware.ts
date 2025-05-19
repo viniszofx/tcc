@@ -49,7 +49,7 @@ export async function middleware(request: NextRequest) {
       const data = await response.json();
       
       if (data.status === "first_user") {
-        return NextResponse.redirect(new URL("/auth/register", request.url));
+        return NextResponse.redirect(new URL("/auth/setup", request.url));
       }
     } catch (error) {
       console.error("Error checking setup status:", error);
