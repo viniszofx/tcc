@@ -1,9 +1,11 @@
-"use client"
-
 import AuthForm from "@/components/auth/auth-form"
 import DarkModeToggle from "@/components/custom/dark-mode-toggle"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
+
+export const metadata = {
+  title: "Entrar na conta - KDÊ",
+}
 
 export default function AuthPage() {
   return (

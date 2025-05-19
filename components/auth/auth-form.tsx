@@ -33,30 +33,9 @@ export default function AuthForm() {
               </a>
             </p>
           </form>
-
-          <div className="relative w-full">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-[var(--border-color)]" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[var(--bg-simple)] px-2 text-[var(--font-color)]">ou</span>
-            </div>
-          </div>
-
-          <form className="w-full">
-            <Button
-              formAction={signInWithGoogle}
-              className="w-full border-[var(--border-color)] bg-[var(--bg-simple)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all"
-              variant="outline"
-              type="submit"
-            >
-              <FaGoogle className="mr-2" />
-              Continuar com Google
-            </Button>
-          </form>
         </CardContent>
 
-        <CardFooter className="mt-6 flex flex-col items-center text-center">
+        <CardFooter className="mt-12 flex flex-col items-center text-center">
           <p className="text-xs md:text-sm text-[var(--font-color)]">
             Não possui uma conta? Entre em contato com o administrador do sistema para solicitar acesso
           </p>
