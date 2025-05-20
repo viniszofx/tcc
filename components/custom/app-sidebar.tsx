@@ -65,7 +65,7 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                       asChild
                     >
                       <Link
-                        href="/dashboard/manager/users"
+                        href={`/dashboard/campus/${campusId}/manager/users`}
                         className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                       >
                         <Users className="text-[var(--font-color2)]" />
@@ -79,7 +79,7 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                       asChild
                     >
                       <Link
-                        href="/dashboard/manager/campuses"
+                        href={`/dashboard/campus/${campusId}/manager/campuses`}
                         className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                       >
                         <Building2 className="text-[var(--font-color2)]" />
@@ -93,7 +93,7 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                       asChild
                     >
                       <Link
-                        href="/dashboard/manager/organizations"
+                        href={`/dashboard/campus/${campusId}/manager/organizations`}
                         className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                       >
                         <Landmark className="text-[var(--font-color2)]" />
@@ -103,13 +103,31 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                   </li>
                 </>
               )}
+              {cargo === "presidente" && (
+                <>
+                <li className="p-2 gap-2 flex items-center">
+                    <Button
+                      className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
+                      asChild
+                    >
+                      <Link
+                        href={`/dashboard/campus/${campusId}/manager/committees`}
+                        className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
+                      >
+                        <Landmark className="text-[var(--font-color2)]" />
+                        Gerenciar Comissões
+                      </Link>
+                    </Button>
+                  </li>
+                </>
+              )}  
               <li className="p-2 gap-2 flex items-center">
                 <Button
                   className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
                   asChild
                 >
                   <Link
-                    href="/dashboard/history"
+                    href={`/dashboard/campus/${campusId}/commissions/${commissionId}/history`}
                     className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                   >
                     <Clock className="text-[var(--font-color2)]" />

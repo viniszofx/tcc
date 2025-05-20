@@ -6,6 +6,9 @@ const urbanist = Urbanist({
   variable: "--font-urbanist",
 });
 
+export const metadata = {
+  title: "Página Inicial - KDÊ",
+};
 
 export default function RootLayout({
   children,
