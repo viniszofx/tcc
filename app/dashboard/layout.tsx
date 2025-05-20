@@ -1,7 +1,6 @@
 import { AppSidebar } from "@/components/custom/app-sidebar";
 import DarkModeToggle from "@/components/custom/dark-mode-toggle";
 import { UserAvatar } from "@/components/custom/user-avatar";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
@@ -9,13 +8,17 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { users } from "@/data/db.json";
-import { createClient } from "@/utils/supabase/client";
+import { supabaseClient } from "@/utils/supabase/client";
 import HeaderTitle from "../../components/custom/header-title";
 
-export default async function Layout({ children }: { children: React.ReactNode }){
+export default async function Layout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const usuarioData = users.find((u) => u.role === "admin");
 
-  const supabase = createClient();
+  const supabase = supabaseClient();
 
   const { data, error } = await supabase.auth.getSession();
 
@@ -32,11 +35,10 @@ export default async function Layout({ children }: { children: React.ReactNode }
     return <div>Usuário não encontrado</div>;
   }
 
-
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[var(--card-color)]">
       <SidebarProvider>
-        <AppSidebar cargo="admin"/>
+        <AppSidebar cargo="admin" />
         <SidebarInset className="flex flex-col">
           <header className="sticky top-0 z-10 flex h-16 items-center border-b bg-[var(--header-color)]">
             <div className="w-full px-4 md:px-6 lg:px-8 flex items-center">
@@ -54,7 +56,8 @@ export default async function Layout({ children }: { children: React.ReactNode }
                   <UserAvatar
                     nome={usuarioData.name}
                     email={usuarioData.email}
-                    foto={usuarioData.profile.image} cargo={"admin"}
+                    foto={usuarioData.profile.image}
+                    cargo={"admin"}
                   />
                 </div>
               </div>
@@ -70,6 +73,4 @@ export default async function Layout({ children }: { children: React.ReactNode }
       </SidebarProvider>
     </div>
   );
-};
-
-
+}

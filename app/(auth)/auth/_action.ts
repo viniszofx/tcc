@@ -132,3 +132,41 @@ export async function signInWithGoogle() {
     provider: "google",
   });
 }
+
+export async function signInWithMagicLink(formData: FormData) {
+  const supabase = await createClient();
+  const email = formData.get("email") as string;
+
+  if (!email) {
+    return { error: "Email is required" };
+  }
+
+  // Validate email domain
+  if (!email.endsWith("@estudante.ifms.edu.br") && !email.endsWith("@ifms.edu.br")) {
+    return { error: "Invalid email domain" };
+  }
+
+  try {
+    const { error, data } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/callback`,
+        data: {
+          email,
+          // role: email.includes("@estudante.ifms.edu.br") ? "student" : "staff",
+          // name: email.split("@")[0], // Add name from email
+        }
+      }
+    });
+
+    if (error) {
+      console.error("Magic link error:", error.message);
+      return { error: error.message };
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    return { error: "An unexpected error occurred" };
+  }
+}

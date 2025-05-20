@@ -11,14 +11,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { supabaseClient } from "@/utils/supabase/client";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
-// const supabase = createClient(
-//   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-//   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-// );
 
 export default function RootRegisterPage() {
   const [name, setName] = useState("");
@@ -31,20 +27,41 @@ export default function RootRegisterPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    if (!email || !password) {
+    if (!email || !password || !name) {
       alert("Preencha todos os campos.");
       setIsLoading(false);
       return;
     }
 
-    const data = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({name, email, password }),
-    });
-    setIsLoading(false);
+    try {
+      const supabase = supabaseClient();
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name,
+            role: "admin", // Set role as admin for first user
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.user) {
+        alert(
+          "Usuário criado com sucesso! Verifique seu email para confirmar o cadastro."
+        );
+        router.push("/auth/setup-email");
+      }
+    } catch (error) {
+      console.error("Error creating user:", error);
+      alert("Erro ao criar usuário. Por favor, tente novamente.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -72,7 +89,8 @@ export default function RootRegisterPage() {
             Registro Administrativo
           </CardTitle>
           <CardDescription className="mt-2 text-[var(--font-color)]">
-            Você é o primeiro usuário do sistema, crie sua conta de administrador.
+            Você é o primeiro usuário do sistema, crie sua conta de
+            administrador.
           </CardDescription>
         </CardHeader>
 
@@ -80,7 +98,9 @@ export default function RootRegisterPage() {
           <CardContent className="space-y-4 flex flex-col items-center">
             <div className="w-full md:w-112 space-y-3">
               <div className="flex flex-col space-y-1">
-                <label className="text-md font-medium text-[var(--font-color)]">Nome:</label>
+                <label className="text-md font-medium text-[var(--font-color)]">
+                  Nome:
+                </label>
                 <Input
                   className="border-[var(--border-input)]"
                   placeholder="Nome"
@@ -91,7 +111,9 @@ export default function RootRegisterPage() {
                 />
               </div>
               <div className="flex flex-col space-y-1">
-                <label className="text-md font-medium text-[var(--font-color)]">E-mail:</label>
+                <label className="text-md font-medium text-[var(--font-color)]">
+                  E-mail:
+                </label>
                 <Input
                   className="border-[var(--border-input)]"
                   placeholder="E-mail"
@@ -103,7 +125,9 @@ export default function RootRegisterPage() {
               </div>
 
               <div className="flex flex-col space-y-1">
-                <label className="text-md font-medium text-[var(--font-color)]">Senha:</label>
+                <label className="text-md font-medium text-[var(--font-color)]">
+                  Senha:
+                </label>
                 <Input
                   className="border-[var(--border-input)]"
                   placeholder="Senha"

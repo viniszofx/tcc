@@ -15,11 +15,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-// const supabase = createClient(
-//   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-//   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-// );
-
 export default function SetupSettingsPage() {
   const [orgs, setOrgs] = useState("");
   const [campus, setCampus] = useState("");
@@ -71,9 +66,10 @@ export default function SetupSettingsPage() {
             Configurações Iniciais
           </CardTitle>
           <div className="w-full md:w-112">
-          <CardDescription className="mt-2 text-[var(--font-color)]">
-            Agora vamos configurar o sistema, adicione abaixo a organização e o campus que você deseja.
-          </CardDescription>
+            <CardDescription className="mt-2 text-[var(--font-color)]">
+              Agora vamos configurar o sistema, adicione abaixo a organização e
+              o campus que você deseja.
+            </CardDescription>
           </div>
         </CardHeader>
 
@@ -81,7 +77,9 @@ export default function SetupSettingsPage() {
           <CardContent className="space-y-4 flex flex-col items-center">
             <div className="w-full md:w-112 space-y-3">
               <div className="flex flex-col space-y-1">
-                <label className="text-md font-medium text-[var(--font-color)]">Nome da organização:</label>
+                <label className="text-md font-medium text-[var(--font-color)]">
+                  Nome da organização:
+                </label>
                 <Input
                   className="border-[var(--border-input)]"
                   placeholder="Ex: IFMS"
@@ -92,7 +90,9 @@ export default function SetupSettingsPage() {
                 />
               </div>
               <div className="flex flex-col space-y-1">
-                <label className="text-md font-medium text-[var(--font-color)]">Nome do Campus:</label>
+                <label className="text-md font-medium text-[var(--font-color)]">
+                  Nome do Campus:
+                </label>
                 <Input
                   className="border-[var(--border-input)]"
                   placeholder="Ex: Campo Grande"
