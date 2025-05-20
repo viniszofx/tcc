@@ -1,5 +1,15 @@
 export const routes = [
+    { prefix: "/dashboard/campus/[campus_id]/commissions/[commission_id]/about", title: "Sobre o Sistema" },
+    { prefix: "/dashboard/campus/[campus_id]/commissions/[commission_id]/settings", title: "Configurações do Sistema" },
+    { prefix: "/dashboard/campus/[campus_id]/commissions/[commission_id]/profile", title: "Perfil do Usuário" },
+    { prefix: "/dashboard/campus/[campus_id]/commissions/[commission_id]/history", title: "Histórico do Sistema" },
+    { prefix: "/dashboard/campus/[campus_id]/commissions/[commission_id]/upload", title: "Processamento do Arquivo" },
+    { prefix: "/dashboard/campus/[campus_id]/commissions/[commission_id]/inventories", title: "Inventário" },
     { prefix: "/dashboard/campus/[campus_id]/commissions/[commission_id]", title: "Detalhes da Comissão" },
+    { prefix: "/dashboard/campus/[campus_id]/manager/users", title: "Gerenciar Usuários" },
+    { prefix: "/dashboard/campus/[campus_id]/manager/campuses", title: "Gerenciar Câmpus" },
+    { prefix: "/dashboard/campus/[campus_id]/manager/organizations", title: "Gerenciar Organizações" },
+    { prefix: "/dashboard/campus/[campus_id]/manager/committees", title: "Gerenciar Comissões" },
     { prefix: "/dashboard/campus/[comission_id]/commissions", title: "Comissões" },
     { prefix: "/dashboard/campus", title: "Câmpus" },
 ]
