@@ -1,64 +1,74 @@
-﻿"use client"
+﻿"use client";
 
-import CampusCard from "@/components/manager-campuses/campus-card"
-import CampusModal from "@/components/manager-campuses/campus-modal"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import type { Campus } from "@/lib/interface"
-import { campus as initialCampuses } from "@/utils/campus"
-import { ArrowLeft, Plus, Save } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import CampusCard from "@/components/manager-campuses/campus-card";
+import CampusModal from "@/components/manager-campuses/campus-modal";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import type { Campus } from "@/lib/interface";
+import { campus as initialCampuses } from "@/utils/campus";
+import { ArrowLeft, Plus, Save } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function CampusPage() {
-  const router = useRouter()
-  const [campuses, setCampuses] = useState<Campus[]>(initialCampuses)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [currentCampus, setCurrentCampus] = useState<Campus | null>(null)
-  const [modalMode, setModalMode] = useState<"create" | "edit" | "delete">("create")
+  const router = useRouter();
+  const [campuses, setCampuses] = useState<Campus[]>(initialCampuses);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentCampus, setCurrentCampus] = useState<Campus | null>(null);
+  const [modalMode, setModalMode] = useState<"create" | "edit" | "delete">(
+    "create"
+  );
 
-  const handleOpenModal = (mode: "create" | "edit" | "delete", campus?: Campus) => {
-    setModalMode(mode)
-    setCurrentCampus(campus || null)
-    setIsModalOpen(true)
-  }
+  const handleOpenModal = (
+    mode: "create" | "edit" | "delete",
+    campus?: Campus
+  ) => {
+    setModalMode(mode);
+    setCurrentCampus(campus || null);
+    setIsModalOpen(true);
+  };
 
   const handleCloseModal = () => {
-    setIsModalOpen(false)
-    setCurrentCampus(null)
-  }
+    setIsModalOpen(false);
+    setCurrentCampus(null);
+  };
 
   const handleSaveCampus = (campus: Campus) => {
     if (modalMode === "create") {
-      // In a real app, you would call an API to create the campus
       const newCampus = {
         ...campus,
-        campus_id: `${Date.now()}`, // Temporary ID generation
-      }
-      setCampuses([...campuses, newCampus])
+        campus_id: `${Date.now()}`,
+      };
+      setCampuses([...campuses, newCampus]);
     } else if (modalMode === "edit") {
-      // In a real app, you would call an API to update the campus
-      setCampuses(campuses.map((c) => (c.campus_id === campus.campus_id ? campus : c)))
+      setCampuses(
+        campuses.map((c) => (c.campus_id === campus.campus_id ? campus : c))
+      );
     }
-    handleCloseModal()
-  }
+    handleCloseModal();
+  };
 
   const handleDeleteCampus = (campusId: string) => {
-    // In a real app, you would call an API to delete the campus
-    setCampuses(campuses.filter((c) => c.campus_id !== campusId))
-    handleCloseModal()
-  }
+    setCampuses(campuses.filter((c) => c.campus_id !== campusId));
+    handleCloseModal();
+  };
 
   const handleSaveAll = () => {
-    // In a real app, this would save all changes to the backend
-    console.log("Saving all changes:", campuses)
-    // Simulate success message
-    alert("Alterações salvas com sucesso!")
-  }
+    console.log("Saving all changes:", campuses);
+
+    alert("Alterações salvas com sucesso!");
+  };
 
   const handleCardClick = (campusId: string) => {
-    router.push(`/dashboard/manager/campuses/${campusId}`)
-  }
+    console.log("Campus ID:", campusId);
+    router.push(`/dashboard/campus/corumba/manager/campuses/${campusId}`);
+  };
 
   return (
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
@@ -125,5 +135,5 @@ export default function CampusPage() {
         mode={modalMode}
       />
     </Card>
-  )
+  );
 }

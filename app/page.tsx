@@ -2,7 +2,6 @@
 
 "use client";
 
-import { CameraComponent } from "@/components/camera/camera";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
@@ -66,6 +65,9 @@ export default function Home() {
       icon: "📱",
     },
   ];
+
+  const data = new Date();
+  const year = data.getFullYear();
 
   return (
     <div className="min-h-screen">
@@ -135,7 +137,7 @@ export default function Home() {
       </section>
 
       {/* Demo Section */}
-      <section className="py-20 px-6">
+      {/* <section className="py-20 px-6">
         <div className="max-w-6xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-12">Demonstração do Scanner</h2>
           <div className="flex justify-center">
@@ -152,9 +154,9 @@ export default function Home() {
             )}
           </div>
         </div>
-      </section>
+      </section> */}
 
-      {/* CTA Section */}
+      {/* CTA Section
       <section className="py-20 px-6 bg-[var(--primary-color)] text-[var(--font-color2)]">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">
@@ -172,7 +174,7 @@ export default function Home() {
             Entrar em Contato
           </Button>
         </div>
-      </section>
+      </section> */}
 
       {/* Footer */}
       <footer className="py-8 px-6 bg-[var(--secondary-color)] text-[var(--font-color2)]">
@@ -182,8 +184,8 @@ export default function Home() {
           </div>
           <div className="text-center md:text-right">
             <p>
-              &copy; 2024 Sistema de Gestão Patrimonial. Todos os direitos
-              reservados.
+              &copy; {year} Sistema de Gestão Patrimonial - KDE | Todos os
+              direitos reservados.
             </p>
           </div>
         </div>
