@@ -7,6 +7,9 @@ console.log("Middleware loaded in", isDevelopment ? "development" : "production"
 const publicRoutes = [
   "/",
   "/auth/setup",
+  "/auth/setup-email",
+  "/auth/setup-password",
+  "/auth/setup-settings",
   "/auth/sign-in",
   "/auth/sign-up",
   "/auth/forget-password",

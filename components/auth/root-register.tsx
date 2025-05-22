@@ -41,7 +41,7 @@ export default function RootRegisterPage() {
         options: {
           data: {
             name: name,
-            role: "admin", // Set role as admin for first user
+            role: "admin",
           },
         },
       });
