@@ -2,6 +2,7 @@
 
 "use client";
 
+import { CameraComponent } from "@/components/camera/camera";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
@@ -137,10 +138,16 @@ export default function Home() {
       </section>
 
       {/* Demo Section */}
-      {/* <section className="py-20 px-6">
+      <section className="py-20 px-6">
         <div className="max-w-6xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-12">Demonstração do Scanner</h2>
-          <div className="flex justify-center">
+          {/* <h2 className="text-3xl font-bold mb-12">Demonstração do Scanner</h2> */}
+          <div className="flex flex-col items-center justify-center">
+            <p className="text-lg text-muted-foreground mb-4">Em breve!</p>
+            <p className="max-w-2xl text-muted-foreground mb-8">
+              Experimente nossa função de scanner QR Code diretamente pelo
+              navegador. Com ela, você poderá fazer a leitura rápida e eficiente
+              dos códigos patrimoniais, facilitando o processo de inventário.
+            </p>
             {cameraModalOpen ? (
               <CameraComponent onClose={() => setCameraModalOpen(false)} />
             ) : (
@@ -148,13 +155,14 @@ export default function Home() {
                 size="lg"
                 className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-gray-400"
                 onClick={handleDemoScanner}
+                disabled
               >
                 Testar Scanner QR Code
               </Button>
             )}
           </div>
         </div>
-      </section> */}
+      </section>
 
       {/* CTA Section
       <section className="py-20 px-6 bg-[var(--primary-color)] text-[var(--font-color2)]">
