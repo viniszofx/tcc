@@ -10,15 +10,52 @@ import {
 import { supabaseClient } from "@/utils/supabase/client";
 import Link from "next/link";
 
-export default async function CampusPage() {
-  // const campuses = data.campuses
-  const supabase = await supabaseClient();
-  const { data, error } = await supabase.from("campus").select("*");
-  console.log("campus", data);
-  if (error) {
-    return <div>Error loading campuses: {error.message}</div>;
+interface Campus {
+  id: string;
+  name: string;
+  code: string;
+  created_at?: string;
+}
+
+const mockCampuses: Campus[] = [
+  {
+    id: "1",
+    name: "Campus São Paulo",
+    code: "SPO",
+  },
+  {
+    id: "2",
+    name: "Campus Guarulhos",
+    code: "GRU",
+  },
+  {
+    id: "3",
+    name: "Campus Suzano",
+    code: "SUZ",
+  },
+];
+
+async function getCampusData(): Promise<Campus[]> {
+  try {
+    const supabase = await supabaseClient();
+    const { data, error } = await supabase.from("campus").select("*");
+
+    if (error) {
+      console.error("Supabase error:", error);
+      return mockCampuses;
+    }
+
+    return data || mockCampuses;
+  } catch (error) {
+    console.error("Failed to fetch campus data:", error);
+    return mockCampuses;
   }
-  if (!data || data.length === 0) {
+}
+
+export default async function CampusPage() {
+  const campusData = await getCampusData();
+
+  if (campusData.length === 0) {
     return <div>No campuses found</div>;
   }
 
@@ -33,7 +70,7 @@ export default async function CampusPage() {
 
       <CardContent className="flex flex-col gap-6">
         <div className="grid gap-6 md:grid-cols-2">
-          {data.map((campus) => (
+          {campusData.map((campus) => (
             <Card key={campus.id}>
               <CardHeader>
                 <CardTitle>{campus.name}</CardTitle>

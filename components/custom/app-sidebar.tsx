@@ -10,7 +10,15 @@ import {
   SidebarMenu,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { File, Home, Info, Settings, Users, Building2, Landmark, Clock } from "lucide-react";
+import {
+  Building2,
+  Clock,
+  Home,
+  Info,
+  Landmark,
+  Settings,
+  Users,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -21,14 +29,14 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 
 export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
   const params = useParams();
-  const campusId = params?.campus_id || 'corumba';
-  const commissionId = params?.commission_id || 'comissao';
+  const campusId = params?.campus_id || "corumba";
+  const commissionId = params?.commission_id || "comissao";
 
   return (
     <Sidebar {...props}>
       <SidebarHeader className="bg-[var(--secondary-color)]">
         <div className="relative w-60 h-32 mx-auto">
-          <Link href={`/dashboard/campus/${campusId}`}>
+          <Link href={`/admin`}>
             <Image
               fill
               className="object-contain"
@@ -48,7 +56,7 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                   asChild
                 >
                   <Link
-                    href={`/dashboard`}
+                    href={`/admin`}
                     className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                   >
                     <Home className="text-[var(--font-color2)]" />
@@ -65,7 +73,7 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                       asChild
                     >
                       <Link
-                        href={`/dashboard/campus/${campusId}/manager/users`}
+                        href={`/admin/users`}
                         className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                       >
                         <Users className="text-[var(--font-color2)]" />
@@ -79,7 +87,7 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                       asChild
                     >
                       <Link
-                        href={`/dashboard/campus/${campusId}/manager/campuses`}
+                        href={`/admin/campus`}
                         className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                       >
                         <Building2 className="text-[var(--font-color2)]" />
@@ -105,7 +113,7 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
               )}
               {cargo === "presidente" && (
                 <>
-                <li className="p-2 gap-2 flex items-center">
+                  <li className="p-2 gap-2 flex items-center">
                     <Button
                       className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
                       asChild
@@ -120,7 +128,7 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                     </Button>
                   </li>
                 </>
-              )}  
+              )}
               <li className="p-2 gap-2 flex items-center">
                 <Button
                   className="bg-[var(--secondary-color)] text-[var(--font-color2)]"

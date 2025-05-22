@@ -7,20 +7,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getOrganizations } from '@/lib/data-service';
+import { getOrganizations } from "@/lib/data-service";
 import Link from "next/link";
 
 export default function OrganizationsPage() {
   const organizations = getOrganizations();
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 mx-auto max-w-3xl bg-[var(--bg-simple)] shadow-lg rounded-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl ">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Organizações</h1>
-        <p className="text-muted-foreground">Lista de organizações cadastradas</p>
+        <p className="text-muted-foreground">
+          Lista de organizações cadastradas
+        </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {organizations.map((org) => (
           <Card key={org.id}>
             <CardHeader>
@@ -33,7 +35,10 @@ export default function OrganizationsPage() {
               </p>
             </CardContent>
             <CardFooter>
-              <Link href={`/dashboard/org/${org.id}/campus/`} className="w-full">
+              <Link
+                href={`/dashboard/org/${org.id}/campus/`}
+                className="w-full"
+              >
                 <Button className="w-full">Ver Câmpus</Button>
               </Link>
             </CardFooter>
