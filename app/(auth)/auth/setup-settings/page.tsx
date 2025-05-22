@@ -31,13 +31,15 @@ export default function SetupSettingsPage() {
       return;
     }
 
-    const data = await fetch("/api/auth/signup", {
+    const data = await fetch("/api/v1/setup", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ orgs, campus }),
     });
+
+    console.log("Response:", data);
     setIsLoading(false);
   };
 

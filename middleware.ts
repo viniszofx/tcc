@@ -14,6 +14,7 @@ const publicRoutes = [
   "/auth/sign-up",
   "/auth/forget-password",
   "/api/v1/auth/callback",
+  "/api/v1/setup",
   "/api/v1/auth/confirm",
   "/api/v1/setup/status",
   "/manifest.webmanifest",
