@@ -87,7 +87,7 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                       asChild
                     >
                       <Link
-                        href={`/admin/campus`}
+                        href={`/admin/campuses`}
                         className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                       >
                         <Building2 className="text-[var(--font-color2)]" />
@@ -101,7 +101,7 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                       asChild
                     >
                       <Link
-                        href={`/dashboard/campus/${campusId}/manager/organizations`}
+                        href={`/admin/organizations`}
                         className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                       >
                         <Landmark className="text-[var(--font-color2)]" />

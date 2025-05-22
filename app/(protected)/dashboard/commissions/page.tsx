@@ -19,10 +19,12 @@ interface CommissionsPageProps {
 export default async function CommissionsPage({
   params,
 }: CommissionsPageProps) {
-  console.log("params", params);
+  // console.log("params", params);
   const resolvedParams = await params;
-  const campus_id = resolvedParams.campus_id;
-
+  const campus_id = resolvedParams.campus_id
+    ? resolvedParams.campus_id
+    : "corumba";
+  console.log("campus_id", campus_id);
   const commissions = data.commissions.filter(
     (commission) => commission.campus_id === campus_id
   );
@@ -54,7 +56,7 @@ export default async function CommissionsPage({
               </CardContent>
               <CardFooter>
                 <Link
-                  href={`/dashboard/campus/${campus_id}/commissions/${commission.id}`}
+                  href={`/dashboard/commissions/${commission.id}`}
                   className="w-full"
                 >
                   <Button className="w-full text-[var(--font-color2)] bg-[var(--button-color)] transition-all hover:bg-[var(--hover-3-color)]">

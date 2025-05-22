@@ -50,31 +50,31 @@ export default async function CommissionPage({ params }: CommissionPageProps) {
       title: "Inventário",
       description: "Gerenciar itens do inventário",
       icon: Database,
-      href: `/dashboard/campus/${resolvedParams.campus_id}/commissions/${resolvedParams.commission_id}/inventory`,
+      href: `/dashboard/commissions/${resolvedParams.commission_id}/inventories`,
     },
     {
       title: "Membros",
       description: "Gerenciar membros da comissão",
       icon: Users2,
-      href: `/dashboard/campus/${resolvedParams.campus_id}/commissions/${resolvedParams.commission_id}/members`,
+      href: `/dashboard/commissions/${resolvedParams.commission_id}/members`,
     },
     {
       title: "Relatórios",
       description: "Visualizar e gerar relatatórios",
       icon: FileText,
-      href: `/dashboard/campus/${resolvedParams.campus_id}/commissions/${resolvedParams.commission_id}/reports`,
+      href: `/dashboard/commissions/${resolvedParams.commission_id}/reports`,
     },
     {
       title: "Configurações",
       description: "Configurações da comissão",
       icon: Settings,
-      href: `/dashboard/campus/${resolvedParams.campus_id}/commissions/${resolvedParams.commission_id}/settings`,
+      href: `/dashboard/commissions/${resolvedParams.commission_id}/settings`,
     },
     {
       title: "Sobre",
       description: "Informações sobre a comissão",
       icon: Info,
-      href: `/dashboard/campus/${resolvedParams.campus_id}/commissions/${resolvedParams.commission_id}/about`,
+      href: `/dashboard/commissions/${resolvedParams.commission_id}/about`,
     },
   ];
 
