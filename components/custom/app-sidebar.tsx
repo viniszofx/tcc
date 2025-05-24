@@ -38,26 +38,26 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
         <div className="relative w-60 h-32 mx-auto">
           {cargo === "admin" || cargo === "presidente" && (
             <>
-            <Link href={`/admin`}>
-            <Image
-              fill
-              className="object-contain"
-              src="/logotipo.svg"
-              alt="logo"
-            />
-            </Link>    
+              <Link href={`/admin`}>
+                <Image
+                  fill
+                  className="object-contain"
+                  src="/logotipo.svg"
+                  alt="logo"
+                />
+              </Link>
             </>
           )}
           {cargo === "operador" && (
             <>
-            <Link href={`/dashboard`}>
-            <Image
-              fill
-              className="object-contain"
-              src="/logotipo.svg"
-              alt="logo"
-            />
-            </Link>    
+              <Link href={`/dashboard`}>
+                <Image
+                  fill
+                  className="object-contain"
+                  src="/logotipo.svg"
+                  alt="logo"
+                />
+              </Link>
             </>
           )}
         </div>
@@ -145,20 +145,42 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                   </li>
                 </>
               )}
-              <li className="p-2 gap-2 flex items-center">
-                <Button
-                  className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
-                  asChild
-                >
-                  <Link
-                    href={`/dashboard/campus/${campusId}/commissions/${commissionId}/history`}
-                    className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
-                  >
-                    <Clock className="text-[var(--font-color2)]" />
-                    Histórico
-                  </Link>
-                </Button>
-              </li>
+              {cargo === "admin" || cargo === "presidente" && (
+                <>
+                  <li className="p-2 gap-2 flex items-center">
+                    <Button
+                      className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
+                      asChild
+                    >
+                      <Link
+                        href={`/admin/comissions/${commissionId}/history`}
+                        className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
+                      >
+                        <Clock className="text-[var(--font-color2)]" />
+                        Histórico
+                      </Link>
+                    </Button>
+                  </li>
+                </>
+              )}
+              {cargo === "operador" && (
+                <>
+                  <li className="p-2 gap-2 flex items-center">
+                    <Button
+                      className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
+                      asChild
+                    >
+                      <Link
+                        href={`/dashboard/comissions/${commissionId}/history`}
+                        className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
+                      >
+                        <Clock className="text-[var(--font-color2)]" />
+                        Histórico
+                      </Link>
+                    </Button>
+                  </li>
+                </>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

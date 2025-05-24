@@ -1,5 +1,5 @@
 import MainSection from "@/components/MainSection"
 
 export default function Page() {
-    return <MainSection title="history" />
+    return <MainSection title="history admin" />
 }
