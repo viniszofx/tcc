@@ -1,4 +1,4 @@
-import SetupEmail from "@/components/e-mail/setup-email";
+import SetupEmail from "@/app/(auth)/auth/trash/setup-email";
 
 export const metadata = {
   title: "Verificar e-mail - KDÊ",
