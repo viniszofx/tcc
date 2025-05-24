@@ -8,9 +8,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressContentEditableWarning suppressHydrationWarning>
       <link rel="icon" href="/logo.svg" type="image/svg+xml" />
       <body
+        suppressHydrationWarning
+        suppressContentEditableWarning
         className={
           "min-h-screen flex flex-col justify-center items-center bg-[var(--bg-secondary)] text-[var(--font-color)]"
         }
