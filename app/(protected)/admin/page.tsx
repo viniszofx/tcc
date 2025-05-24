@@ -36,7 +36,7 @@ export default function ProcessingPage() {
             </span>
           </Link>
           <Link
-            href="/admin/campuses"
+            href="/admin/campus"
             className="flex flex-col items-center justify-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-color)] px-6 py-8 shadow transition hover:shadow-lg hover:bg-[var(--hover-3-color)] group"
           >
             <Building2 size={28} className="text-[var(--font-color)] group-hover:text-white transition" />

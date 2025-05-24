@@ -36,14 +36,30 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
     <Sidebar {...props}>
       <SidebarHeader className="bg-[var(--secondary-color)]">
         <div className="relative w-60 h-32 mx-auto">
-          <Link href={`/admin`}>
+          {cargo === "admin" || cargo === "presidente" && (
+            <>
+            <Link href={`/admin`}>
             <Image
               fill
               className="object-contain"
               src="/logotipo.svg"
               alt="logo"
             />
-          </Link>
+            </Link>    
+            </>
+          )}
+          {cargo === "operador" && (
+            <>
+            <Link href={`/dashboard`}>
+            <Image
+              fill
+              className="object-contain"
+              src="/logotipo.svg"
+              alt="logo"
+            />
+            </Link>    
+            </>
+          )}
         </div>
       </SidebarHeader>
       <SidebarContent className="bg-[var(--secondary-color)] flex flex-col justify-between h-full">
@@ -87,7 +103,7 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                       asChild
                     >
                       <Link
-                        href={`/admin/campuses`}
+                        href={`/admin/campus`}
                         className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                       >
                         <Building2 className="text-[var(--font-color2)]" />
@@ -119,7 +135,7 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                       asChild
                     >
                       <Link
-                        href={`/dashboard/campus/${campusId}/manager/committees`}
+                        href={`/admin/comissions`}
                         className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                       >
                         <Landmark className="text-[var(--font-color2)]" />

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 // Essa página somente sera acessada pelo presidente da comissão
 
