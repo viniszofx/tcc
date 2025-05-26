@@ -58,11 +58,6 @@ export function UserAvatar({ nome, email, cargo, foto }: UserAvatarProps) {
           </DropdownMenuItem>
         </a>
 
-        <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
-          <History size={16} className="text-[var(--font-color2)]" />
-          <span>Histórico</span>
-        </DropdownMenuItem>
-
         <DropdownMenuSeparator className="bg-[var(--font-color2)]" />
 
         <form>

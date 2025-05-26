@@ -85,7 +85,7 @@ export default function CampusPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => router.push("/dashboard")}
+            onClick={() => router.push("/admin")}
             className="text-[var(--font-color)] transition-all"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
