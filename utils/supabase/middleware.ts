@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { publicRoutes } from "../../utils/rotes-public";
 
 export async function updateSession(request: NextRequest) {
   console.log("Middleware triggered");
@@ -49,22 +50,16 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   console.log("User:", user);
-  const RoutesAllowed = [
-    "/",
-    "/auth/sign-in",
-    "/auth/forget-password",
-    "/api/v1/auth/callback",
-    "/api/v1/auth/confirm",
-  ];
-  console.log("RoutesAllowed:", RoutesAllowed);
-  if (!user && !RoutesAllowed.includes(request.nextUrl.pathname)) {
+
+  console.log("RoutesAllowed:", publicRoutes);
+  if (!user && !publicRoutes.includes(request.nextUrl.pathname)) {
     console.log(
       "User not found, redirecting to sign-in page",
       request.nextUrl.pathname
     );
     const url = request.nextUrl.clone();
     console.log("Redirect URL:", url);
-    url.pathname = "/auth/sign-in";
+    url.pathname = "/login";
     url.searchParams.set("redirectedFrom", request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }

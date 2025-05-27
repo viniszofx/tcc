@@ -1,5 +1,6 @@
 import { AppSidebar } from "@/components/custom/app-sidebar";
 import DarkModeToggle from "@/components/custom/dark-mode-toggle";
+import HeaderTitle from "@/components/custom/header-title";
 import { UserAvatar } from "@/components/custom/user-avatar";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -9,7 +10,6 @@ import {
 } from "@/components/ui/sidebar";
 import { users } from "@/data/db.json";
 import { supabaseClient } from "@/utils/supabase/client";
-import HeaderTitle from "../../../components/custom/header-title";
 
 export default async function Layout({
   children,

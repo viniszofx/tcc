@@ -36,7 +36,7 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
     <Sidebar {...props}>
       <SidebarHeader className="bg-[var(--secondary-color)]">
         <div className="relative w-60 h-32 mx-auto">
-          {cargo === "admin" || cargo === "presidente" && (
+          {(cargo === "admin" || cargo === "presidente") && (
             <>
               <Link href={`/admin`}>
                 <Image
@@ -145,24 +145,25 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                   </li>
                 </>
               )}
-              {cargo === "admin" || cargo === "presidente" && (
-                <>
-                  <li className="p-2 gap-2 flex items-center">
-                    <Button
-                      className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
-                      asChild
-                    >
-                      <Link
-                        href={`/admin/comissions/${commissionId}/history`}
-                        className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
+              {cargo === "admin" ||
+                (cargo === "presidente" && (
+                  <>
+                    <li className="p-2 gap-2 flex items-center">
+                      <Button
+                        className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
+                        asChild
                       >
-                        <Clock className="text-[var(--font-color2)]" />
-                        Histórico
-                      </Link>
-                    </Button>
-                  </li>
-                </>
-              )}
+                        <Link
+                          href={`/admin/comissions/${commissionId}/history`}
+                          className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
+                        >
+                          <Clock className="text-[var(--font-color2)]" />
+                          Histórico
+                        </Link>
+                      </Button>
+                    </li>
+                  </>
+                ))}
               {cargo === "operador" && (
                 <>
                   <li className="p-2 gap-2 flex items-center">

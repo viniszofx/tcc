@@ -1,29 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { publicRoutes } from "./utils/rotes-public";
 import { updateSession } from "./utils/supabase/middleware";
 
 const isDevelopment = process.env.NODE_ENV === "development";
 
-console.log("Middleware loaded in", isDevelopment ? "development" : "production", "mode");
-const publicRoutes = [
-  "/",
-  "/auth/setup",
-  "/auth/setup-email",
-  "/auth/setup-password",
-  "/auth/setup-settings",
-  "/auth/sign-in",
-  "/auth/sign-up",
-  "/auth/forget-password",
-  "/api/v1/auth/callback",
-  "/api/v1/setup",
-  "/api/v1/auth/confirm",
-  "/api/v1/setup/status",
-  "/manifest.webmanifest",
-];
+console.log(
+  "Middleware loaded in",
+  isDevelopment ? "development" : "production",
+  "mode"
+);
 
 // Paths to ignore in development logs
 const ignoredPaths = [
-  'manifest.webmanifest',
-  '.well-known/appspecific/com.chrome.devtools.json'
+  "manifest.webmanifest",
+  ".well-known/appspecific/com.chrome.devtools.json",
 ];
 
 if (isDevelopment) {
@@ -36,25 +26,27 @@ export async function middleware(request: NextRequest) {
   // In development mode, allow all routes but filter logs
   if (isDevelopment) {
     console.log("Development mode - all routes are public");
-    const shouldLog = !ignoredPaths.some(path => pathname.includes(path));
-    
+    const shouldLog = !ignoredPaths.some((path) => pathname.includes(path));
+
     if (shouldLog) {
       console.log("Development mode - all routes are public");
       console.log("Request URL:", request.url);
       console.log("Request Pathname:", pathname);
     }
-    
+
     return NextResponse.next();
   }
 
   // Check if it's the login page
-  if (pathname === "/auth/sign-in") {
+  if (pathname === "/login") {
     try {
-      const response = await fetch(new URL("/api/v1/setup/status", request.url));
+      const response = await fetch(
+        new URL("/api/v1/setup/status", request.url)
+      );
       const data = await response.json();
-      
+
       if (data.status === "first_user") {
-        return NextResponse.redirect(new URL("/auth/setup", request.url));
+        return NextResponse.redirect(new URL("/setup", request.url));
       }
     } catch (error) {
       console.error("Error checking setup status:", error);
