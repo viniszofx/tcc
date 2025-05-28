@@ -22,14 +22,8 @@ interface Comission {
   campus_id: string;
 }
 
-interface CommissionsPageProps {
-  params: {
-    campus_id: string;
-  };
-}
-
-export default function CommissionsPage({ params }: CommissionsPageProps) {
-  const campus_id = params.campus_id ? params.campus_id : "corumba";
+export default function CommissionsPage() {
+  const campus_id = "campus-1"; // Replace with the actual campus ID you want to filter by
   const commissions = data.commissions.filter(
     (commission: Comission) => commission.campus_id === campus_id
   );
@@ -39,10 +33,15 @@ export default function CommissionsPage({ params }: CommissionsPageProps) {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedComission, setSelectedComission] = useState<Comission | null>(null);
+  const [selectedComission, setSelectedComission] = useState<Comission | null>(
+    null
+  );
   const [comissions, setComissions] = useState<Comission[]>(commissions);
 
-  const handleAddComission = (newComission: { name: string; description: string }) => {
+  const handleAddComission = (newComission: {
+    name: string;
+    description: string;
+  }) => {
     const newComissionId = `${Date.now()}`;
     const comissionToAdd: Comission = {
       id: newComissionId,
@@ -81,10 +80,17 @@ export default function CommissionsPage({ params }: CommissionsPageProps) {
       <CardContent className="flex flex-col gap-6">
         <div className="grid gap-6 md:grid-cols-2">
           {comissions.map((commission) => (
-            <Card key={commission.id} className="border border-[var(--border-color)] bg-[var(--bg-simple)]">
+            <Card
+              key={commission.id}
+              className="border border-[var(--border-color)] bg-[var(--bg-simple)]"
+            >
               <CardHeader>
-                <CardTitle className="text-[var(--font-color)]">{commission.name}</CardTitle>
-                <CardDescription className="text-[var(--font-color)]">ID: {commission.id}</CardDescription>
+                <CardTitle className="text-[var(--font-color)]">
+                  {commission.name}
+                </CardTitle>
+                <CardDescription className="text-[var(--font-color)]">
+                  ID: {commission.id}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-[var(--font-color)]">

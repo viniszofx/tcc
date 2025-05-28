@@ -38,7 +38,7 @@ export default async function Layout({
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[var(--card-color)]">
       <SidebarProvider>
-        <AppSidebar cargo="presidente" />{" "}
+        <AppSidebar cargo="admin" />{" "}
         {/* mudar aqui para o cargo do usuario no sidebar */}
         <SidebarInset className="flex flex-col">
           <header className="sticky top-0 z-10 flex h-16 items-center border-b bg-[var(--header-color)]">
