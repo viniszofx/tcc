@@ -10,8 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Building, History, LogOut, User, Users } from "lucide-react";
-import { useParams } from "next/navigation";
+import { LogOut, User } from "lucide-react";
 
 interface UserAvatarProps {
   nome: string;
@@ -21,9 +20,6 @@ interface UserAvatarProps {
 }
 
 export function UserAvatar({ nome, email, cargo, foto }: UserAvatarProps) {
-  const params = useParams();
-  const campusId = params?.campus_id || 'corumba';
-  const commissionId = params?.commission_id || 'comissao';
 
   return (
     <DropdownMenu>
@@ -51,12 +47,23 @@ export function UserAvatar({ nome, email, cargo, foto }: UserAvatarProps) {
 
         <DropdownMenuSeparator className="bg-[var(--font-color2)]" />
 
-        <a href={`/dashboard/campus/${campusId}/commissions/${commissionId}/profile`}>
-          <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
-            <User size={16} className="text-[var(--font-color2)]" />
-            <span>Perfil</span>
-          </DropdownMenuItem>
-        </a>
+        {(cargo === "admin" || cargo === "presidente") && (
+          <a href={`/admin/profile`}>
+            <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
+              <User size={16} className="text-[var(--font-color2)]" />
+              <span>Perfil</span>
+            </DropdownMenuItem>
+          </a>
+        )}
+
+        {cargo === "operador" && (
+          <a href={`/dashboard/profile`}>
+            <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
+              <User size={16} className="text-[var(--font-color2)]" />
+              <span>Perfil</span>
+            </DropdownMenuItem>
+          </a>
+          )}
 
         <DropdownMenuSeparator className="bg-[var(--font-color2)]" />
 
