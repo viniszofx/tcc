@@ -81,7 +81,7 @@ export default function OrganizationModal({
           </DialogHeader>
           <div className="my-4 space-y-4">
             <div>
-              <Label htmlFor="name" className="mb-4">Nome</Label>
+              <Label htmlFor="name">Nome</Label>
               <Input
                 id="name"
                 name="name"
@@ -91,7 +91,7 @@ export default function OrganizationModal({
               />
             </div>
             <div>
-              <Label htmlFor="shortName" className="mb-4">Sigla</Label>
+              <Label htmlFor="shortName">Sigla</Label>
               <Input
                 id="shortName"
                 name="shortName"
