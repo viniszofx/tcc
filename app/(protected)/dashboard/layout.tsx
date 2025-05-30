@@ -58,7 +58,8 @@ export default async function Layout({
                     nome={usuarioData.name}
                     email={usuarioData.email}
                     foto={usuarioData.profile.image}
-                    cargo={"admin"}
+                    papel={"operador"}
+                    cargo="operador"
                   />
                 </div>
               </div>

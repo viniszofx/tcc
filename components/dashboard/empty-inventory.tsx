@@ -3,6 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FileSpreadsheet, Upload } from "lucide-react";
 import Link from "next/link";
 
+const commissionId = "comissao";
+
 export default function EmptyInventory() {
   return (
     <Card className="border-[var(--border-input)] bg-[var(--card-color)] w-full">
@@ -15,7 +17,7 @@ export default function EmptyInventory() {
           Para visualizar o inventário, você precisa processar um arquivo de
           dados primeiro.
         </p>
-        <Link href="/dashboard/upload">
+        <Link href={(`/admin/comissions/${commissionId}/upload`)}>
           <Button className="flex items-center gap-2 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white">
             <Upload className="h-4 w-4" />
             <span>Processar Arquivo</span>

@@ -15,12 +15,12 @@ import { LogOut, User } from "lucide-react";
 interface UserAvatarProps {
   nome: string;
   email: string;
-  cargo: "admin" | "operador" | "presidente";
+  papel: "admin" | "operador" | "presidente";
   foto?: string;
+  cargo?: "admin" | "operador" | "presidente";
 }
 
-export function UserAvatar({ nome, email, cargo, foto }: UserAvatarProps) {
-
+export function UserAvatar({ nome, email, papel, foto, cargo }: UserAvatarProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="focus:outline-none">
@@ -41,7 +41,7 @@ export function UserAvatar({ nome, email, cargo, foto }: UserAvatarProps) {
           <span className="font-bold text-[var(--font-color2)]">{nome}</span>
           <span className="text-sm text-[var(--font-color2)]">{email}</span>
           <span className="text-xs text-[var(--font-color2)]">
-            {cargo.toUpperCase()}
+            {papel ? papel.toUpperCase() : ""}
           </span>
         </DropdownMenuLabel>
 
@@ -63,7 +63,7 @@ export function UserAvatar({ nome, email, cargo, foto }: UserAvatarProps) {
               <span>Perfil</span>
             </DropdownMenuItem>
           </a>
-          )}
+        )}
 
         <DropdownMenuSeparator className="bg-[var(--font-color2)]" />
 

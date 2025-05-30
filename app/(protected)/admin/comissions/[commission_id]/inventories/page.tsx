@@ -10,13 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getProcessedData } from "@/utils/data-storage";
 import { Filter } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import NewItemModal from "@/components/inventories/new-item-modal";
 import { addInventoryItem } from "@/utils/data-storage";
 
 import { BemCopia } from "@/lib/interface";
+import { exportToPdfStyled } from "@/utils/pdf-export";
 
 export default function InventoriesPage() {
   const router = useRouter();
@@ -25,6 +26,9 @@ export default function InventoriesPage() {
   const [metadata, setMetadata] = useState<any>(null); // Metadados do inventário
   const [isLoading, setIsLoading] = useState(true); // Controle de carregamento
   const [loadError, setLoadError] = useState<string | null>(null); // Controle de erros
+
+  const params = useParams();
+  const commissionId = params?.commission_id || "comissao";
 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
@@ -281,7 +285,16 @@ export default function InventoriesPage() {
           ? dataToExport.slice(0, 20000)
           : dataToExport;
 
-      // exportToPdfStyled(pdfData, `inventario_${new Date().toISOString().split("T")[0]}`)
+      exportToPdfStyled(
+        pdfData,
+        `inventario_${new Date().toISOString().split("T")[0]}`,
+        metadata?.comissao ?? 0,
+        metadata?.campus ?? "",
+        metadata?.presidente ?? "",
+        metadata?.inventariante ?? "",
+        metadata?.dataAbertura ?? "",
+        metadata?.dataFechamento ?? ""
+      )
     }
   };
 
@@ -316,7 +329,7 @@ export default function InventoriesPage() {
               {loadError}
             </p>
             <Button
-              onClick={() => router.push("/dashboard")}
+              onClick={() => router.push(`/admin/comissions/${commissionId}/upload`)}
               className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white"
             >
               Processar Novo Arquivo
