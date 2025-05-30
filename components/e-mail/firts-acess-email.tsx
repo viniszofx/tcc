@@ -1,3 +1,5 @@
+"use client";
+
 import DarkModeToggle from "@/components/custom/dark-mode-toggle";
 import {
     Card,
@@ -7,6 +9,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 export default function FirstAcessEmail({
     searchParams,
@@ -14,6 +17,7 @@ export default function FirstAcessEmail({
     searchParams?: { email?: string };
 } = {}) {
     const email = searchParams?.email || "seu endereço de e-mail";
+    const router = useRouter();
 
     return (
         <div className="flex flex-col items-center justify-center h-screen p-4">
@@ -44,6 +48,7 @@ export default function FirstAcessEmail({
                         className="w-full md:w-100 border-[var(--border-color)] bg-[var(--bg-simple)] cursor-pointer hover:!bg-[var(--hover-color)] hover:!text-white transition-all"
                         variant={"outline"}
                         type="submit"
+                        onClick={() => router.push("/register-password")}
                     >
                         Continuar
                     </Button>

@@ -23,7 +23,7 @@ export default function FirstAcess() {
       if (result.error) {
         setError(result.error);
       } else {
-        router.push("/auth/sign-up-email");
+        router.push("/register-email");
       }
     } catch (err) {
       setError("Erro ao enviar o link de acesso. Tente novamente.");

@@ -52,9 +52,9 @@ export default function RootRegisterPage() {
 
       if (data.user) {
         alert(
-          "Usuário criado com sucesso! Verifique seu email para confirmar o cadastro."
+          "Usuário criado com sucesso!"
         );
-        router.push("/auth/setup-email");
+        router.push("/setup-settings");
       }
     } catch (error) {
       console.error("Error creating user:", error);

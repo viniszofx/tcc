@@ -32,7 +32,7 @@ export default function FirstAcessPassword() {
 
                 <CardFooter className="mt-12 flex flex-col items-center text-center">
                     <p className="text-xs md:text-sm text-[var(--font-color)]">
-                        Você não recebeu o e-mail? Cheque seu spam ou tente <a className="underline" href="/auth/sign-up">outro e-mail.</a>
+                        Você não recebeu o e-mail? Cheque seu spam ou tente <a className="underline" href="/register">outro e-mail.</a>
                     </p>
                 </CardFooter>
             </div>

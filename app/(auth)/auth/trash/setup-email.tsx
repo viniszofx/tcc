@@ -24,7 +24,7 @@ export default function SetupEmail({
   const email = searchParams?.email || "seu endereço de e-mail";
 
   const handleContinue = () => {
-    router.push("/auth/setup-settings");
+    router.push("/setup-settings");
   };
 
   return (

@@ -73,7 +73,7 @@ export default function RecoverPasswordPage() {
         <CardFooter className="flex justify-center text-center mt-6">
           <p className="w-full md:w-112 text-sm mt-2 text-[var(--font-color)]">
             Você não recebeu o link no seu e-mail? Cheque seu spam ou tente{" "}
-            <a href="/auth/sign-in" className="underline text-[var(--font-color)]">
+            <a href="/login" className="underline text-[var(--font-color)]">
               outro e-mail.
             </a>
           </p>
