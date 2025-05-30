@@ -34,7 +34,7 @@ export default function AuthForm() {
               Entrar
             </Button>
             <p className="block w-full text-xs md:text-sm text-end text-[var(--font-color)]">
-              <a href="/auth/forget-password" className="hover:underline">
+              <a href="/forget-password" className="hover:underline">
                 Esqueci minha senha
               </a>
             </p>
