@@ -41,6 +41,8 @@ export async function signUp(formData: FormData) {
 
   const { error, data: userData } = await createUserAccount(data);
 
+  console.log("signUp result:", userData, error);
+
   if (error) {
     console.error("Sign up error:", error.message);
     redirect(`/error?message=${error.message}`);
@@ -142,7 +144,10 @@ export async function signInWithMagicLink(formData: FormData) {
   }
 
   // Validate email domain
-  if (!email.endsWith("@estudante.ifms.edu.br") && !email.endsWith("@ifms.edu.br")) {
+  if (
+    !email.endsWith("@estudante.ifms.edu.br") &&
+    !email.endsWith("@ifms.edu.br")
+  ) {
     return { error: "Invalid email domain" };
   }
 
@@ -155,10 +160,10 @@ export async function signInWithMagicLink(formData: FormData) {
           email,
           // role: email.includes("@estudante.ifms.edu.br") ? "student" : "staff",
           // name: email.split("@")[0], // Add name from email
-        }
-      }
+        },
+      },
     });
-
+    console.log("signInWithMagicLink result data:", data);
     if (error) {
       console.error("Magic link error:", error.message);
       return { error: error.message };
