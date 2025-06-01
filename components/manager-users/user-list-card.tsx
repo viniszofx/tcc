@@ -1,16 +1,15 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Eye, Pencil } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
-import type { Usuario } from "@/lib/interface"
 
 interface UserListCardProps {
-    users: Usuario[]
-    onEditUser: (user: Usuario) => void
+    users: any[]
+    onEditUser: (user: any) => void
 }
 
 export function UserListCard({ users, onEditUser }: UserListCardProps) {
@@ -47,30 +46,30 @@ export function UserListCard({ users, onEditUser }: UserListCardProps) {
                         {users.length > 0 ? (
                             users.map((usuario) => (
                                 <div
-                                    key={usuario.usuario_id}
+                                    key={usuario.id}
                                     className="grid grid-cols-12 items-center gap-2 p-4 text-[var(--font-color)]"
                                 >
                                     <div className="col-span-1 hidden md:block">
                                         <Avatar className="h-10 w-10 border">
-                                            <AvatarImage src={usuario.imagem_url || "/placeholder.svg?height=40&width=40"} alt={usuario.nome} />
-                                            <AvatarFallback>{usuario.nome.charAt(0)}</AvatarFallback>
+                                            <AvatarImage src={usuario.profile?.image || "/placeholder.svg?height=40&width=40"} alt={usuario.name || "Usuário"} />
+                                            <AvatarFallback>{usuario.name ? usuario.name.charAt(0) : "?"}</AvatarFallback>
                                         </Avatar>
                                     </div>
                                     <div className="col-span-4 md:col-span-2 truncate">
                                         <div className="flex items-center gap-2 md:hidden">
                                             <Avatar className="h-8 w-8 border">
-                                                <AvatarImage src={usuario.imagem_url || "/placeholder.svg?height=32&width=32"} alt={usuario.nome} />
-                                                <AvatarFallback>{usuario.nome.charAt(0)}</AvatarFallback>
+                                                <AvatarImage src={usuario.profile?.image || "/placeholder.svg?height=32&width=32"} alt={usuario.name || "Usuário"} />
+                                                <AvatarFallback>{usuario.name ? usuario.name.charAt(0) : "?"}</AvatarFallback>
                                             </Avatar>
-                                            <span>{usuario.nome}</span>
+                                            <span>{usuario.name || "Sem nome"}</span>
                                         </div>
-                                        <span className="hidden md:inline">{usuario.nome}</span>
+                                        <span className="hidden md:inline">{usuario.name || "Sem nome"}</span>
                                     </div>
-                                    <div className="col-span-4 md:col-span-3 truncate">{usuario.email}</div>
-                                    <div className="col-span-2 hidden md:block truncate">{usuario.campus_id}</div>
+                                    <div className="col-span-4 md:col-span-3 truncate">{usuario.email || "Sem email"}</div>
+                                    <div className="col-span-2 hidden md:block truncate">{usuario.campus_id || "Sem campus"}</div>
                                     <div className="col-span-2 hidden md:block">
-                                        <Badge className={`${getRoleBadgeColor(usuario.papel)} text-white`}>
-                                            {usuario.papel.toUpperCase()}
+                                        <Badge className={`${getRoleBadgeColor(usuario.role)} text-white`}>
+                                            {usuario.role ? usuario.role.toUpperCase() : "SEM PAPEL"}
                                         </Badge>
                                     </div>
                                     <div className="col-span-4 md:col-span-2 flex justify-end gap-2">
@@ -82,7 +81,7 @@ export function UserListCard({ users, onEditUser }: UserListCardProps) {
                                         >
                                             <Pencil className="h-4 w-4" />
                                         </Button>
-                                        <Link href={`/dashboard/manager/users/${usuario.usuario_id}`}>
+                                        <Link href={`/dashboard/manager/users/${usuario.id}`}>
                                             <Button
                                                 variant="outline"
                                                 size="icon"

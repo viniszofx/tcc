@@ -6,49 +6,68 @@ import { UserListCard } from "@/components/manager-users/user-list-card"
 import { UserSearchCard } from "@/components/manager-users/user-search-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import type { Usuario } from "@/lib/interface"
-import { campusList, getCampusNameById, user } from "@/utils/user"
 import { Plus } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+
+function getCampusNameById(campusId: string, campuses: any[]) {
+  const campus = campuses.find((c) => c.id === campusId)
+  return campus ? campus.name : "Sem campus"
+}
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<Usuario | null>(null)
-  const [users, setUsers] = useState<Usuario[]>(user)
+  const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [users, setUsers] = useState<any[]>([])
+  const [campuses, setCampuses] = useState<any[]>([])
+
+  useEffect(() => {
+    fetch("/api/v1/users")
+      .then((res) => res.json())
+      .then(setUsers)
+    fetch("/api/v1/campuses")
+      .then((res) => res.json())
+      .then(setCampuses)
+  }, [])
 
   const filteredUsers = users.filter(
     (usuario) =>
-      usuario.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      usuario.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      usuario.papel.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (usuario.campus_id && getCampusNameById(usuario.campus_id).toLowerCase().includes(searchTerm.toLowerCase())),
+      (usuario.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (usuario.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (usuario.role?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (usuario.campus_id && getCampusNameById(usuario.campus_id, campuses).toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
-  const handleAddUser = (newUser: Partial<Usuario>) => {
+  const handleAddUser = (newUser: Partial<any>) => {
     const newUserId = `dev-user-${Date.now()}`
-
-    const userToAdd: Usuario = {
-      ...(newUser as Usuario),
-      usuario_id: newUserId,
-      imagem_url: newUser.imagem_url || "/logo.svg",
-      habilitado: true,
-      organizacao_id: "org-001",
+    const userToAdd = {
+      ...(newUser as any),
+      id: newUserId,
+      name: newUser.name || "",
+      email: newUser.email || "",
+      role: newUser.role || "operador",
+      campus_id: newUser.campus_id || "",
+      active: true,
+      profile: {
+        description: newUser.profile?.description || "",
+        image: newUser.profile?.image || "/logo.svg",
+      },
     }
-
     setUsers([...users, userToAdd])
   }
 
-  const handleEditUser = (updatedUser: Usuario) => {
-    const updatedUsers = users.map((user) => (user.usuario_id === updatedUser.usuario_id ? updatedUser : user))
+  const handleEditUser = (updatedUser: any) => {
+    const updatedUsers = users.map((user) => (user.id === updatedUser.id ? updatedUser : user))
     setUsers(updatedUsers)
   }
 
-  const handleEditClick = (user: Usuario) => {
+  const handleEditClick = (user: any) => {
     setSelectedUser(user)
     setIsEditModalOpen(true)
   }
+
+  if (users.length === 0 || campuses.length === 0) return <div>Carregando...</div>
 
   return (
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
@@ -72,7 +91,6 @@ export default function UsersPage() {
 
       <CardContent className="flex flex-col gap-6">
         <UserSearchCard searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-
         <UserListCard users={filteredUsers} onEditUser={handleEditClick} />
       </CardContent>
 
@@ -80,7 +98,7 @@ export default function UsersPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAddUser={handleAddUser}
-        campusList={campusList}
+        campusList={campuses}
       />
 
       {selectedUser && (
@@ -89,7 +107,7 @@ export default function UsersPage() {
           onClose={() => setIsEditModalOpen(false)}
           user={selectedUser}
           onEditUser={handleEditUser}
-          campusList={campusList}
+          campusList={campuses}
         />
       )}
     </Card>
