@@ -1,15 +1,15 @@
 ﻿"use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
 import { AddUserModal } from "@/components/manager-users/add-user-modal"
 import { EditUserModal } from "@/components/manager-users/edit-user-modal"
-import { UserSearchCard } from "@/components/manager-users/user-search-card"
 import { UserListCard } from "@/components/manager-users/user-list-card"
-import { user, campusList, getCampusNameById } from "@/utils/user"
+import { UserSearchCard } from "@/components/manager-users/user-search-card"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import type { Usuario } from "@/lib/interface"
+import { campusList, getCampusNameById, user } from "@/utils/user"
+import { Plus } from "lucide-react"
+import { useState } from "react"
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("")

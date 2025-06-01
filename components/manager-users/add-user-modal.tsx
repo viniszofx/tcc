@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -15,6 +13,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Usuario } from "@/lib/interface"
+import type React from "react"
+import { useState } from "react"
 
 interface AddUserModalProps {
   isOpen: boolean
