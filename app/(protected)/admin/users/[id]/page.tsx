@@ -6,40 +6,56 @@ import { UserDetailsCard } from "@/components/manager-users/user-details-card"
 import { UserProfileCard } from "@/components/manager-users/user-profile-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import type { Usuario } from "@/lib/interface"
-import { campusList, getCampusNameById, user } from "@/utils/user"
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
+function getCampusNameById(campusId: string, campuses: any[]) {
+  const campus = campuses.find((c) => String(c.id) === String(campusId))
+  return campus ? campus.name : "Sem campus"
+}
+
 export default function UserDetailsPage() {
   const params = useParams()
   const router = useRouter()
-  const [userData, setUserData] = useState<Usuario | null>(null)
+  const id = typeof params.id === "string" ? params.id : Array.isArray(params.id) ? params.id[0] : ""
+  const [userData, setUserData] = useState<any>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [campuses, setCampuses] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    function fetchUser() {
-      if (params?.id) {
-        const foundUser = user.find((u) => u.usuario_id === params.id)
-        if (foundUser) {
-          setUserData(foundUser)
-        } else {
-          setUserData(null)
-        }
-      }
+    async function fetchData() {
+      setLoading(true)
+      const [userRes, campusRes] = await Promise.all([
+        fetch("/api/v1/users"),
+        fetch("/api/v1/campuses"),
+      ])
+      const users = await userRes.json()
+      const campusesData = await campusRes.json()
+      setCampuses(campusesData)
+      const foundUser = users.find(
+        (u: any) =>
+          String(u.id) === String(id) ||
+          String(u.usuario_id) === String(id)
+      )
+      setUserData(foundUser || null)
+      setLoading(false)
     }
-
-    fetchUser()
-  }, [params?.id])
+    fetchData()
+  }, [id])
 
   const handleDeleteUser = () => {
-    router.push("/dashboard/manager/users")
+    router.push("/admin/users")
   }
 
-  const handleEditUser = (updatedUser: Usuario) => {
+  const handleEditUser = (updatedUser: any) => {
     setUserData(updatedUser)
+  }
+
+  if (loading) {
+    return <div>Carregando...</div>
   }
 
   if (!userData) {
@@ -79,12 +95,18 @@ export default function UserDetailsPage() {
       </CardHeader>
 
       <CardContent className="flex flex-col gap-6 p-6">
-        <UserProfileCard nome={userData.nome} papel={userData.papel} foto={userData.imagem_url} />
+        <UserProfileCard
+          nome={userData.name || userData.nome}
+          papel={userData.role || userData.papel}
+          foto={userData.profile?.image || userData.foto || userData.imagem_url}
+        />
 
         <UserDetailsCard
-          id={userData.usuario_id}
+          id={userData.id || userData.usuario_id}
           email={userData.email}
-          campus={getCampusNameById(userData.campus_id || "")} role={""} />
+          campus={getCampusNameById(userData.campus_id, campuses)}
+          role={userData.role || userData.papel}
+        />
       </CardContent>
 
       <CardFooter className="flex flex-col sm:flex-row sm:justify-between gap-2 p-6 pt-0">
@@ -110,7 +132,7 @@ export default function UserDetailsPage() {
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleDeleteUser}
-        userName={userData.nome}
+        userName={userData.name || userData.nome}
       />
 
       <EditUserModal
@@ -118,7 +140,7 @@ export default function UserDetailsPage() {
         onClose={() => setIsEditModalOpen(false)}
         user={userData}
         onEditUser={handleEditUser}
-        campusList={campusList}
+        campusList={campuses}
       />
     </Card>
   )

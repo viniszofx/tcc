@@ -81,7 +81,7 @@ export function UserListCard({ users, onEditUser }: UserListCardProps) {
                                         >
                                             <Pencil className="h-4 w-4" />
                                         </Button>
-                                        <Link href={`/dashboard/manager/users/${usuario.id}`}>
+                                        <Link href={`/admin/users/${usuario.id}`}>
                                             <Button
                                                 variant="outline"
                                                 size="icon"

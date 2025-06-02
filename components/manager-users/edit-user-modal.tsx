@@ -37,12 +37,12 @@ export function EditUserModal({ isOpen, onClose, user, onEditUser, campusList }:
   useEffect(() => {
     if (user) {
       setFormData({
-        usuario_id: user.usuario_id,
-        nome: user.nome,
-        email: user.email,
-        papel: user.papel,
-        campus_id: user.campus_id || "",
-        foto: user.foto || "/logo.svg",
+        usuario_id: user.usuario_id || user.id || "",
+        nome: user.nome || user.name || "",
+        email: user.email || "",
+        papel: user.papel || user.role || "",
+        campus_id: user.campus_id || user.campus || "",
+        foto: user.foto || user.imagem_url || user.profile?.image || "/logo.svg",
       })
     }
   }, [user])

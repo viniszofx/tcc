@@ -63,7 +63,7 @@
       "active": true,
       "profile": {
         "description": "Presidente da comissão de inventário com 5 anos de experiência",
-        "image": "/avatars/presidente.svg"
+        "image": "/logo.svg"
       }
     },
     {
@@ -75,7 +75,7 @@
       "active": true,
       "profile": {
         "description": "Operador responsável pelo registro e atualização de itens no sistema",
-        "image": "/avatars/operador.svg"
+        "image": "/logo.svg"
       }
     }
   ],
