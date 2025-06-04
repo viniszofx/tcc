@@ -6,6 +6,10 @@ import {
 } from "@/components/ui/card";
 import Image from "next/image";
 
+export const metadata = {
+  title: "Redirecionando - KDÊ",
+}
+
 export default function page() {
   return (
     <main>
