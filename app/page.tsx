@@ -15,7 +15,7 @@ export default function Home() {
 
   const handleStartNow = () => {
     console.log("Iniciando o processo de registro...");
-    router.push("/register");
+    router.push("/login");
   };
 
   const handleLearnMore = () => {

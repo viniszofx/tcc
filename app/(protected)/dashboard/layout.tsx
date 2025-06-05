@@ -7,9 +7,11 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { users } from "@/data/db.json";
+import db from "@/data/db.json";
 import { supabaseClient } from "@/utils/supabase/client";
 import HeaderTitle from "../../../components/custom/header-title";
+
+const { users } = db;
 
 export default async function Layout({
   children,
