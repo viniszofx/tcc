@@ -1,10 +1,10 @@
 # .github/workflows/docker-build.yml
-name: Build and Push Next.js Image to Docker Hub
+name: Build and Push Next.js Image to Docker Hub (Ideal Secure)
 
 on:
   push:
     branches:
-      - preview # Dispara o workflow em push para o branch 'main'
+      - preview
 
 env:
   DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
@@ -15,27 +15,11 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read # Permissão padrão para ler o repositório
+      contents: read
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      # Define as variáveis de ambiente necessárias para o BUILD do Next.js.
-      # APENAS as variáveis 'NEXT_PUBLIC_' devem ser injetadas aqui,
-      # pois são lidas no tempo de build e incluídas no bundle do cliente.
-      # NUNCA inclua segredos de servidor como SUPABASE_SERVICE_ROLE_KEY ou RESEND_API_KEY aqui.
-      - name: Setup Next.js Build Environment Variables
-        run: |
-          echo "NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL_PROD }}" >> .env.production
-          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PROD }}" >> .env.production
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PROD }}" >> .env.production
-          # Este arquivo .env.production será lido pelo 'pnpm build' no Dockerfile
-          # e depois ignorado no estágio 'runner' (já que não há COPY explícito dele para lá).
-        env:
-          NEXT_PUBLIC_BASE_URL_PROD: ${{ secrets.NEXT_PUBLIC_BASE_URL_PROD }}
-          NEXT_PUBLIC_SUPABASE_URL_PROD: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PROD }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY_PROD: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PROD }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -64,9 +48,18 @@ jobs:
       - name: Build and Push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: . # Usa o contexto atual (onde o .env.production foi criado)
+          context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ github.workflow }}
           cache-to: type=gha,mode=max,scope=${{ github.workflow }}
+          # Passa as variáveis NEXT_PUBLIC_ como build-args
+          build-args: |
+            NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL_PROD }}
+            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PROD }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PROD }}
+          # Passa as "super keys" como build-secrets
+          secrets: |
+            supabase_service_role_key=${{ secrets.SUPABASE_SERVICE_ROLE_KEY_PROD }}
+            resend_api_key=${{ secrets.RESEND_API_KEY_PROD }}
