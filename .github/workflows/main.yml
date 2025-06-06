@@ -4,7 +4,7 @@ name: Build and Push Next.js Image to Docker Hub
 on:
   push:
     branches:
-      - main # Dispara o workflow em push para o branch 'main'
+      - preview # Dispara o workflow em push para o branch 'main'
 
 env:
   DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
