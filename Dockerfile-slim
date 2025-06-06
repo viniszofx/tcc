@@ -1,0 +1,68 @@
+# Nome do build: `minha-app-next:latest`
+# Exemplo de build: `docker build -t minha-app-next .`
+# Exemplo de execução: `docker run -p 8000:8000 minha-app-next`
+
+# Etapa 1: Base de Build - pnpm e Node.js
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+# Ativa o pnpm via corepack e prepara para uso
+# Usar `corepack enable` globalmente é mais eficiente que instalar pnpm como dep.
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copia e instala apenas as dependências para o build
+# Isso aproveita o cache do Docker, invalidando apenas se os arquivos de lock ou package.json mudarem.
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+# Copia o restante do código-fonte da aplicação
+# O .dockerignore garantirá que apenas o essencial seja copiado aqui.
+COPY . .
+
+# Copia o arquivo .env.production como .env para uso durante o build
+COPY .env.production .env
+
+# Build da aplicação Next.js
+# `output: "standalone"` é a OTIMIZAÇÃO chave que a Vercel utiliza para criar um pacote autossuficiente
+# no diretório `.next/standalone`. Ele copia automaticamente node_modules e outros arquivos necessários.
+RUN pnpm build
+
+# Limpa devDependencies, mas o modo standalone já é bastante otimizado
+# Esta etapa é redundante se você usar `output: "standalone"` corretamente,
+# pois o `standalone` já gera um diretório com APENAS as dependências de produção necessárias.
+# Contudo, manteremos para clareza se você decidir não usar `output: "standalone"`.
+# RUN pnpm prune --prod
+
+
+# Etapa 2: Runner - Imagem de Produção Leve
+# Usamos a imagem node-slim para o runner, que é ainda mais leve que alpine em alguns casos,
+# pois não inclui ferramentas que não são necessárias para o runtime.
+FROM node:22-alpine AS runner
+
+WORKDIR /app
+
+# Copia o pacote standalone gerado pelo Next.js
+# O diretório `standalone` contém tudo o que é necessário para rodar a aplicação,
+# incluindo um `node_modules` otimizado e o código da aplicação.
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+# Não precisamos copiar `package.json` ou `node_modules` separadamente, pois o `standalone` já os inclui.
+# COPY --from=builder /app/package.json ./package.json
+# COPY --from=builder /app/node_modules ./node_modules
+# Copia o .env de produção para o ambiente de execução
+COPY --from=builder /app/.env ./.env
+
+
+# Configurações de ambiente para produção
+ENV NODE_ENV=production
+ENV PORT=8000
+
+# Expõe a porta que o app vai escutar
+EXPOSE 8000
+
+# Comando para iniciar a aplicação Next.js em modo de produção
+# O `standalone` gera um arquivo `server.js` na raiz do diretório `standalone`.
+# Você pode usar `/usr/local/bin/node` para garantir o uso do Node.js do container.
+CMD ["node", "server.js"]

@@ -1,0 +1,58 @@
+# .github/workflows/docker-build.yml
+name: Build and Push Next.js Image to Docker Hub
+
+# Aciona o workflow em push para o branch 'main'
+on:
+  push:
+    branches:
+      - preview # O branch principal do seu projeto
+
+# Define variáveis de ambiente globais para o workflow
+env:
+  DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }} # Puxa o username do GitHub Secrets
+  IMAGE_NAME: osirissouza/kde-ifms # O nome completo da sua imagem no Docker Hub
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest # O ambiente de execução do job (uma VM Linux)
+
+    # Permissões necessárias para o workflow
+    permissions:
+      contents: read # Permite que o workflow leia o código do repositório
+
+    steps:
+      - name: Checkout Repository # Passo 1: Clona o código do seu repositório
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub # Passo 2: Faz login no Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }} # Puxa o PAT do GitHub Secrets
+
+      - name: Extract Docker metadata (tags, labels) # Passo 3: Gera tags para a imagem
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }} # Usa o nome da sua imagem do Docker Hub
+          # Define as tags da imagem baseadas no evento do Git
+          tags: |
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,format=long,prefix=
+            latest # Adiciona a tag 'latest' para a última versão
+
+      - name: Build and Push Docker image # Passo 4: Constrói e envia a imagem
+        uses: docker/build-push-action@v5
+        with:
+          context: . # Onde o Dockerfile está localizado (raiz do projeto)
+          push: true # Habilita o push da imagem para o registro
+          tags: ${{ steps.meta.outputs.tags }} # Aplica as tags geradas
+          labels: ${{ steps.meta.outputs.labels }} # Aplica os labels gerados
+          # Configura o cache para acelerar builds futuros
+          cache-from: type=gha,scope=${{ github.workflow }}
+          cache-to: type=gha,mode=max,scope=${{ github.workflow }}
