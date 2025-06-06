@@ -15,4 +15,5 @@ export const publicRoutes = [
   "/api/v1/auth/confirm",
   "/api/v1/auth/callback",
   "/api/v1/auth/redirect",
+  "/manifest.webmanifest",
 ];
