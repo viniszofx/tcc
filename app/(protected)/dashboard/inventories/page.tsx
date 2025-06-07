@@ -17,6 +17,7 @@ import NewItemModal from "@/components/inventories/new-item-modal";
 import { addInventoryItem } from "@/utils/data-storage";
 
 import { BemCopia } from "@/lib/interface";
+import { exportToPdfStyled } from "@/utils/pdf-export";
 
 export default function InventoriesPage() {
   const router = useRouter();
@@ -281,7 +282,16 @@ export default function InventoriesPage() {
           ? dataToExport.slice(0, 20000)
           : dataToExport;
 
-      // exportToPdfStyled(pdfData, `inventario_${new Date().toISOString().split("T")[0]}`)
+      exportToPdfStyled(
+        pdfData,
+        `inventario_${new Date().toISOString().split("T")[0]}`,
+        metadata?.comissao ?? 0,
+        metadata?.campus ?? "",
+        metadata?.presidente ?? "",
+        metadata?.inventariante ?? "",
+        metadata?.dataAbertura ?? "",
+        metadata?.dataFechamento ?? ""
+      );
     }
   };
 

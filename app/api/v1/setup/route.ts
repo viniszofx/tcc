@@ -30,7 +30,5 @@ export async function POST(request: Request) {
   console.log("Setup completed with orgs and campus:", orgs, campus);
 
   // Fixed redirect using NextResponse.redirect with absolute URL
-  return NextResponse.redirect(new URL("/redirect", request.url).toString(), {
-    status: 307,
-  });
+  return NextResponse.redirect(new URL("/redirect", request.url));
 }
