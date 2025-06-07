@@ -10,23 +10,21 @@ import {
 import data from "@/data/db.json";
 import Link from "next/link";
 
-interface CommissionsPageProps {
+interface comissionsPageProps {
   params: Promise<{
     campus_id: string;
   }>;
 }
 
-export default async function CommissionsPage({
-  params,
-}: CommissionsPageProps) {
-  // console.log("params", params);
+export default async function comissionsPage({ params }: comissionsPageProps) {
+  console.log("params", params);
   const resolvedParams = await params;
   const campus_id = resolvedParams.campus_id
     ? resolvedParams.campus_id
     : "corumba";
   console.log("campus_id", campus_id);
-  const commissions = data.commissions.filter(
-    (commission) => commission.campus_id === campus_id
+  const comissions = data.comissions.filter(
+    (comission) => comission.campus_id === campus_id
   );
 
   const campus = data.campuses.find((campus) => campus.id === campus_id);
@@ -43,20 +41,20 @@ export default async function CommissionsPage({
 
       <CardContent className="flex flex-col gap-6">
         <div className="grid gap-6 md:grid-cols-2">
-          {commissions.map((commission) => (
-            <Card key={commission.id}>
+          {comissions.map((comission) => (
+            <Card key={comission.id}>
               <CardHeader>
-                <CardTitle>{commission.name}</CardTitle>
-                <CardDescription>ID: {commission.id}</CardDescription>
+                <CardTitle>{comission.name}</CardTitle>
+                <CardDescription>ID: {comission.id}</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  {commission.description}
+                  {comission.description}
                 </p>
               </CardContent>
               <CardFooter>
                 <Link
-                  href={`/dashboard/commissions/${commission.id}`}
+                  href={`/dashboard/comissions/${comission.id}`}
                   className="w-full"
                 >
                   <Button className="w-full text-[var(--font-color2)] bg-[var(--button-color)] transition-all hover:bg-[var(--hover-3-color)]">
