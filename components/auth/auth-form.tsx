@@ -1,4 +1,4 @@
-import { signIn, signInWithGoogle } from "@/app/(auth)/auth/_action";
+import { signIn } from "@/app/(auth)/auth/_action";
 import { Button } from "../ui/button";
 import { CardContent, CardFooter } from "../ui/card";
 import { Input } from "../ui/input";
@@ -40,14 +40,14 @@ export default function AuthForm() {
             >
               Entrar
             </Button>
-            <Button
+            {/* <Button
               formAction={signInWithGoogle}
               className="w-full border-[var(--border-color)] bg-[var(--bg-simple)] cursor-pointer hover:!bg-[var(--hover-color)] hover:!text-white transition-all"
               variant={"outline"}
               type="submit"
             >
               Entrar com Google
-            </Button>
+            </Button> */}
             <p className="block w-full text-xs md:text-sm text-end text-[var(--font-color)]">
               <a href="/forget-password" className="hover:underline">
                 Esqueci minha senha

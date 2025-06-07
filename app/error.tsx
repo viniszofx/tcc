@@ -41,7 +41,7 @@ export default function Error({
           </Button>
 
           <Button asChild variant="outline" className="gap-2 px-8 py-6 text-[var(--font-color)]">
-            <Link href="/dashboard">
+            <Link href="/">
               <ArrowLeft className="w-4 h-4" />
               Voltar para a página inicial
             </Link>
