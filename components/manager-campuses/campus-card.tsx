@@ -18,7 +18,6 @@ export default function CampusCard({ campus, onEdit, onDelete, onClick }: Campus
     <Card
       className="cursor-pointer overflow-hidden transition-all hover:shadow-md h-full flex flex-col"
       onClick={(e) => {
-        // Prevent clicking the card when clicking on buttons
         if ((e.target as HTMLElement).closest("button")) return
         onClick()
       }}
@@ -43,10 +42,6 @@ export default function CampusCard({ campus, onEdit, onDelete, onClick }: Campus
           <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
             <span className="font-medium">ID:</span>
             <span className="break-words">{campus.campus_id}</span>
-          </div>
-          <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-            <span className="font-medium">Organização:</span>
-            <span className="break-words">{campus.organizacao_id}</span>
           </div>
         </div>
       </CardContent>

@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { Campus } from "@/lib/interface";
-import { campus as initialCampuses } from "@/utils/campus";
 import { ArrowLeft, Edit } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
@@ -24,17 +23,32 @@ export default function CampusDetailPage({
   const router = useRouter();
   const [campus, setCampus] = useState<Campus | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const unwrappedParams = use(params);
   const campusId = unwrappedParams.id;
 
   useEffect(() => {
-    const foundCampus = initialCampuses.find((c) => c.campus_id === campusId);
-    if (foundCampus) {
-      setCampus(foundCampus);
-    } else {
-      router.push("/dashboard/campus");
-    }
+    const fetchCampus = async () => {
+      try {
+        const response = await fetch("/api/v1/campuses");
+        const data = await response.json();
+        const foundCampus = data.find((c: Campus) => c.campus_id === campusId);
+        
+        if (foundCampus) {
+          setCampus(foundCampus);
+        } else {
+          router.push("/admin/campus");
+        }
+      } catch (error) {
+        console.error("Error fetching campus:", error);
+        router.push("/admin/campus");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCampus();
   }, [campusId, router]);
 
   const handleOpenModal = () => {
@@ -51,14 +65,24 @@ export default function CampusDetailPage({
   };
 
   const handleDeleteCampus = () => {
-    router.push("/dashboard/manager/campuses");
+    router.push("/admin/campus");
   };
+
+  if (isLoading) {
+    return (
+      <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
+        <CardContent className="flex h-40 items-center justify-center">
+          <p className="text-[var(--font-color)]">Carregando...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!campus) {
     return (
       <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
         <CardContent className="flex h-40 items-center justify-center">
-          <p className="text-[var(--font-color)]">Carregando...</p>
+          <p className="text-[var(--font-color)]">Campus não encontrado</p>
         </CardContent>
       </Card>
     );
@@ -79,7 +103,7 @@ export default function CampusDetailPage({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => router.push("/dashboard/manager/campuses")}
+            onClick={() => router.push("/admin/campus")}
             className="text-[var(--font-color)] transition-all"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -129,14 +153,6 @@ export default function CampusDetailPage({
               </p>
               <p className="text-lg font-semibold text-[var(--font-color)] break-words">
                 {campus.campus_id}
-              </p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-[var(--font-color)] opacity-70">
-                ID da Organização
-              </p>
-              <p className="text-lg font-semibold text-[var(--font-color)] break-words">
-                {campus.organizacao_id}
               </p>
             </div>
             <div className="space-y-2">

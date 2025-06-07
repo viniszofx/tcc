@@ -62,6 +62,8 @@ export interface Comissao {
 export interface Organizacao {
   organizacao_id: string;
   nome: string;
+  ativo?: boolean;
+  nome_curto?: string;
 
   // Relations
   campus?: Campus[];
@@ -73,7 +75,7 @@ export interface Campus {
   campus_id: string;
   nome: string;
   campus_codigo: string;
-  organizacao_id: string;
+  organizacao_id?: string;
   campus_ativo: boolean;
 
   // Relations
@@ -82,6 +84,16 @@ export interface Campus {
   bens?: BemOriginal[];
   bens_copias?: BemCopia[];
   responsavel?: Responsavel;
+}
+
+export interface ProfileType {
+  id: string;
+  nome: string;
+  email: string;
+  campus: string;
+  descricao: string;
+  cargo: "admin" | "operador" | "presidente";
+  foto: string;
 }
 
 export interface Responsavel {

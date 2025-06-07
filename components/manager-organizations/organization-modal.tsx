@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,19 +11,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-interface Organization {
-  id: string;
-  name: string;
-  shortName: string;
-  active?: boolean;
-}
+import type { Organizacao } from "@/lib/interface";
+import { useEffect, useState } from "react";
 
 interface OrganizationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (org: Organization) => void;
-  organization: Organization | null;
+  onSave: (org: Organizacao) => void;
+  organization: Organizacao | null;
   mode: "create" | "edit";
 }
 
@@ -35,11 +29,11 @@ export default function OrganizationModal({
   organization,
   mode,
 }: OrganizationModalProps) {
-  const [formData, setFormData] = useState<Organization>({
-    id: "",
-    name: "",
-    shortName: "",
-    active: true,
+  const [formData, setFormData] = useState<Organizacao>({
+    organizacao_id: "",
+    nome: "",
+    nome_curto: "",
+    ativo: true,
   });
 
   useEffect(() => {
@@ -47,10 +41,10 @@ export default function OrganizationModal({
       setFormData(organization);
     } else {
       setFormData({
-        id: "",
-        name: "",
-        shortName: "",
-        active: true,
+        organizacao_id: "",
+        nome: "",
+        nome_curto: "",
+        ativo: true,
       });
     }
   }, [organization, isOpen]);
@@ -81,21 +75,21 @@ export default function OrganizationModal({
           </DialogHeader>
           <div className="my-4 space-y-4">
             <div>
-              <Label htmlFor="name">Nome</Label>
+              <Label htmlFor="nome">Nome</Label>
               <Input
-                id="name"
-                name="name"
-                value={formData.name}
+                id="nome"
+                name="nome" 
+                value={formData.nome}
                 onChange={handleChange}
                 required
               />
             </div>
             <div>
-              <Label htmlFor="shortName">Sigla</Label>
+              <Label htmlFor="nome_curto">Sigla</Label>
               <Input
-                id="shortName"
-                name="shortName"
-                value={formData.shortName}
+                id="nome_curto"
+                name="nome_curto"
+                value={formData.nome_curto}
                 onChange={handleChange}
                 required
               />

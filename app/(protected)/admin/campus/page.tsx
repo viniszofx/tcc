@@ -11,19 +11,29 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { Campus } from "@/lib/interface";
-import { campus as initialCampuses } from "@/utils/campus";
 import { ArrowLeft, Plus, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function CampusPage() {
   const router = useRouter();
-  const [campuses, setCampuses] = useState<Campus[]>(initialCampuses);
+  const [campuses, setCampuses] = useState<Campus[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentCampus, setCurrentCampus] = useState<Campus | null>(null);
-  const [modalMode, setModalMode] = useState<"create" | "edit" | "delete">(
-    "create"
-  );
+  const [modalMode, setModalMode] = useState<"create" | "edit" | "delete">("create");
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const res = await fetch("/api/v1/campuses");
+        const data = await res.json();
+        setCampuses(data);
+      } catch (error) {
+        console.error("Erro ao buscar os campuses:", error);
+      }
+    };
+    loadData();
+  }, []);
 
   const handleOpenModal = (
     mode: "create" | "edit" | "delete",
@@ -41,7 +51,7 @@ export default function CampusPage() {
 
   const handleSaveCampus = (campus: Campus) => {
     if (modalMode === "create") {
-      const newCampus = {
+      const newCampus: Campus = {
         ...campus,
         campus_id: `${Date.now()}`,
       };
@@ -61,13 +71,11 @@ export default function CampusPage() {
 
   const handleSaveAll = () => {
     console.log("Saving all changes:", campuses);
-
     alert("Alterações salvas com sucesso!");
   };
 
   const handleCardClick = (campusId: string) => {
-    console.log("Campus ID:", campusId);
-    router.push(`/dashboard/campus/corumba/manager/campuses/${campusId}`);
+    router.push(`/admin/campus/${campusId}`);
   };
 
   return (

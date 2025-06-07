@@ -27,8 +27,8 @@ export default async function comissionsPage({ params }: comissionsPageProps) {
     (comission) => comission.campus_id === campus_id
   );
 
-  const campus = data.campuses.find((campus) => campus.id === campus_id);
-  const campusName = campus ? campus.name : "Câmpus";
+  const campus = data.campuses.find((campus) => campus.campus_id === campus_id);
+  const campusName = campus ? campus.nome : "Câmpus";
 
   return (
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">

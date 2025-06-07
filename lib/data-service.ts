@@ -10,11 +10,11 @@ export const getCampuses = () => {
 
 export const getCommissions = (campusId?: string) => {
   if (campusId) {
-    return data.commissions.filter(
+    return data.comissions.filter(
       (commission) => commission.campus_id === campusId
     );
   }
-  return data.commissions;
+  return data.comissions;
 };
 
 export const getUsers = (campusId?: string) => {

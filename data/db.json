@@ -1,24 +1,24 @@
 {
   "organizations": [
     {
-      "id": "ifms",
-      "name": "Instituto Federal de Mato Grosso do Sul",
-      "shortName": "IFMS",
-      "active": true
+      "organizacao_id": "2000",
+      "nome": "Instituto Federal de Mato Grosso do Sul",
+      "nome_curto": "IFMS",
+      "ativo": true
     }
   ],
   "campuses": [
     {
-      "id": "corumba",
-      "name": "Câmpus Corumbá",
-      "code": "IFMS-CB",
-      "active": true
+      "campus_id": "corumba",
+      "nome": "Câmpus Corumbá",
+      "campus_codigo": "IFMS-CB",
+      "campus_ativo": true
     },
     {
-      "id": "campo-grande",
-      "name": "Câmpus Campo Grande",
-      "code": "IFMS-CG",
-      "active": true
+      "campus_id": "campo-grande",
+      "nome": "Câmpus Campo Grande",
+      "campus_codigo": "IFMS-CG",
+      "campus_ativo": true
     }
   ],
   "comissions": [

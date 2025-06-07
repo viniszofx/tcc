@@ -23,13 +23,13 @@ interface Comission {
 }
 
 export default function CommissionsPage() {
-  const campus_id = "campus-1"; // Replace with the actual campus ID you want to filter by
-  const commissions = data.commissions.filter(
+  const campus_id = "campus-1";
+  const commissions = data.comissions.filter(
     (commission: Comission) => commission.campus_id === campus_id
   );
 
   const campus = data.campuses.find((campus: any) => campus.id === campus_id);
-  const campusName = campus ? campus.name : "Câmpus";
+  const campusName = campus ? campus.nome : "Câmpus";
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);

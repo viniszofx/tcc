@@ -2,12 +2,12 @@
 
 import { Button } from "@/components/ui/button"
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,7 +30,6 @@ export default function CampusModal({ isOpen, onClose, onSave, onDelete, campus,
   const [formData, setFormData] = useState<Campus>({
     campus_id: "",
     nome: "",
-    organizacao_id: "",
     campus_codigo: "",
     campus_ativo: false,
   })
@@ -42,20 +41,25 @@ export default function CampusModal({ isOpen, onClose, onSave, onDelete, campus,
       setFormData({
         campus_id: "",
         nome: "",
-        organizacao_id: "",
         campus_codigo: "",
         campus_ativo: false,
       })
     }
   }, [campus, isOpen])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
   }
 
   const handleSwitchChange = (checked: boolean) => {
-    setFormData((prev) => ({ ...prev, campus_ativo: checked }))
+    setFormData(prev => ({
+      ...prev,
+      campus_ativo: checked
+    }))
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -150,25 +154,15 @@ export default function CampusModal({ isOpen, onClose, onSave, onDelete, campus,
               className="border-[var(--border-color)] bg-[var(--input-bg-color)] text-[var(--font-color)]"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="organizacao_id" className="text-[var(--font-color)]">
-              ID da Organização
-            </Label>
-            <Input
-              id="organizacao_id"
-              name="organizacao_id"
-              value={formData.organizacao_id}
-              onChange={handleChange}
-              placeholder="ID da organização"
-              required
-              className="border-[var(--border-color)] bg-[var(--input-bg-color)] text-[var(--font-color)]"
-            />
-          </div>
           <div className="flex items-center justify-between">
             <Label htmlFor="campus_ativo" className="text-[var(--font-color)]">
               Campus Ativo
             </Label>
-            <Switch id="campus_ativo" checked={formData.campus_ativo} onCheckedChange={handleSwitchChange} />
+            <Switch 
+              id="campus_ativo"
+              checked={formData.campus_ativo} 
+              onCheckedChange={handleSwitchChange}
+            />
           </div>
         </div>
         <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">

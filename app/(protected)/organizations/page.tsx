@@ -24,19 +24,19 @@ export default function OrganizationsPage() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {organizations.map((org) => (
-          <Card key={org.id}>
+          <Card key={org.organizacao_id}>
             <CardHeader>
-              <CardTitle>{org.name}</CardTitle>
-              <CardDescription>{org.shortName}</CardDescription>
+              <CardTitle>{org.nome}</CardTitle>
+              <CardDescription>{org.nome_curto}</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Detalhes sobre o {org.name} e suas unidades
+                Detalhes sobre o {org.nome} e suas unidades
               </p>
             </CardContent>
             <CardFooter>
               <Link
-                href={`/dashboard/org/${org.id}/campus/`}
+                href={`/dashboard/org/${org.organizacao_id}/campus/`}
                 className="w-full"
               >
                 <Button className="w-full">Ver Câmpus</Button>

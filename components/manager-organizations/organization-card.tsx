@@ -1,17 +1,10 @@
-import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Organizacao } from "@/lib/interface";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { Pencil, Trash2, Eye } from "lucide-react";
-
-interface Organization {
-  id: string;
-  name: string;
-  shortName: string;
-  active?: boolean;
-}
-
 interface OrganizationCardProps {
-  organization: Organization;
+  organization: Organizacao;
   onEdit: () => void;
   onDelete: () => void;
   onClick?: () => void;
@@ -21,11 +14,11 @@ export default function OrganizationCard({ organization, onEdit, onDelete, onCli
   return (
     <Card className="border border-[var(--border-color)] rounded-xl shadow-sm flex flex-col justify-between min-h-[180px]">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold text-[var(--font-color)]">{organization.name}</CardTitle>
-        <CardDescription className="text-[var(--font-color)] opacity-80">Sigla: {organization.shortName}</CardDescription>
+        <CardTitle className="text-lg font-semibold text-[var(--font-color)]">{organization.nome}</CardTitle>
+        <CardDescription className="text-[var(--font-color)] opacity-80">Sigla: {organization.nome_curto}</CardDescription>
       </CardHeader>
       <CardFooter className="flex items-center justify-end gap-3 pt-0 pb-4 px-6">
-        <Link href={`/admin/organizations/${organization.id}`}>
+        <Link href={`/admin/organizations/${organization.organizacao_id}`}>
           <Button
             className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] hover:text-white"
             size="icon"

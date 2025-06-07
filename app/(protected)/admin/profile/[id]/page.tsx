@@ -9,19 +9,10 @@ import ProfileEditor from "@/components/profile/profile-editor"
 import ProfileSidebar from "@/components/profile/profile-sidebar"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { ProfileType } from "@/lib/interface"
 
 import ProfileLoading from "./loading"
 import NotFound from "./not-found"
-
-type ProfileType = {
-  id: string
-  nome: string
-  email: string
-  campus: string
-  descricao: string
-  cargo: "admin" | "operador" | "presidente"
-  foto: string
-}
 
 export default function ProfilePage() {
   const params = useParams()
@@ -40,13 +31,13 @@ export default function ProfilePage() {
       return null
     }
 
-    const userCampus = data.campuses.find(c => c.id === foundUser.campus_id)
+    const userCampus = data.campuses.find(c => c.campus_id === foundUser.campus_id)
 
     return {
       id: foundUser.id,
       nome: foundUser.name,
       email: foundUser.email,
-      campus: userCampus?.name || "",
+      campus: userCampus?.nome || "",
       descricao: foundUser.profile.description,
       cargo: foundUser.role as "admin" | "operador" | "presidente",
       foto: foundUser.profile.image

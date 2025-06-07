@@ -1,16 +1,16 @@
 ﻿"use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import data from "@/data/db.json";
 import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useParams, useRouter } from "next/navigation";
 
 export default function OrganizationDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const orgId = params.id as string;
 
-  const organization = (data.organizations || []).find((org: any) => org.id === orgId);
+  const organization = (data.organizations || []).find((org: any) => org.organizacao_id === orgId);
 
   if (!organization) {
     return (
@@ -30,24 +30,24 @@ export default function OrganizationDetailsPage() {
         <ArrowLeft size={18} className="mr-2" />
         Voltar
       </Button>
-      <div className="bg-white rounded-xl shadow p-8 border border-[var(--border-color)]">
-        <h1 className="text-2xl font-bold mb-2 text-[var(--font-color)]">{organization.name}</h1>
+      <div className="bg-[var(--bg-simple)] rounded-xl shadow p-8 border border-[var(--border-color)]">
+        <h1 className="text-2xl font-bold mb-2 text-[var(--font-color)]">{organization.nome}</h1>
         <div className="text-lg mb-1 text-[var(--font-color)]">
-          <span className="font-semibold">Sigla:</span> {organization.shortName}
+          <span className="font-semibold">Sigla:</span> {organization.nome_curto}
         </div>
         <div className="text-md text-[var(--font-color)]">
-          <span className="font-semibold">ID:</span> {organization.id}
+          <span className="font-semibold">ID:</span> {organization.organizacao_id}
         </div>
-        {organization.active !== undefined && (
+        {organization.ativo !== undefined && (
           <div className="mt-2">
             <span
               className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                organization.active
+                organization.ativo
                   ? "bg-green-100 text-green-700"
                   : "bg-gray-200 text-gray-600"
               }`}
             >
-              {organization.active ? "Ativa" : "Inativa"}
+              {organization.ativo ? "Ativa" : "Inativa"}
             </span>
           </div>
         )}

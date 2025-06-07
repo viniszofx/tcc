@@ -6,7 +6,8 @@ import { UserListCard } from "@/components/manager-users/user-list-card"
 import { UserSearchCard } from "@/components/manager-users/user-search-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus } from "lucide-react"
+import { ArrowLeft, Plus } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 function getCampusNameById(campusId: string, campuses: any[]) {
@@ -21,6 +22,7 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [users, setUsers] = useState<any[]>([])
   const [campuses, setCampuses] = useState<any[]>([])
+  const router = useRouter()
 
   useEffect(() => {
     fetch("/api/v1/users")
@@ -80,6 +82,16 @@ export default function UsersPage() {
             Gerencie os usuários do sistema
           </CardDescription>
         </div>
+        <div className="flex flex-wrap gap-2">
+        <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/admin")}
+            className="text-[var(--font-color)] transition-all"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar
+          </Button>
         <Button
           onClick={() => setIsAddModalOpen(true)}
           className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all w-full sm:w-auto"
@@ -87,6 +99,7 @@ export default function UsersPage() {
           <Plus className="mr-2 h-4 w-4" />
           Adicionar Usuário
         </Button>
+        </div>
       </CardHeader>
 
       <CardContent className="flex flex-col gap-6">
