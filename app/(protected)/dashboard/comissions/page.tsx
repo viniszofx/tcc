@@ -17,7 +17,7 @@ interface PageProps {
   searchParams?: Record<string, string | string[] | undefined>;
 }
 
-export default function ComissionsPage({ params }: PageProps) {
+export default function ComissionsPage({ params }: any) {
   const campus_id = params.campus_id || "corumba";
   const comissoes = data.comissoes.filter(
     (comissao) => comissao.campus_id === campus_id
@@ -55,7 +55,7 @@ export default function ComissionsPage({ params }: PageProps) {
       <CardContent className="flex flex-col gap-6">
         <div className="grid gap-6 md:grid-cols-2">
           {comissoes.map((comissao) => (
-            <Card 
+            <Card
               key={comissao.comissao_id}
               className="border-[var(--border-color)] bg-[var(--bg-simple)]"
             >
