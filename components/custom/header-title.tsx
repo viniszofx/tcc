@@ -1,8 +1,7 @@
 "use client"
 
-import { usePathname } from "next/navigation"
 import { routes } from "@/components/custom/routes-title"
-import Head from "next/head"
+import { usePathname } from "next/navigation"
 
 const HeaderTitle = () => {
   const pathname = usePathname()

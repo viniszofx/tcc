@@ -1,15 +1,19 @@
 export const routes = [
-    { prefix: "/dashboard/campus/[campus_id]/commissions/[commission_id]/about", title: "Sobre o Sistema" },
-    { prefix: "/dashboard/campus/[campus_id]/commissions/[commission_id]/settings", title: "Configurações do Sistema" },
-    { prefix: "/dashboard/campus/[campus_id]/commissions/[commission_id]/profile", title: "Perfil do Usuário" },
-    { prefix: "/dashboard/campus/[campus_id]/commissions/[commission_id]/history", title: "Histórico do Sistema" },
-    { prefix: "/dashboard/campus/[campus_id]/commissions/[commission_id]/upload", title: "Processamento do Arquivo" },
-    { prefix: "/dashboard/campus/[campus_id]/commissions/[commission_id]/inventories", title: "Inventário" },
-    { prefix: "/dashboard/campus/[campus_id]/commissions/[commission_id]", title: "Detalhes da Comissão" },
-    { prefix: "/dashboard/campus/[campus_id]/manager/users", title: "Gerenciar Usuários" },
-    { prefix: "/dashboard/campus/[campus_id]/manager/campuses", title: "Gerenciar Câmpus" },
-    { prefix: "/dashboard/campus/[campus_id]/manager/organizations", title: "Gerenciar Organizações" },
-    { prefix: "/dashboard/campus/[campus_id]/manager/committees", title: "Gerenciar Comissões" },
-    { prefix: "/dashboard/campus/[comission_id]/commissions", title: "Comissões" },
-    { prefix: "/dashboard/campus", title: "Câmpus" },
+    // admin routes
+    { prefix: "/admin/about", title: "Sobre o Sistema" },
+    { prefix: "/admin/profile", title: "Perfil" },
+    { prefix: "/admin/settings", title: "Configurações do Sistema" },
+    { prefix: "/admin/comissions", title: "Comissões" },
+    { prefix: "/admin/campus", title: "Gerenciar Campus" },
+    { prefix: "/admin/users", title: "Gerenciar Usuários" },
+    { prefix: "/admin/organizations", title: "Gerenciar Organizações" },
+    // { prefix: "/admin/comissions/[commission_id]/history", title: "Histórico" },
+
+    // dashboard routes
+    { prefix: "/dashboard/about", title: "Sobre o Sistema" },
+    { prefix: "/admin/settings", title: "Configurações do Sistema" },
+    { prefix: "/dashboard/profile", title: "Perfil" },
+    { prefix: "/dashboard/comissions", title: "Comissões" },
+    { prefix: "/admin/comissions/[comissao_id]/upload", title: "Processamento do Arquivo" },
+    { prefix: "/admin/comissions/[comissao_id]/inventories", title: "Inventário" },
 ]
