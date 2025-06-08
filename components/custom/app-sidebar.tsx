@@ -185,33 +185,65 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <div className="flex flex-col items-start gap-2 p-4 mt-auto mb-6 [var(--border-color)]">
-          <hr className="my-2 border-[var(--border-color)] w-full" />
-          <Button
-            className="bg-[var(--secondary-color)] text-[var(--font-color2)] mb-2"
-            asChild
-          >
-            <Link
-              href={`/dashboard/campus/${campusId}/commissions/${commissionId}/about`}
-              className="flex gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
+        {cargo === "admin" ||
+          (cargo === "presidente" && (
+            <div className="flex flex-col items-start gap-2 p-4 mt-auto mb-6 [var(--border-color)]">
+              <hr className="my-2 border-[var(--border-color)] w-full" />
+              <Button
+                className="bg-[var(--secondary-color)] text-[var(--font-color2)] mb-2"
+                asChild
+              >
+                <Link
+                  href={`/admin/about`}
+                  className="flex gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
+                >
+                  <Info className="text-[var(--font-color2)]" />
+                  Sobre
+                </Link>
+              </Button>
+              <Button
+                className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
+                asChild
+              >
+                <Link
+                  href={`/admin/settings`}
+                  className="flex gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
+                >
+                  <Settings className="text-[var(--font-color2)]" />
+                  Configurações
+                </Link>
+              </Button>
+            </div>
+          ))}
+        {cargo === "operador" && (
+          <div className="flex flex-col items-start gap-2 p-4 mt-auto mb-6 [var(--border-color)]">
+            <hr className="my-2 border-[var(--border-color)] w-full" />
+            <Button
+              className="bg-[var(--secondary-color)] text-[var(--font-color2)] mb-2"
+              asChild
             >
-              <Info className="text-[var(--font-color2)]" />
-              Sobre
-            </Link>
-          </Button>
-          <Button
-            className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
-            asChild
-          >
-            <Link
-              href={`/dashboard/campus/${campusId}/commissions/${commissionId}/settings`}
-              className="flex gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
+              <Link
+                href={`/dashboard/about`}
+                className="flex gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
+              >
+                <Info className="text-[var(--font-color2)]" />
+                Sobre
+              </Link>
+            </Button>
+            <Button
+              className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
+              asChild
             >
-              <Settings className="text-[var(--font-color2)]" />
-              Configurações
-            </Link>
-          </Button>
-        </div>
+              <Link
+                href={`/dashboard/settings`}
+                className="flex gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
+              >
+                <Settings className="text-[var(--font-color2)]" />
+                Configurações
+              </Link>
+            </Button>
+          </div>
+        )}
       </SidebarContent>
       <SidebarRail />
     </Sidebar>
