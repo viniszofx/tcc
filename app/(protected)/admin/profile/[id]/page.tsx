@@ -1,6 +1,7 @@
 "use client"
 
 import data from "@/data/db.json"
+import type { Campus, Usuario } from "@/lib/interface"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
@@ -9,7 +10,6 @@ import ProfileEditor from "@/components/profile/profile-editor"
 import ProfileSidebar from "@/components/profile/profile-sidebar"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { ProfileType } from "@/lib/interface"
 
 import ProfileLoading from "./loading"
 import NotFound from "./not-found"
@@ -19,68 +19,54 @@ export default function ProfilePage() {
   const router = useRouter()
   const profileId = params.id as string
 
-  const [perfil, setPerfil] = useState<ProfileType | null>(null)
+  const [usuario, setUsuario] = useState<Usuario | null>(null)
+  const [campuses, setCampuses] = useState<Campus[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
 
-  const fetchProfileData = async (id: string): Promise<ProfileType | null> => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    const foundUser = data.users.find((u) => u.id === id)
-    if (!foundUser) {
-      return null
-    }
-
-    const userCampus = data.campuses.find(c => c.campus_id === foundUser.campus_id)
-
-    return {
-      id: foundUser.id,
-      nome: foundUser.name,
-      email: foundUser.email,
-      campus: userCampus?.nome || "",
-      descricao: foundUser.profile.description,
-      cargo: foundUser.role as "admin" | "operador" | "presidente",
-      foto: foundUser.profile.image
-    }
+  const getCampusNameById = (campusId: string): string => {
+    const campus = campuses.find((c: Campus) => c.campus_id === campusId)
+    return campus?.nome || "Sem campus"
   }
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true)
-        const profileData = await fetchProfileData(profileId)
-
-        if (!profileData) {
+        // Simulando chamadas API com dados locais
+        const user = data.users.find(u => u.usuario_id === profileId)
+        const campusesData = data.campuses
+        
+        if (!user) {
           NotFound()
           return
         }
 
-        setPerfil(profileData)
+        setUsuario(user)
+        setCampuses(campusesData)
       } catch (error) {
         console.error("Failed to fetch profile:", error)
-        throw new Error("Falha ao carregar o perfil")
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchProfile()
+    fetchData()
   }, [profileId])
 
   const handleSave = async () => {
-    if (!perfil) return
+    if (!usuario) return
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(perfil.email)) {
+    if (!emailRegex.test(usuario.email)) {
       alert("Por favor, insira um e-mail válido antes de salvar.")
       return
     }
 
     try {
       setIsSaving(true)
-
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
+      // Simulando salvamento
+      await new Promise(resolve => setTimeout(resolve, 1000))
       alert("Perfil salvo com sucesso!")
     } catch (error) {
       console.error("Error saving profile:", error)
@@ -94,9 +80,20 @@ export default function ProfilePage() {
     router.push(`/dashboard/org/${params.slug}/campus/${params.campus_id}/commissions/${params.commission_id}`)
   }
 
-  if (isLoading) {
+  const handleFieldChange = (field: keyof Usuario, value: any) => {
+    if (usuario) {
+      setUsuario({
+        ...usuario,
+        [field]: value
+      })
+    }
+  }
+
+  if (isLoading || !usuario) {
     return <ProfileLoading />
   }
+
+  const campusNome = getCampusNameById(usuario.campus_id || "")
 
   return (
     <div className="flex-1 w-full p-3 xs:p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center">
@@ -104,24 +101,24 @@ export default function ProfilePage() {
         <CardContent className="flex-grow p-0">
           <div className="flex flex-col md:flex-row h-full p-6 sm:p-8 gap-8">
             <ProfileSidebar
-              nome={perfil!.nome}
-              email={perfil!.email}
-              campus={perfil!.campus}
-              descricao={perfil!.descricao}
-              cargo={perfil!.cargo}
-              foto={perfil!.foto}
+              usuario={{
+                nome: usuario.nome,
+                email: usuario.email,
+                papel: usuario.papel as "admin" | "operador" | "presidente",
+                perfil: {
+                  descricao: usuario.perfil?.descricao || "",
+                  imagem_url: usuario.perfil?.imagem_url || "/logo.svg"
+                },
+                campusName: campusNome
+              }}
             />
 
             <Separator orientation="vertical" className="hidden md:block" />
 
             <ProfileEditor
-              nome={perfil!.nome}
-              email={perfil!.email}
-              campus={perfil!.campus}
-              descricao={perfil!.descricao}
-              onNomeChange={(value) => setPerfil({ ...perfil!, nome: value })}
-              onEmailChange={(value) => setPerfil({ ...perfil!, email: value })}
-              onDescricaoChange={(value) => setPerfil({ ...perfil!, descricao: value })}
+              usuario={usuario}
+              campusName={campusNome}
+              onFieldChange={handleFieldChange}
             />
           </div>
         </CardContent>

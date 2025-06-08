@@ -12,69 +12,51 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { Usuario } from "@/lib/interface"
-import type React from "react"
+import type { Campus, Usuario } from "@/lib/interface"
 import { useState } from "react"
 
 interface AddUserModalProps {
   isOpen: boolean
   onClose: () => void
   onAddUser: (user: Partial<Usuario>) => void
-  campusList: { id: string; nome: string }[]
+  campusList: Campus[]
 }
 
 export function AddUserModal({ isOpen, onClose, onAddUser, campusList }: AddUserModalProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Partial<Usuario>>({
     nome: "",
     email: "",
-    senha: "",
+    senha_hash: "",
     campus_id: "",
     papel: "",
-    foto: "/logo.svg",
+    perfil: {
+      imagem_url: "/logo.svg",
+      descricao: ""
+    }
   })
+
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }))
-    }
+    setFormData(prev => ({ ...prev, [name]: value }))
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }))
   }
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }))
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }))
-    }
+    setFormData(prev => ({ ...prev, [name]: value }))
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }))
   }
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
-
-    if (!formData.nome.trim()) {
-      newErrors.nome = "Nome é obrigatório"
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email é obrigatório"
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email inválido"
-    }
-
-    if (!formData.senha.trim()) {
-      newErrors.senha = "Senha é obrigatória"
-    } else if (formData.senha.length < 6) {
-      newErrors.senha = "Senha deve ter pelo menos 6 caracteres"
-    }
-
-    if (!formData.papel) {
-      newErrors.papel = "Papel é obrigatório"
-    }
-
-    if (!formData.campus_id) {
-      newErrors.campus_id = "Campus é obrigatório"
-    }
+    if (!formData.nome?.trim()) newErrors.nome = "Nome é obrigatório"
+    if (!formData.email?.trim()) newErrors.email = "Email é obrigatório"
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email inválido"
+    if (!formData.senha_hash) newErrors.senha_hash = "Senha é obrigatória"
+    else if (formData.senha_hash.length < 6) newErrors.senha_hash = "Senha deve ter pelo menos 6 caracteres"
+    if (!formData.papel) newErrors.papel = "Papel é obrigatório"
+    if (!formData.campus_id) newErrors.campus_id = "Campus é obrigatório"
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -82,22 +64,19 @@ export function AddUserModal({ isOpen, onClose, onAddUser, campusList }: AddUser
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-
     if (validateForm()) {
-      onAddUser({
-        ...formData,
-        senha_hash: formData.senha,
-      })
-
+      onAddUser(formData)
       setFormData({
         nome: "",
         email: "",
-        senha: "",
+        senha_hash: "",
         campus_id: "",
         papel: "",
-        foto: "/logo.svg",
+        perfil: {
+          imagem_url: "/logo.svg",
+          descricao: ""
+        }
       })
-
       onClose()
     }
   }
@@ -107,21 +86,19 @@ export function AddUserModal({ isOpen, onClose, onAddUser, campusList }: AddUser
       <DialogContent className="sm:max-w-[425px] bg-[var(--bg-simple)]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="text-[var(--font-color)]">Adicionar Novo Usuário</DialogTitle>
+            <DialogTitle className="text-[var(--font-color)]">Adicionar Usuário</DialogTitle>
             <DialogDescription className="text-[var(--font-color)]">
-              Preencha os dados do novo usuário abaixo.
+              Preencha os dados do novo usuário
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="nome" className="text-[var(--font-color)]">
-                Nome
-              </Label>
+              <Label htmlFor="nome" className="text-[var(--font-color)]">Nome</Label>
               <Input
                 id="nome"
                 name="nome"
-                value={formData.nome}
+                value={formData.nome || ""}
                 onChange={handleChange}
                 className="border-[var(--border-input)]"
               />
@@ -129,14 +106,12 @@ export function AddUserModal({ isOpen, onClose, onAddUser, campusList }: AddUser
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="email" className="text-[var(--font-color)]">
-                Email
-              </Label>
+              <Label htmlFor="email" className="text-[var(--font-color)]">Email</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                value={formData.email}
+                value={formData.email || ""}
                 onChange={handleChange}
                 className="border-[var(--border-input)]"
               />
@@ -144,31 +119,30 @@ export function AddUserModal({ isOpen, onClose, onAddUser, campusList }: AddUser
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="senha" className="text-[var(--font-color)]">
-                Senha
-              </Label>
+              <Label htmlFor="senha_hash" className="text-[var(--font-color)]">Senha</Label>
               <Input
-                id="senha"
-                name="senha"
+                id="senha_hash"
+                name="senha_hash"
                 type="password"
-                value={formData.senha}
+                value={formData.senha_hash || ""}
                 onChange={handleChange}
                 className="border-[var(--border-input)]"
               />
-              {errors.senha && <p className="text-xs text-red-500">{errors.senha}</p>}
+              {errors.senha_hash && <p className="text-xs text-red-500">{errors.senha_hash}</p>}
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="campus_id" className="text-[var(--font-color)]">
-                Campus
-              </Label>
-              <Select value={formData.campus_id} onValueChange={(value) => handleSelectChange("campus_id", value)}>
+              <Label className="text-[var(--font-color)]">Campus</Label>
+              <Select 
+                value={formData.campus_id || ""}
+                onValueChange={value => handleSelectChange("campus_id", value)}
+              >
                 <SelectTrigger className="border-[var(--border-input)]">
                   <SelectValue placeholder="Selecione um campus" />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)]">
-                  {campusList.map((campus) => (
-                    <SelectItem key={campus.id} value={campus.id}>
+                  {campusList.map(campus => (
+                    <SelectItem key={campus.campus_id} value={campus.campus_id}>
                       {campus.nome}
                     </SelectItem>
                   ))}
@@ -178,10 +152,11 @@ export function AddUserModal({ isOpen, onClose, onAddUser, campusList }: AddUser
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="papel" className="text-[var(--font-color)]">
-                Papel
-              </Label>
-              <Select value={formData.papel} onValueChange={(value) => handleSelectChange("papel", value)}>
+              <Label className="text-[var(--font-color)]">Papel</Label>
+              <Select
+                value={formData.papel || ""}
+                onValueChange={value => handleSelectChange("papel", value)}
+              >
                 <SelectTrigger className="border-[var(--border-input)]">
                   <SelectValue placeholder="Selecione um papel" />
                 </SelectTrigger>
@@ -195,18 +170,18 @@ export function AddUserModal({ isOpen, onClose, onAddUser, campusList }: AddUser
             </div>
           </div>
 
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button
-              type="button"
-              variant="outline"
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
               onClick={onClose}
-              className="border-[var(--border-color)] bg-[var(--bg-simple)] hover:bg-[var(--hover-color)] hover:text-white w-full sm:w-auto"
+              className="border-[var(--border-color)]"
             >
               Cancelar
             </Button>
-            <Button
+            <Button 
               type="submit"
-              className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white w-full sm:w-auto"
+              className="bg-[var(--button-color)] text-[var(--font-color2)]"
             >
               Adicionar
             </Button>

@@ -18,7 +18,7 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  const usuarioData = users.find((u) => u.role === "admin");
+  const usuarioData = users.find((u) => u.papel === "admin");
 
   const supabase = supabaseClient();
 
@@ -57,9 +57,9 @@ export default async function Layout({
                 <div className="flex items-center gap-4">
                   <DarkModeToggle />
                   <UserAvatar
-                    nome={usuarioData.name}
+                    nome={usuarioData.nome}
                     email={usuarioData.email}
-                    foto={usuarioData.profile.image}
+                    foto={usuarioData.perfil.imagem_url}
                     papel={"admin"}
                     cargo="admin"
                   />

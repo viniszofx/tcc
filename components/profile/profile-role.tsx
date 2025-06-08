@@ -1,13 +1,13 @@
 "use client"
 
 interface RoleProfileProps {
-  cargo: "admin" | "operador" | "presidente"
+  papel: string;
 }
 
-export default function RoleProfile({ cargo }: RoleProfileProps) {
+export default function RoleProfile({ papel }: RoleProfileProps) {
   return (
     <div className="w-full text-center font-bold text-lg md:text-xl mb-4 text-[var(--font-color)]">
-      {cargo.toUpperCase()}
+      {papel.toUpperCase()}
     </div>
   )
 }

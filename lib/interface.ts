@@ -20,9 +20,12 @@ export interface Usuario {
   nome: string;
   papel: string;
   email: string;
-  imagem_url?: string;
   senha_hash?: string | null;
   habilitado: boolean;
+  perfil? : {
+    descricao?: string;
+    imagem_url?: string;
+  };
   organizacao_id: string;
   campus_id?: string | null;
   comissao_id?: string | null;
@@ -47,10 +50,13 @@ export interface Usuario {
 export interface Comissao {
   comissao_id: string;
   nome: string;
-  data_inicio: Date;
-  data_fim: Date;
-  presidente_id: string;
-  organizacao_id: string;
+  ativo?: boolean;
+  tipo: string;
+  ano?: number;
+  descricao?: string;
+  presidente_id?: string;
+  organizacao_id?: string;
+  campus_id: string;
 
   // Relations
   organizacao?: Organizacao;

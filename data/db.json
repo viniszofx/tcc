@@ -21,68 +21,76 @@
       "campus_ativo": true
     }
   ],
-  "comissions": [
+  "comissoes": [
     {
-      "id": "556489651438",
+      "comissao_id": "556489651438",
       "campus_id": "corumba",
-      "name": "Comissão de Inventário 2024",
-      "type": "inventory",
-      "description": "Comissão responsável pelo inventário anual de 2024",
-      "active": true,
-      "year": 2024
+      "nome": "Comissão de Inventário 2024",
+      "tipo": "inventory",
+      "descricao": "Comissão responsável pelo inventário anual de 2024",
+      "ativo": true,
+      "ano": 2024,
+      "presidente_id": "2"
     },
     {
-      "id": "56494946156",
+      "comissao_id": "56494946156",
       "campus_id": "corumba",
-      "name": "Comissão de Desfazimento",
-      "type": "disposal",
-      "description": "Comissão responsável pelo desfazimento de bens inservíveis",
-      "active": true,
-      "year": 2024
+      "nome": "Comissão de Desfazimento",
+      "tipo": "disposal",
+      "descricao": "Comissão responsável pelo desfazimento de bens inservíveis",
+      "ativo": true,
+      "ano": 2024,
+      "presidente_id": "2"
     }
   ],
   "users": [
     {
-      "id": "1",
-      "name": "John Doe",
+      "usuario_id": "1",
+      "nome": "John Doe",
       "email": "john@ifms.edu.br",
       "campus_id": "corumba",
-      "role": "admin",
-      "active": true,
-      "profile": {
-        "description": "Administrador do sistema com experiência em gestão de comissões",
-        "image": "/logo.svg"
-      }
+      "comissao_id": "556489651438",
+      "papel": "admin",
+      "habilitado": true,
+      "perfil": {
+        "descricao": "Administrador do sistema com experiência em gestão de comissões",
+        "imagem_url": "/logo.svg"
+      },
+      "organizacao_id": "2000"
     },
     {
-      "id": "2",
-      "name": "Maria Silva",
+      "usuario_id": "2",
+      "nome": "Maria Silva",
       "email": "maria@ifms.edu.br",
       "campus_id": "corumba",
-      "role": "presidente",
-      "active": true,
-      "profile": {
-        "description": "Presidente da comissão de inventário com 5 anos de experiência",
-        "image": "/logo.svg"
-      }
+      "comissao_id": "556489651438",
+      "papel": "presidente",
+      "habilitado": true,
+      "perfil": {
+        "descricao": "Presidente da comissão de inventário com 5 anos de experiência",
+        "imagem_url": "/logo.svg"
+      },
+      "organizacao_id": "2000"
     },
     {
-      "id": "3",
-      "name": "Pedro Santos",
+      "usuario_id": "3",
+      "nome": "Pedro Santos",
       "email": "pedro@ifms.edu.br",
       "campus_id": "campo-grande",
-      "role": "operador",
-      "active": true,
-      "profile": {
-        "description": "Operador responsável pelo registro e atualização de itens no sistema",
-        "image": "/logo.svg"
-      }
+      "comissao_id": "56494946156",
+      "papel": "operador",
+      "habilitado": true,
+      "perfil": {
+        "descricao": "Operador responsável pelo registro e atualização de itens no sistema",
+        "imagem_url": "/logo.svg"
+      },
+      "organizacao_id": "2000"
     }
   ],
   "inventory_items": [
     {
       "id": "1",
-      "commission_id": "5564896513",
+      "comissao_id": "556489651438",
       "number": "123456",
       "description": "Item de inventário",
       "brand_model": "Marca/Modelo",

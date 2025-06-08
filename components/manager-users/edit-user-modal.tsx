@@ -12,76 +12,66 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type React from "react"
+import type { Campus, Usuario } from "@/lib/interface"
 import { useEffect, useState } from "react"
 
 interface EditUserModalProps {
   isOpen: boolean
   onClose: () => void
-  user: any
-  onEditUser: (user: any) => void
-  campusList: { id: string; nome: string }[]
+  user: Usuario | null
+  onEditUser: (user: Partial<Usuario>) => void
+  campusList: Campus[]
 }
 
 export function EditUserModal({ isOpen, onClose, user, onEditUser, campusList }: EditUserModalProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Partial<Usuario>>({
     usuario_id: "",
     nome: "",
     email: "",
     papel: "",
     campus_id: "",
-    foto: "",
+    perfil: {
+      imagem_url: "/logo.svg",
+      descricao: ""
+    }
   })
+
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (user) {
       setFormData({
-        usuario_id: user.usuario_id || user.id || "",
-        nome: user.nome || user.name || "",
-        email: user.email || "",
-        papel: user.papel || user.role || "",
-        campus_id: user.campus_id || user.campus || "",
-        foto: user.foto || user.imagem_url || user.profile?.image || "/logo.svg",
+        usuario_id: user.usuario_id,
+        nome: user.nome,
+        email: user.email,
+        papel: user.papel,
+        campus_id: user.campus_id,
+        perfil: user.perfil || {
+          imagem_url: "/logo.svg",
+          descricao: ""
+        }
       })
     }
   }, [user])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }))
-    }
+    setFormData(prev => ({ ...prev, [name]: value }))
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }))
   }
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }))
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }))
-    }
+    setFormData(prev => ({ ...prev, [name]: value }))
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }))
   }
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
-
-    if (!formData.nome.trim()) {
-      newErrors.nome = "Nome é obrigatório"
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email é obrigatório"
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email inválido"
-    }
-
-    if (!formData.papel) {
-      newErrors.papel = "Papel é obrigatório"
-    }
-
-    if (!formData.campus_id) {
-      newErrors.campus_id = "Campus é obrigatório"
-    }
+    if (!formData.nome?.trim()) newErrors.nome = "Nome é obrigatório"
+    if (!formData.email?.trim()) newErrors.email = "Email é obrigatório"
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email inválido"
+    if (!formData.papel) newErrors.papel = "Papel é obrigatório"
+    if (!formData.campus_id) newErrors.campus_id = "Campus é obrigatório"
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -89,7 +79,6 @@ export function EditUserModal({ isOpen, onClose, user, onEditUser, campusList }:
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-
     if (validateForm()) {
       onEditUser(formData)
       onClose()
@@ -103,19 +92,17 @@ export function EditUserModal({ isOpen, onClose, user, onEditUser, campusList }:
           <DialogHeader>
             <DialogTitle className="text-[var(--font-color)]">Editar Usuário</DialogTitle>
             <DialogDescription className="text-[var(--font-color)]">
-              Atualize os dados do usuário abaixo.
+              Atualize os dados do usuário
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="nome" className="text-[var(--font-color)]">
-                Nome
-              </Label>
+              <Label htmlFor="nome" className="text-[var(--font-color)]">Nome</Label>
               <Input
                 id="nome"
                 name="nome"
-                value={formData.nome}
+                value={formData.nome || ""}
                 onChange={handleChange}
                 className="border-[var(--border-input)]"
               />
@@ -123,14 +110,12 @@ export function EditUserModal({ isOpen, onClose, user, onEditUser, campusList }:
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="email" className="text-[var(--font-color)]">
-                Email
-              </Label>
+              <Label htmlFor="email" className="text-[var(--font-color)]">Email</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                value={formData.email}
+                value={formData.email || ""}
                 onChange={handleChange}
                 className="border-[var(--border-input)]"
               />
@@ -138,16 +123,17 @@ export function EditUserModal({ isOpen, onClose, user, onEditUser, campusList }:
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="campus_id" className="text-[var(--font-color)]">
-                Campus
-              </Label>
-              <Select value={formData.campus_id} onValueChange={(value) => handleSelectChange("campus_id", value)}>
+              <Label className="text-[var(--font-color)]">Campus</Label>
+              <Select 
+                value={formData.campus_id || ""}
+                onValueChange={value => handleSelectChange("campus_id", value)}
+              >
                 <SelectTrigger className="border-[var(--border-input)]">
                   <SelectValue placeholder="Selecione um campus" />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)]">
-                  {campusList.map((campus) => (
-                    <SelectItem key={campus.id} value={campus.id}>
+                  {campusList.map(campus => (
+                    <SelectItem key={campus.campus_id} value={campus.campus_id}>
                       {campus.nome}
                     </SelectItem>
                   ))}
@@ -157,10 +143,11 @@ export function EditUserModal({ isOpen, onClose, user, onEditUser, campusList }:
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="papel" className="text-[var(--font-color)]">
-                Papel
-              </Label>
-              <Select value={formData.papel} onValueChange={(value) => handleSelectChange("papel", value)}>
+              <Label className="text-[var(--font-color)]">Papel</Label>
+              <Select
+                value={formData.papel || ""}
+                onValueChange={value => handleSelectChange("papel", value)}
+              >
                 <SelectTrigger className="border-[var(--border-input)]">
                   <SelectValue placeholder="Selecione um papel" />
                 </SelectTrigger>
@@ -174,18 +161,18 @@ export function EditUserModal({ isOpen, onClose, user, onEditUser, campusList }:
             </div>
           </div>
 
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button
-              type="button"
-              variant="outline"
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
               onClick={onClose}
-              className="border-[var(--border-color)] bg-[var(--bg-simple)] hover:bg-[var(--hover-color)] hover:text-white w-full sm:w-auto"
+              className="border-[var(--border-color)]"
             >
               Cancelar
             </Button>
-            <Button
+            <Button 
               type="submit"
-              className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white w-full sm:w-auto"
+              className="bg-[var(--button-color)] text-[var(--font-color2)]"
             >
               Salvar
             </Button>

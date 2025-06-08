@@ -1,34 +1,30 @@
-import data from "@/data/db.json";
+import data from "@/data/db.json"
 
 export const getOrganizations = () => {
-  return data.organizations;
-};
+  return data.organizations
+}
 
 export const getCampuses = () => {
-  return data.campuses;
-};
+  return data.campuses
+}
 
 export const getCommissions = (campusId?: string) => {
   if (campusId) {
-    return data.comissions.filter(
-      (commission) => commission.campus_id === campusId
-    );
+    return data.comissoes.filter((commission) => commission.campus_id === campusId)
   }
-  return data.comissions;
-};
+  return data.comissoes
+}
 
 export const getUsers = (campusId?: string) => {
   if (campusId) {
-    return data.users.filter((user) => user.campus_id === campusId);
+    return data.users.filter((user) => user.campus_id === campusId)
   }
-  return data.users;
-};
+  return data.users
+}
 
 export const getInventoryItems = (commissionId?: string) => {
   if (commissionId) {
-    return data.inventory_items.filter(
-      (item) => item.commission_id === commissionId
-    );
+    return data.inventory_items.filter((item) => item.comissao_id === commissionId)
   }
-  return data.inventory_items;
-};
+  return data.inventory_items
+}

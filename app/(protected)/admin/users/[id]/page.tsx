@@ -96,16 +96,24 @@ export default function UserDetailsPage() {
 
       <CardContent className="flex flex-col gap-6 p-6">
         <UserProfileCard
-          nome={userData.name || userData.nome}
-          papel={userData.role || userData.papel}
-          foto={userData.profile?.image || userData.foto || userData.imagem_url}
+          usuario={{
+            nome: userData.nome,
+            papel: userData.papel,
+            perfil: {
+              imagem_url: userData.perfil?.imagem_url || "/logo.svg",
+              descricao: userData.perfil?.descricao || ""
+            }
+          }}
         />
 
         <UserDetailsCard
-          id={userData.id || userData.usuario_id}
-          email={userData.email}
-          campus={getCampusNameById(userData.campus_id, campuses)}
-          role={userData.role || userData.papel}
+          usuario={{
+            usuario_id: userData.usuario_id,
+            email: userData.email,
+            campus_id: userData.campus_id,
+            papel: userData.papel,
+            campusName: getCampusNameById(userData.campus_id, campuses)
+          }}
         />
       </CardContent>
 
