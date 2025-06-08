@@ -12,8 +12,9 @@ import {
 } from "@/components/ui/card";
 import data from "@/data/db.json";
 import type { Comissao } from "@/lib/interface";
-import { Plus } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function CommissionsPage() {
@@ -41,7 +42,7 @@ export default function CommissionsPage() {
       presidente_id: "",
       organizacao_id: data.organizations[0]?.organizacao_id || ""
     };
-    
+
     setComissoes([...comissoes, novaComissao]);
     setIsAddModalOpen(false);
   };
@@ -51,6 +52,8 @@ export default function CommissionsPage() {
     return campus?.nome || "Câmpus";
   };
 
+  const router = useRouter();
+
   return (
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
       <CardHeader className="pb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -59,19 +62,30 @@ export default function CommissionsPage() {
             Comissões
           </CardTitle>
           <CardDescription className="text-[var(--font-color)] opacity-70">
-            {comissoes.length > 0 
+            {comissoes.length > 0
               ? `Lista de comissões do ${getCampusName(comissoes[0].campus_id)}`
               : "Nenhuma comissão cadastrada"}
           </CardDescription>
         </div>
-        <Button
-          onClick={() => setIsAddModalOpen(true)}
-          className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all w-full sm:w-auto"
-          disabled={data.campuses.length === 0}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Adicionar Comissão
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/admin")}
+            className="text-[var(--font-color)] transition-all"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar
+          </Button>
+          <Button
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all w-full sm:w-auto"
+            disabled={data.campuses.length === 0}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Adicionar Comissão
+          </Button>
+        </div>
       </CardHeader>
 
       <CardContent className="flex flex-col gap-6">
@@ -99,11 +113,10 @@ export default function CommissionsPage() {
                       Status:
                     </span>
                     <span
-                      className={`text-sm ${
-                        comissao.ativo
+                      className={`text-sm ${comissao.ativo
                           ? "text-green-500"
                           : "text-red-500"
-                      }`}
+                        }`}
                     >
                       {comissao.ativo ? "Ativa" : "Inativa"}
                     </span>

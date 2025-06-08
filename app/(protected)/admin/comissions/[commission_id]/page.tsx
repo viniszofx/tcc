@@ -3,15 +3,15 @@
 import { EditComissionModal } from "@/components/manager-comissions/edit-comission-modal";
 import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import data from "@/data/db.json";
 import type { Comissao } from "@/lib/interface";
-import { Edit, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -31,7 +31,7 @@ export default function ComissionDetailsPage() {
         const comissaoEncontrada = data.comissoes.find(
           (c: Comissao) => c.comissao_id === comissionId && c.ativo !== false
         );
-        
+
         if (comissaoEncontrada) {
           setComissao(comissaoEncontrada);
         } else {
@@ -92,83 +92,89 @@ export default function ComissionDetailsPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card className="bg-[var(--bg-simple)] border-[var(--border-color)] shadow-lg">
-        <CardHeader className="pb-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
-                {comissao.nome}
-              </CardTitle>
-              <CardDescription className="text-[var(--font-color)]">
-                {campus?.nome} • {comissao.tipo}
-              </CardDescription>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditModalOpen(true)}
-                className="text-[var(--font-color)]"
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Editar
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDelete}
-                className="text-red-500 hover:text-red-700"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Excluir
-              </Button>
-            </div>
+    <Card className="bg-[var(--bg-simple)] border-[var(--border-color)] shadow-lg">
+      <CardHeader className="pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
+              {comissao.nome}
+            </CardTitle>
+            <CardDescription className="text-[var(--font-color)]">
+              {campus?.nome} • {comissao.tipo}
+            </CardDescription>
           </div>
-        </CardHeader>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/admin/comissions")}
+              className="text-[var(--font-color)] transition-all"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditModalOpen(true)}
+              className="text-[var(--font-color)]"
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Editar
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDelete}
+              className="text-red-500 hover:text-red-700"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
 
-        <CardContent className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-3">
-              <h3 className="font-medium text-[var(--font-color)]">Descrição</h3>
-              <p className="text-sm text-[var(--font-color)]">
-                {comissao.descricao || "Nenhuma descrição fornecida"}
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="font-medium text-[var(--font-color)]">Presidente</h3>
-              <p className="text-sm text-[var(--font-color)]">
-                {presidente?.nome || "Não definido"}
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="font-medium text-[var(--font-color)]">Status</h3>
-              <p className="text-sm text-[var(--font-color)]">
-                {comissao.ativo ? "Ativa" : "Inativa"} • Ano: {comissao.ano}
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="font-medium text-[var(--font-color)]">Membros</h3>
-              <p className="text-sm text-[var(--font-color)]">
-                {membros.length} membro{membros.length !== 1 ? 's' : ''}
-              </p>
-            </div>
+      <CardContent className="space-y-6">
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-3">
+            <h3 className="font-medium text-[var(--font-color)]">Descrição</h3>
+            <p className="text-sm text-[var(--font-color)]">
+              {comissao.descricao || "Nenhuma descrição fornecida"}
+            </p>
           </div>
 
-          <div className="flex flex-wrap gap-4 pt-4">
-            <Link href={`/admin/comissions/${comissionId}/members`} className="flex-1 min-w-[200px]">
-              <Button className="w-full gap-2 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)]">
-                <Users className="h-4 w-4" />
-                Gerenciar Membros
-              </Button>
-            </Link>
+          <div className="space-y-3">
+            <h3 className="font-medium text-[var(--font-color)]">Presidente</h3>
+            <p className="text-sm text-[var(--font-color)]">
+              {presidente?.nome || "Não definido"}
+            </p>
           </div>
-        </CardContent>
-      </Card>
 
+          <div className="space-y-3">
+            <h3 className="font-medium text-[var(--font-color)]">Status</h3>
+            <p className="text-sm text-[var(--font-color)]">
+              {comissao.ativo ? "Ativa" : "Inativa"} • Ano: {comissao.ano}
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="font-medium text-[var(--font-color)]">Membros</h3>
+            <p className="text-sm text-[var(--font-color)]">
+              {membros.length} membro{membros.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-4 pt-4">
+          <Link href={`/admin/comissions/${comissionId}/members`} className="flex-1 min-w-[200px]">
+            <Button className="w-full gap-2 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)]">
+              <Users className="h-4 w-4" />
+              Gerenciar Membros
+            </Button>
+          </Link>
+        </div>
+      </CardContent>
       <EditComissionModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -176,6 +182,6 @@ export default function ComissionDetailsPage() {
         onDelete={handleDelete}
         comissao={comissao}
       />
-    </div>
+    </Card>
   );
 }
