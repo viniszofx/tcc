@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/custom/app-sidebar";
 import DarkModeToggle from "@/components/custom/dark-mode-toggle";
 import { UserAvatar } from "@/components/custom/user-avatar";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
@@ -38,6 +39,7 @@ export default async function Layout({
   }
 
   return (
+    <ThemeProvider>
     <div className="flex h-screen w-full overflow-hidden bg-[var(--card-color)]">
       <SidebarProvider>
         <AppSidebar cargo="operador" />{" "}
@@ -76,5 +78,6 @@ export default async function Layout({
         </SidebarInset>
       </SidebarProvider>
     </div>
+    </ThemeProvider>
   );
 }

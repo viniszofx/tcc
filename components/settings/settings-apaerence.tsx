@@ -1,16 +1,17 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { Switch } from "@/components/ui/switch"
-import { Check, Moon, Sun } from "lucide-react"
-import { useState } from "react"
+import { useTheme } from "@/components/providers/ThemeProvider";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Check, Moon, Sun } from "lucide-react";
+import { useState } from "react";
 
 export function AppearanceSettings() {
-  const [animationsEnabled, setAnimationsEnabled] = useState(true)
-  const [theme, setTheme] = useState("system")
+  const [animationsEnabled, setAnimationsEnabled] = useState(true);
+  const { theme, setTheme } = useTheme();
 
   return (
     <div className="space-y-6">
@@ -26,8 +27,11 @@ export function AppearanceSettings() {
         <div className="grid gap-3">
           <h4 className="text-sm font-medium text-[var(--font-color)]">Tema</h4>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Tema Claro */}
             <Card
-              className="p-4 cursor-pointer border-2 border-transparent hover:border-[var(--button-color)] transition-all"
+              className={`p-4 cursor-pointer border-2 transition-all ${
+                theme === "light" ? "border-[var(--button-color)]" : "border-transparent"
+              }`}
               onClick={() => setTheme("light")}
             >
               <div className="flex items-center justify-between mb-2">
@@ -40,8 +44,11 @@ export function AppearanceSettings() {
               <div className="h-16 rounded-md bg-[#f8f9fa] border border-[#e9ecef]"></div>
             </Card>
 
+            {/* Tema Escuro */}
             <Card
-              className="p-4 cursor-pointer border-2 border-transparent hover:border-[var(--button-color)] transition-all"
+              className={`p-4 cursor-pointer border-2 transition-all ${
+                theme === "dark" ? "border-[var(--button-color)]" : "border-transparent"
+              }`}
               onClick={() => setTheme("dark")}
             >
               <div className="flex items-center justify-between mb-2">
@@ -54,14 +61,15 @@ export function AppearanceSettings() {
               <div className="h-16 rounded-md bg-[#212529] border border-[#343a40]"></div>
             </Card>
 
+            {/* Tema Sistema */}
             <Card
-              className="p-4 cursor-pointer border-2 border-transparent hover:border-[var(--button-color)] transition-all"
+              className={`p-4 cursor-pointer border-2 transition-all ${
+                theme === "system" ? "border-[var(--button-color)]" : "border-transparent"
+              }`}
               onClick={() => setTheme("system")}
             >
               <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-[var(--font-color)]">Sistema</span>
-                </div>
+                <span className="text-sm font-medium text-[var(--font-color)]">Sistema</span>
                 {theme === "system" && <Check className="h-4 w-4 text-[var(--button-color)]" />}
               </div>
               <div className="h-16 rounded-md bg-gradient-to-r from-[#f8f9fa] to-[#212529] border border-[#e9ecef]"></div>
@@ -100,5 +108,5 @@ export function AppearanceSettings() {
         </Button>
       </div>
     </div>
-  )
+  );
 }
