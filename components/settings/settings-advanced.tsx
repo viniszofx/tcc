@@ -6,12 +6,13 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
+import { useSettings } from "@/hooks/use-settings"
 import { AlertTriangle, Monitor } from "lucide-react"
 import { useState } from "react"
 
 export function AdvancedSettings() {
+  const { hardwareAcceleration, setHardwareAcceleration } = useSettings()
   const [debugMode, setDebugMode] = useState(false)
-  const [hardwareAcceleration, setHardwareAcceleration] = useState(true)
   const [language] = useState("pt-BR")
 
   return (

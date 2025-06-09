@@ -1,41 +1,45 @@
-"use client";
+"use client"
 
-// Essa página somente sera acessada pelo presidente da comissão
-
-import ErrorDisplay from "@/components/dashboard/error-display";
-import FileUploadArea from "@/components/dashboard/file-update-area";
-import HardwareAccelerationToggle from "@/components/dashboard/hardware-acceleration-toggle";
-import ProcessButton from "@/components/dashboard/process-button";
-import ProcessingIndicator from "@/components/dashboard/processing-indicator";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useFileProcessor } from "@/hooks/use-file-processor";
-import { storeProcessedData } from "@/utils/data-storage";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import ErrorDisplay from "@/components/dashboard/error-display"
+import FileUploadArea from "@/components/dashboard/file-update-area"
+import HardwareAccelerationToggle from "@/components/dashboard/hardware-acceleration-toggle"
+import ProcessButton from "@/components/dashboard/process-button"
+import ProcessingIndicator from "@/components/dashboard/processing-indicator"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useFileProcessor } from "@/hooks/use-file-processor"
+import { useSettings } from "@/hooks/use-settings"
+import { storeProcessedData } from "@/utils/data-storage"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export default function ProcessingPage() {
-  const isPresident = true; // Você pode substituir isso pela lógica real de verificação
-  const [file, setFile] = useState<File | null>(null);
-  const [hardwareAcceleration, setHardwareAcceleration] = useState(false);
-  const [storageError, setStorageError] = useState<string | null>(null);
-  const router = useRouter();
+  const isPresident = true
+  const [file, setFile] = useState<File | null>(null)
+  const { hardwareAcceleration: globalAcceleration } = useSettings()
+  const [hardwareAcceleration, setHardwareAcceleration] = useState(globalAcceleration)
+  const [storageError, setStorageError] = useState<string | null>(null)
+  const router = useRouter()
 
-  const { processFile, isProcessing, error, progress } = useFileProcessor();
+  const { processFile, isProcessing, error, progress } = useFileProcessor()
+
+  useEffect(() => {
+    setHardwareAcceleration(globalAcceleration)
+  }, [globalAcceleration])
 
   const handleFileChange = (file: File) => {
-    setFile(file);
-  };
+    setFile(file)
+  }
 
   const handleProcess = async () => {
     if (!file) {
-      alert("Por favor, selecione um arquivo primeiro.");
-      return;
+      alert("Por favor, selecione um arquivo primeiro.")
+      return
     }
 
-    setStorageError(null);
+    setStorageError(null)
 
     try {
-      const results = await processFile(file, hardwareAcceleration);
+      const results = await processFile(file, hardwareAcceleration)
 
       if (results && results.length > 0) {
         try {
@@ -44,22 +48,22 @@ export default function ProcessingPage() {
             timestamp: new Date().toISOString(),
             recordCount: results.length,
             usedAcceleration: hardwareAcceleration,
-          };
+          }
 
-          await storeProcessedData(results, metadata);
+          await storeProcessedData(results, metadata)
 
-          router.push("/dashboard/inventories");
+          router.push("/dashboard/inventories")
         } catch (storageError) {
-          console.error("Erro ao armazenar resultados:", storageError);
+          console.error("Erro ao armazenar resultados:", storageError)
           setStorageError(
             "O conjunto de dados é muito grande para ser armazenado. Tente um arquivo menor ou filtre os dados antes de processar."
-          );
+          )
         }
       }
     } catch (err) {
-      console.error("Erro no processamento:", err);
+      console.error("Erro no processamento:", err)
     }
-  };
+  }
 
   return (
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
@@ -126,5 +130,5 @@ export default function ProcessingPage() {
         )}
       </CardContent>
     </Card>
-  );
+  )
 }
