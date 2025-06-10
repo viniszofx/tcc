@@ -1,5 +1,3 @@
-import AuthForm from "@/components/auth/auth-form"
-import FirstAcess from "@/components/auth/first-acess-email"
 import FirstAcessPassword from "@/components/auth/first-acess-password"
 import DarkModeToggle from "@/components/custom/dark-mode-toggle"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"

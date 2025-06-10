@@ -114,8 +114,8 @@ export default function CommissionsPage() {
                     </span>
                     <span
                       className={`text-sm ${comissao.ativo
-                          ? "text-green-500"
-                          : "text-red-500"
+                        ? "text-green-500"
+                        : "text-red-500"
                         }`}
                     >
                       {comissao.ativo ? "Ativa" : "Inativa"}

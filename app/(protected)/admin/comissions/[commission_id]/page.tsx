@@ -59,7 +59,7 @@ export default function ComissionDetailsPage() {
 
   if (!comissao) {
     return (
-      <Card className="w-full max-w-3xl bg-[var(--bg-simple)]">
+      <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
         <CardContent className="flex flex-col items-center justify-center py-12">
           <h2 className="text-xl font-bold text-[var(--font-color)]">
             Comissão não encontrada
@@ -92,7 +92,7 @@ export default function ComissionDetailsPage() {
   };
 
   return (
-    <Card className="bg-[var(--bg-simple)] border-[var(--border-color)] shadow-lg">
+    <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
       <CardHeader className="pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
