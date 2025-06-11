@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { supabaseClient } from "@/utils/supabase/client";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -33,35 +32,7 @@ export default function RootRegisterPage() {
       return;
     }
 
-    try {
-      const supabase = supabaseClient();
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: name,
-            role: "admin",
-          },
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (data.user) {
-        alert(
-          "Usuário criado com sucesso!"
-        );
-        router.push("/setup-settings");
-      }
-    } catch (error) {
-      console.error("Error creating user:", error);
-      alert("Erro ao criar usuário. Por favor, tente novamente.");
-    } finally {
-      setIsLoading(false);
-    }
+    console.log("Submitting registration:", { name, email, password });
   };
 
   return (

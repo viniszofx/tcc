@@ -1,3 +1,5 @@
+// api/v1/setup/route.ts
+
 import { NextResponse } from "next/server";
 
 export function GET(request: Request) {

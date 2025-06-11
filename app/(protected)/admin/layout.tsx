@@ -1,6 +1,4 @@
 import { AppSidebar } from "@/components/custom/app-sidebar";
-import DarkModeToggle from "@/components/custom/dark-mode-toggle";
-import HeaderTitle from "@/components/custom/header-title";
 import { UserAvatar } from "@/components/custom/user-avatar";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Separator } from "@/components/ui/separator";
@@ -10,7 +8,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import db from "@/data/db.json";
-import { supabaseClient } from "@/utils/supabase/client";
+// import { supabaseClient } from "@/utils/supabase/client";
 
 const { users } = db;
 
@@ -19,22 +17,11 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  const usuarioData = users.find((u) => u.papel === "admin");
-
-  const supabase = supabaseClient();
-  const { data, error } = await supabase.auth.getSession();
-  const session = data.session;
-
-  console.log("session", session);
-
-  if (error) {
-    console.error("Erro ao obter sessão:", error);
-    return <div>Erro ao obter sessão</div>;
-  }
-
-  if (!usuarioData) {
-    return <div>Usuário não encontrado</div>;
-  }
+  const usuarioData = users.find((u) => u.papel === "admin") || {
+    nome: "",
+    email: "",
+    perfil: { imagem_url: "" },
+  };
 
   return (
     <ThemeProvider>
@@ -49,22 +36,15 @@ export default async function Layout({
                   orientation="vertical"
                   className="h-6 hidden md:block mx-2"
                 />
-                <div className="flex w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto items-center justify-between">
-                  <HeaderTitle />
-                  <div className="flex items-center gap-4">
-                    <DarkModeToggle />
-                    <UserAvatar
-                      nome={usuarioData.nome}
-                      email={usuarioData.email}
-                      foto={usuarioData.perfil.imagem_url}
-                      papel={"admin"}
-                      cargo="admin"
-                    />
-                  </div>
-                </div>
+                <UserAvatar
+                  nome={usuarioData.nome}
+                  email={usuarioData.email}
+                  foto={usuarioData.perfil.imagem_url}
+                  papel={"admin"}
+                  cargo="admin"
+                />
               </div>
             </header>
-
             <main className="flex-1 overflow-auto bg-[var(--card-color)] p-0">
               <div className="container mx-auto flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-4 md:px-6 md:py-6 lg:px-8 lg:py-8">
                 {children}

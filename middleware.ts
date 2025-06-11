@@ -1,8 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { publicRoutes } from "./utils/rotes-public";
-import { updateSession } from "./utils/supabase/middleware";
+// import { updateSession } from "./utils/supabase/middleware";
 
-const isDevelopment = process.env.NODE_ENV === "development";
+let isDevelopment = process.env.NODE_ENV === "development";
+
+isDevelopment = true; // Force development mode for testing purposes
 
 console.log(
   "Middleware loaded in",
@@ -63,7 +65,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Handle authentication for protected routes
-  return await updateSession(request);
+  // return await updateSession(request);
 }
 
 export const config = {

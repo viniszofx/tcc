@@ -8,7 +8,7 @@ import { Button } from "../ui/button";
 import { CardContent, CardFooter } from "../ui/card";
 import { Input } from "../ui/input";
 
-export default function FirstAcess() {
+export default function FirstAccessEmail() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -20,13 +20,14 @@ export default function FirstAcess() {
     try {
       const result = await signInWithMagicLink(formData);
       console.log("result", result);
+
       if (result.error) {
         setError(result.error);
       } else {
         router.push("/register-email");
       }
     } catch (err) {
-      setError("Erro ao enviar o link de acesso. Tente novamente.");
+      setError((err as Error).message);
     } finally {
       setIsLoading(false);
     }
