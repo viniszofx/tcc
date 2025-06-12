@@ -1,4 +1,6 @@
 import { AppSidebar } from "@/components/custom/app-sidebar";
+import DarkModeToggle from "@/components/custom/dark-mode-toggle";
+import HeaderTitle from "@/components/custom/header-title";
 import { UserAvatar } from "@/components/custom/user-avatar";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Separator } from "@/components/ui/separator";
@@ -36,13 +38,20 @@ export default async function Layout({
                   orientation="vertical"
                   className="h-6 hidden md:block mx-2"
                 />
-                <UserAvatar
-                  nome={usuarioData.nome}
-                  email={usuarioData.email}
-                  foto={usuarioData.perfil.imagem_url}
-                  papel={"admin"}
-                  cargo="admin"
-                />
+                <div className="flex w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto items-center justify-between">
+                  <HeaderTitle />
+
+                  <div className="flex items-center gap-4">
+                    <DarkModeToggle />
+                    <UserAvatar
+                      nome={usuarioData.nome}
+                      email={usuarioData.email}
+                      foto={usuarioData.perfil.imagem_url}
+                      papel={"admin"}
+                      cargo="admin"
+                    />
+                  </div>
+                </div>
               </div>
             </header>
             <main className="flex-1 overflow-auto bg-[var(--card-color)] p-0">
