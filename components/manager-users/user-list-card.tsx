@@ -75,7 +75,7 @@ export function UserListCard({ users, onEditUser, getCampusName }: UserListCardP
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8 border-[var(--border-color)] hover:bg-[var(--hover-color)]"
+                      className="h-8 w-8 border-[var(--border-color)] hover:bg-[var(--hover-3-color)]"
                       onClick={() => onEditUser(usuario)}
                     >
                       <Pencil className="h-4 w-4" />
@@ -84,7 +84,7 @@ export function UserListCard({ users, onEditUser, getCampusName }: UserListCardP
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8 border-[var(--border-color)] hover:bg-[var(--hover-color)]"
+                        className="h-8 w-8 border-[var(--border-color)] hover:bg-[var(--hover-3-color)]"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
