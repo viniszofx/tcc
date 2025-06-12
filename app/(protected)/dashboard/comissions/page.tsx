@@ -77,7 +77,7 @@ export default function ComissionsPage({ params }: any) {
               </CardContent>
               <CardFooter>
                 <Link
-                  href={`/dashoard/comissions/${comissao.comissao_id}`}
+                  href={`/dashboard/comissions/${comissao.comissao_id}`}
                   className="w-full"
                 >
                   <Button className="w-full text-[var(--font-color2)] bg-[var(--button-color)] hover:bg-[var(--hover-3-color)]">

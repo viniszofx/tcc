@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
-    "@prisma/client": "^6.8.2",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
     "@radix-ui/react-aspect-ratio": "^1.1.2",
@@ -37,8 +36,6 @@
     "@radix-ui/react-toggle": "^1.1.2",
     "@radix-ui/react-toggle-group": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.8",
-    "@supabase/ssr": "^0.6.1",
-    "@supabase/supabase-js": "^2.49.4",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -50,7 +47,6 @@
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.487.0",
     "lz-string": "^1.5.0",
-    "mongoose": "^8.14.2",
     "next": "15.2.4",
     "next-themes": "^0.4.6",
     "react": "^19.0.0",
@@ -77,19 +73,8 @@
     "cross-env": "^7.0.3",
     "eslint": "^9.28.0",
     "eslint-config-next": "15.3.3",
-    "prisma": "^6.8.2",
     "tailwindcss": "^4",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@prisma/client",
-      "@prisma/engines",
-      "core-js",
-      "esbuild",
-      "prisma",
-      "sharp"
-    ]
   }
 }

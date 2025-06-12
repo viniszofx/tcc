@@ -1,3 +1,5 @@
+// app/(auth)/redirect/page.tsx
+
 import {
   Card,
   CardDescription,
@@ -8,7 +10,7 @@ import Image from "next/image";
 
 export const metadata = {
   title: "Redirecionando - KDÊ",
-}
+};
 
 export default function page() {
   return (

@@ -1,14 +1,43 @@
+"use client";
+
 import { signIn } from "@/app/(auth)/auth/_action";
+import { useFormState } from "react-dom";
 import { Button } from "../ui/button";
 import { CardContent, CardFooter } from "../ui/card";
 import { Input } from "../ui/input";
 
+type State = {
+  message?: string;
+  errors?: {
+    [key: string]: string[];
+  };
+};
+
 export default function AuthForm() {
+  const initialState: State = { message: "" };
+
+  const [state, formAction] = useFormState(
+    async (prevState: State, formData: FormData) => {
+      try {
+        await signIn(formData);
+        return { message: "Success" };
+      } catch (error) {
+        return {
+          message: "Error",
+          errors: {
+            form: [(error as Error).message],
+          },
+        };
+      }
+    },
+    initialState
+  );
+
   return (
     <div className="w-full flex justify-start md:justify-center">
       <div className="w-full md:max-w-[28rem]">
         <CardContent className="space-y-4 text-center p-0">
-          <form className="w-full space-y-3 text-left">
+          <form action={formAction} className="w-full space-y-3 text-left">
             <div className="flex flex-col space-y-1">
               <label className="text-md font-medium text-[var(--font-color)]">
                 E-mail:
@@ -33,7 +62,6 @@ export default function AuthForm() {
               />
             </div>
             <Button
-              formAction={signIn}
               className="w-full border-[var(--border-color)] bg-[var(--bg-simple)] cursor-pointer hover:!bg-[var(--hover-color)] hover:!text-white transition-all"
               variant={"outline"}
               type="submit"
@@ -53,6 +81,9 @@ export default function AuthForm() {
                 Esqueci minha senha
               </a>
             </p>
+            {state?.message && (
+              <p className="text-sm text-red-500">{state.message}</p>
+            )}
           </form>
         </CardContent>
 

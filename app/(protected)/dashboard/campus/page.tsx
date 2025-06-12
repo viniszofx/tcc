@@ -7,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { supabaseClient } from "@/utils/supabase/client";
 import Link from "next/link";
 
 interface Campus {
@@ -35,25 +34,8 @@ const mockCampuses: Campus[] = [
   },
 ];
 
-async function getCampusData(): Promise<Campus[]> {
-  try {
-    const supabase = await supabaseClient();
-    const { data, error } = await supabase.from("campus").select("*");
-
-    if (error) {
-      console.error("Supabase error:", error);
-      return mockCampuses;
-    }
-
-    return data || mockCampuses;
-  } catch (error) {
-    console.error("Failed to fetch campus data:", error);
-    return mockCampuses;
-  }
-}
-
 export default async function CampusPage() {
-  const campusData = await getCampusData();
+  const campusData = mockCampuses;
 
   if (campusData.length === 0) {
     return <div>No campuses found</div>;
