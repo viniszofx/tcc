@@ -19,12 +19,6 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  const usuarioData = users.find((u) => u.papel === "admin") || {
-    nome: "",
-    email: "",
-    perfil: { imagem_url: "" },
-  };
-
   return (
     <ThemeProvider>
       <div className="flex h-screen w-full overflow-hidden bg-[var(--card-color)]">
@@ -43,13 +37,7 @@ export default async function Layout({
 
                   <div className="flex items-center gap-4">
                     <DarkModeToggle />
-                    <UserAvatar
-                      nome={usuarioData.nome}
-                      email={usuarioData.email}
-                      foto={usuarioData.perfil.imagem_url}
-                      papel={"admin"}
-                      cargo="admin"
-                    />
+                    <UserAvatar/>
                   </div>
                 </div>
               </div>

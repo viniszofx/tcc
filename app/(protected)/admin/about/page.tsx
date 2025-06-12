@@ -43,7 +43,7 @@ export default function Page() {
             className="w-full bg-[var(--button-color)] px-8 py-6 text-[var(--font-color2)] transition-all hover:bg-[var(--hover-3-color)] hover:text-white sm:w-auto md:text-lg lg:text-xl cursor-pointer"
             asChild
           >
-            <Link href="/dashboard">Voltar</Link>
+            <Link href="/admin">Voltar</Link>
           </Button>
         </div>
       </CardContent>

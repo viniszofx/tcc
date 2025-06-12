@@ -41,13 +41,7 @@ export default async function Layout({
                   <div className="flex items-center gap-4">
                     <DarkModeToggle />
                     {usuarioData && (
-                      <UserAvatar
-                        nome={usuarioData.nome}
-                        email={usuarioData.email}
-                        foto={usuarioData.perfil.imagem_url}
-                        papel={"operador"}
-                        cargo="operador"
-                      />
+                      <UserAvatar/>
                     )}
                   </div>
                 </div>

@@ -10,26 +10,38 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import db from "@/data/db.json";
+import { Usuario } from "@/lib/interface";
 import { LogOut, User } from "lucide-react";
+import { useEffect, useState } from "react";
 
-interface UserAvatarProps {
-  nome: string;
-  email: string;
-  papel: "admin" | "operador" | "presidente";
-  foto?: string;
-  cargo?: "admin" | "operador" | "presidente";
-}
+export function UserAvatar() {
+  const [user, setUser] = useState<Usuario | null>(null);
 
-export function UserAvatar({ nome, email, papel, foto, cargo }: UserAvatarProps) {
+  useEffect(() => {
+    const currentUser = db.users.find(u => u.papel === "admin") || null;
+    setUser(currentUser);
+  }, []);
+
+  if (!user) {
+    return (
+      <Avatar className="w-10 h-10 border">
+        <AvatarFallback>?</AvatarFallback>
+      </Avatar>
+    );
+  }
+
+  const cargo = user.papel as "admin" | "operador" | "presidente";
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="focus:outline-none">
         <Avatar className="w-10 h-10 cursor-pointer border">
           <AvatarImage
-            src={foto || "/logo.svg"}
+            src={user.perfil?.imagem_url || "/logo.svg"}
             alt="Foto do usuário"
           />
-          <AvatarFallback>{nome.charAt(0)}</AvatarFallback>
+          <AvatarFallback>{user.nome.charAt(0)}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
 
@@ -38,10 +50,10 @@ export function UserAvatar({ nome, email, papel, foto, cargo }: UserAvatarProps)
         className="w-56 bg-[var(--perfil-color)]"
       >
         <DropdownMenuLabel className="flex flex-col">
-          <span className="font-bold text-[var(--font-color2)]">{nome}</span>
-          <span className="text-sm text-[var(--font-color2)]">{email}</span>
+          <span className="font-bold text-[var(--font-color2)]">{user.nome}</span>
+          <span className="text-sm text-[var(--font-color2)]">{user.email}</span>
           <span className="text-xs text-[var(--font-color2)]">
-            {papel ? papel.toUpperCase() : ""}
+            {user.papel ? user.papel.toUpperCase() : ""}
           </span>
         </DropdownMenuLabel>
 

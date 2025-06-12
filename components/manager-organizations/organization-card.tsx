@@ -36,7 +36,7 @@ export default function OrganizationCard({ organization, onEdit, onDelete, onCli
 
   return (
     <>
-      <Card className="border border-[var(--border-color)] rounded-xl shadow-sm flex flex-col justify-between min-h-[180px]">
+      <Card className="border border-[var(--border-color)] bg-[var(--bg-simple)] transition-all duration-300 rounded-xl shadow-sm flex flex-col justify-between min-h-[180px]">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-semibold text-[var(--font-color)]">{organization.nome}</CardTitle>
           <CardDescription className="text-[var(--font-color)] opacity-80">

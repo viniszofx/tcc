@@ -1,6 +1,13 @@
 ﻿"use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
 import data from "@/data/db.json";
 import { ArrowLeft } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -10,48 +17,76 @@ export default function OrganizationDetailsPage() {
   const router = useRouter();
   const orgId = params.id as string;
 
-  const organization = (data.organizations || []).find((org: any) => org.organizacao_id === orgId);
+  const organization = (data.organizations || []).find(
+    (org: any) => org.organizacao_id === orgId
+  );
 
   if (!organization) {
     return (
-      <div className="p-8">
-        <Button variant="outline" onClick={() => router.back()} className="mb-4">
-          <ArrowLeft size={18} className="mr-2" />
-          Voltar
-        </Button>
-        <div className="text-xl font-bold text-red-500">Organização não encontrada.</div>
-      </div>
+      <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl mx-auto mt-12">
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <h2 className="text-xl font-bold text-[var(--font-color)]">
+            Organização não encontrada
+          </h2>
+          <p className="text-muted-foreground mt-2">
+            ID: {orgId} não corresponde a nenhuma organização
+          </p>
+          <p className="text-muted-foreground mt-1">
+            IDs válidos: {(data.organizations || []).map(o => o.organizacao_id).join(", ")}
+          </p>
+          <Button
+            variant="outline"
+            className="mt-4"
+            onClick={() => router.push("/admin/organizations")}
+          >
+            Voltar para lista de organizações
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-2 sm:px-6 py-8">
-      <Button variant="outline" onClick={() => router.back()} className="mb-6">
-        <ArrowLeft size={18} className="mr-2" />
-        Voltar
-      </Button>
-      <div className="bg-[var(--bg-simple)] rounded-xl shadow p-8 border border-[var(--border-color)]">
-        <h1 className="text-2xl font-bold mb-2 text-[var(--font-color)]">{organization.nome}</h1>
-        <div className="text-lg mb-1 text-[var(--font-color)]">
-          <span className="font-semibold">Sigla:</span> {organization.nome_curto}
-        </div>
-        <div className="text-md text-[var(--font-color)]">
-          <span className="font-semibold">ID:</span> {organization.organizacao_id}
-        </div>
-        {organization.ativo !== undefined && (
-          <div className="mt-2">
-            <span
-              className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                organization.ativo
-                  ? "bg-green-100 text-green-700"
-                  : "bg-gray-200 text-gray-600"
-              }`}
-            >
-              {organization.ativo ? "Ativa" : "Inativa"}
-            </span>
+    <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl mx-auto mt-12">
+      <CardHeader className="pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
+              {organization.nome}
+            </CardTitle>
+            <CardDescription className="text-[var(--font-color)]">
+              Sigla: {organization.nome_curto}
+            </CardDescription>
           </div>
-        )}
-      </div>
-    </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.back()}
+            className="text-[var(--font-color)] transition-all"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar
+          </Button>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-6">
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-3">
+            <h3 className="font-medium text-[var(--font-color)]">ID da Organização</h3>
+            <p className="text-sm text-[var(--font-color)]">
+              {organization.organizacao_id}
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="font-medium text-[var(--font-color)]">Status</h3>
+            <p className="text-sm text-[var(--font-color)]">
+              {organization.ativo ? "Ativa" : "Inativa"}
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
