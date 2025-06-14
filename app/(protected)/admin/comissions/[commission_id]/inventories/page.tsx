@@ -420,6 +420,7 @@ export default function InventoriesPage() {
           isOpen={isNewItemModalOpen}
           onClose={() => setIsNewItemModalOpen(false)}
           onSave={handleSaveNewItem}
+          inventoryData={inventoryData}
         />
       </CardContent>
     </Card>

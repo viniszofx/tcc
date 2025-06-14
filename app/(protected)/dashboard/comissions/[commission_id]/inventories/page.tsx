@@ -20,7 +20,7 @@ export default function InventoriesPage() {
   const [inventoryData, setInventoryData] = useState<any[]>([]); 
   const [metadata, setMetadata] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true); 
-  const [loadError, setLoadError] = useState<string | null>(null); 
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
@@ -404,6 +404,7 @@ export default function InventoriesPage() {
         isOpen={isNewItemModalOpen}
         onClose={() => setIsNewItemModalOpen(false)}
         onSave={handleSaveNewItem}
+        inventoryData={inventoryData}
       />
     </CardContent>
   </Card>

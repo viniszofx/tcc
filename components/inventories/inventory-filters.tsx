@@ -52,9 +52,8 @@ export default function InventoryFilters({
 
   const filterFields = [
     { id: "SALA", label: "Sala" },
-    { id: "CAMPUS_DA_LOTACAO_DO_BEM", label: "Campus" },
     { id: "SETOR_DO_RESPONSAVEL", label: "Setor" },
-    { id: "ESTADO_DE_CONSERVACAO", label: "Estado de Conservação" },
+    { id: "ESTADO_DE_CONSERVACAO", label: "Estado" },
   ]
 
   const toggleDisplayField = (fieldId: string) => {

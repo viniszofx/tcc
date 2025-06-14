@@ -13,15 +13,21 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { EstadoConservacao, StatusBem, type BemCopia } from "@/lib/interface"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 interface NewItemModalProps {
   isOpen: boolean
   onClose: () => void
   onSave: (item: BemCopia) => void
+  inventoryData?: BemCopia[]
 }
 
-export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalProps) {
+export default function NewItemModal({ 
+  isOpen, 
+  onClose, 
+  onSave,
+  inventoryData,
+}: NewItemModalProps) {
   const [formData, setFormData] = useState<Partial<BemCopia>>({
     NUMERO: "",
     DESCRICAO: "",
@@ -36,8 +42,37 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
     ROTULOS: "",
   })
 
+  const [setores, setSetores] = useState<string[]>([])
+  const [salas, setSalas] = useState<string[]>([])
+  const [campuses, setCampuses] = useState<string[]>([])
+  const [responsaveis, setResponsaveis] = useState<string[]>([])
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+  if (!isOpen) return;
+  
+  const validData = inventoryData?.filter(item => 
+    item.SETOR_DO_RESPONSAVEL && 
+    item.SALA && 
+    item.CAMPUS_DA_LOTACAO_DO_BEM && 
+    item.RESPONSABILIDADE_ATUAL
+  ) || [];
+
+  const extractUnique = (field: keyof BemCopia) => [
+    ...new Set(
+      validData.map(item => item[field])
+        .filter((value): value is string => !!value)
+    )
+  ].sort();
+
+  setSetores(extractUnique('SETOR_DO_RESPONSAVEL'));
+  setSalas(extractUnique('SALA'));
+  setCampuses(extractUnique('CAMPUS_DA_LOTACAO_DO_BEM'));
+  setResponsaveis(extractUnique('RESPONSABILIDADE_ATUAL'));
+
+}, [isOpen, inventoryData]);
 
   const handleChange = (field: keyof BemCopia, value: string) => {
     setFormData((prev) => ({
@@ -141,8 +176,7 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
                   const value = e.target.value.replace(/\D/g, "")
                   handleChange("NUMERO", value)
                 }}
-                className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${errors.NUMERO ? "border-red-500" : ""
-                  }`}
+                className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${errors.NUMERO ? "border-red-500" : ""}`}
                 type="text"
                 inputMode="numeric"
                 pattern="[0-9]*"
@@ -154,13 +188,12 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
               <Label htmlFor="ed" className="text-[var(--font-color)]">
                 ED <span className="text-red-500">*</span>
               </Label>
-                <Input
-                    id="ed"
-                    value={formData.ED}
-                    onChange={(e) => handleChange("ED", e.target.value)}
-                    className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${errors.ED ? "border-red-500" : ""
-                      }`}
-                  />
+              <Input
+                id="ed"
+                value={formData.ED}
+                onChange={(e) => handleChange("ED", e.target.value)}
+                className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${errors.ED ? "border-red-500" : ""}`}
+              />
               {errors.ED && <p className="text-xs text-red-500">{errors.ED}</p>}
             </div>
           </div>
@@ -173,8 +206,7 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
               id="descricao"
               value={formData.DESCRICAO}
               onChange={(e) => handleChange("DESCRICAO", e.target.value)}
-              className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${errors.DESCRICAO ? "border-red-500" : ""
-                }`}
+              className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${errors.DESCRICAO ? "border-red-500" : ""}`}
             />
             {errors.DESCRICAO && <p className="text-xs text-red-500">{errors.DESCRICAO}</p>}
           </div>
@@ -196,13 +228,21 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
               <Label htmlFor="responsavel" className="text-[var(--font-color)]">
                 Responsável <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="responsavel"
+              <Select
                 value={formData.RESPONSABILIDADE_ATUAL}
-                onChange={(e) => handleChange("RESPONSABILIDADE_ATUAL", e.target.value)}
-                className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${errors.RESPONSABILIDADE_ATUAL ? "border-red-500" : ""
-                  }`}
-              />
+                onValueChange={(value) => handleChange("RESPONSABILIDADE_ATUAL", value)}
+              >
+                <SelectTrigger className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)]">
+                  <SelectValue placeholder="Selecione o responsável" />
+                </SelectTrigger>
+                <SelectContent>
+                  {responsaveis.map((responsavel) => (
+                    <SelectItem key={responsavel} value={responsavel}>
+                      {responsavel}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {errors.RESPONSABILIDADE_ATUAL && <p className="text-xs text-red-500">{errors.RESPONSABILIDADE_ATUAL}</p>}
             </div>
 
@@ -210,13 +250,21 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
               <Label htmlFor="setor" className="text-[var(--font-color)]">
                 Setor <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="setor"
+              <Select
                 value={formData.SETOR_DO_RESPONSAVEL}
-                onChange={(e) => handleChange("SETOR_DO_RESPONSAVEL", e.target.value)}
-                className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${errors.SETOR_DO_RESPONSAVEL ? "border-red-500" : ""
-                  }`}
-              />
+                onValueChange={(value) => handleChange("SETOR_DO_RESPONSAVEL", value)}
+              >
+                <SelectTrigger className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)]">
+                  <SelectValue placeholder="Selecione o setor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {setores.map((setor) => (
+                    <SelectItem key={setor} value={setor}>
+                      {setor}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {errors.SETOR_DO_RESPONSAVEL && <p className="text-xs text-red-500">{errors.SETOR_DO_RESPONSAVEL}</p>}
             </div>
           </div>
@@ -226,25 +274,42 @@ export default function NewItemModal({ isOpen, onClose, onSave }: NewItemModalPr
               <Label htmlFor="campus" className="text-[var(--font-color)]">
                 Campus
               </Label>
-              <Input
-                id="campus"
+              <Select
                 value={formData.CAMPUS_DA_LOTACAO_DO_BEM}
-                onChange={(e) => handleChange("CAMPUS_DA_LOTACAO_DO_BEM", e.target.value)}
-                className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)]"
-              />
+                onValueChange={(value) => handleChange("CAMPUS_DA_LOTACAO_DO_BEM", value)}
+              >
+                <SelectTrigger className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)]">
+                  <SelectValue placeholder="Selecione o campus" />
+                </SelectTrigger>
+                <SelectContent>
+                  {campuses.map((campus) => (
+                    <SelectItem key={campus} value={campus}>
+                      {campus}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="sala" className="text-[var(--font-color)]">
                 Sala <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="sala"
+              <Select
                 value={formData.SALA}
-                onChange={(e) => handleChange("SALA", e.target.value)}
-                className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] ${errors.SALA ? "border-red-500" : ""
-                  }`}
-              />
+                onValueChange={(value) => handleChange("SALA", value)}
+              >
+                <SelectTrigger className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)]">
+                  <SelectValue placeholder="Selecione a sala" />
+                </SelectTrigger>
+                <SelectContent>
+                  {salas.map((sala) => (
+                    <SelectItem key={sala} value={sala}>
+                      {sala}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {errors.SALA && <p className="text-xs text-red-500">{errors.SALA}</p>}
             </div>
           </div>
