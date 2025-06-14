@@ -73,7 +73,7 @@ export default function InventoryCard({ item, displayFields }: InventoryCardProp
   }
 
   return (
-    <Link href={`/dashboard/inventories/${item.bem_id}`}>
+    <Link href={`/dashboard/comissions/${item.comissao_id}/inventories/${item.bem_id}`}>
       <Card className="border-[var(--border-input)] bg-[var(--card-color)] transition-all hover:shadow-md cursor-pointer h-full">
         <CardContent className="p-4">
           <div className="flex justify-between items-start mb-2">

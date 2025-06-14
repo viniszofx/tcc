@@ -52,7 +52,7 @@ export default function ProcessingPage() {
 
           await storeProcessedData(results, metadata)
 
-          router.push("/dashboard/inventories")
+          router.push("/admin/comissions")
         } catch (storageError) {
           console.error("Erro ao armazenar resultados:", storageError)
           setStorageError(

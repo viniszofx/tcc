@@ -8,20 +8,23 @@ import type { BemCopia } from "@/lib/interface";
 import { getProcessedData } from "@/utils/data-storage";
 import { formatDate } from "@/utils/data-utils";
 import { ArrowLeft, Edit, Trash2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { JSX, useEffect, useState } from "react";
 
 interface InventoryItemClientProps {
   id: string;
+  commissionId?: string;
 }
 
 export default function InventoryItemClient({
   id,
+  commissionId: propCommissionId, 
 }: InventoryItemClientProps): JSX.Element {
   const router = useRouter();
+  const params = useParams();
   const [item, setItem] = useState<BemCopia | null>(null);
   const [loading, setLoading] = useState(true);
+  const commissionId = propCommissionId || params?.commission_id;
 
   useEffect(() => {
     async function loadItem() {
@@ -35,18 +38,18 @@ export default function InventoryItemClient({
         if (foundItem) {
           setItem(foundItem);
         } else {
-          router.push("/dashboard/inventories");
+          router.push(`/admin/comissions/${commissionId}/inventories`);
         }
       } catch (error) {
         console.error("Error loading item:", error);
-        router.push("/dashboard/inventories");
+        router.push(`/admin/comissions/${commissionId}/inventories`);
       } finally {
         setLoading(false);
       }
     }
 
     loadItem();
-  }, [id, router]);
+  }, [id, router, commissionId]);
 
   if (loading) {
     return (
@@ -73,16 +76,16 @@ export default function InventoryItemClient({
           <p className="text-[var(--font-color)]/70 mt-2">
             O item que você está procurando não existe ou foi removido.
           </p>
-          <Link href="/dashboard/inventories">
-            <Button className="mt-4 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white">
-              Voltar para Inventário
-            </Button>
-          </Link>
+          <Button 
+            className="mt-4 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white"
+            onClick={() => router.push( `/admin/comissions/${commissionId}/inventories`)}
+          >
+            Voltar para Inventário
+          </Button>
         </CardContent>
       </Card>
     );
   }
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ATIVO":
@@ -108,15 +111,14 @@ export default function InventoryItemClient({
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-md lg:max-w-5xl xl:max-w-6xl mx-auto">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <Link href="/dashboard/org/inventories">
             <Button
               variant="ghost"
               className="flex items-center gap-2 text-[var(--font-color)] hover:bg-[var(--hover-2-color)] hover:text-white cursor-pointer"
+              onClick={() => router.push(`/admin/comissions/${commissionId}/inventories`)}
             >
               <ArrowLeft className="h-4 w-4" />
               <span>Voltar para Inventário</span>
             </Button>
-          </Link>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"

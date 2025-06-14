@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getProcessedData } from "@/utils/data-storage";
 import { Filter } from "lucide-react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import NewItemModal from "@/components/inventories/new-item-modal";
@@ -21,11 +21,10 @@ import { exportToPdfStyled } from "@/utils/pdf-export";
 
 export default function InventoriesPage() {
   const router = useRouter();
-  // Estados principais para controle de dados
-  const [inventoryData, setInventoryData] = useState<any[]>([]); // Armazena itens do inventário
-  const [metadata, setMetadata] = useState<any>(null); // Metadados do inventário
-  const [isLoading, setIsLoading] = useState(true); // Controle de carregamento
-  const [loadError, setLoadError] = useState<string | null>(null); // Controle de erros
+  const [inventoryData, setInventoryData] = useState<any[]>([]);
+  const [metadata, setMetadata] = useState<any>(null); 
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const params = useParams();
   const commissionId = params?.commission_id || "comissao";
@@ -50,7 +49,7 @@ export default function InventoriesPage() {
     let isMounted = true;
 
     async function loadData() {
-      console.log("🔄 Iniciando carregamento de dados..."); // Debug
+      console.log("🔄 Iniciando carregamento de dados...");
 
       if (!isMounted) return;
       setIsLoading(true);
@@ -61,7 +60,7 @@ export default function InventoriesPage() {
         console.log("📦 Dados carregados:", {
           itemCount: data.length,
           metadata,
-          sampleData: data.slice(0, 2), // Mostra primeiros 2 itens
+          sampleData: data.slice(0, 2),
         });
 
         if (!isMounted) return;
@@ -111,7 +110,6 @@ export default function InventoriesPage() {
     return values;
   }, [inventoryData]);
 
-  // Debug da filtragem
   const filteredItems = useMemo(() => {
     console.log("🔍 Aplicando filtros:", {
       totalItems: inventoryData.length,
@@ -348,7 +346,7 @@ export default function InventoriesPage() {
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-md lg:max-w-5xl xl:max-w-6xl">
       <CardContent className="flex flex-col gap-6 p-6">
         <InventoryMetadata metadata={metadata} />
-
+  
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
           <InventoryActions
             onExport={handleExport}
@@ -365,7 +363,7 @@ export default function InventoriesPage() {
             uniqueValues={uniqueValues}
           />
         </div>
-
+  
         <InventoryPagination
           currentPage={currentPage}
           totalPages={totalPages}
@@ -375,7 +373,7 @@ export default function InventoriesPage() {
           totalItems={filteredItems.length}
           itemsPerPage={itemsPerPage}
         />
-
+  
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {currentItems.map((item) => (
             <InventoryCard
@@ -385,7 +383,7 @@ export default function InventoriesPage() {
             />
           ))}
         </div>
-
+  
         {filteredItems.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Filter className="h-12 w-12 text-[var(--font-color)]/30 mb-4" />
@@ -407,18 +405,17 @@ export default function InventoriesPage() {
             </Button>
           </div>
         )}
-
-        {filteredItems.length > itemsPerPage && (
-          <InventoryPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            showAll={showAll}
-            onPageChange={handlePageChange}
-            onShowAllToggle={toggleShowAll}
-            totalItems={filteredItems.length}
-            itemsPerPage={itemsPerPage}
-          />
-        )}
+  
+        <div className="flex justify-end mt-4">
+          <Button
+            variant="outline"
+            className="w-36 flex items-center gap-2 border-[var(--border-input)] bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] hover:text-white"
+            onClick={() => router.push("/admin/comissions")}
+          >
+            <span>Voltar</span>
+          </Button>
+        </div>
+  
         <NewItemModal
           isOpen={isNewItemModalOpen}
           onClose={() => setIsNewItemModalOpen(false)}
@@ -426,5 +423,4 @@ export default function InventoriesPage() {
         />
       </CardContent>
     </Card>
-  );
-}
+  )};

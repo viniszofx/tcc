@@ -134,6 +134,7 @@ export interface BemOriginal {
 }
 
 export interface BemCopia {
+  comissao_id?: any;
   bem_id: string;
   inventario_id: string;
   grupo_id: string;
