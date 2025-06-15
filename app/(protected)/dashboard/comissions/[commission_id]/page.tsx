@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import data from "@/data/db.json";
-import { Database, FileText, Info, Settings, Users2 } from "lucide-react";
+import { Clock, Database } from "lucide-react";
 import Link from "next/link";
 import type React from "react";
 
@@ -55,31 +55,13 @@ export default async function ComissionPage({ params }: PageProps) {
       title: "Inventário",
       description: "Gerenciar itens do inventário",
       icon: Database,
-      href: `/admin/comissions/${commission_id}/inventory`,
+      href: `/dashboard/comissions/${commission_id}/inventories`,
     },
     {
-      title: "Membros",
-      description: "Gerenciar membros da comissão",
-      icon: Users2,
-      href: `/admin/comissions/${commission_id}/members`,
-    },
-    {
-      title: "Relatórios",
-      description: "Visualizar e gerar relatórios",
-      icon: FileText,
-      href: `/admin/comissions/${commission_id}/reports`,
-    },
-    {
-      title: "Configurações",
-      description: "Configurações da comissão",
-      icon: Settings,
-      href: `/admin/comissions/${commission_id}/settings`,
-    },
-    {
-      title: "Sobre",
-      description: "Informações sobre a comissão",
-      icon: Info,
-      href: `/admin/comissions/${commission_id}/about`,
+      title: "Histórico",
+      description: "Visualizar Histórico do inventário",
+      icon: Clock,
+      href: `/admin/comissions/${commission_id}/history`,
     },
   ];
 

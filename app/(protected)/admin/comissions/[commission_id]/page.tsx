@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import data from "@/data/db.json";
 import type { Comissao } from "@/lib/interface";
-import { ArrowLeft, Edit, Trash2, Upload, Users } from "lucide-react";
+import { ArrowLeft, Database, Edit, Trash2, Upload, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -179,6 +179,14 @@ export default function ComissionDetailsPage() {
             >
               <Upload className="h-4 w-4" />
               Fazer Upload do Arquivo
+            </Button>
+          </Link>
+          <Link href={`/admin/comissions/${comissionId}/inventories`} className="flex-1 min-w-[200px]">
+            <Button
+              className="w-full gap-2 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)]"
+            >
+              <Database className="h-4 w-4" />
+              Acessar inventário
             </Button>
           </Link>
         </div>

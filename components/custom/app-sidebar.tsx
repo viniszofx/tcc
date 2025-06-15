@@ -29,7 +29,6 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 
 export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
   const params = useParams();
-  const campusId = params?.campus_id || "corumba";
   const commissionId = params?.commission_id || "comissao";
 
   return (
