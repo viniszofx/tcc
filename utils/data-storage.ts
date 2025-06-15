@@ -63,6 +63,57 @@ function initIndexedDB(): Promise<IDBDatabase> {
   })
 }
 
+export async function saveProcessedData(
+  data: BemCopia[],
+  metadata?: InventoryMetadata,
+  compressData = true
+): Promise<void> {
+  try {
+    const defaultMetadata: InventoryMetadata = {
+      recordCount: data.length,
+      timestamp: new Date().toISOString(),
+      fileName: metadata?.fileName || "manual_update.json",
+      usedAcceleration: metadata?.usedAcceleration || false,
+    };
+
+    const finalMetadata = metadata || defaultMetadata;
+    await clearProcessedData();
+
+    if (data.length > 1000) {
+      return storeInIndexedDB(data, finalMetadata, compressData);
+    }
+
+    try {
+      localStorage.setItem(INVENTORY_METADATA_KEY, JSON.stringify(finalMetadata));
+
+      const dataToStore = compressData ? compressInventoryData(data) : data;
+      const jsonData = JSON.stringify(dataToStore);
+
+      if (jsonData.length < MAX_CHUNK_SIZE) {
+        localStorage.setItem(INVENTORY_DATA_KEY, compressToUTF16(jsonData));
+        localStorage.setItem(STORAGE_TYPE_KEY, "localStorage");
+        return;
+      }
+
+      const chunks = splitIntoChunks(dataToStore);
+      localStorage.setItem(INVENTORY_CHUNKS_COUNT_KEY, chunks.length.toString());
+
+      for (let i = 0; i < chunks.length; i++) {
+        const chunkData = JSON.stringify(chunks[i]);
+        localStorage.setItem(`${INVENTORY_CHUNKS_KEY_PREFIX}${i}`, compressToUTF16(chunkData));
+      }
+
+      localStorage.setItem(STORAGE_TYPE_KEY, "localStorage");
+    } catch (error) {
+      console.error("Error storing in localStorage, falling back to IndexedDB:", error);
+      return storeInIndexedDB(data, finalMetadata, compressData);
+    }
+  } catch (error) {
+    console.error("Error saving processed data:", error);
+    throw error;
+  }
+}
+
 async function storeChunk(db: IDBDatabase, chunkId: number, data: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const transaction = db.transaction([STORE_NAME], "readwrite")
