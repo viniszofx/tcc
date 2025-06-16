@@ -22,7 +22,7 @@ export interface Usuario {
   email: string;
   senha_hash?: string | null;
   habilitado: boolean;
-  perfil? : {
+  perfil?: {
     descricao?: string;
     imagem_url?: string;
   };
@@ -39,7 +39,6 @@ export interface Usuario {
   comissao?: Comissao | null;
   inventarios?: Inventario[];
   papeis?: UserRole[];
-  autenticacoes?: AutenticacaoSocial[];
   comissoesPresididas?: Comissao[];
   historico_bens?: HistoricoBem[];
   inventarios_abertos?: Inventario[];
@@ -90,16 +89,6 @@ export interface Campus {
   bens?: BemOriginal[];
   bens_copias?: BemCopia[];
   responsavel?: Responsavel;
-}
-
-export interface ProfileType {
-  id: string;
-  nome: string;
-  email: string;
-  campus: string;
-  descricao: string;
-  cargo: "admin" | "operador" | "presidente";
-  foto: string;
 }
 
 export interface Responsavel {
@@ -243,22 +232,6 @@ export interface UserRole {
   // Relations
   usuario?: Usuario;
   role?: Role;
-}
-
-export interface AutenticacaoSocial {
-  autenticacao_id: string;
-  usuario_id: string;
-  provedor: string;
-  provedor_id: string;
-  email: string;
-  nome: string;
-  avatar_url?: string | null;
-  access_token?: string | null;
-  refresh_token?: string | null;
-  data_criacao: Date;
-
-  // Relations
-  usuario?: Usuario;
 }
 
 export interface Setting {
