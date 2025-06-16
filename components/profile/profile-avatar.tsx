@@ -26,7 +26,7 @@ export default function ProfileAvatar({ foto }: AvatarProps) {
 
   return (
     <div className="relative mb-10">
-      <Avatar className="md:w-40 md:h-40 w-32 h-32 cursor-pointer border-2 border-[var(--border-color)]">
+      <Avatar className="lg:h-40 lg:w-40 w-32 h-32 cursor-pointer border-2 border-[var(--border-color)]">
         <AvatarImage src={fotoSelecionada} alt="Foto do usuário" />
         <AvatarFallback className="bg-[var(--button-color)] text-[var(--font-color2)]">?</AvatarFallback>
       </Avatar>

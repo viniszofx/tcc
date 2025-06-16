@@ -304,18 +304,6 @@ export default function InventoryItemClient({
                 <span className="font-medium">ID do Bem:</span>
                 <span>{item.bem_id}</span>
               </div>
-              <div className="flex justify-between text-sm sm:text-base">
-                <span className="font-medium">ID do Inventário:</span>
-                <span>{item.inventario_id}</span>
-              </div>
-              <div className="flex justify-between text-sm sm:text-base">
-                <span className="font-medium">ID do Grupo:</span>
-                <span>{item.grupo_id}</span>
-              </div>
-              <div className="flex justify-between text-sm sm:text-base">
-                <span className="font-medium">ID do Campus:</span>
-                <span>{item.campus_id}</span>
-              </div>
             </CardContent>
           </Card>
         </CardContent>

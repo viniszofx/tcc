@@ -27,10 +27,10 @@ export default function ProfilePage() {
           fetch("/api/v1/user"),
           fetch("/api/v1/campuses")
         ])
-        
+
         const userData: Usuario = await userRes.json()
         const campusesData: Campus[] = await campusesRes.json()
-        
+
         setUsuario(userData)
         setCampuses(campusesData)
       } catch (error) {
@@ -70,7 +70,7 @@ export default function ProfilePage() {
   }
 
   const handleBack = () => {
-    router.push("/")
+    router.push("/admin")
   }
 
   const handleFieldChange = (field: keyof Usuario, value: string) => {
@@ -97,7 +97,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex-1 w-full p-3 xs:p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center">
-      <Card className="bg-[var(--bg-simple)] w-full max-w-[98%] xs:max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[calc(100%-var(--sidebar-width)-2rem)] mx-auto shadow-md rounded-lg flex flex-col h-full md:h-auto flex-grow">
+      <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
         <div className="flex flex-col md:flex-row h-full p-6 sm:p-8 gap-8">
           <ProfileSidebar
             usuario={{
@@ -121,10 +121,10 @@ export default function ProfilePage() {
           />
         </div>
 
-        <ProfileActions 
-          onSave={handleSave} 
-          onBack={handleBack} 
-          isSaving={isSaving} 
+        <ProfileActions
+          onSave={handleSave}
+          onBack={handleBack}
+          isSaving={isSaving}
         />
       </Card>
     </div>
