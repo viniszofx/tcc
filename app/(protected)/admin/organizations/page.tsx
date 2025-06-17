@@ -97,14 +97,14 @@ export default function OrganizationsPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
           <div className="flex justify-end">
-          <Button
+            <Button
               onClick={() => handleOpenModal("create")}
               className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all"
             >
               <Plus size={18} />
               Nova Organização
             </Button>
-          </div>  
+          </div>
           <div className="grid gap-6 md:grid-cols-2">
             {orgs.map((org) => (
               <OrganizationCard
@@ -112,6 +112,7 @@ export default function OrganizationsPage() {
                 organization={org}
                 onEdit={() => handleOpenModal("edit", org)}
                 onDelete={() => handleDelete(org.organizacao_id)}
+                disableDelete={orgs.length === 1}
               />
             ))}
           </div>

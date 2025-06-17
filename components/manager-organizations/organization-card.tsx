@@ -20,9 +20,10 @@ interface OrganizationCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onClick?: () => void;
+  disableDelete?: boolean;
 }
 
-export default function OrganizationCard({ organization, onEdit, onDelete, onClick }: OrganizationCardProps) {
+export default function OrganizationCard({ organization, onEdit, onDelete, onClick, disableDelete }: OrganizationCardProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const handleDeleteClick = () => {
@@ -64,14 +65,17 @@ export default function OrganizationCard({ organization, onEdit, onDelete, onCli
           >
             <Pencil size={18} />
           </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDeleteClick}
-            size="icon"
-            title="Deletar"
-          >
-            <Trash2 size={18} />
-          </Button>
+          {!disableDelete && (
+            <Button
+              variant="destructive"
+              onClick={handleDeleteClick}
+              size="icon"
+              title="Deletar"
+            >
+              <Trash2 size={18} />
+            </Button>
+          )}
+
         </CardFooter>
       </Card>
 
@@ -85,7 +89,7 @@ export default function OrganizationCard({ organization, onEdit, onDelete, onCli
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleConfirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
