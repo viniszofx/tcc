@@ -103,6 +103,11 @@ export default function InventoryItemClient({
     }
   };
 
+  const truncateDescription = (description: string) => {
+    const index = description.indexOf('[');
+    return index >= 0 ? description.substring(0, index).trim() : description;
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ATIVO":
@@ -193,7 +198,7 @@ export default function InventoryItemClient({
             </div>
           </div>
           <CardTitle className="mt-4 text-lg font-bold text-[var(--font-color)] sm:text-xl md:text-2xl lg:text-3xl">
-            {item.DESCRICAO}
+            {truncateDescription(item.DESCRICAO)}
             <Badge className={`ml-2 sm:ml-4 ${getStatusColor(item.STATUS)} text-white text-xs sm:text-sm`}>
               {item.STATUS}
             </Badge>
