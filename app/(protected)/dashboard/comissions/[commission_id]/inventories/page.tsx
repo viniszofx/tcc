@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BemCopia } from "@/lib/interface";
 import { addInventoryItem, getProcessedData } from "@/utils/data-storage";
+import { exportToPdfStyled } from "@/utils/pdf-export";
 import { Filter } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -215,71 +216,115 @@ export default function InventoriesPage() {
   };
 
   const handleExport = (format: "csv" | "json" | "pdf") => {
-    let dataToExport = filteredItems;
+  let dataToExport = filteredItems;
 
-    if (filteredItems.length > 5000) {
-      if (format === "pdf") {
-        const confirmExport = window.confirm(
-          `Exportar ${filteredItems.length.toLocaleString()} itens para PDF pode ser lento e consumir muita memória. ` +
-            `Apenas os primeiros 15000 itens serão exportados. Deseja continuar?`
-        );
+  if (filteredItems.length > 5000) {
+    if (format === "pdf") {
+      const confirmExport = window.confirm(
+        `Exportar ${filteredItems.length.toLocaleString()} itens para PDF pode ser lento e consumir muita memória. ` +
+          `Apenas os primeiros 15000 itens serão exportados. Deseja continuar?`
+      );
 
-        if (!confirmExport) return;
-        dataToExport = filteredItems.slice(0, 20000);
-      } else {
-        const confirmExport = window.confirm(
-          `Exportar ${filteredItems.length.toLocaleString()} itens pode ser lento e consumir muita memória. Deseja continuar?`
-        );
+      if (!confirmExport) return;
+      dataToExport = filteredItems.slice(0, 20000);
+    } else {
+      const confirmExport = window.confirm(
+        `Exportar ${filteredItems.length.toLocaleString()} itens pode ser lento e consumir muita memória. Deseja continuar?`
+      );
 
-        if (!confirmExport) return;
-      }
+      if (!confirmExport) return;
     }
+  }
 
-    if (format === "csv") {
-      const headers = Object.keys(dataToExport[0] || {}).join(",");
-      const rows = dataToExport.map((item) =>
-        Object.values(item)
-          .map((value) =>
-            typeof value === "string" ? `"${value.replace(/"/g, '""')}"` : value
-          )
-          .join(",")
-      );
-      const csv = [headers, ...rows].join("\n");
-
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute(
-        "download",
-        `inventario_${new Date().toISOString().split("T")[0]}.csv`
-      );
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else if (format === "json") {
-      const json = JSON.stringify(dataToExport, null, 2);
-      const blob = new Blob([json], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute(
-        "download",
-        `inventario_${new Date().toISOString().split("T")[0]}.json`
-      );
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else if (format === "pdf") {
-      const pdfData =
-        format === "pdf" && dataToExport.length > 20000
-          ? dataToExport.slice(0, 20000)
-          : dataToExport;
-
-      // exportToPdfStyled(pdfData, `inventario_${new Date().toISOString().split("T")[0]}`)
-    }
+  const safeDate = (date: any): Date => {
+    if (date instanceof Date) return date;
+    if (typeof date === 'string' || typeof date === 'number') return new Date(date);
+    return new Date(); 
   };
 
+  if (format === "csv") {
+    exportToCsv(dataToExport);
+  } else if (format === "json") {
+    exportToJson(dataToExport);
+  } else if (format === "pdf") {
+    const pdfData = dataToExport.length > 20000 
+      ? dataToExport.slice(0, 20000) 
+      : dataToExport;
+
+    exportToPdfStyled(
+      pdfData,
+      `inventario_${new Date().toISOString().split("T")[0]}`,
+      metadata?.comissao ?? { comissao_id: 0, nome: "Comissão Desconhecida" },
+      metadata?.campus ?? { campus_id: "", nome: "Campus Desconhecido" },
+      metadata?.presidente ?? { usuario_id: "", nome: "Presidente Desconhecido" },
+      metadata?.inventariante ?? { usuario_id: "", nome: "Inventariante Desconhecido" },
+      safeDate(metadata?.dataAbertura),
+      safeDate(metadata?.dataFechamento),
+      displayFields
+    );
+  }
+};
+
+const exportToCsv = (data: BemCopia[]) => {
+  try {
+    const headers = displayFields.join(",") + "\n";
+    
+    const rows = data.map(item => {
+      return displayFields.map(field => {
+        if (field === 'data_ultima_atualizacao' && item[field]) {
+          return `"${new Date(item[field]).toLocaleDateString('pt-BR')}"`;
+        }
+        const value = item[field as keyof BemCopia] ?? '';
+        return `"${String(value).replace(/"/g, '""')}"`;
+      }).join(",");
+    }).join("\n");
+
+    const csvContent = headers + rows;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `inventario_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error("Erro ao exportar CSV:", error);
+    alert("Ocorreu um erro ao exportar para CSV");
+  }
+};
+
+const exportToJson = (data: BemCopia[]) => {
+  try {
+    const filteredData = data.map(item => {
+      const filteredItem: any = {};
+      displayFields.forEach(field => {
+        filteredItem[field] = item[field as keyof BemCopia];
+      });
+      return filteredItem;
+    });
+
+    const jsonStr = JSON.stringify(filteredData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `inventario_${new Date().toISOString().split('T')[0]}.json`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error("Erro ao exportar JSON:", error);
+    alert("Ocorreu um erro ao exportar para JSON");
+  }
+};
+  
   if (isLoading) {
     return (
       <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-md lg:max-w-5xl xl:max-w-6xl">
