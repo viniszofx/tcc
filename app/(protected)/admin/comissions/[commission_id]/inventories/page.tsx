@@ -9,7 +9,7 @@ import InventoryPagination from "@/components/inventories/inventory-pagination";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getProcessedData } from "@/utils/data-storage";
-import { Camera, Filter } from "lucide-react";
+import { Filter } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -382,28 +382,26 @@ export default function InventoriesPage() {
       <CardContent className="flex flex-col gap-6 p-6">
         <InventoryMetadata metadata={metadata} />
 
-        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
-          <InventoryActions
-            onExport={handleExport}
-            onNewItem={handleNewItem}
-            hasData={filteredItems.length > 0}
-          />
-          <Button
-            variant="outline"
-            className="w-36 flex items-center gap-2 border-[var(--border-input)] bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] hover:text-white"
-          >
-            <Camera className="h-5 w-5" />
-            <span>Câmera</span>
-          </Button>
-          <InventoryFilters
-            onFilterChange={handleFilterChange}
-            selectedFilters={selectedFilters}
-            onDisplayFieldsChange={setDisplayFields}
-            displayFields={displayFields}
-            onSearchChange={handleSearchChange}
-            searchTerm={searchTerm}
-            uniqueValues={uniqueValues}
-          />
+        <div className="flex flex-col gap-4 lg:flex-row lg:justify-between">
+          <div className="flex flex-col gap-2">
+            <InventoryActions
+              onExport={handleExport}
+              onNewItem={handleNewItem}
+              hasData={filteredItems.length > 0}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <InventoryFilters
+              onFilterChange={handleFilterChange}
+              selectedFilters={selectedFilters}
+              onDisplayFieldsChange={setDisplayFields}
+              displayFields={displayFields}
+              onSearchChange={handleSearchChange}
+              searchTerm={searchTerm}
+              uniqueValues={uniqueValues}
+            />
+          </div>
         </div>
 
         <InventoryPagination
@@ -416,7 +414,7 @@ export default function InventoriesPage() {
           itemsPerPage={itemsPerPage}
         />
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {currentItems.map((item) => (
             <InventoryCard
               key={item.bem_id || item.NUMERO}

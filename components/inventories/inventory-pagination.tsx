@@ -26,8 +26,8 @@ export default function InventoryPagination({
   const endItem = Math.min((currentPage + 1) * (itemsPerPage || 0), totalItems || 0)
 
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div className="flex items-center gap-2 w-full sm:w-auto">
         <Button
           variant="outline"
           size="icon"
@@ -36,18 +36,19 @@ export default function InventoryPagination({
           className="h-8 w-8 border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] hover:text-white disabled:opacity-50"
         >
           <ChevronLeft className="h-4 w-4" />
-          <span className="sr-only">Página anterior</span>
         </Button>
 
         {!showAll && (
-          <span className="text-sm text-[var(--font-color)]">
-            Página {currentPage + 1} de {totalPages || 1}
+          <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
+            <span className="text-xs sm:text-sm text-[var(--font-color)] whitespace-nowrap">
+              Página {currentPage + 1} de {totalPages || 1}
+            </span>
             {totalItems && itemsPerPage && (
-              <span className="ml-2 text-xs text-[var(--font-color)]/70">
-                ({startItem}-{endItem} de {totalItems.toLocaleString()} registros)
+              <span className="text-xs text-[var(--font-color)]/70 whitespace-nowrap">
+                ({startItem}-{endItem} de {totalItems > 1000 ? `${Math.floor(totalItems/1000)}k` : totalItems})
               </span>
             )}
-          </span>
+          </div>
         )}
 
         <Button
@@ -58,17 +59,16 @@ export default function InventoryPagination({
           className="h-8 w-8 border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] hover:text-white disabled:opacity-50"
         >
           <ChevronRight className="h-4 w-4" />
-          <span className="sr-only">Próxima página</span>
         </Button>
       </div>
 
       <Button
         variant="outline"
         onClick={onShowAllToggle}
-        className="flex items-center gap-2 border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] hover:text-white"
+        className="w-full sm:w-auto flex items-center gap-2 border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] hover:text-white text-xs sm:text-sm"
       >
         <LayoutGrid className="h-4 w-4" />
-        <span>{showAll ? "Mostrar Paginado" : "Mostrar Tudo"}</span>
+        <span>{showAll ? "Paginado" : "Mostrar Tudo"}</span>
       </Button>
     </div>
   )

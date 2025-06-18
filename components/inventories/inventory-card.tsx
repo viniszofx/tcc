@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import type { BemCopia } from "@/lib/interface"
-import { formatDate } from "@/utils/data-utils"
 import Link from "next/link"
 
 interface InventoryCardProps {
@@ -73,94 +72,31 @@ export default function InventoryCard({ item, displayFields }: InventoryCardProp
   }
 
   return (
-    <Link href={`/dashboard/comissions/${item.comissao_id}/inventories/${item.bem_id}`}>
+    <Link href={`/comissions/${item.comissao_id}/inventories/${item.bem_id}`}>
       <Card className="border-[var(--border-input)] bg-[var(--card-color)] transition-all hover:shadow-md cursor-pointer h-full">
-        <CardContent className="p-4">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="font-semibold text-[var(--font-color)] line-clamp-2">{item.DESCRICAO}</h3>
-            <Badge className={`${getStatusColor(item.STATUS)} text-white ml-2 shrink-0`}>{item.STATUS}</Badge>
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex justify-between items-start mb-2 gap-2">
+            <h3 className="font-semibold text-[var(--font-color)] line-clamp-2 text-sm sm:text-base">
+              {item.DESCRICAO}
+            </h3>
+            <Badge className={`${getStatusColor(item.STATUS)} text-white text-xs`}>
+              {item.STATUS.length > 10 ? `${item.STATUS.substring(0,8)}...` : item.STATUS}
+            </Badge>
           </div>
-          <div className="text-sm text-[var(--font-color)]/70 space-y-1">
-            {displayFields.includes("NUMERO") && (
-              <div className="flex justify-between">
-                <span>{fieldLabels.NUMERO}:</span>
-                <span className="font-medium text-[var(--font-color)]">{item.NUMERO}</span>
-              </div>
-            )}
-
-            {displayFields.includes("MARCA_MODELO") && (
-              <div className="flex justify-between">
-                <span>{fieldLabels.MARCA_MODELO}:</span>
-                <span className="font-medium text-[var(--font-color)] truncate max-w-[150px]">{item.MARCA_MODELO}</span>
-              </div>
-            )}
-
-            {displayFields.includes("RESPONSABILIDADE_ATUAL") && (
-              <div className="flex justify-between">
-                <span>{fieldLabels.RESPONSABILIDADE_ATUAL}:</span>
-                <span className="font-medium text-[var(--font-color)] truncate max-w-[150px]">
-                  {item.RESPONSABILIDADE_ATUAL}
-                </span>
-              </div>
-            )}
-
-            {displayFields.includes("SETOR_DO_RESPONSAVEL") && (
-              <div className="flex justify-between">
-                <span>{fieldLabels.SETOR_DO_RESPONSAVEL}:</span>
-                <span className="font-medium text-[var(--font-color)] truncate max-w-[150px]">
-                  {item.SETOR_DO_RESPONSAVEL}
-                </span>
-              </div>
-            )}
-
-            {displayFields.includes("CAMPUS_DA_LOTACAO_DO_BEM") && (
-              <div className="flex justify-between">
-                <span>{fieldLabels.CAMPUS_DA_LOTACAO_DO_BEM}:</span>
-                <span className="font-medium text-[var(--font-color)] truncate max-w-[150px]">
-                  {item.CAMPUS_DA_LOTACAO_DO_BEM}
-                </span>
-              </div>
-            )}
-
-            {displayFields.includes("SALA") && (
-              <div className="flex justify-between">
-                <span>{fieldLabels.SALA}:</span>
-                <span className="font-medium text-[var(--font-color)] truncate max-w-[150px]">{item.SALA}</span>
-              </div>
-            )}
-
-            {displayFields.includes("ESTADO_DE_CONSERVACAO") && (
-              <div className="flex justify-between">
-                <span>{fieldLabels.ESTADO_DE_CONSERVACAO}:</span>
-                <span className={`font-medium ${getConservacaoColor(item.ESTADO_DE_CONSERVACAO)}`}>
-                  {item.ESTADO_DE_CONSERVACAO}
-                </span>
-              </div>
-            )}
-
-            {displayFields.includes("data_ultima_atualizacao") && item.data_ultima_atualizacao && (
-              <div className="flex justify-between">
-                <span>{fieldLabels.data_ultima_atualizacao}:</span>
-                <span className="font-medium text-[var(--font-color)]">
-                  {typeof item.data_ultima_atualizacao === "string"
-                    ? formatDate(item.data_ultima_atualizacao)
-                    : formatDate(new Date(item.data_ultima_atualizacao).toISOString())}
-                </span>
-              </div>
-            )}
-
-            {displayFields.includes("ED") && (
-              <div className="flex justify-between">
-                <span>{fieldLabels.ED}:</span>
-                <span className="font-medium text-[var(--font-color)]">{item.ED}</span>
-              </div>
-            )}
-            {displayFields.includes("ROTULOS") && item.ROTULOS && (
-              <div className="flex justify-between">
-                <span>{fieldLabels.ROTULOS}:</span>
-                <span className="font-medium text-[var(--font-color)] truncate max-w-[150px]">{item.ROTULOS}</span>
-              </div>
-            )}
+          
+          <div className="text-xs sm:text-sm text-[var(--font-color)]/70 space-y-1">
+            {displayFields.map(field => {
+              if (!item[field as keyof BemCopia]) return null;
+              
+              return (
+                <div key={field} className="flex justify-between gap-1">
+                  <span className="whitespace-nowrap">{fieldLabels[field]}:</span>
+                  <span className="font-medium text-[var(--font-color)] truncate max-w-[50%] sm:max-w-[150px]">
+                    {String(item[field as keyof BemCopia])}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
