@@ -144,8 +144,7 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                   </li>
                 </>
               )}
-              {cargo === "admin" ||
-                (cargo === "presidente" && (
+                {cargo === "presidente" && (
                   <>
                     <li className="p-2 gap-2 flex items-center">
                       <Button
@@ -162,7 +161,7 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                       </Button>
                     </li>
                   </>
-                ))}
+                )}
               {cargo === "operador" && (
                 <>
                   <li className="p-2 gap-2 flex items-center">

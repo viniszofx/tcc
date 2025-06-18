@@ -9,7 +9,7 @@ import InventoryPagination from "@/components/inventories/inventory-pagination";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getProcessedData } from "@/utils/data-storage";
-import { Filter } from "lucide-react";
+import { Camera, Filter } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -22,7 +22,7 @@ import { exportToPdfStyled } from "@/utils/pdf-export";
 export default function InventoriesPage() {
   const router = useRouter();
   const [inventoryData, setInventoryData] = useState<any[]>([]);
-  const [metadata, setMetadata] = useState<any>(null); 
+  const [metadata, setMetadata] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -222,114 +222,114 @@ export default function InventoriesPage() {
   };
 
   const handleExport = (format: "csv" | "json" | "pdf") => {
-  let dataToExport = filteredItems;
+    let dataToExport = filteredItems;
 
-  if (filteredItems.length > 5000) {
-    if (format === "pdf") {
-      const confirmExport = window.confirm(
-        `Exportar ${filteredItems.length.toLocaleString()} itens para PDF pode ser lento e consumir muita memória. ` +
+    if (filteredItems.length > 5000) {
+      if (format === "pdf") {
+        const confirmExport = window.confirm(
+          `Exportar ${filteredItems.length.toLocaleString()} itens para PDF pode ser lento e consumir muita memória. ` +
           `Apenas os primeiros 15000 itens serão exportados. Deseja continuar?`
-      );
+        );
 
-      if (!confirmExport) return;
-      dataToExport = filteredItems.slice(0, 20000);
-    } else {
-      const confirmExport = window.confirm(
-        `Exportar ${filteredItems.length.toLocaleString()} itens pode ser lento e consumir muita memória. Deseja continuar?`
-      );
+        if (!confirmExport) return;
+        dataToExport = filteredItems.slice(0, 20000);
+      } else {
+        const confirmExport = window.confirm(
+          `Exportar ${filteredItems.length.toLocaleString()} itens pode ser lento e consumir muita memória. Deseja continuar?`
+        );
 
-      if (!confirmExport) return;
+        if (!confirmExport) return;
+      }
     }
-  }
 
-  const safeDate = (date: any): Date => {
-    if (date instanceof Date) return date;
-    if (typeof date === 'string' || typeof date === 'number') return new Date(date);
-    return new Date(); 
+    const safeDate = (date: any): Date => {
+      if (date instanceof Date) return date;
+      if (typeof date === 'string' || typeof date === 'number') return new Date(date);
+      return new Date();
+    };
+
+    if (format === "csv") {
+      exportToCsv(dataToExport);
+    } else if (format === "json") {
+      exportToJson(dataToExport);
+    } else if (format === "pdf") {
+      const pdfData = dataToExport.length > 20000
+        ? dataToExport.slice(0, 20000)
+        : dataToExport;
+
+      exportToPdfStyled(
+        pdfData,
+        `inventario_${new Date().toISOString().split("T")[0]}`,
+        metadata?.comissao ?? { comissao_id: 0, nome: "Comissão Desconhecida" },
+        metadata?.campus ?? { campus_id: "", nome: "Campus Desconhecido" },
+        metadata?.presidente ?? { usuario_id: "", nome: "Presidente Desconhecido" },
+        metadata?.inventariante ?? { usuario_id: "", nome: "Inventariante Desconhecido" },
+        safeDate(metadata?.dataAbertura),
+        safeDate(metadata?.dataFechamento),
+        displayFields
+      );
+    }
   };
 
-  if (format === "csv") {
-    exportToCsv(dataToExport);
-  } else if (format === "json") {
-    exportToJson(dataToExport);
-  } else if (format === "pdf") {
-    const pdfData = dataToExport.length > 20000 
-      ? dataToExport.slice(0, 20000) 
-      : dataToExport;
+  const exportToCsv = (data: BemCopia[]) => {
+    try {
+      const headers = displayFields.join(",") + "\n";
 
-    exportToPdfStyled(
-      pdfData,
-      `inventario_${new Date().toISOString().split("T")[0]}`,
-      metadata?.comissao ?? { comissao_id: 0, nome: "Comissão Desconhecida" },
-      metadata?.campus ?? { campus_id: "", nome: "Campus Desconhecido" },
-      metadata?.presidente ?? { usuario_id: "", nome: "Presidente Desconhecido" },
-      metadata?.inventariante ?? { usuario_id: "", nome: "Inventariante Desconhecido" },
-      safeDate(metadata?.dataAbertura),
-      safeDate(metadata?.dataFechamento),
-      displayFields
-    );
-  }
-};
+      const rows = data.map(item => {
+        return displayFields.map(field => {
+          if (field === 'data_ultima_atualizacao' && item[field]) {
+            return `"${new Date(item[field]).toLocaleDateString('pt-BR')}"`;
+          }
+          const value = item[field as keyof BemCopia] ?? '';
+          return `"${String(value).replace(/"/g, '""')}"`;
+        }).join(",");
+      }).join("\n");
 
-const exportToCsv = (data: BemCopia[]) => {
-  try {
-    const headers = displayFields.join(",") + "\n";
-    
-    const rows = data.map(item => {
-      return displayFields.map(field => {
-        if (field === 'data_ultima_atualizacao' && item[field]) {
-          return `"${new Date(item[field]).toLocaleDateString('pt-BR')}"`;
-        }
-        const value = item[field as keyof BemCopia] ?? '';
-        return `"${String(value).replace(/"/g, '""')}"`;
-      }).join(",");
-    }).join("\n");
+      const csvContent = headers + rows;
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
 
-    const csvContent = headers + rows;
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    
-    link.setAttribute('href', url);
-    link.setAttribute('download', `inventario_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } catch (error) {
-    console.error("Erro ao exportar CSV:", error);
-    alert("Ocorreu um erro ao exportar para CSV");
-  }
-};
+      link.setAttribute('href', url);
+      link.setAttribute('download', `inventario_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
 
-const exportToJson = (data: BemCopia[]) => {
-  try {
-    const filteredData = data.map(item => {
-      const filteredItem: any = {};
-      displayFields.forEach(field => {
-        filteredItem[field] = item[field as keyof BemCopia];
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Erro ao exportar CSV:", error);
+      alert("Ocorreu um erro ao exportar para CSV");
+    }
+  };
+
+  const exportToJson = (data: BemCopia[]) => {
+    try {
+      const filteredData = data.map(item => {
+        const filteredItem: any = {};
+        displayFields.forEach(field => {
+          filteredItem[field] = item[field as keyof BemCopia];
+        });
+        return filteredItem;
       });
-      return filteredItem;
-    });
 
-    const jsonStr = JSON.stringify(filteredData, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    
-    link.setAttribute('href', url);
-    link.setAttribute('download', `inventario_${new Date().toISOString().split('T')[0]}.json`);
-    link.style.visibility = 'hidden';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } catch (error) {
-    console.error("Erro ao exportar JSON:", error);
-    alert("Ocorreu um erro ao exportar para JSON");
-  }
-};
+      const jsonStr = JSON.stringify(filteredData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      link.setAttribute('href', url);
+      link.setAttribute('download', `inventario_${new Date().toISOString().split('T')[0]}.json`);
+      link.style.visibility = 'hidden';
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Erro ao exportar JSON:", error);
+      alert("Ocorreu um erro ao exportar para JSON");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -381,13 +381,20 @@ const exportToJson = (data: BemCopia[]) => {
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-md lg:max-w-5xl xl:max-w-6xl">
       <CardContent className="flex flex-col gap-6 p-6">
         <InventoryMetadata metadata={metadata} />
-  
+
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
           <InventoryActions
             onExport={handleExport}
             onNewItem={handleNewItem}
             hasData={filteredItems.length > 0}
           />
+          <Button
+            variant="outline"
+            className="w-36 flex items-center gap-2 border-[var(--border-input)] bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] hover:text-white"
+          >
+            <Camera className="h-5 w-5" />
+            <span>Câmera</span>
+          </Button>
           <InventoryFilters
             onFilterChange={handleFilterChange}
             selectedFilters={selectedFilters}
@@ -398,7 +405,7 @@ const exportToJson = (data: BemCopia[]) => {
             uniqueValues={uniqueValues}
           />
         </div>
-  
+
         <InventoryPagination
           currentPage={currentPage}
           totalPages={totalPages}
@@ -408,7 +415,7 @@ const exportToJson = (data: BemCopia[]) => {
           totalItems={filteredItems.length}
           itemsPerPage={itemsPerPage}
         />
-  
+
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {currentItems.map((item) => (
             <InventoryCard
@@ -418,7 +425,7 @@ const exportToJson = (data: BemCopia[]) => {
             />
           ))}
         </div>
-  
+
         {filteredItems.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Filter className="h-12 w-12 text-[var(--font-color)]/30 mb-4" />
@@ -440,7 +447,7 @@ const exportToJson = (data: BemCopia[]) => {
             </Button>
           </div>
         )}
-  
+
         <div className="flex justify-end mt-4">
           <Button
             variant="outline"
@@ -450,7 +457,7 @@ const exportToJson = (data: BemCopia[]) => {
             <span>Voltar</span>
           </Button>
         </div>
-  
+
         <NewItemModal
           isOpen={isNewItemModalOpen}
           onClose={() => setIsNewItemModalOpen(false)}
@@ -459,4 +466,5 @@ const exportToJson = (data: BemCopia[]) => {
         />
       </CardContent>
     </Card>
-  )};
+  )
+};

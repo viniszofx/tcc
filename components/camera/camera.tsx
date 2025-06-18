@@ -4,7 +4,8 @@ import { useCamera } from "@/hooks/use-camera";
 import { useEffect } from "react";
 
 type CameraProps = {
-  onClose: () => void; // Função de fechamento
+  onClose: () => void; 
+  isOpen?: boolean;
 };
 
 export function CameraComponent({ onClose }: CameraProps) {
