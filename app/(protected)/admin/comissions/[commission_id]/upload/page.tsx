@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useFileProcessor } from "@/hooks/use-file-processor"
 import { useSettings } from "@/hooks/use-settings"
 import { storeProcessedData } from "@/utils/data-storage"
-import { useRouter } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 export default function ProcessingPage() {
@@ -18,6 +18,8 @@ export default function ProcessingPage() {
   const { hardwareAcceleration: globalAcceleration } = useSettings()
   const [hardwareAcceleration, setHardwareAcceleration] = useState(globalAcceleration)
   const [storageError, setStorageError] = useState<string | null>(null)
+  const params = useParams();
+  const comissionId = params.commission_id as string;
   const router = useRouter()
 
   const { processFile, isProcessing, error, progress } = useFileProcessor()
@@ -52,7 +54,7 @@ export default function ProcessingPage() {
 
           await storeProcessedData(results, metadata)
 
-          router.push("/admin/comissions")
+          router.push(`/admin/comissions/${comissionId}/inventories`)
         } catch (storageError) {
           console.error("Erro ao armazenar resultados:", storageError)
           setStorageError(
