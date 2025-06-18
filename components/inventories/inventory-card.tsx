@@ -1,7 +1,10 @@
+"use client"
+
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import type { BemCopia } from "@/lib/interface"
 import Link from "next/link"
+import { useParams, usePathname } from "next/navigation"
 
 interface InventoryCardProps {
   item: BemCopia
@@ -9,6 +12,14 @@ interface InventoryCardProps {
 }
 
 export default function InventoryCard({ item, displayFields }: InventoryCardProps) {
+  const pathname = usePathname()
+  const params = useParams()
+  const commissionId = params?.commission_id as string
+
+  const isAdminRoute = pathname.includes("/admin/")
+  const basePath = isAdminRoute ? "/admin" : "/dashboard"
+  const itemDetailRoute = `${basePath}/comissions/${commissionId}/inventories/${item.bem_id}`
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ATIVO":
@@ -72,7 +83,7 @@ export default function InventoryCard({ item, displayFields }: InventoryCardProp
   }
 
   return (
-    <Link href={`/comissions/${item.comissao_id}/inventories/${item.bem_id}`}>
+    <Link href={itemDetailRoute}>
       <Card className="border-[var(--border-input)] bg-[var(--card-color)] transition-all hover:shadow-md cursor-pointer h-full">
         <CardContent className="p-3 sm:p-4">
           <div className="flex justify-between items-start mb-2 gap-2">
@@ -80,14 +91,14 @@ export default function InventoryCard({ item, displayFields }: InventoryCardProp
               {item.DESCRICAO}
             </h3>
             <Badge className={`${getStatusColor(item.STATUS)} text-white text-xs`}>
-              {item.STATUS.length > 10 ? `${item.STATUS.substring(0,8)}...` : item.STATUS}
+              {item.STATUS.length > 10 ? `${item.STATUS.substring(0, 8)}...` : item.STATUS}
             </Badge>
           </div>
-          
+
           <div className="text-xs sm:text-sm text-[var(--font-color)]/70 space-y-1">
-            {displayFields.map(field => {
-              if (!item[field as keyof BemCopia]) return null;
-              
+            {displayFields.map((field) => {
+              if (!item[field as keyof BemCopia]) return null
+
               return (
                 <div key={field} className="flex justify-between gap-1">
                   <span className="whitespace-nowrap">{fieldLabels[field]}:</span>
@@ -95,7 +106,7 @@ export default function InventoryCard({ item, displayFields }: InventoryCardProp
                     {String(item[field as keyof BemCopia])}
                   </span>
                 </div>
-              );
+              )
             })}
           </div>
         </CardContent>
