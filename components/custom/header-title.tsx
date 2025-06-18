@@ -1,23 +1,26 @@
 "use client"
 
 import { routes } from "@/components/custom/routes-title"
-import { usePathname } from "next/navigation"
+import { useParams, usePathname } from "next/navigation"
 
 const HeaderTitle = () => {
   const pathname = usePathname()
+  const params = useParams()
 
   const convertToRegex = (prefix: string) => {
-    const regexString = "^" + prefix.replace(/\[.*?\]/g, "[^/]+")
+    const regexString = "^" + prefix.replace(/\[.*?\]/g, "[^/]+") + "$"
     return new RegExp(regexString)
   }
 
   const matchedRoute = routes.find((route) => convertToRegex(route.prefix).test(pathname))
-  const title = matchedRoute?.title || "Dashboard"
+  
+  let title = matchedRoute?.title || "Dashboard"
+  if (params.commission_id && title.includes("[commission_id]")) {
+    title = title.replace("[commission_id]", params.commission_id as string)
+  }
 
   return (
-    <>
-      <h1 className="text-xl font-bold text-[var(--font-color)]">{title}</h1>
-    </>
+    <h1 className="text-xl font-bold text-[var(--font-color)]">{title}</h1>
   )
 }
 
