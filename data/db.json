@@ -86,17 +86,5 @@
       },
       "organizacao_id": "2000"
     }
-  ],
-  "inventory_items": [
-    {
-      "id": "1",
-      "comissao_id": "556489651438",
-      "number": "123456",
-      "description": "Item de inventário",
-      "brand_model": "Marca/Modelo",
-      "current_responsibility": "Setor X",
-      "conservation_state": "Bom",
-      "location": "Sala 101"
-    }
   ]
 }
