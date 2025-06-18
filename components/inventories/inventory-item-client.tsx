@@ -1,133 +1,140 @@
-"use client";
+"use client"
 
-import DeleteItemModal from "@/components/inventories/delete-item-modal";
-import EditItemModal from "@/components/inventories/edit-item-modal";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import type { BemCopia } from "@/lib/interface";
-import { getProcessedData, saveProcessedData } from "@/utils/data-storage";
-import { formatDate } from "@/utils/data-utils";
-import { ArrowLeft, Edit, Trash2 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import DeleteItemModal from "@/components/inventories/delete-item-modal"
+import EditItemModal from "@/components/inventories/edit-item-modal"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import type { BemCopia } from "@/lib/interface"
+import { getProcessedData, saveProcessedData } from "@/utils/data-storage"
+import { formatDate } from "@/utils/data-utils"
+import { ArrowLeft, Edit, Trash2 } from "lucide-react"
+import { useParams, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 interface InventoryItemClientProps {
-  id: string;
-  commissionId?: string;
+  id: string
+  commissionId?: string
+  basePath: string 
+  backButtonText?: string
 }
 
 export default function InventoryItemClient({
   id,
   commissionId: propCommissionId,
+  basePath,
+  backButtonText = "Voltar para Inventário",
 }: InventoryItemClientProps) {
-  const router = useRouter();
-  const params = useParams();
-  const [item, setItem] = useState<BemCopia | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [inventoryData, setInventoryData] = useState<BemCopia[]>([]);
-  const commissionId = propCommissionId || params?.commission_id;
-  const [isMounted, setIsMounted] = useState(false);
+  const router = useRouter()
+  const params = useParams()
+  const [item, setItem] = useState<BemCopia | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [inventoryData, setInventoryData] = useState<BemCopia[]>([])
+  const commissionId = propCommissionId || params?.commission_id
+  const [isMounted, setIsMounted] = useState(false)
+
+  const getBackUrl = () => {
+    if (commissionId) {
+      return `${basePath}/${commissionId}/inventories`
+    }
+    return `${basePath}/inventories`
+  }
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     async function loadItem() {
-      setLoading(true);
+      setLoading(true)
       try {
-        const { data } = await getProcessedData();
-        setInventoryData(data);
-        const foundItem = data.find(
-          (item) => item.bem_id === id || item.NUMERO === id
-        );
+        const { data } = await getProcessedData()
+        setInventoryData(data)
+        const foundItem = data.find((item) => item.bem_id === id || item.NUMERO === id)
 
         if (foundItem) {
-          setItem(foundItem);
+          setItem(foundItem)
         } else {
-          router.push(`/admin/comissions/${commissionId}/inventories`);
+          router.push(getBackUrl())
         }
       } catch (error) {
-        console.error("Error loading item:", error);
-        router.push(`/admin/comissions/${commissionId}/inventories`);
+        console.error("Error loading item:", error)
+        router.push(getBackUrl())
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
 
-    loadItem();
-  }, [id, router, commissionId]);
+    loadItem()
+  }, [id, router, commissionId, basePath])
 
   const handleSaveItem = async (updatedItem: BemCopia) => {
     try {
-      const updatedData = inventoryData.map(item =>
-        item.bem_id === updatedItem.bem_id ? updatedItem : item
-      );
+      const updatedData = inventoryData.map((item) => (item.bem_id === updatedItem.bem_id ? updatedItem : item))
 
       await saveProcessedData(updatedData, {
         recordCount: updatedData.length,
         timestamp: new Date().toISOString(),
         fileName: "inventory_update.json",
-        usedAcceleration: false
-      });
+        usedAcceleration: false,
+      })
 
-      setItem(updatedItem);
-      setInventoryData(updatedData);
-      setEditModalOpen(false);
+      setItem(updatedItem)
+      setInventoryData(updatedData)
+      setEditModalOpen(false)
     } catch (error) {
-      console.error("Error saving item:", error);
+      console.error("Error saving item:", error)
     }
-  };
+  }
 
   const handleDeleteItem = async () => {
-    if (!item) return;
+    if (!item) return
 
     try {
-      const updatedData = inventoryData.filter(i => i.bem_id !== item.bem_id);
+      const updatedData = inventoryData.filter((i) => i.bem_id !== item.bem_id)
 
       await saveProcessedData(updatedData, {
         recordCount: updatedData.length,
         timestamp: new Date().toISOString(),
         fileName: "inventory_update.json",
-        usedAcceleration: false
-      });
+        usedAcceleration: false,
+      })
 
-      setDeleteModalOpen(false);
-      router.push(`/admin/comissions/${commissionId}/inventories`);
+      setDeleteModalOpen(false)
+      router.push(getBackUrl())
     } catch (error) {
-      console.error("Error deleting item:", error);
+      console.error("Error deleting item:", error)
     }
-  };
+  }
 
   const truncateDescription = (description: string) => {
-    const index = description.indexOf('[');
-    return index >= 0 ? description.substring(0, index).trim() : description;
-  };
+    const index = description.indexOf("[")
+    return index >= 0 ? description.substring(0, index).trim() : description
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ATIVO":
       case "Ativo":
-        return "bg-green-500";
+        return "bg-green-500"
       case "EM_USO":
       case "Em Manutenção":
-        return "bg-amber-500";
+        return "bg-amber-500"
       case "BAIXA_SOLICITADA":
       case "Inativo":
-        return "bg-gray-500";
+        return "bg-gray-500"
       case "BAIXADO":
       case "Baixado":
-        return "bg-red-500";
+        return "bg-red-500"
       case "Transferido":
-        return "bg-blue-500";
+        return "bg-blue-500"
       default:
-        return "bg-gray-500";
+        return "bg-gray-500"
     }
-  };
+  }
 
   if (loading) {
     return (
@@ -141,28 +148,26 @@ export default function InventoryItemClient({
           </div>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   if (!item) {
     return (
       <Card className="w-full bg-[var(--bg-simple)] shadow-md mx-auto">
         <CardContent className="p-4 sm:p-8 text-center">
-          <h2 className="text-lg sm:text-xl font-bold text-[var(--font-color)]">
-            Item não encontrado
-          </h2>
+          <h2 className="text-lg sm:text-xl font-bold text-[var(--font-color)]">Item não encontrado</h2>
           <p className="text-[var(--font-color)]/70 mt-2 text-sm sm:text-base">
             O item que você está procurando não existe ou foi removido.
           </p>
           <Button
             className="mt-4 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white text-sm sm:text-base"
-            onClick={() => router.push(`/admin/comissions/${commissionId}/inventories`)}
+            onClick={() => router.push(getBackUrl())}
           >
-            Voltar para Inventário
+            {backButtonText}
           </Button>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
@@ -173,10 +178,10 @@ export default function InventoryItemClient({
             <Button
               variant="ghost"
               className="flex items-center gap-2 text-[var(--font-color)] hover:bg-[var(--hover-2-color)] hover:text-white cursor-pointer p-0 sm:p-2"
-              onClick={() => router.push(`/admin/comissions/${commissionId}/inventories`)}
+              onClick={() => router.push(getBackUrl())}
             >
               <ArrowLeft className="h-4 w-4" />
-              <span className="text-sm sm:text-base">Voltar para Inventário</span>
+              <span className="text-sm sm:text-base">{backButtonText}</span>
             </Button>
             <div className="flex items-center gap-2 justify-end sm:justify-normal">
               <Button
@@ -333,5 +338,5 @@ export default function InventoryItemClient({
         </>
       )}
     </>
-  );
+  )
 }
