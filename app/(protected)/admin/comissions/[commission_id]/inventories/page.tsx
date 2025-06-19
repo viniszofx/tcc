@@ -10,7 +10,7 @@ export default function AdminInventoriesPage() {
   return (
     <InventoryPageBase
       backRoute={`/admin/comissions/${commissionId}`}
-      errorRoute={`/error?message=Inventário não encontrado ou inativo`}
+      errorRoute="/error?message=Inventário não encontrado ou inativo"
     />
   )
 }
