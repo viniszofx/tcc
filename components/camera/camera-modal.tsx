@@ -106,8 +106,9 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
       video: isMobile
         ? {
             facingMode: { exact: "environment" },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
+            width: { ideal: 1080 }, // Square dimensions for mobile
+            height: { ideal: 1080 },
+            aspectRatio: { exact: 1.0 }, // Force 1:1 ratio
           }
         : {
             deviceId: { exact: selectedCameraId },
@@ -148,7 +149,8 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
 
     const config = {
       fps: 10,
-      qrbox: 250,
+      qrbox: isMobile() ? { width: 250, height: 250 } : 250, // Square scanning area for mobile
+      aspectRatio: isMobile() ? 1.0 : 1.77, // 1:1 for mobile, 16:9 for desktop
       formatsToSupport: [
         Html5QrcodeSupportedFormats.QR_CODE,
         Html5QrcodeSupportedFormats.CODE_39,
@@ -450,14 +452,21 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
 
           <div className="relative">
             {useScanner ? (
-              <div id={containerId} className="w-full" />
+              <div
+                id={containerId}
+                className={`w-full ${
+                  isMobile() ? "aspect-square" : "aspect-video"
+                }`}
+              />
             ) : (
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
-                className="w-full rounded-lg"
+                className={`w-full rounded-lg ${
+                  isMobile() ? "aspect-square" : "aspect-video"
+                }`}
               />
             )}
 
