@@ -101,7 +101,7 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     const constraints = {
       video: isIOS
         ? {
-            facingMode: { exact: "environment" }, // Force back camera
+            facingMode: { exact: "environment" },
             width: { ideal: 1280 },
             height: { ideal: 720 },
           }
@@ -119,30 +119,9 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
         setVideoRunning(true);
       }
     } catch (e) {
-      // If exact constraint fails, try without it
-      if (isIOS) {
-        try {
-          const fallbackStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              facingMode: "environment",
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
-            },
-          });
-          if (videoRef.current) {
-            videoRef.current.srcObject = fallbackStream;
-            setVideoRunning(true);
-          }
-        } catch (fallbackError) {
-          console.error("Start video error:", fallbackError);
-          alert("Não foi possível iniciar a câmera");
-          onClose();
-        }
-      } else {
-        console.error("Start video error:", e);
-        alert("Não foi possível iniciar a câmera");
-        onClose();
-      }
+      console.error("Start video error:", e);
+      alert("Não foi possível iniciar a câmera traseira");
+      onClose();
     }
   };
 
@@ -154,6 +133,11 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
 
     const scanner = new Html5Qrcode(containerId);
     qrScannerRef.current = scanner;
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const cameraConfig = isIOS
+      ? { facingMode: { exact: "environment" } }
+      : { deviceId: { exact: selectedCameraId } };
 
     const config = {
       fps: 10,
@@ -172,7 +156,7 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
 
     try {
       await scanner.start(
-        { deviceId: { exact: selectedCameraId } },
+        cameraConfig,
         config,
         (decodedText) => {
           setUseScanner(false);
@@ -184,6 +168,26 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
       );
       setScannerRunning(true);
     } catch (e) {
+      // Se falhar com exact constraint, tenta sem
+      if (isIOS) {
+        try {
+          await scanner.start(
+            { facingMode: "environment" },
+            config,
+            (decodedText) => {
+              setUseScanner(false);
+              setCaptureResult({ type: "qr", data: decodedText });
+            },
+            (error) => {
+              // silencioso
+            }
+          );
+          setScannerRunning(true);
+          return;
+        } catch (fallbackError) {
+          console.error("Scanner error:", fallbackError);
+        }
+      }
       alert("Erro ao iniciar scanner");
       onClose();
     }
@@ -193,7 +197,7 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: { exact: "environment" }, // Force back camera
+          facingMode: { exact: "environment" },
           width: { ideal: 1280 },
           height: { ideal: 720 },
         },
@@ -201,21 +205,8 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
       stream.getTracks().forEach((track) => track.stop());
       return true;
     } catch (error) {
-      // If back camera fails, try without exact constraint
-      try {
-        const fallbackStream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: "environment",
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
-        });
-        fallbackStream.getTracks().forEach((track) => track.stop());
-        return true;
-      } catch (fallbackError) {
-        console.error("iOS Camera permission error:", error);
-        return false;
-      }
+      console.error("iOS Camera permission error:", error);
+      return false;
     }
   };
 
@@ -315,6 +306,11 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     onClose();
   };
 
+  const showCameraToggle = () => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    return isMobile() && !isIOS;
+  };
+
   return (
     <>
       {/* Existing camera dialog */}
@@ -360,7 +356,7 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
               />
             )}
 
-            {isMobile() && (
+            {showCameraToggle() && (
               <Button
                 variant="secondary"
                 size="icon"
