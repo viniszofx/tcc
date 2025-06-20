@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
@@ -33,6 +34,10 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
   const [scannerRunning, setScannerRunning] = useState(false);
   const [videoRunning, setVideoRunning] = useState(false);
   const [useScanner, setUseScanner] = useState(true); // true: leitura qr/barcode; false: captura manual
+  const [captureResult, setCaptureResult] = useState<{
+    type: "image" | "qr";
+    data: string;
+  } | null>(null);
 
   const isMobile = () =>
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -92,12 +97,19 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
 
     if (!selectedCameraId) return;
 
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const constraints = {
-      video: {
-        deviceId: { exact: selectedCameraId },
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-      },
+      video: isIOS
+        ? {
+            facingMode: facingMode,
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          }
+        : {
+            deviceId: { exact: selectedCameraId },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
     };
 
     try {
@@ -107,6 +119,7 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
         setVideoRunning(true);
       }
     } catch (e) {
+      console.error("Start video error:", e);
       alert("Não foi possível iniciar a câmera");
       onClose();
     }
@@ -142,8 +155,7 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
         config,
         (decodedText) => {
           setUseScanner(false);
-          onCapture(decodedText);
-          handleClose();
+          setCaptureResult({ type: "qr", data: decodedText });
         },
         (error) => {
           // silencioso
@@ -156,10 +168,55 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     }
   };
 
+  const requestIOSPermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "environment",
+        },
+      });
+      stream.getTracks().forEach((track) => track.stop());
+      return true;
+    } catch (error) {
+      console.error("iOS Camera permission error:", error);
+      return false;
+    }
+  };
+
+  const initializeCamera = async () => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    if (isIOS) {
+      const hasPermission = await requestIOSPermission();
+      if (!hasPermission) {
+        alert(
+          "Por favor, permita o acesso à câmera nas configurações do Safari."
+        );
+        onClose();
+        return false;
+      }
+    }
+
+    try {
+      await listCameras();
+      return true;
+    } catch (error) {
+      console.error("Camera initialization error:", error);
+      alert("Erro ao inicializar a câmera. Verifique as permissões.");
+      onClose();
+      return false;
+    }
+  };
+
   // Ao abrir modal lista câmeras
   useEffect(() => {
     if (isOpen) {
-      listCameras();
+      (async () => {
+        const initialized = await initializeCamera();
+        if (!initialized) {
+          onClose();
+        }
+      })();
     } else {
       stopAll();
     }
@@ -193,6 +250,15 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     // Note: aqui poderia atualizar selectedCameraId para câmera com facingMode
   };
 
+  // Adicionado para confirmar resultado da captura
+  const handleConfirmResult = () => {
+    if (captureResult) {
+      onCapture(captureResult.data);
+      setCaptureResult(null);
+      handleClose();
+    }
+  };
+
   const handleCapture = () => {
     if (!videoRunning || !videoRef.current) return;
 
@@ -205,8 +271,7 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     const imgData = canvas.toDataURL("image/jpeg");
-    onCapture(imgData);
-    handleClose();
+    setCaptureResult({ type: "image", data: imgData });
   };
 
   const handleClose = async () => {
@@ -215,86 +280,131 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
   };
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) handleClose();
-      }}
-    >
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogTitle>Leitor QR e Captura de Foto</DialogTitle>
-        <DialogDescription>
-          {useScanner
-            ? "Aponte a câmera para um QR Code ou código de barras."
-            : "Capture uma foto manualmente."}
-        </DialogDescription>
+    <>
+      {/* Existing camera dialog */}
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => {
+          if (!open) handleClose();
+        }}
+      >
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogTitle>Leitor QR e Captura de Foto</DialogTitle>
+          <DialogDescription>
+            {useScanner
+              ? "Aponte a câmera para um QR Code ou código de barras."
+              : "Capture uma foto manualmente."}
+          </DialogDescription>
 
-        {/* Se desktop, select para trocar câmera */}
-        {!isMobile() && (
-          <select
-            className="mb-4 w-full rounded border border-input p-2"
-            value={selectedCameraId}
-            onChange={(e) => changeCamera(e.target.value)}
-          >
-            {availableCameras.map((cam) => (
-              <option key={cam.deviceId} value={cam.deviceId}>
-                {cam.label || `Câmera ${availableCameras.indexOf(cam) + 1}`}
-              </option>
-            ))}
-          </select>
-        )}
-
-        <div className="relative">
-          {useScanner ? (
-            <div id={containerId} className="w-full" />
-          ) : (
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full rounded-lg"
-            />
-          )}
-
-          {isMobile() && (
-            <Button
-              variant="secondary"
-              size="icon"
-              className="absolute top-2 right-2 rounded-full p-2"
-              onClick={() => {
-                toggleFacingMode();
-              }}
-              title="Alternar câmera"
+          {/* Se desktop, select para trocar câmera */}
+          {!isMobile() && (
+            <select
+              className="mb-4 w-full rounded border border-input p-2"
+              value={selectedCameraId}
+              onChange={(e) => changeCamera(e.target.value)}
             >
-              <SwitchCamera className="h-4 w-4" />
-            </Button>
+              {availableCameras.map((cam) => (
+                <option key={cam.deviceId} value={cam.deviceId}>
+                  {cam.label || `Câmera ${availableCameras.indexOf(cam) + 1}`}
+                </option>
+              ))}
+            </select>
           )}
-        </div>
 
-        <div className="mt-4 flex justify-between">
-          <Button onClick={toggleMode} variant="outline">
-            {useScanner ? "Captura manual" : "Leitura QR/Barcode"}
-          </Button>
+          <div className="relative">
+            {useScanner ? (
+              <div id={containerId} className="w-full" />
+            ) : (
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full rounded-lg"
+              />
+            )}
 
-          {!useScanner && (
-            <Button
-              onClick={handleCapture}
-              disabled={!videoRunning}
-              className="flex items-center gap-2"
-            >
-              <Camera className="h-4 w-4" />
-              Capturar Foto
+            {isMobile() && (
+              <Button
+                variant="secondary"
+                size="icon"
+                className="absolute top-2 right-2 rounded-full p-2"
+                onClick={() => {
+                  toggleFacingMode();
+                }}
+                title="Alternar câmera"
+              >
+                <SwitchCamera className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
+          <div className="mt-4 flex justify-between">
+            <Button onClick={toggleMode} variant="outline">
+              {useScanner ? "Captura manual" : "Leitura QR/Barcode"}
             </Button>
-          )}
-        </div>
 
-        <DialogFooter className="flex justify-end mt-4 gap-2">
-          <Button onClick={handleClose} variant="secondary">
-            Fechar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            {!useScanner && (
+              <Button
+                onClick={handleCapture}
+                disabled={!videoRunning}
+                className="flex items-center gap-2"
+              >
+                <Camera className="h-4 w-4" />
+                Capturar Foto
+              </Button>
+            )}
+          </div>
+
+          <DialogFooter className="flex justify-end mt-4 gap-2">
+            <Button onClick={handleClose} variant="secondary">
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Result dialog */}
+      <Dialog
+        open={captureResult !== null}
+        onOpenChange={() => setCaptureResult(null)}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {captureResult?.type === "image"
+                ? "Foto Capturada"
+                : "Código Lido"}
+            </DialogTitle>
+            <DialogDescription>
+              {captureResult?.type === "image"
+                ? "Confirme se a foto está adequada"
+                : "Confirme se o código foi lido corretamente"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="my-4">
+            {captureResult?.type === "image" ? (
+              <img
+                src={captureResult.data}
+                alt="Captured"
+                className="w-full rounded-lg"
+              />
+            ) : (
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="break-all">{captureResult?.data}</p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex justify-between gap-2">
+            <Button variant="outline" onClick={() => setCaptureResult(null)}>
+              Tentar Novamente
+            </Button>
+            <Button onClick={handleConfirmResult}>Confirmar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
