@@ -302,9 +302,34 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     setCaptureResult({ type: "image", data: imgData });
   };
 
+  // Update the handleClose function
   const handleClose = async () => {
-    await stopAll();
-    onClose();
+    try {
+      // Stop video tracks
+      if (videoRef.current?.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach((track) => {
+          track.stop();
+          stream.removeTrack(track);
+        });
+        videoRef.current.srcObject = null;
+      }
+
+      // Stop scanner if running
+      await stopScanner();
+
+      // Reset states
+      setVideoRunning(false);
+      setScannerRunning(false);
+      setCaptureResult(null);
+      setZoomLevel(1);
+
+      // Call parent close handler
+      onClose();
+    } catch (error) {
+      console.error("Error closing camera:", error);
+      onClose();
+    }
   };
 
   const showCameraToggle = () => {
@@ -354,7 +379,9 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
       <Dialog
         open={isOpen}
         onOpenChange={(open) => {
-          if (!open) handleClose();
+          if (!open) {
+            handleClose();
+          }
         }}
       >
         <DialogContent className="sm:max-w-[600px]">
