@@ -101,7 +101,7 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     const constraints = {
       video: isIOS
         ? {
-            facingMode: facingMode,
+            facingMode: { exact: "environment" }, // Force back camera
             width: { ideal: 1280 },
             height: { ideal: 720 },
           }
@@ -119,9 +119,30 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
         setVideoRunning(true);
       }
     } catch (e) {
-      console.error("Start video error:", e);
-      alert("Não foi possível iniciar a câmera");
-      onClose();
+      // If exact constraint fails, try without it
+      if (isIOS) {
+        try {
+          const fallbackStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: "environment",
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+          });
+          if (videoRef.current) {
+            videoRef.current.srcObject = fallbackStream;
+            setVideoRunning(true);
+          }
+        } catch (fallbackError) {
+          console.error("Start video error:", fallbackError);
+          alert("Não foi possível iniciar a câmera");
+          onClose();
+        }
+      } else {
+        console.error("Start video error:", e);
+        alert("Não foi possível iniciar a câmera");
+        onClose();
+      }
     }
   };
 
@@ -172,14 +193,29 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: "environment",
+          facingMode: { exact: "environment" }, // Force back camera
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
         },
       });
       stream.getTracks().forEach((track) => track.stop());
       return true;
     } catch (error) {
-      console.error("iOS Camera permission error:", error);
-      return false;
+      // If back camera fails, try without exact constraint
+      try {
+        const fallbackStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: "environment",
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        });
+        fallbackStream.getTracks().forEach((track) => track.stop());
+        return true;
+      } catch (fallbackError) {
+        console.error("iOS Camera permission error:", error);
+        return false;
+      }
     }
   };
 
