@@ -10,16 +10,22 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
-import { Camera, SwitchCamera, ZoomIn } from "lucide-react";
+import { Camera, Search, SwitchCamera, ZoomIn } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface CameraModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCapture: (data: string) => void;
+  onSearch?: (value: string) => void; // Add this prop
 }
 
-export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
+export function CameraModal({
+  isOpen,
+  onClose,
+  onCapture,
+  onSearch,
+}: CameraModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const qrScannerRef = useRef<Html5Qrcode | null>(null);
   const containerId = "qr-reader-container";
@@ -416,6 +422,15 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     }
   };
 
+  // Add handleSearch function
+  const handleSearch = () => {
+    if (captureResult?.data) {
+      onSearch?.(captureResult.data);
+      setCaptureResult(null);
+      handleClose();
+    }
+  };
+
   return (
     <>
       {/* Existing camera dialog */}
@@ -556,11 +571,25 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
             )}
           </div>
 
-          <DialogFooter className="flex justify-between gap-2">
-            <Button variant="outline" onClick={() => setCaptureResult(null)}>
-              Tentar Novamente
-            </Button>
-            <Button onClick={handleConfirmResult}>Confirmar</Button>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <div className="flex gap-2 w-full sm:w-auto justify-start">
+              <Button variant="outline" onClick={() => setCaptureResult(null)}>
+                Tentar Novamente
+              </Button>
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto justify-end">
+              {captureResult?.type === "qr" && (
+                <Button
+                  variant="secondary"
+                  onClick={handleSearch}
+                  className="flex items-center gap-2"
+                >
+                  <Search className="h-4 w-4" />
+                  Buscar Item
+                </Button>
+              )}
+              <Button onClick={handleConfirmResult}>Confirmar</Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1,320 +1,358 @@
-"use client"
+"use client";
 
-import EmptyInventory from "@/components/dashboard/empty-inventory"
-import InventoryActions from "@/components/inventories/inventory-actions"
-import InventoryCard from "@/components/inventories/inventory-card"
-import InventoryFilters from "@/components/inventories/inventory-filters"
-import InventoryMetadata from "@/components/inventories/inventory-metadata"
-import InventoryPagination from "@/components/inventories/inventory-pagination"
-import NewItemModal from "@/components/inventories/new-item-modal"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import type { BemCopia } from "@/lib/interface"
-import { addInventoryItem, getProcessedData } from "@/utils/data-storage"
-import { exportToPdfStyled } from "@/utils/pdf-export"
-import { Filter } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import EmptyInventory from "@/components/dashboard/empty-inventory";
+import InventoryActions from "@/components/inventories/inventory-actions";
+import InventoryCard from "@/components/inventories/inventory-card";
+import InventoryFilters from "@/components/inventories/inventory-filters";
+import InventoryMetadata from "@/components/inventories/inventory-metadata";
+import InventoryPagination from "@/components/inventories/inventory-pagination";
+import NewItemModal from "@/components/inventories/new-item-modal";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import type { BemCopia } from "@/lib/interface";
+import { addInventoryItem, getProcessedData } from "@/utils/data-storage";
+import { exportToPdfStyled } from "@/utils/pdf-export";
+import { Filter } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 interface InventoryPageBaseProps {
-  backRoute: string
-  errorRoute: string
-  commissionId?: string
+  backRoute: string;
+  errorRoute: string;
+  commissionId?: string;
 }
 
-export default function InventoryPageBase({ backRoute, errorRoute, commissionId }: InventoryPageBaseProps) {
-  const router = useRouter()
-  const [inventoryData, setInventoryData] = useState<any[]>([])
-  const [metadata, setMetadata] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [loadError, setLoadError] = useState<string | null>(null)
+export default function InventoryPageBase({
+  backRoute,
+  errorRoute,
+}: InventoryPageBaseProps) {
+  const router = useRouter();
+  const [inventoryData, setInventoryData] = useState<any[]>([]);
+  const [metadata, setMetadata] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const [searchTerm, setSearchTerm] = useState("")
-  const [currentPage, setCurrentPage] = useState(0)
-  const [showAll, setShowAll] = useState(false)
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({})
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [showAll, setShowAll] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState<
+    Record<string, string>
+  >({});
   const [displayFields, setDisplayFields] = useState<string[]>([
     "NUMERO",
     "MARCA_MODELO",
     "RESPONSABILIDADE_ATUAL",
     "ESTADO_DE_CONSERVACAO",
-  ])
-  const [itemsPerPage, setItemsPerPage] = useState(9)
+  ]);
+  const [itemsPerPage, setItemsPerPage] = useState(9);
 
-  const [isNewItemModalOpen, setIsNewItemModalOpen] = useState(false)
+  const [isNewItemModalOpen, setIsNewItemModalOpen] = useState(false);
 
   useEffect(() => {
-    let isMounted = true
+    let isMounted = true;
 
     async function loadData() {
-      console.log("🔄 Iniciando carregamento de dados...")
+      console.log("🔄 Iniciando carregamento de dados...");
 
-      if (!isMounted) return
-      setIsLoading(true)
-      setLoadError(null)
+      if (!isMounted) return;
+      setIsLoading(true);
+      setLoadError(null);
 
       try {
-        const { data, metadata } = await getProcessedData()
+        const { data, metadata } = await getProcessedData();
         console.log("📦 Dados carregados:", {
           itemCount: data.length,
           metadata,
           sampleData: data.slice(0, 2),
-        })
+        });
 
-        if (!isMounted) return
+        if (!isMounted) return;
 
-        setInventoryData(data)
-        setMetadata(metadata)
+        setInventoryData(data);
+        setMetadata(metadata);
       } catch (error) {
-        console.error("❌ Erro no carregamento:", error)
-        setLoadError("Erro ao carregar os dados. Tente novamente.")
+        console.error("❌ Erro no carregamento:", error);
+        setLoadError("Erro ao carregar os dados. Tente novamente.");
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
 
-    loadData()
+    loadData();
     return () => {
-      isMounted = false
-    }
-  }, [])
+      isMounted = false;
+    };
+  }, []);
 
   const uniqueValues = useMemo(() => {
-    const maxItemsToCheck = inventoryData.length > 10000 ? 5000 : inventoryData.length
-    const sampleData = inventoryData.slice(0, maxItemsToCheck)
+    const maxItemsToCheck =
+      inventoryData.length > 10000 ? 5000 : inventoryData.length;
+    const sampleData = inventoryData.slice(0, maxItemsToCheck);
 
-    const values: Record<string, string[]> = {}
+    const values: Record<string, string[]> = {};
 
-    const fields = ["SALA", "CAMPUS_DA_LOTACAO_DO_BEM", "SETOR_DO_RESPONSAVEL", "ESTADO_DE_CONSERVACAO"]
+    const fields = [
+      "SALA",
+      "CAMPUS_DA_LOTACAO_DO_BEM",
+      "SETOR_DO_RESPONSAVEL",
+      "ESTADO_DE_CONSERVACAO",
+    ];
 
     fields.forEach((field) => {
-      const uniqueSet = new Set<string>()
+      const uniqueSet = new Set<string>();
 
       sampleData.forEach((item) => {
         if (item[field]) {
-          uniqueSet.add(item[field])
+          uniqueSet.add(item[field]);
         }
-      })
+      });
 
-      values[field] = Array.from(uniqueSet).sort()
-    })
+      values[field] = Array.from(uniqueSet).sort();
+    });
 
-    return values
-  }, [inventoryData])
+    return values;
+  }, [inventoryData]);
 
   const filteredItems = useMemo(() => {
     console.log("🔍 Aplicando filtros:", {
       totalItems: inventoryData.length,
       searchTerm,
       selectedFilters,
-    })
+    });
 
-    if (inventoryData.length === 0) return []
+    if (inventoryData.length === 0) return [];
 
-    const hasFilters = Object.values(selectedFilters).some(Boolean)
-    const hasSearch = searchTerm.trim().length > 0
+    const hasFilters = Object.values(selectedFilters).some(Boolean);
+    const hasSearch = searchTerm.trim().length > 0;
 
     if (!hasFilters && !hasSearch) {
-      return inventoryData
+      return inventoryData;
     }
 
-    const searchTermLower = searchTerm.toLowerCase()
+    const searchTermLower = searchTerm.toLowerCase();
 
     const result = inventoryData.filter((item) => {
       const matchesSearch =
         !hasSearch ||
-        (item.DESCRICAO && item.DESCRICAO.toLowerCase().includes(searchTermLower)) ||
+        (item.DESCRICAO &&
+          item.DESCRICAO.toLowerCase().includes(searchTermLower)) ||
         (item.NUMERO && item.NUMERO.toLowerCase().includes(searchTermLower)) ||
-        (item.MARCA_MODELO && item.MARCA_MODELO.toLowerCase().includes(searchTermLower)) ||
-        (item.RESPONSABILIDADE_ATUAL && item.RESPONSABILIDADE_ATUAL.toLowerCase().includes(searchTermLower)) ||
-        (item.SETOR_DO_RESPONSAVEL && item.SETOR_DO_RESPONSAVEL.toLowerCase().includes(searchTermLower))
+        (item.MARCA_MODELO &&
+          item.MARCA_MODELO.toLowerCase().includes(searchTermLower)) ||
+        (item.RESPONSABILIDADE_ATUAL &&
+          item.RESPONSABILIDADE_ATUAL.toLowerCase().includes(
+            searchTermLower
+          )) ||
+        (item.SETOR_DO_RESPONSAVEL &&
+          item.SETOR_DO_RESPONSAVEL.toLowerCase().includes(searchTermLower));
 
-      if (!matchesSearch) return false
+      if (!matchesSearch) return false;
 
-      if (!hasFilters) return true
+      if (!hasFilters) return true;
 
       return Object.entries(selectedFilters).every(([field, value]) => {
-        return !value || value === "all" || item[field] === value
-      })
-    })
+        return !value || value === "all" || item[field] === value;
+      });
+    });
 
-    console.log("✅ Itens filtrados:", result.length)
-    return result
-  }, [inventoryData, searchTerm, selectedFilters])
+    console.log("✅ Itens filtrados:", result.length);
+    return result;
+  }, [inventoryData, searchTerm, selectedFilters]);
 
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage)
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
 
   const currentItems = useMemo(() => {
     if (showAll) {
-      const maxItemsToShow = 500
+      const maxItemsToShow = 500;
       if (filteredItems.length > maxItemsToShow) {
-        return filteredItems.slice(0, maxItemsToShow)
+        return filteredItems.slice(0, maxItemsToShow);
       }
-      return filteredItems
+      return filteredItems;
     }
 
-    return filteredItems.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage)
-  }, [filteredItems, currentPage, itemsPerPage, showAll])
+    return filteredItems.slice(
+      currentPage * itemsPerPage,
+      (currentPage + 1) * itemsPerPage
+    );
+  }, [filteredItems, currentPage, itemsPerPage, showAll]);
 
   const handleFilterChange = (field: string, value: string) => {
     setSelectedFilters((prev) => ({
       ...prev,
       [field]: value,
-    }))
-    setCurrentPage(0)
-  }
+    }));
+    setCurrentPage(0);
+  };
 
   const handleSearchChange = (value: string) => {
-    setSearchTerm(value)
-    setCurrentPage(0)
-  }
+    setSearchTerm(value);
+    setCurrentPage(0);
+  };
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  }
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const toggleShowAll = () => {
     if (!showAll && filteredItems.length > 500) {
       if (
         !window.confirm(
-          `Mostrar todos os ${filteredItems.length.toLocaleString()} itens pode deixar a página lenta. Deseja continuar?`,
+          `Mostrar todos os ${filteredItems.length.toLocaleString()} itens pode deixar a página lenta. Deseja continuar?`
         )
       ) {
-        return
+        return;
       }
     }
 
-    setShowAll((prev) => !prev)
-    setCurrentPage(0)
-  }
+    setShowAll((prev) => !prev);
+    setCurrentPage(0);
+  };
 
   const handleSaveNewItem = async (item: BemCopia) => {
     try {
-      await addInventoryItem(item)
-      const { data, metadata } = await getProcessedData()
-      setInventoryData(data)
-      setMetadata(metadata)
+      await addInventoryItem(item);
+      const { data, metadata } = await getProcessedData();
+      setInventoryData(data);
+      setMetadata(metadata);
     } catch (error) {
-      console.error("Error saving new item:", error)
+      console.error("Error saving new item:", error);
     }
-  }
+  };
 
   const handleNewItem = () => {
-    setIsNewItemModalOpen(true)
-  }
+    setIsNewItemModalOpen(true);
+  };
 
   const handleExport = (format: "csv" | "json" | "pdf") => {
-    let dataToExport = filteredItems
+    let dataToExport = filteredItems;
 
     if (filteredItems.length > 5000) {
       if (format === "pdf") {
         const confirmExport = window.confirm(
           `Exportar ${filteredItems.length.toLocaleString()} itens para PDF pode ser lento e consumir muita memória. ` +
-            `Apenas os primeiros 15000 itens serão exportados. Deseja continuar?`,
-        )
+            `Apenas os primeiros 15000 itens serão exportados. Deseja continuar?`
+        );
 
-        if (!confirmExport) return
-        dataToExport = filteredItems.slice(0, 20000)
+        if (!confirmExport) return;
+        dataToExport = filteredItems.slice(0, 20000);
       } else {
         const confirmExport = window.confirm(
-          `Exportar ${filteredItems.length.toLocaleString()} itens pode ser lento e consumir muita memória. Deseja continuar?`,
-        )
+          `Exportar ${filteredItems.length.toLocaleString()} itens pode ser lento e consumir muita memória. Deseja continuar?`
+        );
 
-        if (!confirmExport) return
+        if (!confirmExport) return;
       }
     }
 
     const safeDate = (date: any): Date => {
-      if (date instanceof Date) return date
-      if (typeof date === "string" || typeof date === "number") return new Date(date)
-      return new Date()
-    }
+      if (date instanceof Date) return date;
+      if (typeof date === "string" || typeof date === "number")
+        return new Date(date);
+      return new Date();
+    };
 
     if (format === "csv") {
-      exportToCsv(dataToExport)
+      exportToCsv(dataToExport);
     } else if (format === "json") {
-      exportToJson(dataToExport)
+      exportToJson(dataToExport);
     } else if (format === "pdf") {
-      const pdfData = dataToExport.length > 20000 ? dataToExport.slice(0, 20000) : dataToExport
+      const pdfData =
+        dataToExport.length > 20000
+          ? dataToExport.slice(0, 20000)
+          : dataToExport;
 
       exportToPdfStyled(
         pdfData,
         `inventario_${new Date().toISOString().split("T")[0]}`,
         metadata?.comissao ?? { comissao_id: 0, nome: "Comissão Desconhecida" },
         metadata?.campus ?? { campus_id: "", nome: "Campus Desconhecido" },
-        metadata?.presidente ?? { usuario_id: "", nome: "Presidente Desconhecido" },
-        metadata?.inventariante ?? { usuario_id: "", nome: "Inventariante Desconhecido" },
+        metadata?.presidente ?? {
+          usuario_id: "",
+          nome: "Presidente Desconhecido",
+        },
+        metadata?.inventariante ?? {
+          usuario_id: "",
+          nome: "Inventariante Desconhecido",
+        },
         safeDate(metadata?.dataAbertura),
         safeDate(metadata?.dataFechamento),
-        displayFields,
-      )
+        displayFields
+      );
     }
-  }
+  };
 
   const exportToCsv = (data: BemCopia[]) => {
     try {
-      const headers = displayFields.join(",") + "\n"
+      const headers = displayFields.join(",") + "\n";
 
       const rows = data
         .map((item) => {
           return displayFields
             .map((field) => {
               if (field === "data_ultima_atualizacao" && item[field]) {
-                return `"${new Date(item[field]).toLocaleDateString("pt-BR")}"`
+                return `"${new Date(item[field]).toLocaleDateString("pt-BR")}"`;
               }
-              const value = item[field as keyof BemCopia] ?? ""
-              return `"${String(value).replace(/"/g, '""')}"`
+              const value = item[field as keyof BemCopia] ?? "";
+              return `"${String(value).replace(/"/g, '""')}"`;
             })
-            .join(",")
+            .join(",");
         })
-        .join("\n")
+        .join("\n");
 
-      const csvContent = headers + rows
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement("a")
+      const csvContent = headers + rows;
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
 
-      link.setAttribute("href", url)
-      link.setAttribute("download", `inventario_${new Date().toISOString().split("T")[0]}.csv`)
-      link.style.visibility = "hidden"
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `inventario_${new Date().toISOString().split("T")[0]}.csv`
+      );
+      link.style.visibility = "hidden";
 
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
-      console.error("Erro ao exportar CSV:", error)
-      alert("Ocorreu um erro ao exportar para CSV")
+      console.error("Erro ao exportar CSV:", error);
+      alert("Ocorreu um erro ao exportar para CSV");
     }
-  }
+  };
 
   const exportToJson = (data: BemCopia[]) => {
     try {
       const filteredData = data.map((item) => {
-        const filteredItem: any = {}
+        const filteredItem: any = {};
         displayFields.forEach((field) => {
-          filteredItem[field] = item[field as keyof BemCopia]
-        })
-        return filteredItem
-      })
+          filteredItem[field] = item[field as keyof BemCopia];
+        });
+        return filteredItem;
+      });
 
-      const jsonStr = JSON.stringify(filteredData, null, 2)
-      const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8;" })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement("a")
+      const jsonStr = JSON.stringify(filteredData, null, 2);
+      const blob = new Blob([jsonStr], {
+        type: "application/json;charset=utf-8;",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
 
-      link.setAttribute("href", url)
-      link.setAttribute("download", `inventario_${new Date().toISOString().split("T")[0]}.json`)
-      link.style.visibility = "hidden"
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `inventario_${new Date().toISOString().split("T")[0]}.json`
+      );
+      link.style.visibility = "hidden";
 
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
-      console.error("Erro ao exportar JSON:", error)
-      alert("Ocorreu um erro ao exportar para JSON")
+      console.error("Erro ao exportar JSON:", error);
+      alert("Ocorreu um erro ao exportar para JSON");
     }
-  }
+  };
 
   if (isLoading) {
     return (
@@ -331,7 +369,7 @@ export default function InventoryPageBase({ backRoute, errorRoute, commissionId 
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (loadError) {
@@ -340,8 +378,12 @@ export default function InventoryPageBase({ backRoute, errorRoute, commissionId 
         <CardContent className="flex flex-col gap-6 items-center justify-center py-12 p-6">
           <div className="text-center">
             <Filter className="h-12 w-12 text-red-500/70 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-[var(--font-color)]">Erro ao carregar dados</h3>
-            <p className="text-sm text-[var(--font-color)]/70 mt-2 mb-6 max-w-md">{loadError}</p>
+            <h3 className="text-lg font-medium text-[var(--font-color)]">
+              Erro ao carregar dados
+            </h3>
+            <p className="text-sm text-[var(--font-color)]/70 mt-2 mb-6 max-w-md">
+              {loadError}
+            </p>
             <Button
               onClick={() => router.push(errorRoute)}
               className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white"
@@ -351,12 +393,26 @@ export default function InventoryPageBase({ backRoute, errorRoute, commissionId 
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (!inventoryData.length) {
-    return <EmptyInventory />
+    return <EmptyInventory />;
   }
+
+  // Add this new handler for camera search
+  const handleCameraSearch = (value: string) => {
+    setSearchTerm(value);
+    // Scroll to search input and results
+    setTimeout(() => {
+      const searchInput = document.querySelector(
+        'input[placeholder="Buscar itens..."]'
+      );
+      if (searchInput instanceof HTMLElement) {
+        searchInput.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 100);
+  };
 
   return (
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-md lg:max-w-5xl xl:max-w-6xl">
@@ -365,7 +421,12 @@ export default function InventoryPageBase({ backRoute, errorRoute, commissionId 
 
         <div className="flex flex-col gap-4 lg:flex-row lg:justify-between">
           <div className="flex flex-col gap-2">
-            <InventoryActions onExport={handleExport} onNewItem={handleNewItem} hasData={filteredItems.length > 0} />
+            <InventoryActions
+              onExport={handleExport}
+              onNewItem={handleNewItem}
+              hasData={filteredItems.length > 0}
+              onSearch={handleCameraSearch} // Updated to use new handler
+            />
           </div>
 
           <div className="flex flex-col gap-2">
@@ -393,20 +454,28 @@ export default function InventoryPageBase({ backRoute, errorRoute, commissionId 
 
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {currentItems.map((item) => (
-            <InventoryCard key={item.bem_id || item.NUMERO} item={item} displayFields={displayFields} />
+            <InventoryCard
+              key={item.bem_id || item.NUMERO}
+              item={item}
+              displayFields={displayFields}
+            />
           ))}
         </div>
 
         {filteredItems.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Filter className="h-12 w-12 text-[var(--font-color)]/30 mb-4" />
-            <h3 className="text-lg font-medium text-[var(--font-color)]">Nenhum item encontrado</h3>
-            <p className="text-sm text-[var(--font-color)]/70 mt-1">Tente ajustar sua busca ou os filtros aplicados</p>
+            <h3 className="text-lg font-medium text-[var(--font-color)]">
+              Nenhum item encontrado
+            </h3>
+            <p className="text-sm text-[var(--font-color)]/70 mt-1">
+              Tente ajustar sua busca ou os filtros aplicados
+            </p>
             <Button
               variant="outline"
               onClick={() => {
-                setSearchTerm("")
-                setSelectedFilters({})
+                setSearchTerm("");
+                setSelectedFilters({});
               }}
               className="mt-4 border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] hover:text-white"
             >
@@ -433,5 +502,5 @@ export default function InventoryPageBase({ backRoute, errorRoute, commissionId 
         />
       </CardContent>
     </Card>
-  )
+  );
 }

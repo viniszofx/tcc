@@ -1,6 +1,5 @@
 "use client";
 
-import { CameraModal } from "@/components/camera/camera-modal";
 import { Button } from "@/components/ui/button";
 import {
   Camera,
@@ -10,18 +9,20 @@ import {
   FileText,
 } from "lucide-react";
 import { useState } from "react";
+import { CameraModal } from "../camera/camera-modal";
 
 interface InventoryActionsProps {
   onExport: (format: "csv" | "json" | "pdf") => void;
   onNewItem: () => void;
   hasData: boolean;
-  openCamera?: () => void;
+  onSearch?: (value: string) => void; // Add this prop
 }
 
 export default function InventoryActions({
   onExport,
   onNewItem,
   hasData,
+  onSearch,
 }: InventoryActionsProps) {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
 
@@ -93,6 +94,7 @@ export default function InventoryActions({
         isOpen={isCameraOpen}
         onClose={() => setIsCameraOpen(false)}
         onCapture={handleCapture}
+        onSearch={onSearch}
       />
     </>
   );
