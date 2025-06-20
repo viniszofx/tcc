@@ -2,9 +2,17 @@
 
 "use client";
 
-import { CameraComponent } from "@/components/camera/camera";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ArrowRight,
+  Building2,
+  CheckCircle,
+  QrCode,
+  Shield,
+  Users2,
+} from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -46,25 +54,37 @@ export default function Home() {
 
   const features = [
     {
-      title: "Gestão de Inventário",
-      description: "Controle total sobre seus bens patrimoniais com QR Code",
-      icon: "📦",
+      title: "Controle Patrimonial Simplificado",
+      description:
+        "Gerencie seus bens com tecnologia QR Code, reduzindo erros e tempo de inventário",
+      icon: <QrCode className="w-10 h-10 text-blue-500" />,
     },
     {
-      title: "Multi-organizacional",
-      description: "Gerencie múltiplas organizações e câmpus em um só lugar",
-      icon: "🏢",
+      title: "Gestão Multi-organizacional",
+      description:
+        "Administre múltiplas unidades e departamentos em uma única plataforma centralizada",
+      icon: <Building2 className="w-10 h-10 text-green-500" />,
     },
     {
-      title: "Comissões",
-      description: "Organize comissões de inventário e desfazimento",
-      icon: "👥",
+      title: "Comissões Integradas",
+      description:
+        "Organize e gerencie comissões de inventário com fluxos de trabalho otimizados",
+      icon: <Users2 className="w-10 h-10 text-purple-500" />,
     },
     {
-      title: "Scanner QR Code",
-      description: "Leitura rápida e precisa de patrimônios via câmera",
-      icon: "📱",
+      title: "Segurança e Conformidade",
+      description:
+        "Mantenha seus dados seguros e em conformidade com as normas patrimoniais",
+      icon: <Shield className="w-10 h-10 text-red-500" />,
     },
+  ];
+
+  const benefits = [
+    "Redução no tempo de inventário",
+    "Eliminação de erros em registros manuais",
+    "Rastreamento em tempo real dos ativos",
+    "Relatórios personalizados e exportáveis",
+    "Atualizações regulares do sistema",
   ];
 
   const data = new Date();
@@ -72,64 +92,79 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative h-[600px] flex items-center justify-center bg-[var(--secondary-color)]">
-        <div className="absolute inset-0" />
+      {/* Hero Section - Modernizado */}
+      <section className="relative h-[700px] flex items-center justify-center bg-gradient-to-r from-[var(--secondary-color)] to-[var(--primary-color)]">
+        <div className="absolute inset-0 bg-grid-white/[0.02]" />
         <div className="relative z-10 text-center text-[var(--primary-color)] p-8">
-          {/* Logo addition */}
           <div className="mb-8 flex justify-center">
             <Image
               src="/logotipo.svg"
               alt="Logo"
-              width={200}
-              height={100}
+              width={240}
+              height={120}
               priority
+              className="drop-shadow-lg"
             />
           </div>
 
-          <h1 className="text-5xl font-bold mb-4">
-            Sistema de Gestão Patrimonial
+          <Badge className="mb-4 px-4 py-2 text-sm bg-white/10 backdrop-blur-sm border-white/20">
+            Novo: Scanner QR Code integrado ✨
+          </Badge>
+
+          <h1 className="text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-100">
+            Revolucione sua Gestão Patrimonial
           </h1>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Simplifique o controle do seu patrimônio com nossa solução completa
-            de gestão de inventário
+          <p className="text-xl mb-8 max-w-2xl mx-auto text-gray-200">
+            Automatize o controle de patrimônio com tecnologia QR Code e reduza
+            o tempo gasto em inventários
           </p>
-          <Button
-            size="lg"
-            className="mr-4 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-gray-400"
-            onClick={handleStartNow}
-          >
-            Começar Agora
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="border-white bg-[var([--secondary-color]) text-[var(--font-color2)] hover:bg-white/10"
-            onClick={handleLearnMore}
-          >
-            Saiba Mais
-          </Button>
+          <div className="flex gap-4 justify-center">
+            <Button
+              size="lg"
+              className="bg-white text-[var(--secondary-color)] hover:bg-gray-100 transform hover:scale-105 transition-all"
+              onClick={handleStartNow}
+            >
+              Começar Gratuitamente
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white/30 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20"
+              onClick={handleLearnMore}
+            >
+              Saiba Mais
+            </Button>
+          </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section
-        id="features"
-        className="py-20 px-6 bg-[var(--bg-simple)] scroll-mt-20"
-      >
+      {/* Features Section - Remodelado */}
+      <section id="features" className="py-24 px-6 bg-white scroll-mt-20">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">
-            Funcionalidades Principais
-          </h2>
+          <div className="text-center mb-16">
+            <Badge className="mb-4">Funcionalidades</Badge>
+            <h2 className="text-4xl font-bold mb-4">
+              Tudo que você precisa para uma gestão eficiente
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Nossa plataforma oferece um conjunto completo de ferramentas para
+              modernizar e simplificar sua gestão patrimonial
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature) => (
-              <Card key={feature.title} className="text-center">
+              <Card
+                key={feature.title}
+                className="border border-gray-200 hover:shadow-lg transition-shadow"
+              >
                 <CardHeader>
-                  <div className="text-4xl mb-4">{feature.icon}</div>
-                  <CardTitle>{feature.title}</CardTitle>
+                  <div className="mb-4">{feature.icon}</div>
+                  <CardTitle className="text-xl">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">{feature.description}</p>
+                  <p className="text-gray-600">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -137,63 +172,74 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Demo Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-6xl mx-auto text-center">
-          {/* <h2 className="text-3xl font-bold mb-12">Demonstração do Scanner</h2> */}
-          <div className="flex flex-col items-center justify-center">
-            <p className="text-lg text-muted-foreground mb-4">Em breve!</p>
-            <p className="max-w-2xl text-muted-foreground mb-8">
-              Experimente nossa função de scanner QR Code diretamente pelo
-              navegador. Com ela, você poderá fazer a leitura rápida e eficiente
-              dos códigos patrimoniais, facilitando o processo de inventário.
-            </p>
-            {cameraModalOpen ? (
-              <CameraComponent onClose={() => setCameraModalOpen(false)} />
-            ) : (
-              <Button
-                size="lg"
-                className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-gray-400"
-                onClick={handleDemoScanner}
-                disabled
-              >
-                Testar Scanner QR Code
-              </Button>
-            )}
+      {/* Benefits Section - Novo */}
+      <section className="py-24 px-6 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <Badge variant="outline" className="mb-4">
+              Benefícios
+            </Badge>
+            <h2 className="text-4xl font-bold mb-4">
+              Por que escolher nossa solução?
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {benefits.map((benefit) => (
+              <div key={benefit} className="flex items-start gap-4 p-4">
+                <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
+                <p className="text-gray-700">{benefit}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section
-      <section className="py-20 px-6 bg-[var(--primary-color)] text-[var(--font-color2)]">
+      {/* CTA Section - Reativado e Melhorado */}
+      <section className="py-24 px-6 bg-[var(--primary-color)] text-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">
+          <h2 className="text-4xl font-bold mb-4">
             Pronto para modernizar sua gestão patrimonial?
           </h2>
-          <p className="mb-8 text-lg">
-            Entre em contato conosco e descubra como podemos ajudar sua
-            instituição
+          <p className="mb-8 text-xl text-gray-200">
+            Comece agora mesmo e transforme a maneira como sua instituição
+            gerencia seu patrimônio
           </p>
-          <Button
-            size="lg"
-            className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-gray-400"
-            onClick={handleContact}
-          >
-            Entrar em Contato
-          </Button>
+          <div className="flex gap-4 justify-center">
+            <Button
+              size="lg"
+              className="bg-white text-[var(--secondary-color)] hover:bg-gray-100"
+              onClick={handleStartNow}
+            >
+              Começar Gratuitamente
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white text-[var(--secondary-color)]  hover:bg-[var(--secondary-color)] hover:text-white"
+              onClick={handleContact}
+            >
+              Falar com Especialista
+            </Button>
+          </div>
         </div>
-      </section> */}
+      </section>
 
-      {/* Footer */}
-      <footer className="py-8 px-6 bg-[var(--secondary-color)] text-[var(--font-color2)]">
+      {/* Footer - Atualizado */}
+      <footer className="py-12 px-6 bg-[var(--secondary-color)] text-white">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
-          <div className="mb-4 md:mb-0">
-            <Image src="/logotipo.svg" alt="Logo" width={120} height={40} />
+          <div className="mb-8 md:mb-0">
+            <Image src="/logotipo.svg" alt="Logo" width={140} height={50} />
+            <p className="mt-4 text-gray-300 max-w-md">
+              Transformando a gestão patrimonial com tecnologia e inovação
+            </p>
           </div>
           <div className="text-center md:text-right">
-            <p>
-              &copy; {year} Sistema de Gestão Patrimonial - KDE | Todos os
-              direitos reservados.
+            <p className="text-gray-300">
+              &copy; {new Date().getFullYear()} Sistema de Gestão Patrimonial
+            </p>
+            <p className="text-gray-400 mt-2">
+              Desenvolvido por Mockeys Solutions
             </p>
           </div>
         </div>
