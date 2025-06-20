@@ -98,9 +98,12 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
 
     if (!selectedCameraId) return;
 
+    const isAndroid = /Android/i.test(navigator.userAgent);
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isMobile = isAndroid || isIOS;
+
     const constraints = {
-      video: isIOS
+      video: isMobile
         ? {
             facingMode: { exact: "environment" },
             width: { ideal: 1280 },
@@ -135,8 +138,11 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     const scanner = new Html5Qrcode(containerId);
     qrScannerRef.current = scanner;
 
+    const isAndroid = /Android/i.test(navigator.userAgent);
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const cameraConfig = isIOS
+    const isMobile = isAndroid || isIOS;
+
+    const cameraConfig = isMobile
       ? { facingMode: { exact: "environment" } }
       : { deviceId: { exact: selectedCameraId } };
 
@@ -211,29 +217,23 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     }
   };
 
-  // Add this new function after isMobile()
+  // Update the requestAndroidPermission function
   const requestAndroidPermission = async () => {
     try {
-      // First try to get existing permission status
-      const result = await navigator.permissions.query({ name: 'camera' as PermissionName });
-      
-      if (result.state === 'denied') {
-        alert('Por favor, permita o acesso à câmera nas configurações do seu navegador.');
-        return false;
-      }
-
-      // Explicitly request camera access
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      // Explicitly request back camera access
+      const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { exact: "environment" },
-        } 
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
       });
-      
+
       // Stop the test stream immediately
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
       return true;
     } catch (error) {
-      console.error('Android Camera permission error:', error);
+      console.error("Android Camera permission error:", error);
       return false;
     }
   };
@@ -246,14 +246,18 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     if (isIOS) {
       const hasPermission = await requestIOSPermission();
       if (!hasPermission) {
-        alert('Por favor, permita o acesso à câmera nas configurações do Safari.');
+        alert(
+          "Por favor, permita o acesso à câmera nas configurações do Safari."
+        );
         onClose();
         return false;
       }
     } else if (isAndroid) {
       const hasPermission = await requestAndroidPermission();
       if (!hasPermission) {
-        alert('Por favor, permita o acesso à câmera nas configurações do seu navegador.');
+        alert(
+          "Por favor, permita o acesso à câmera nas configurações do seu navegador."
+        );
         onClose();
         return false;
       }
@@ -263,10 +267,10 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
       await listCameras();
       return true;
     } catch (error) {
-      console.error('Camera initialization error:', error);
-      const message = isAndroid 
-        ? 'Verifique as permissões da câmera nas configurações do Chrome'
-        : 'Erro ao inicializar a câmera. Verifique as permissões.';
+      console.error("Camera initialization error:", error);
+      const message = isAndroid
+        ? "Verifique as permissões da câmera nas configurações do Chrome"
+        : "Erro ao inicializar a câmera. Verifique as permissões.";
       alert(message);
       onClose();
       return false;
@@ -369,9 +373,9 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     }
   };
 
+  // Remove or update showCameraToggle to return false for all mobile devices
   const showCameraToggle = () => {
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    return isMobile() && !isIOS;
+    return false; // Disable camera toggle for all mobile devices
   };
 
   // Zoom control function
