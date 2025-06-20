@@ -113,46 +113,42 @@ export default function InventoryPageBase({
     return values;
   }, [inventoryData]);
 
+  // Add helper function to remove leading zeros
+  const removeLeadingZeros = (str: string) => str.replace(/^0+/, "") || "0";
+
   const filteredItems = useMemo(() => {
-    console.log("🔍 Aplicando filtros:", {
-      totalItems: inventoryData.length,
-      searchTerm,
-      selectedFilters,
-    });
-
-    if (inventoryData.length === 0) return [];
-
-    const hasFilters = Object.values(selectedFilters).some(Boolean);
+    const hasFilters = Object.keys(selectedFilters).length > 0;
     const hasSearch = searchTerm.trim().length > 0;
 
     if (!hasFilters && !hasSearch) {
       return inventoryData;
     }
 
-    const searchTermLower = searchTerm.toLowerCase();
+    const searchTermLower = removeLeadingZeros(searchTerm.toLowerCase());
 
     const result = inventoryData.filter((item) => {
-      const matchesSearch =
-        !hasSearch ||
-        (item.DESCRICAO &&
-          item.DESCRICAO.toLowerCase().includes(searchTermLower)) ||
-        (item.NUMERO && item.NUMERO.toLowerCase().includes(searchTermLower)) ||
-        (item.MARCA_MODELO &&
-          item.MARCA_MODELO.toLowerCase().includes(searchTermLower)) ||
-        (item.RESPONSABILIDADE_ATUAL &&
-          item.RESPONSABILIDADE_ATUAL.toLowerCase().includes(
-            searchTermLower
-          )) ||
-        (item.SETOR_DO_RESPONSAVEL &&
-          item.SETOR_DO_RESPONSAVEL.toLowerCase().includes(searchTermLower));
+      // Check filters first
+      if (hasFilters) {
+        const matchesFilters = Object.entries(selectedFilters).every(
+          ([field, value]) => item[field] === value
+        );
+        if (!matchesFilters) return false;
+      }
 
-      if (!matchesSearch) return false;
+      // Then check search term
+      if (hasSearch) {
+        return Object.entries(item).some(([key, value]) => {
+          if (!value) return false;
+          const valueStr = String(value).toLowerCase();
+          // Remove leading zeros from numeric values before comparison
+          const normalizedValue = /^\d+$/.test(valueStr)
+            ? removeLeadingZeros(valueStr)
+            : valueStr;
+          return normalizedValue.includes(searchTermLower);
+        });
+      }
 
-      if (!hasFilters) return true;
-
-      return Object.entries(selectedFilters).every(([field, value]) => {
-        return !value || value === "all" || item[field] === value;
-      });
+      return true;
     });
 
     console.log("✅ Itens filtrados:", result.length);
