@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
-import { Camera, SwitchCamera } from "lucide-react";
+import { Camera, SwitchCamera, ZoomIn } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface CameraModalProps {
@@ -38,6 +38,7 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     type: "image" | "qr";
     data: string;
   } | null>(null);
+  const [zoomLevel, setZoomLevel] = useState(1); // New zoom state
 
   const isMobile = () =>
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -311,6 +312,42 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     return isMobile() && !isIOS;
   };
 
+  // Zoom control function
+  const handleZoom = async () => {
+    if (!videoRef.current?.srcObject) return;
+
+    const stream = videoRef.current.srcObject as MediaStream;
+    const videoTrack = stream.getVideoTracks()[0];
+
+    try {
+      const capabilities =
+        videoTrack.getCapabilities() as MediaTrackCapabilities & {
+          zoom?: number | { min: number; max: number; step: number };
+        };
+      // Check if zoom is supported
+      if (!capabilities.zoom) {
+        console.warn("Zoom não suportado nesta câmera");
+        return;
+      }
+
+      const settings = videoTrack.getSettings() as MediaTrackSettings & {
+        zoom?: number;
+      };
+      const currentZoom = settings.zoom ?? 1;
+
+      // Toggle between zoom levels: 1 -> 1.5 -> 2 -> 1
+      const newZoom = currentZoom === 1 ? 1.5 : currentZoom === 1.5 ? 2 : 1;
+
+      await videoTrack.applyConstraints({
+        advanced: [{ zoom: newZoom }] as any,
+      } as any);
+
+      setZoomLevel(newZoom);
+    } catch (error) {
+      console.error("Erro ao ajustar zoom:", error);
+    }
+  };
+
   return (
     <>
       {/* Existing camera dialog */}
@@ -354,6 +391,19 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
                 muted
                 className="w-full rounded-lg"
               />
+            )}
+
+            {!useScanner && videoRunning && (
+              <Button
+                variant="secondary"
+                size="icon"
+                className="absolute bottom-2 right-2 rounded-full p-2"
+                onClick={handleZoom}
+                title={`Zoom ${zoomLevel}x`}
+              >
+                <ZoomIn className="h-4 w-4" />
+                <span className="ml-1 text-xs">{zoomLevel}x</span>
+              </Button>
             )}
 
             {showCameraToggle() && (
