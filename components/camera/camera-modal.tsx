@@ -141,9 +141,9 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
 
     const isAndroid = /Android/i.test(navigator.userAgent);
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isMobile = isAndroid || isIOS;
+    const isMobileDevice = isAndroid || isIOS;
 
-    const cameraConfig = isMobile
+    const cameraConfig = isMobileDevice
       ? { facingMode: { exact: "environment" } }
       : { deviceId: { exact: selectedCameraId } };
 
