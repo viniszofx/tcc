@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -6,232 +8,290 @@ import {
   DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import { Camera, SwitchCamera } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface CameraModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCapture: (imageData: string) => void;
+  onCapture: (data: string) => void;
 }
 
 export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [facingMode, setFacingMode] = useState<"environment" | "user">(
-    "environment"
-  );
+  const qrScannerRef = useRef<Html5Qrcode | null>(null);
+  const containerId = "qr-reader-container";
+
   const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>(
     []
   );
   const [selectedCameraId, setSelectedCameraId] = useState<string>("");
-  const [cameraStarted, setCameraStarted] = useState(false);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">(
+    "environment"
+  );
+  const [scannerRunning, setScannerRunning] = useState(false);
+  const [videoRunning, setVideoRunning] = useState(false);
+  const [useScanner, setUseScanner] = useState(true); // true: leitura qr/barcode; false: captura manual
 
   const isMobile = () =>
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent
     );
 
-  const stopCamera = () => {
-    const stream = videoRef.current?.srcObject as MediaStream | null;
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setCameraStarted(false);
-  };
-
-  const getAvailableCameras = async () => {
+  // Lista câmeras
+  const listCameras = async () => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(
-        (device) => device.kind === "videoinput"
-      );
+      const videoDevices = devices.filter((d) => d.kind === "videoinput");
       setAvailableCameras(videoDevices);
-      if (videoDevices.length > 0) {
+      if (videoDevices.length > 0 && !selectedCameraId) {
         setSelectedCameraId(videoDevices[0].deviceId);
       }
-    } catch (err) {
-      console.error("Erro ao obter câmeras:", err);
+    } catch (e) {
+      console.error("Erro ao listar câmeras:", e);
     }
   };
 
-  const requestCameraPermission = async () => {
-    try {
-      const permission = await navigator.permissions.query({
-        name: "camera" as PermissionName,
-      });
-
-      if (permission.state === "denied") {
-        alert(
-          "Permissão de câmera negada. Altere nas configurações do navegador."
-        );
-        return false;
-      }
-
-      return true;
-    } catch (err) {
-      console.warn("Permissões não disponíveis, tentando acessar diretamente.");
-      return true; // alguns browsers não suportam permissions.query
+  // Para o vídeo (stream)
+  const stopVideo = () => {
+    if (videoRef.current?.srcObject) {
+      (videoRef.current.srcObject as MediaStream)
+        .getTracks()
+        .forEach((t) => t.stop());
+      videoRef.current.srcObject = null;
+      setVideoRunning(false);
     }
   };
 
-  const enableCamera = async () => {
-    stopCamera();
+  // Para o scanner QR
+  const stopScanner = async () => {
+    if (qrScannerRef.current) {
+      try {
+        await qrScannerRef.current.stop();
+      } catch (e) {
+        // pode já estar parado
+      }
+      try {
+        await qrScannerRef.current.clear();
+      } catch (e) {}
+      qrScannerRef.current = null;
+      setScannerRunning(false);
+    }
+  };
 
-    const constraints = isMobile()
-      ? {
-          video: {
-            facingMode,
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
-        }
-      : {
-          video: {
-            deviceId: selectedCameraId,
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
-        };
+  // Para tudo
+  const stopAll = async () => {
+    stopVideo();
+    await stopScanner();
+  };
+
+  // Inicia vídeo para captura manual
+  const startVideo = async () => {
+    await stopAll();
+
+    if (!selectedCameraId) return;
+
+    const constraints = {
+      video: {
+        deviceId: { exact: selectedCameraId },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+    };
 
     try {
-      const hasPermission = await requestCameraPermission();
-      if (!hasPermission) {
-        onClose();
-        return;
-      }
-
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        setVideoRunning(true);
       }
-      setCameraStarted(true);
-    } catch (err) {
-      console.error("Erro ao acessar a câmera:", err);
-      alert("Não foi possível acessar a câmera.");
+    } catch (e) {
+      alert("Não foi possível iniciar a câmera");
       onClose();
     }
   };
 
-  const handleCapture = () => {
-    if (videoRef.current) {
-      const canvas = document.createElement("canvas");
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      const context = canvas.getContext("2d");
-      context?.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      const imageData = canvas.toDataURL("image/jpeg");
-      onCapture(imageData);
-      handleClose();
+  // Inicia leitor qr/barcode
+  const startScanner = async () => {
+    await stopScanner();
+
+    if (!selectedCameraId) return;
+
+    const scanner = new Html5Qrcode(containerId);
+    qrScannerRef.current = scanner;
+
+    const config = {
+      fps: 10,
+      qrbox: 250,
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.QR_CODE,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.CODABAR,
+      ],
+    };
+
+    try {
+      await scanner.start(
+        { deviceId: { exact: selectedCameraId } },
+        config,
+        (decodedText) => {
+          setUseScanner(false);
+          onCapture(decodedText);
+          handleClose();
+        },
+        (error) => {
+          // silencioso
+        }
+      );
+      setScannerRunning(true);
+    } catch (e) {
+      alert("Erro ao iniciar scanner");
+      onClose();
     }
   };
 
-  const handleClose = () => {
-    stopCamera();
-    onClose();
-  };
-
-  const toggleCamera = () => {
-    if (isMobile()) {
-      setFacingMode((prev) =>
-        prev === "environment" ? "user" : "environment"
-      );
-      setCameraStarted(false); // reinicia a câmera
-    } else {
-      const currentIndex = availableCameras.findIndex(
-        (camera) => camera.deviceId === selectedCameraId
-      );
-      const nextIndex = (currentIndex + 1) % availableCameras.length;
-      setSelectedCameraId(availableCameras[nextIndex].deviceId);
-      setCameraStarted(false); // reinicia a câmera
-    }
-  };
-
+  // Ao abrir modal lista câmeras
   useEffect(() => {
     if (isOpen) {
-      getAvailableCameras();
+      listCameras();
+    } else {
+      stopAll();
     }
   }, [isOpen]);
 
+  // Quando seleciona câmera, inicia o vídeo ou scanner conforme modo
   useEffect(() => {
-    if (cameraStarted && (selectedCameraId || isMobile())) {
-      enableCamera();
+    if (!isOpen || !selectedCameraId) return;
+
+    if (useScanner) {
+      startScanner();
+      stopVideo();
+    } else {
+      startVideo();
+      stopScanner();
     }
-    // cleanup ao desmontar
-    return () => stopCamera();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [facingMode, selectedCameraId]);
+  }, [selectedCameraId, useScanner, isOpen]);
+
+  // Alterna entre scanner e captura manual
+  const toggleMode = () => {
+    setUseScanner((v) => !v);
+  };
+
+  // Alterna câmera (desktop select ou mobile toggle)
+  const changeCamera = (deviceId: string) => {
+    setSelectedCameraId(deviceId);
+  };
+
+  const toggleFacingMode = () => {
+    setFacingMode((f) => (f === "environment" ? "user" : "environment"));
+    // Note: aqui poderia atualizar selectedCameraId para câmera com facingMode
+  };
+
+  const handleCapture = () => {
+    if (!videoRunning || !videoRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext("2d");
+    ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const imgData = canvas.toDataURL("image/jpeg");
+    onCapture(imgData);
+    handleClose();
+  };
+
+  const handleClose = async () => {
+    await stopAll();
+    onClose();
+  };
 
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) {
-          handleClose();
-        }
+        if (!open) handleClose();
       }}
     >
       <DialogContent className="sm:max-w-[600px]">
-        <DialogTitle>Câmera</DialogTitle>
-        <DialogDescription id="camera-desc">
-          Posicione o item no centro da câmera
+        <DialogTitle>Leitor QR e Captura de Foto</DialogTitle>
+        <DialogDescription>
+          {useScanner
+            ? "Aponte a câmera para um QR Code ou código de barras."
+            : "Capture uma foto manualmente."}
         </DialogDescription>
 
+        {/* Se desktop, select para trocar câmera */}
         {!isMobile() && (
-          <div className="mb-4">
-            <select
-              value={selectedCameraId}
-              onChange={(e) => {
-                setSelectedCameraId(e.target.value);
-                setCameraStarted(false); // reinicia câmera ao trocar
-              }}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              {availableCameras.map((camera, index) => (
-                <option key={camera.deviceId} value={camera.deviceId}>
-                  {camera.label || `Camera ${index + 1}`}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            className="mb-4 w-full rounded border border-input p-2"
+            value={selectedCameraId}
+            onChange={(e) => changeCamera(e.target.value)}
+          >
+            {availableCameras.map((cam) => (
+              <option key={cam.deviceId} value={cam.deviceId}>
+                {cam.label || `Câmera ${availableCameras.indexOf(cam) + 1}`}
+              </option>
+            ))}
+          </select>
         )}
 
         <div className="relative">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            className="w-full rounded-lg"
-            aria-describedby="camera-desc"
-          />
-          {isMobile() && availableCameras.length > 1 && (
+          {useScanner ? (
+            <div id={containerId} className="w-full" />
+          ) : (
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full rounded-lg"
+            />
+          )}
+
+          {isMobile() && (
             <Button
-              onClick={toggleCamera}
-              className="absolute top-2 right-2 rounded-full p-2"
               variant="secondary"
               size="icon"
+              className="absolute top-2 right-2 rounded-full p-2"
+              onClick={() => {
+                toggleFacingMode();
+              }}
+              title="Alternar câmera"
             >
               <SwitchCamera className="h-4 w-4" />
             </Button>
           )}
         </div>
 
-        {!cameraStarted && (
-          <div className="mt-4 flex justify-end">
-            <Button onClick={enableCamera}>Iniciar Câmera</Button>
-          </div>
-        )}
+        <div className="mt-4 flex justify-between">
+          <Button onClick={toggleMode} variant="outline">
+            {useScanner ? "Captura manual" : "Leitura QR/Barcode"}
+          </Button>
 
-        <DialogFooter className="flex justify-end items-center">
-          <Button
-            onClick={handleCapture}
-            className="flex items-center gap-2"
-            disabled={!cameraStarted}
-          >
-            <Camera className="h-4 w-4" />
-            Capturar Foto
+          {!useScanner && (
+            <Button
+              onClick={handleCapture}
+              disabled={!videoRunning}
+              className="flex items-center gap-2"
+            >
+              <Camera className="h-4 w-4" />
+              Capturar Foto
+            </Button>
+          )}
+        </div>
+
+        <DialogFooter className="flex justify-end mt-4 gap-2">
+          <Button onClick={handleClose} variant="secondary">
+            Fechar
           </Button>
         </DialogFooter>
       </DialogContent>
