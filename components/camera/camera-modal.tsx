@@ -211,15 +211,49 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     }
   };
 
+  // Add this new function after isMobile()
+  const requestAndroidPermission = async () => {
+    try {
+      // First try to get existing permission status
+      const result = await navigator.permissions.query({ name: 'camera' as PermissionName });
+      
+      if (result.state === 'denied') {
+        alert('Por favor, permita o acesso à câmera nas configurações do seu navegador.');
+        return false;
+      }
+
+      // Explicitly request camera access
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: {
+          facingMode: { exact: "environment" },
+        } 
+      });
+      
+      // Stop the test stream immediately
+      stream.getTracks().forEach(track => track.stop());
+      return true;
+    } catch (error) {
+      console.error('Android Camera permission error:', error);
+      return false;
+    }
+  };
+
+  // Update the initializeCamera function
   const initializeCamera = async () => {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/i.test(navigator.userAgent);
 
     if (isIOS) {
       const hasPermission = await requestIOSPermission();
       if (!hasPermission) {
-        alert(
-          "Por favor, permita o acesso à câmera nas configurações do Safari."
-        );
+        alert('Por favor, permita o acesso à câmera nas configurações do Safari.');
+        onClose();
+        return false;
+      }
+    } else if (isAndroid) {
+      const hasPermission = await requestAndroidPermission();
+      if (!hasPermission) {
+        alert('Por favor, permita o acesso à câmera nas configurações do seu navegador.');
         onClose();
         return false;
       }
@@ -229,8 +263,11 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
       await listCameras();
       return true;
     } catch (error) {
-      console.error("Camera initialization error:", error);
-      alert("Erro ao inicializar a câmera. Verifique as permissões.");
+      console.error('Camera initialization error:', error);
+      const message = isAndroid 
+        ? 'Verifique as permissões da câmera nas configurações do Chrome'
+        : 'Erro ao inicializar a câmera. Verifique as permissões.';
+      alert(message);
       onClose();
       return false;
     }
