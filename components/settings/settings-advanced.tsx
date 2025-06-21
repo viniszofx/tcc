@@ -77,35 +77,8 @@ export function AdvancedSettings() {
                 </SelectContent>
               </Select>
             </div>
-            <p className="text-xs text-[var(--font-color)] opacity-70">Outros idiomas estarão disponíveis em breve.</p>
           </div>
         </div>
-
-        <Separator className="bg-[var(--header-color)]" />
-
-        <div className="space-y-4">
-          <h4 className="flex items-center gap-2 text-sm font-medium text-[var(--font-color)]">
-            Desenvolvimento e Depuração
-          </h4>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="debug-mode" className="text-[var(--font-color)]">
-                Modo de Depuração
-              </Label>
-              <p className="text-xs text-[var(--font-color)] opacity-70">
-                Ativa logs detalhados e ferramentas de desenvolvimento
-              </p>
-            </div>
-            <Switch
-              id="debug-mode"
-              checked={debugMode}
-              onCheckedChange={setDebugMode}
-              className="data-[state=checked]:bg-[var(--button-color)]"
-            />
-          </div>
-        </div>
-      </div>
 
       <div className="flex justify-end gap-2 mt-6">
         <Button variant="outline" className="bg-[var(--button-color)] hover:bg-[var(--hover-2-color)] text-[var(--font-color2)] cursor-pointer">
@@ -115,6 +88,7 @@ export function AdvancedSettings() {
           Salvar Alterações
         </Button>
       </div>
+    </div>
     </div>
   )
 }

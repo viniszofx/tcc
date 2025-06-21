@@ -2,11 +2,10 @@
 
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Bell, Mail, MessageSquare } from "lucide-react"
+import { Bell, Mail } from "lucide-react"
 import { useState } from "react"
 
 export function NotificationSettings() {
@@ -88,58 +87,12 @@ export function NotificationSettings() {
 
         <TabsContent value="preferences" className="mt-4 space-y-4">
           <div className="space-y-4">
-            <h4 className="text-sm font-medium text-[var(--font-color)]">Frequência de Notificações</h4>
-            <RadioGroup value={notificationFrequency} onValueChange={setNotificationFrequency} className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem
-                  value="immediate"
-                  id="immediate"
-                  className="border-[var(--header-color)] text-[var(--button-color)]"
-                />
-                <Label htmlFor="immediate" className="text-[var(--font-color)]">
-                  Imediata
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem
-                  value="daily"
-                  id="daily"
-                  className="border-[var(--header-color)] text-[var(--button-color)]"
-                />
-                <Label htmlFor="daily" className="text-[var(--font-color)]">
-                  Resumo Diário
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem
-                  value="weekly"
-                  id="weekly"
-                  className="border-[var(--header-color)] text-[var(--button-color)]"
-                />
-                <Label htmlFor="weekly" className="text-[var(--font-color)]">
-                  Resumo Semanal
-                </Label>
-              </div>
-            </RadioGroup>
 
             <Separator className="bg-[var(--header-color)]" />
 
             <h4 className="text-sm font-medium text-[var(--font-color)]">Tipos de Notificações</h4>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-[var(--font-color)]" />
-                  <Label htmlFor="message-notifications" className="text-[var(--font-color)]">
-                    Mensagens
-                  </Label>
-                </div>
-                <Switch
-                  id="message-notifications"
-                  defaultChecked={true}
-                  className="data-[state=checked]:bg-[var(--button-color)]"
-                />
-              </div>
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
