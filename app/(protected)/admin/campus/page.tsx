@@ -129,6 +129,7 @@ export default function CampusPage() {
               onEdit={() => handleOpenModal("edit", campus)}
               onDelete={() => handleOpenModal("delete", campus)}
               onClick={() => handleCardClick(campus.campus_id)}
+              disableDelete={campuses.length === 1}
             />
           ))}
         </div>

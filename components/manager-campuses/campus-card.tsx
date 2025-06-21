@@ -10,9 +10,10 @@ interface CampusCardProps {
   onEdit: () => void
   onDelete: () => void
   onClick: () => void
+  disableDelete?: boolean
 }
 
-export default function CampusCard({ campus, onEdit, onDelete, onClick }: CampusCardProps) {
+export default function CampusCard({ campus, onEdit, onDelete, disableDelete, onClick }: CampusCardProps) {
   return (
     <Card
       className="border border-[var(--border-color)] bg-[var(--bg-simple)] transition-all duration-300 rounded-xl shadow-sm flex flex-col justify-between min-h-[180px] cursor-pointer"
@@ -69,6 +70,7 @@ export default function CampusCard({ campus, onEdit, onDelete, onClick }: Campus
         >
           <Pencil size={18} />
         </Button>
+        {!disableDelete && (
         <Button
           variant="destructive"
           onClick={(e) => {
@@ -80,6 +82,7 @@ export default function CampusCard({ campus, onEdit, onDelete, onClick }: Campus
         >
           <Trash2 size={18} />
         </Button>
+        )}
       </CardFooter>
     </Card>
   )
