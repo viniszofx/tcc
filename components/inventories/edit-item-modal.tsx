@@ -129,7 +129,7 @@ export default function EditItemModal({
     }
 }}>
     <DialogContent 
-        className="max-w-[95vw] sm:max-w-[600px] w-[90vw] overflow-y-auto px-4 sm:px-6"
+        className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto"
         onInteractOutside={(e) => e.preventDefault()}
     >
         <DialogHeader>

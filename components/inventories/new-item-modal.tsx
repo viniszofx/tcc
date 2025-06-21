@@ -22,9 +22,9 @@ interface NewItemModalProps {
   inventoryData?: BemCopia[]
 }
 
-export default function NewItemModal({ 
-  isOpen, 
-  onClose, 
+export default function NewItemModal({
+  isOpen,
+  onClose,
   onSave,
   inventoryData,
 }: NewItemModalProps) {
@@ -51,28 +51,28 @@ export default function NewItemModal({
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
-  if (!isOpen) return;
-  
-  const validData = inventoryData?.filter(item => 
-    item.SETOR_DO_RESPONSAVEL && 
-    item.SALA && 
-    item.CAMPUS_DA_LOTACAO_DO_BEM && 
-    item.RESPONSABILIDADE_ATUAL
-  ) || [];
+    if (!isOpen) return;
 
-  const extractUnique = (field: keyof BemCopia) => [
-    ...new Set(
-      validData.map(item => item[field])
-        .filter((value): value is string => !!value)
-    )
-  ].sort();
+    const validData = inventoryData?.filter(item =>
+      item.SETOR_DO_RESPONSAVEL &&
+      item.SALA &&
+      item.CAMPUS_DA_LOTACAO_DO_BEM &&
+      item.RESPONSABILIDADE_ATUAL
+    ) || [];
 
-  setSetores(extractUnique('SETOR_DO_RESPONSAVEL'));
-  setSalas(extractUnique('SALA'));
-  setCampuses(extractUnique('CAMPUS_DA_LOTACAO_DO_BEM'));
-  setResponsaveis(extractUnique('RESPONSABILIDADE_ATUAL'));
+    const extractUnique = (field: keyof BemCopia) => [
+      ...new Set(
+        validData.map(item => item[field])
+          .filter((value): value is string => !!value)
+      )
+    ].sort();
 
-}, [isOpen, inventoryData]);
+    setSetores(extractUnique('SETOR_DO_RESPONSAVEL'));
+    setSalas(extractUnique('SALA'));
+    setCampuses(extractUnique('CAMPUS_DA_LOTACAO_DO_BEM'));
+    setResponsaveis(extractUnique('RESPONSABILIDADE_ATUAL'));
+
+  }, [isOpen, inventoryData]);
 
   const handleChange = (field: keyof BemCopia, value: string) => {
     setFormData((prev) => ({
@@ -155,8 +155,8 @@ export default function NewItemModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="top-0 z-10">
           <DialogTitle className="text-[var(--font-color)]">Adicionar Novo Item</DialogTitle>
           <DialogDescription className="text-[var(--font-color)]/70">
             Preencha os detalhes do novo item de inventário.
@@ -223,7 +223,7 @@ export default function NewItemModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="responsavel" className="text-[var(--font-color)]">
                 Responsável <span className="text-red-500">*</span>
@@ -232,7 +232,7 @@ export default function NewItemModal({
                 value={formData.RESPONSABILIDADE_ATUAL}
                 onValueChange={(value) => handleChange("RESPONSABILIDADE_ATUAL", value)}
               >
-                <SelectTrigger className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)]">
+                <SelectTrigger className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] w-full">
                   <SelectValue placeholder="Selecione o responsável" />
                 </SelectTrigger>
                 <SelectContent>
@@ -254,7 +254,7 @@ export default function NewItemModal({
                 value={formData.SETOR_DO_RESPONSAVEL}
                 onValueChange={(value) => handleChange("SETOR_DO_RESPONSAVEL", value)}
               >
-                <SelectTrigger className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)]">
+                <SelectTrigger className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] w-full">
                   <SelectValue placeholder="Selecione o setor" />
                 </SelectTrigger>
                 <SelectContent>
@@ -269,7 +269,7 @@ export default function NewItemModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="campus" className="text-[var(--font-color)]">
                 Campus
