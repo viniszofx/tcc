@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "IFMS Inventário",
-    short_name: "Inventário",
+    name: "Sistema KDÊ - Inventário Patrimonial",
+    short_name: "KDÊ",
     description: "Sistema de Gestão de Inventário do IFMS",
     start_url: "/",
     display: "standalone",
