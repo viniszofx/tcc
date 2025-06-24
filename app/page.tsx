@@ -91,11 +91,11 @@ export default function Home() {
   const year = data.getFullYear();
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen w-full">
       {/* Hero Section - Modernizado */}
       <section className="relative h-[700px] flex items-center justify-center bg-gradient-to-r from-[var(--secondary-color)] to-[var(--primary-color)]">
         <div className="absolute inset-0 bg-grid-white/[0.02]" />
-        <div className="relative z-10 text-center text-[var(--primary-color)] p-8">
+        <div className="relative z-10 text-center text-[var(--primary-color)] ">
           <div className="mb-8 flex justify-center">
             <Image
               src="/logotipo.svg"
@@ -106,15 +106,13 @@ export default function Home() {
               className="drop-shadow-lg"
             />
           </div>
-
           <Badge className="mb-4 px-4 py-2 text-sm bg-white/10 backdrop-blur-sm border-white/20">
             Novo: Scanner QR Code integrado ✨
-          </Badge>
-
-          <h1 className="text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-100">
+          </Badge>{" "}
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-100">
             Revolucione sua Gestão Patrimonial
           </h1>
-          <p className="text-xl mb-8 max-w-2xl mx-auto text-gray-200">
+          <p className="text-base sm:text-lg lg:text-xl mb-8 max-w-2xl mx-auto text-gray-200">
             Automatize o controle de patrimônio com tecnologia QR Code e reduza
             o tempo gasto em inventários
           </p>
@@ -143,11 +141,11 @@ export default function Home() {
       <section id="features" className="py-24 px-6 bg-white scroll-mt-20">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <Badge className="mb-4">Funcionalidades</Badge>
-            <h2 className="text-4xl font-bold mb-4">
+            <Badge className="mb-4">Funcionalidades</Badge>{" "}
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
               Tudo que você precisa para uma gestão eficiente
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
               Nossa plataforma oferece um conjunto completo de ferramentas para
               modernizar e simplificar sua gestão patrimonial
             </p>
@@ -159,12 +157,17 @@ export default function Home() {
                 key={feature.title}
                 className="border border-gray-200 hover:shadow-lg transition-shadow"
               >
+                {" "}
                 <CardHeader>
                   <div className="mb-4">{feature.icon}</div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  <CardTitle className="text-lg sm:text-xl">
+                    {feature.title}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600">{feature.description}</p>
+                  <p className="text-sm sm:text-base text-gray-600">
+                    {feature.description}
+                  </p>
                 </CardContent>
               </Card>
             ))}
@@ -178,8 +181,8 @@ export default function Home() {
           <div className="text-center mb-16">
             <Badge variant="outline" className="mb-4">
               Benefícios
-            </Badge>
-            <h2 className="text-4xl font-bold mb-4">
+            </Badge>{" "}
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
               Por que escolher nossa solução?
             </h2>
           </div>
@@ -188,7 +191,7 @@ export default function Home() {
             {benefits.map((benefit) => (
               <div key={benefit} className="flex items-start gap-4 p-4">
                 <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
-                <p className="text-gray-700">{benefit}</p>
+                <p className="text-sm sm:text-base text-gray-700">{benefit}</p>
               </div>
             ))}
           </div>
@@ -198,14 +201,15 @@ export default function Home() {
       {/* CTA Section - Reativado e Melhorado */}
       <section className="py-24 px-6 bg-[var(--primary-color)] text-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-4">
+          {" "}
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
             Pronto para modernizar sua gestão patrimonial?
           </h2>
-          <p className="mb-8 text-xl text-gray-200">
+          <p className="mb-8 text-base sm:text-lg lg:text-xl text-gray-200">
             Comece agora mesmo e transforme a maneira como sua instituição
             gerencia seu patrimônio
           </p>
-          <div className="flex gap-4 justify-center">
+          <div className="flex flex-wrap gap-4 justify-center">
             <Button
               size="lg"
               className="bg-white text-[var(--secondary-color)] hover:bg-gray-100"
@@ -229,16 +233,17 @@ export default function Home() {
       <footer className="py-12 px-6 bg-[var(--secondary-color)] text-white">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
           <div className="mb-8 md:mb-0">
-            <Image src="/logotipo.svg" alt="Logo" width={140} height={50} />
-            <p className="mt-4 text-gray-300 max-w-md">
+            <Image src="/logotipo.svg" alt="Logo" width={140} height={50} />{" "}
+            <p className="mt-4 text-sm sm:text-base text-gray-300 max-w-md">
               Transformando a gestão patrimonial com tecnologia e inovação
             </p>
           </div>
           <div className="text-center md:text-right">
-            <p className="text-gray-300">
+            {" "}
+            <p className="text-sm sm:text-base text-gray-300">
               &copy; {new Date().getFullYear()} Sistema de Gestão Patrimonial
             </p>
-            <p className="text-gray-400 mt-2">
+            <p className="text-xs sm:text-sm text-gray-400 mt-2">
               Desenvolvido por Mockeys Solutions
             </p>
           </div>
