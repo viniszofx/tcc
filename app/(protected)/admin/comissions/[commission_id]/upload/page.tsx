@@ -1,5 +1,6 @@
 "use client"
 
+import LoadingScreen from "@/components/custom/loading"
 import ErrorDisplay from "@/components/dashboard/error-display"
 import FileUploadArea from "@/components/dashboard/file-update-area"
 import HardwareAccelerationToggle from "@/components/dashboard/hardware-acceleration-toggle"
@@ -20,6 +21,7 @@ export default function ProcessingPage() {
   const [storageError, setStorageError] = useState<string | null>(null)
   const params = useParams();
   const comissionId = params.commission_id as string;
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter()
 
   const { processFile, isProcessing, error, progress } = useFileProcessor()
@@ -27,6 +29,10 @@ export default function ProcessingPage() {
   useEffect(() => {
     setHardwareAcceleration(globalAcceleration)
   }, [globalAcceleration])
+
+  useEffect(() => {
+    setIsLoading(false)
+  }, [])
 
   const handleFileChange = (file: File) => {
     setFile(file)
@@ -65,6 +71,12 @@ export default function ProcessingPage() {
     } catch (err) {
       console.error("Erro no processamento:", err)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <LoadingScreen />
+    );
   }
 
   return (

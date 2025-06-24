@@ -1,5 +1,6 @@
 "use client"
 
+import LoadingScreen from "@/components/custom/loading"
 import { DeleteUserDialog } from "@/components/manager-users/delete-user-dialog"
 import { EditUserModal } from "@/components/manager-users/edit-user-modal"
 import { UserDetailsCard } from "@/components/manager-users/user-details-card"
@@ -55,7 +56,9 @@ export default function UserDetailsPage() {
   }
 
   if (loading) {
-    return <div>Carregando...</div>
+    return (
+      <LoadingScreen />
+    )
   }
 
   if (!userData) {

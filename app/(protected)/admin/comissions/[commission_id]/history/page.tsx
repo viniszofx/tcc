@@ -1,9 +1,10 @@
 "use client";
 
+import LoadingScreen from "@/components/custom/loading";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const historicoMock = [
   "Mesa superfaturada foi movida para casa do Vinicius",
@@ -12,7 +13,18 @@ const historicoMock = [
 
 export default function Page() {
   const [historico] = useState(historicoMock);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <LoadingScreen />
+    );
+  }
 
   return (
     <Card className="w-full max-w-6xl min-h-[300px] bg-[var(--bg-simple)] shadow-xl transition-all duration-300 p-8">

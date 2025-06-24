@@ -1,15 +1,25 @@
 "use client"
 
+import LoadingScreen from "@/components/custom/loading"
 import { AdvancedSettings } from "@/components/settings/settings-advanced"
 import { AppearanceSettings } from "@/components/settings/settings-apaerence"
 import { NotificationSettings } from "@/components/settings/settings-notification"
 import { SecuritySettings } from "@/components/settings/settings-security"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("appearance")
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <div className="flex-1 w-full p-3 xs:p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center">

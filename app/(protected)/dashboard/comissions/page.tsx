@@ -1,3 +1,6 @@
+"use client";
+
+import LoadingScreen from "@/components/custom/loading";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import data from "@/data/db.json";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 interface PageProps {
   params: {
@@ -25,6 +29,15 @@ export default function ComissionsPage({ params }: any) {
 
   const campus = data.campuses.find((campus) => campus.campus_id === campus_id);
   const campusName = campus ? campus.nome : "Câmpus";
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   if (comissoes.length === 0) {
     return (

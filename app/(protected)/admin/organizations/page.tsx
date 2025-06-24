@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import LoadingScreen from "@/components/custom/loading";
 import OrganizationCard from "@/components/manager-organizations/organization-card";
 import OrganizationModal from "@/components/manager-organizations/organization-modal";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import data from "@/data/db.json";
 import { Organizacao } from "@/lib/interface";
 import { ArrowLeft, Plus, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 
 export default function OrganizationsPage() {
@@ -27,6 +28,11 @@ export default function OrganizationsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [currentOrg, setCurrentOrg] = useState<Organizacao | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
 
   const handleOpenModal = (mode: "create" | "edit", org?: Organizacao) => {
     setModalMode(mode);
@@ -64,6 +70,12 @@ export default function OrganizationsPage() {
   const handleSaveAll = () => {
     alert("Salvo com sucesso!");
   };
+
+  if (isLoading) {
+    return (
+      <LoadingScreen />
+    );
+  }
 
   return (
     <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 py-6">

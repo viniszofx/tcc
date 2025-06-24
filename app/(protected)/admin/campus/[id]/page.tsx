@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import LoadingScreen from "@/components/custom/loading";
 import CampusModal from "@/components/manager-campuses/campus-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,7 @@ export default function CampusDetailPage({
         const response = await fetch("/api/v1/campuses");
         const data = await response.json();
         const foundCampus = data.find((c: Campus) => c.campus_id === campusId);
-        
+
         if (foundCampus) {
           setCampus(foundCampus);
         } else {
@@ -70,11 +71,7 @@ export default function CampusDetailPage({
 
   if (isLoading) {
     return (
-      <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
-        <CardContent className="flex h-40 items-center justify-center">
-          <p className="text-[var(--font-color)]">Carregando...</p>
-        </CardContent>
-      </Card>
+      <LoadingScreen />
     );
   }
 

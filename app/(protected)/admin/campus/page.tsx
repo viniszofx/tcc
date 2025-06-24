@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import LoadingScreen from "@/components/custom/loading";
 import CampusCard from "@/components/manager-campuses/campus-card";
 import CampusModal from "@/components/manager-campuses/campus-modal";
 import { Button } from "@/components/ui/button";
@@ -77,6 +78,12 @@ export default function CampusPage() {
   const handleCardClick = (campusId: string) => {
     router.push(`/admin/campus/${campusId}`);
   };
+
+  if (campuses.length === 0) {
+    return (
+      <LoadingScreen />
+    )
+  }
 
   return (
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">

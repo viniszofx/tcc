@@ -1,5 +1,7 @@
 // Essa página somente sera acessada pelo Admin
+"use client";
 
+import LoadingScreen from "@/components/custom/loading";
 import {
   Card,
   CardContent,
@@ -9,8 +11,20 @@ import {
 } from "@/components/ui/card";
 import { Building2, Clock, Landmark, Users } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function ProcessingPage() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <LoadingScreen />
+    );
+  }
   // Aqui você deve colocar a lógica real de verificação de admin
 
   return (

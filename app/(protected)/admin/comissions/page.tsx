@@ -1,5 +1,6 @@
 "use client";
 
+import LoadingScreen from "@/components/custom/loading";
 import { AddComissionModal } from "@/components/manager-comissions/add-comission-modal";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,11 +16,16 @@ import type { Comissao } from "@/lib/interface";
 import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function CommissionsPage() {
   const [comissoes, setComissoes] = useState<Comissao[]>(data.comissoes);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
 
   const getDefaultCampusId = (): string => {
     const defaultCampus = data.campuses.find(c => c.campus_ativo);
@@ -53,6 +59,10 @@ export default function CommissionsPage() {
   };
 
   const router = useRouter();
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">

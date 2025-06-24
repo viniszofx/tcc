@@ -1,5 +1,7 @@
 // Essa página somente sera acessada pelo Admin
+"use client";
 
+import LoadingScreen from "@/components/custom/loading";
 import {
   Card,
   CardContent,
@@ -9,8 +11,18 @@ import {
 } from "@/components/ui/card";
 import { Clock, Landmark } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function ProcessingPage() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
   return (
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
       <CardHeader className="pb-2 text-center">

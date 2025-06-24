@@ -1,5 +1,6 @@
 "use client";
 
+import LoadingScreen from "@/components/custom/loading";
 import { EditComissionModal } from "@/components/manager-comissions/edit-comission-modal";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,7 +55,9 @@ export default function ComissionDetailsPage() {
   const membros = data.users.filter(u => u.comissao_id === comissionId);
 
   if (isLoading) {
-    return <div>Carregando...</div>;
+    return (
+      <LoadingScreen />
+    );
   }
 
   if (!comissao) {

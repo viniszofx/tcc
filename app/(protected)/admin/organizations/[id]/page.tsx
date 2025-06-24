@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import LoadingScreen from "@/components/custom/loading";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,11 +12,17 @@ import {
 import data from "@/data/db.json";
 import { ArrowLeft } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function OrganizationDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const orgId = params.id as string;
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
 
   const organization = (data.organizations || []).find(
     (org: any) => org.organizacao_id === orgId
@@ -43,6 +50,12 @@ export default function OrganizationDetailsPage() {
           </Button>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <LoadingScreen />
     );
   }
 

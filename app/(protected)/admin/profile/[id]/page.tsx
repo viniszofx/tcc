@@ -5,13 +5,12 @@ import type { Campus, Usuario } from "@/lib/interface"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
+import LoadingScreen from "@/components/custom/loading"
 import ProfileActions from "@/components/profile/profile-actions"
 import ProfileEditor from "@/components/profile/profile-editor"
 import ProfileSidebar from "@/components/profile/profile-sidebar"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-
-import ProfileLoading from "./loading"
 import NotFound from "./not-found"
 
 export default function ProfilePage() {
@@ -90,7 +89,7 @@ export default function ProfilePage() {
   }
 
   if (isLoading || !usuario) {
-    return <ProfileLoading />
+    return <LoadingScreen />
   }
 
   const campusNome = getCampusNameById(usuario.campus_id || "")

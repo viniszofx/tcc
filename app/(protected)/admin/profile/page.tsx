@@ -4,6 +4,7 @@ import type { Campus, Usuario } from "@/lib/interface"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
+import LoadingScreen from "@/components/custom/loading"
 import ProfileActions from "@/components/profile/profile-actions"
 import ProfileEditor from "@/components/profile/profile-editor"
 import ProfileSidebar from "@/components/profile/profile-sidebar"
@@ -87,9 +88,7 @@ export default function ProfilePage() {
 
   if (!usuario || campuses.length === 0) {
     return (
-      <div className="flex-1 w-full p-3 xs:p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center">
-        <div>Carregando perfil...</div>
-      </div>
+      <LoadingScreen />
     )
   }
 

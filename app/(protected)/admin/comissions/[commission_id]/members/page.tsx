@@ -1,5 +1,6 @@
 "use client";
 
+import LoadingScreen from "@/components/custom/loading";
 import AddMemberModal from "@/components/members/add-member-modal";
 import { Button } from "@/components/ui/button";
 import {
@@ -91,7 +92,9 @@ export default function ComissionMembersPage() {
   };
 
   if (isLoading) {
-    return <div>Carregando...</div>;
+    return (
+      <LoadingScreen />
+    );
   }
 
   if (!comissao) {

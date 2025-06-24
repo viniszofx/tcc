@@ -1,5 +1,6 @@
 ﻿"use client"
 
+import LoadingScreen from "@/components/custom/loading"
 import { AddUserModal } from "@/components/manager-users/add-user-modal"
 import { EditUserModal } from "@/components/manager-users/edit-user-modal"
 import { UserListCard } from "@/components/manager-users/user-list-card"
@@ -32,10 +33,10 @@ export default function UsersPage() {
           fetch("/api/v1/users"),
           fetch("/api/v1/campuses")
         ])
-        
+
         const usersData: Usuario[] = await usersRes.json()
         const campusesData: Campus[] = await campusesRes.json()
-        
+
         setUsers(usersData)
         setCampuses(campusesData)
       } catch (error) {
@@ -71,15 +72,15 @@ export default function UsersPage() {
       },
       organizacao_id: "2000"
     } as Usuario
-    
+
     setUsers([...users, userToAdd])
   }
 
   const handleEditUser = (updatedUser: Partial<Usuario>) => {
-  setUsers(users.map(user => 
-    user.usuario_id === updatedUser.usuario_id ? { ...user, ...updatedUser } : user
-  ))
-}
+    setUsers(users.map(user =>
+      user.usuario_id === updatedUser.usuario_id ? { ...user, ...updatedUser } : user
+    ))
+  }
 
   const handleEditClick = (user: Usuario) => {
     setSelectedUser(user)
@@ -87,7 +88,9 @@ export default function UsersPage() {
   }
 
   if (users.length === 0 || campuses.length === 0) {
-    return <div className="p-4">Carregando...</div>
+    return (
+      <LoadingScreen />
+    )
   }
 
   return (
