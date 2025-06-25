@@ -442,7 +442,7 @@ export function CameraModal({
           }
         }}
       >
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] overflow-y-auto">
           <DialogTitle>Leitor QR e Captura de Foto</DialogTitle>
           <DialogDescription>
             {useScanner
