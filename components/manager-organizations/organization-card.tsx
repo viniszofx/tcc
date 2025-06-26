@@ -10,13 +10,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Organizacao } from "@/lib/interface";
+import type { Organization } from "@/lib/new-interface";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
 interface OrganizationCardProps {
-  organization: Organizacao;
+  organization: Organization;
   onEdit: () => void;
   onDelete: () => void;
   onClick?: () => void;
@@ -39,13 +39,13 @@ export default function OrganizationCard({ organization, onEdit, onDelete, onCli
     <>
       <Card className="border border-[var(--border-color)] bg-[var(--bg-simple)] transition-all duration-300 rounded-xl shadow-sm flex flex-col justify-between min-h-[180px]">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold text-[var(--font-color)]">{organization.nome}</CardTitle>
+          <CardTitle className="text-lg font-semibold text-[var(--font-color)]">{organization.name}</CardTitle>
           <CardDescription className="text-[var(--font-color)] opacity-80">
-            Sigla: {organization.nome_curto}
+            Sigla: {organization.shortName}
           </CardDescription>
         </CardHeader>
         <CardFooter className="flex items-center justify-end gap-3 pt-0 pb-4 px-6">
-          <Link href={`/admin/organizations/${organization.organizacao_id}`}>
+          <Link href={`/admin/organizations/${organization.id}`}>
             <Button
               className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] hover:text-white"
               size="icon"
@@ -84,7 +84,7 @@ export default function OrganizationCard({ organization, onEdit, onDelete, onCli
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir a organização "{organization.nome}"? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir a organização "{organization.name}"? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

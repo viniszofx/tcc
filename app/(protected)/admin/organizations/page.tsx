@@ -11,8 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import data from "@/data/db.json";
-import { Organizacao } from "@/lib/interface";
+import data from "@/data/new-db.json";
+import { Organization } from "@/lib/new-interface";
 import { ArrowLeft, Plus, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -20,21 +20,21 @@ import { useEffect, useState } from "react";
 
 export default function OrganizationsPage() {
   const router = useRouter();
-  const initialOrgs: Organizacao[] = (data.organizations || []).map((org: any) => ({
+  const initialOrgs: Organization[] = (data.organizations || []).map((org: any) => ({
     ...org,
   }));
 
-  const [orgs, setOrgs] = useState<Organizacao[]>(initialOrgs);
+  const [orgs, setOrgs] = useState<Organization[]>(initialOrgs);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
-  const [currentOrg, setCurrentOrg] = useState<Organizacao | null>(null);
+  const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setIsLoading(false);
   }, []);
 
-  const handleOpenModal = (mode: "create" | "edit", org?: Organizacao) => {
+  const handleOpenModal = (mode: "create" | "edit", org?: Organization) => {
     setModalMode(mode);
     setCurrentOrg(org || null);
     setIsModalOpen(true);
@@ -45,26 +45,26 @@ export default function OrganizationsPage() {
     setCurrentOrg(null);
   };
 
-  const handleSave = (org: Organizacao) => {
+  const handleSave = (org: Organization) => {
     if (modalMode === "create") {
       setOrgs([
         ...orgs,
         {
           ...org,
-          organizacao_id: `${Date.now()}`,
-          ativo: true,
+          id: `${Date.now()}`,
+          active: true,
         },
       ]);
     } else if (modalMode === "edit" && currentOrg) {
       setOrgs(
-        orgs.map((o) => (o.organizacao_id === currentOrg.organizacao_id ? { ...org, id: currentOrg.organizacao_id } : o))
+        orgs.map((o) => (o.id === currentOrg.id ? { ...org, id: currentOrg.id } : o))
       );
     }
     handleCloseModal();
   };
 
   const handleDelete = (orgId: string) => {
-    setOrgs(orgs.filter((o) => o.organizacao_id !== orgId));
+    setOrgs(orgs.filter((o) => o.id !== orgId));
   };
 
   const handleSaveAll = () => {
@@ -120,10 +120,10 @@ export default function OrganizationsPage() {
           <div className="grid gap-6 md:grid-cols-2">
             {orgs.map((org) => (
               <OrganizationCard
-                key={org.organizacao_id}
+                key={org.id}
                 organization={org}
                 onEdit={() => handleOpenModal("edit", org)}
-                onDelete={() => handleDelete(org.organizacao_id)}
+                onDelete={() => handleDelete(org.id)}
                 disableDelete={orgs.length === 1}
               />
             ))}

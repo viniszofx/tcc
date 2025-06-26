@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import data from "@/data/db.json";
+import data from "@/data/new-db.json";
 import { ArrowLeft } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -25,7 +25,7 @@ export default function OrganizationDetailsPage() {
   }, []);
 
   const organization = (data.organizations || []).find(
-    (org: any) => org.organizacao_id === orgId
+    (org: any) => org.id === orgId
   );
 
   if (!organization) {
@@ -39,7 +39,7 @@ export default function OrganizationDetailsPage() {
             ID: {orgId} não corresponde a nenhuma organização
           </p>
           <p className="text-muted-foreground mt-1">
-            IDs válidos: {(data.organizations || []).map(o => o.organizacao_id).join(", ")}
+            IDs válidos: {(data.organizations || []).map(o => o.id).join(", ")}
           </p>
           <Button
             variant="outline"
@@ -65,10 +65,10 @@ export default function OrganizationDetailsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
-              {organization.nome}
+              {organization.name}
             </CardTitle>
             <CardDescription className="text-[var(--font-color)]">
-              Sigla: {organization.nome_curto}
+              Sigla: {organization.shortName}
             </CardDescription>
           </div>
           <Button
@@ -88,14 +88,14 @@ export default function OrganizationDetailsPage() {
           <div className="space-y-3">
             <h3 className="font-medium text-[var(--font-color)]">ID da Organização</h3>
             <p className="text-sm text-[var(--font-color)]">
-              {organization.organizacao_id}
+              {organization.id}
             </p>
           </div>
 
           <div className="space-y-3">
             <h3 className="font-medium text-[var(--font-color)]">Status</h3>
             <p className="text-sm text-[var(--font-color)]">
-              {organization.ativo ? "Ativa" : "Inativa"}
+              {organization.active ? "Ativa" : "Inativa"}
             </p>
           </div>
         </div>

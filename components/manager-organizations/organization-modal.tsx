@@ -11,14 +11,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { Organizacao } from "@/lib/interface";
+import type { Organization } from "@/lib/new-interface";
 import { useEffect, useState } from "react";
 
 interface OrganizationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (org: Organizacao) => void;
-  organization: Organizacao | null;
+  onSave: (org: Organization) => void;
+  organization: Organization | null;
   mode: "create" | "edit";
 }
 
@@ -29,11 +29,11 @@ export default function OrganizationModal({
   organization,
   mode,
 }: OrganizationModalProps) {
-  const [formData, setFormData] = useState<Organizacao>({
-    organizacao_id: "",
-    nome: "",
-    nome_curto: "",
-    ativo: true,
+  const [formData, setFormData] = useState<Organization>({
+    id: "",
+    name: "",
+    shortName: "",
+    active: true,
   });
 
   useEffect(() => {
@@ -41,10 +41,10 @@ export default function OrganizationModal({
       setFormData(organization);
     } else {
       setFormData({
-        organizacao_id: "",
-        nome: "",
-        nome_curto: "",
-        ativo: true,
+        id: "",
+        name: "",
+        shortName: "",
+        active: true,
       });
     }
   }, [organization, isOpen]);
@@ -78,18 +78,18 @@ export default function OrganizationModal({
               <Label htmlFor="nome">Nome</Label>
               <Input
                 id="nome"
-                name="nome" 
-                value={formData.nome}
+                name="name"
+                value={formData.name}
                 onChange={handleChange}
                 required
               />
             </div>
             <div>
-              <Label htmlFor="nome_curto">Sigla</Label>
+              <Label htmlFor="shortName">Sigla</Label>
               <Input
-                id="nome_curto"
-                name="nome_curto"
-                value={formData.nome_curto}
+                id="shortName"
+                name="shortName"
+                value={formData.shortName}
                 onChange={handleChange}
                 required
               />
