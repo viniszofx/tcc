@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import type { Campus } from "@/lib/interface"
+import type { Campus } from "@/lib/new-interface"
 import { AlertTriangle } from "lucide-react"
 import type React from "react"
 import { useEffect, useState } from "react"
@@ -28,10 +28,10 @@ interface CampusModalProps {
 
 export default function CampusModal({ isOpen, onClose, onSave, onDelete, campus, mode }: CampusModalProps) {
   const [formData, setFormData] = useState<Campus>({
-    campus_id: "",
-    nome: "",
-    campus_codigo: "",
-    campus_ativo: false,
+    id: "",
+    name: "",
+    code: "",
+    active: false,
   })
 
   useEffect(() => {
@@ -39,10 +39,10 @@ export default function CampusModal({ isOpen, onClose, onSave, onDelete, campus,
       setFormData(campus)
     } else {
       setFormData({
-        campus_id: "",
-        nome: "",
-        campus_codigo: "",
-        campus_ativo: false,
+        id: "",
+        name: "",
+        code: "",
+        active: true,
       })
     }
   }, [campus, isOpen])
@@ -58,7 +58,7 @@ export default function CampusModal({ isOpen, onClose, onSave, onDelete, campus,
   const handleSwitchChange = (checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      campus_ativo: checked
+      active: checked
     }))
   }
 
@@ -69,7 +69,7 @@ export default function CampusModal({ isOpen, onClose, onSave, onDelete, campus,
 
   const handleDelete = () => {
     if (campus) {
-      onDelete(campus.campus_id)
+      onDelete(campus.id)
     }
   }
 
@@ -90,7 +90,7 @@ export default function CampusModal({ isOpen, onClose, onSave, onDelete, campus,
           </div>
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 sm:p-4 text-center">
             <p className="font-medium text-red-800 break-words">
-              {campus?.nome} ({campus?.campus_codigo})
+              {campus?.name} ({campus?.code})
             </p>
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2 sm:justify-center mt-4">
@@ -131,9 +131,9 @@ export default function CampusModal({ isOpen, onClose, onSave, onDelete, campus,
               Nome
             </Label>
             <Input
-              id="nome"
-              name="nome"
-              value={formData.nome}
+              id="name"
+              name="name"
+              value={formData.name}
               onChange={handleChange}
               placeholder="Nome do campus"
               required
@@ -145,9 +145,9 @@ export default function CampusModal({ isOpen, onClose, onSave, onDelete, campus,
               Código
             </Label>
             <Input
-              id="campus_codigo"
-              name="campus_codigo"
-              value={formData.campus_codigo}
+              id="code"
+              name="code"
+              value={formData.code}
               onChange={handleChange}
               placeholder="Código do campus"
               required
@@ -155,12 +155,12 @@ export default function CampusModal({ isOpen, onClose, onSave, onDelete, campus,
             />
           </div>
           <div className="flex items-center justify-between">
-            <Label htmlFor="campus_ativo" className="text-[var(--font-color)]">
+            <Label htmlFor="active" className="text-[var(--font-color)]">
               Campus Ativo
             </Label>
-            <Switch 
-              id="campus_ativo"
-              checked={formData.campus_ativo} 
+            <Switch
+              id="active"
+              checked={formData.active}
               onCheckedChange={handleSwitchChange}
             />
           </div>

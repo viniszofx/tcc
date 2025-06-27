@@ -30,7 +30,7 @@ export interface OrganizationMember {
 
 export interface Campus {
   id: string;
-  organizationId: string;
+  organizationId?: string;
   name: string;
   code: string;
   active: boolean;

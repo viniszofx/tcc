@@ -11,10 +11,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Campus } from "@/lib/interface";
+import data from "@/data/new-db.json";
+import type { Campus } from "@/lib/new-interface";
 import { ArrowLeft, Plus, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+
 
 export default function CampusPage() {
   const router = useRouter();
@@ -22,18 +25,18 @@ export default function CampusPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentCampus, setCurrentCampus] = useState<Campus | null>(null);
   const [modalMode, setModalMode] = useState<"create" | "edit" | "delete">("create");
+  const [isLoading, setIsLoading] = useState(true);
+
+  const initialCampuses: Campus[] = (data.campus || []).map((campus: any) => ({
+    ...campus,
+  }));
+
+  useState(() => {
+    setCampuses(initialCampuses);
+  });
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const res = await fetch("/api/v1/campuses");
-        const data = await res.json();
-        setCampuses(data);
-      } catch (error) {
-        console.error("Erro ao buscar os campuses:", error);
-      }
-    };
-    loadData();
+    setIsLoading(false);
   }, []);
 
   const handleOpenModal = (
@@ -54,19 +57,19 @@ export default function CampusPage() {
     if (modalMode === "create") {
       const newCampus: Campus = {
         ...campus,
-        campus_id: `${Date.now()}`,
+        id: uuidv4(),
       };
       setCampuses([...campuses, newCampus]);
     } else if (modalMode === "edit") {
       setCampuses(
-        campuses.map((c) => (c.campus_id === campus.campus_id ? campus : c))
+        campuses.map((c) => (c.id === campus.id ? campus : c))
       );
     }
     handleCloseModal();
   };
 
   const handleDeleteCampus = (campusId: string) => {
-    setCampuses(campuses.filter((c) => c.campus_id !== campusId));
+    setCampuses(campuses.filter((c) => c.id !== campusId));
     handleCloseModal();
   };
 
@@ -79,10 +82,8 @@ export default function CampusPage() {
     router.push(`/admin/campus/${campusId}`);
   };
 
-  if (campuses.length === 0) {
-    return (
-      <LoadingScreen />
-    )
+  if (isLoading) {
+    return <LoadingScreen />;
   }
 
   return (
@@ -131,11 +132,11 @@ export default function CampusPage() {
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {campuses.map((campus) => (
             <CampusCard
-              key={campus.campus_id}
+              key={campus.id}
               campus={campus}
               onEdit={() => handleOpenModal("edit", campus)}
               onDelete={() => handleOpenModal("delete", campus)}
-              onClick={() => handleCardClick(campus.campus_id)}
+              onClick={() => handleCardClick(campus.id)}
               disableDelete={campuses.length === 1}
             />
           ))}

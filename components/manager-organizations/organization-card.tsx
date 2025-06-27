@@ -43,6 +43,21 @@ export default function OrganizationCard({ organization, onEdit, onDelete, onCli
           <CardDescription className="text-[var(--font-color)] opacity-80">
             Sigla: {organization.shortName}
           </CardDescription>
+          <CardDescription className="text-[var(--font-color)] opacity-80 space-y-1">
+            <div>ID: {organization.id}</div>
+            <div className="mt-1">
+              Status:{" "}
+              <span
+                className={
+                  organization.active
+                    ? "text-green-600 font-medium"
+                    : "text-gray-500 font-medium"
+                }
+              >
+                {organization.active ? "Ativo" : "Inativo"}
+              </span>
+            </div>
+          </CardDescription>
         </CardHeader>
         <CardFooter className="flex items-center justify-end gap-3 pt-0 pb-4 px-6">
           <Link href={`/admin/organizations/${organization.id}`}>

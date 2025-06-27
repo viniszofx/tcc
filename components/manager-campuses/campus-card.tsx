@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import type { Campus } from "@/lib/interface"
+import type { Campus } from "@/lib/new-interface"
 import { Eye, Pencil, Trash2 } from "lucide-react"
 
 interface CampusCardProps {
@@ -24,21 +24,21 @@ export default function CampusCard({ campus, onEdit, onDelete, disableDelete, on
     >
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold text-[var(--font-color)]">
-          {campus.nome}
+          {campus.name}
         </CardTitle>
         <CardDescription className="text-[var(--font-color)] opacity-80 space-y-1">
-          <div>Código: {campus.campus_codigo}</div>
-          <div>ID: {campus.campus_id}</div>
+          <div>Código: {campus.code}</div>
+          <div>ID: {campus.id}</div>
           <div className="mt-1">
             Status:{" "}
             <span
               className={
-                campus.campus_ativo
+                campus.active
                   ? "text-green-600 font-medium"
                   : "text-gray-500 font-medium"
               }
             >
-              {campus.campus_ativo ? "Ativo" : "Inativo"}
+              {campus.active ? "Ativo" : "Inativo"}
             </span>
           </div>
         </CardDescription>

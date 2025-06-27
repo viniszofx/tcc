@@ -14,11 +14,13 @@ import { ArrowLeft } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+
 export default function OrganizationDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const orgId = params.id as string;
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     setIsLoading(false);
@@ -80,6 +82,14 @@ export default function OrganizationDetailsPage() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
           </Button>
+          {/* <Button
+            size="sm"
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all"
+          >
+            <Edit className="mr-2 h-4 w-4" />
+            Editar
+          </Button> */}
         </div>
       </CardHeader>
 

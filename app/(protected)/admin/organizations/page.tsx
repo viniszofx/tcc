@@ -16,7 +16,7 @@ import { Organization } from "@/lib/new-interface";
 import { ArrowLeft, Plus, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
+import { v4 as uuidv4 } from "uuid";
 
 export default function OrganizationsPage() {
   const router = useRouter();
@@ -51,8 +51,7 @@ export default function OrganizationsPage() {
         ...orgs,
         {
           ...org,
-          id: `${Date.now()}`,
-          active: true,
+          id: uuidv4(),
         },
       ]);
     } else if (modalMode === "edit" && currentOrg) {

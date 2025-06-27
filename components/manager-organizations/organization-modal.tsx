@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import type { Organization } from "@/lib/new-interface";
 import { useEffect, useState } from "react";
 
@@ -33,7 +34,7 @@ export default function OrganizationModal({
     id: "",
     name: "",
     shortName: "",
-    active: true,
+    active: false,
   });
 
   useEffect(() => {
@@ -59,6 +60,13 @@ export default function OrganizationModal({
     onSave(formData);
   };
 
+  const handleSwitchChange = (checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      active: checked
+    }))
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
@@ -73,7 +81,7 @@ export default function OrganizationModal({
                 : "Edite as informações da organização."}
             </DialogDescription>
           </DialogHeader>
-          <div className="my-4 space-y-4">
+          <div className="my-4 sm:my-6 space-y-4">
             <div>
               <Label htmlFor="nome">Nome</Label>
               <Input
@@ -94,6 +102,16 @@ export default function OrganizationModal({
                 required
               />
             </div>
+            <div className="flex items-center justify-between">
+            <Label htmlFor="active" className="text-[var(--font-color)]">
+              Campus Ativo
+            </Label>
+            <Switch
+              id="active"
+              checked={formData.active}
+              onCheckedChange={handleSwitchChange}
+            />
+          </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
