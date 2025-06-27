@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Building2, Clock, Landmark, Users } from "lucide-react";
+import { Building2, Landmark, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -39,10 +39,10 @@ export default function ProcessingPage() {
       </CardHeader>
 
       <CardContent className="flex flex-col items-center justify-center py-8">
-        <div className="grid grid-cols-1 gap-6 w-full max-w-2xl md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-8 w-full max-w-5xl md:grid-cols-3">
           <Link
             href="/admin/users"
-            className="flex flex-col items-center justify-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-color)] px-6 py-8 shadow transition hover:shadow-lg hover:bg-[var(--hover-3-color)] group"
+            className="flex flex-col items-center justify-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-color)] px-6 py-12 shadow transition hover:shadow-lg hover:bg-[var(--hover-3-color)] group"
           >
             <Users size={28} className="text-[var(--font-color)] group-hover:text-white transition" />
             <span className="font-medium text-[var(--font-color)] group-hover:text-white transition">
@@ -51,7 +51,7 @@ export default function ProcessingPage() {
           </Link>
           <Link
             href="/admin/campus"
-            className="flex flex-col items-center justify-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-color)] px-6 py-8 shadow transition hover:shadow-lg hover:bg-[var(--hover-3-color)] group"
+            className="flex flex-col items-center justify-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-color)] px-6 py-12 shadow transition hover:shadow-lg hover:bg-[var(--hover-3-color)] group"
           >
             <Building2 size={28} className="text-[var(--font-color)] group-hover:text-white transition" />
             <span className="font-medium text-[var(--font-color)] group-hover:text-white transition">
@@ -60,20 +60,11 @@ export default function ProcessingPage() {
           </Link>
           <Link
             href="/admin/organizations"
-            className="flex flex-col items-center justify-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-color)] px-6 py-8 shadow transition hover:shadow-lg hover:bg-[var(--hover-3-color)] group"
+            className="flex flex-col items-center justify-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-color)] px-6 py-12 shadow transition hover:shadow-lg hover:bg-[var(--hover-3-color)] group"
           >
             <Landmark size={28} className="text-[var(--font-color)] group-hover:text-white transition" />
             <span className="font-medium text-[var(--font-color)] group-hover:text-white transition">
               Gerenciar Organização
-            </span>
-          </Link>
-          <Link
-            href={"/admin/comissions/${commissionId}/history"}
-            className="flex flex-col items-center justify-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-color)] px-6 py-8 shadow transition hover:shadow-lg hover:bg-[var(--hover-3-color)] group"
-          >
-            <Clock size={28} className="text-[var(--font-color)] group-hover:text-white transition" />
-            <span className="font-medium text-[var(--font-color)] group-hover:text-white transition">
-              Histórico
             </span>
           </Link>
         </div>

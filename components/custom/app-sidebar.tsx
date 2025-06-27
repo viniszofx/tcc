@@ -12,12 +12,11 @@ import {
 } from "@/components/ui/sidebar";
 import {
   Building2,
-  Clock,
   Home,
   Info,
   Landmark,
   Settings,
-  Users,
+  Users
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -139,42 +138,6 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                       >
                         <Landmark className="text-[var(--font-color2)]" />
                         Gerenciar Comissões
-                      </Link>
-                    </Button>
-                  </li>
-                </>
-              )}
-                {cargo === "presidente" && (
-                  <>
-                    <li className="p-2 gap-2 flex items-center">
-                      <Button
-                        className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
-                        asChild
-                      >
-                        <Link
-                          href={`/admin/comissions/${commissionId}/history`}
-                          className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
-                        >
-                          <Clock className="text-[var(--font-color2)]" />
-                          Histórico
-                        </Link>
-                      </Button>
-                    </li>
-                  </>
-                )}
-              {cargo === "operador" && (
-                <>
-                  <li className="p-2 gap-2 flex items-center">
-                    <Button
-                      className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
-                      asChild
-                    >
-                      <Link
-                        href={`/dashboard/comissions/${commissionId}/history`}
-                        className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
-                      >
-                        <Clock className="text-[var(--font-color2)]" />
-                        Histórico
                       </Link>
                     </Button>
                   </li>

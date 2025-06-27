@@ -110,7 +110,7 @@ export default function OrganizationsPage() {
           <div className="flex justify-end">
             <Button
               onClick={() => handleOpenModal("create")}
-              className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all"
+              className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all w-full sm:w-auto"
             >
               <Plus size={18} />
               Nova Organização

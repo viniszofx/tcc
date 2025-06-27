@@ -578,6 +578,7 @@ export function CameraModal({
               </Button>
             </div>
             <div className="flex gap-2 w-full sm:w-auto justify-end">
+              <Button onClick={handleConfirmResult}>Voltar</Button>
               {captureResult?.type === "qr" && (
                 <Button
                   variant="secondary"
@@ -587,8 +588,7 @@ export function CameraModal({
                   <Search className="h-4 w-4" />
                   Buscar Item
                 </Button>
-              )}
-              <Button onClick={handleConfirmResult}>Confirmar</Button>
+              )}  
             </div>
           </DialogFooter>
         </DialogContent>

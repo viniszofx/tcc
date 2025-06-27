@@ -97,7 +97,7 @@ export default function CampusPage() {
             Gerencie os campus do sistema
           </CardDescription>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2 w-full sm:w-auto justify-end">
           <Button
             variant="outline"
             size="sm"
@@ -129,7 +129,7 @@ export default function CampusPage() {
           </Button>
         </div>
 
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2">
           {campuses.map((campus) => (
             <CampusCard
               key={campus.id}

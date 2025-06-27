@@ -61,21 +61,21 @@ export default function OrganizationModal({
   };
 
   const handleSwitchChange = (checked: boolean) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      active: checked
-    }))
-  }
+      active: checked,
+    }));
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md max-w-[95vw] p-4 sm:p-6">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-xl font-bold text-[var(--font-color)]">
               {mode === "create" ? "Nova Organização" : "Editar Organização"}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-[var(--font-color)] opacity-70">
               {mode === "create"
                 ? "Preencha os campos para criar uma nova organização."
                 : "Edite as informações da organização."}
@@ -83,41 +83,55 @@ export default function OrganizationModal({
           </DialogHeader>
           <div className="my-4 sm:my-6 space-y-4">
             <div>
-              <Label htmlFor="nome">Nome</Label>
+              <Label htmlFor="name" className="text-[var(--font-color)]">
+                Nome
+              </Label>
               <Input
-                id="nome"
+                id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
                 required
+                className="border-[var(--border-color)] bg-[var(--input-bg-color)] text-[var(--font-color)]"
               />
             </div>
             <div>
-              <Label htmlFor="shortName">Sigla</Label>
+              <Label htmlFor="shortName" className="text-[var(--font-color)]">
+                Sigla
+              </Label>
               <Input
                 id="shortName"
                 name="shortName"
                 value={formData.shortName}
                 onChange={handleChange}
                 required
+                className="border-[var(--border-color)] bg-[var(--input-bg-color)] text-[var(--font-color)]"
               />
             </div>
             <div className="flex items-center justify-between">
-            <Label htmlFor="active" className="text-[var(--font-color)]">
-              Campus Ativo
-            </Label>
-            <Switch
-              id="active"
-              checked={formData.active}
-              onCheckedChange={handleSwitchChange}
-            />
+              <Label htmlFor="active" className="text-[var(--font-color)]">
+                Organização Ativa
+              </Label>
+              <Switch
+                id="active"
+                checked={formData.active}
+                onCheckedChange={handleSwitchChange}
+              />
+            </div>
           </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+          <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="w-full sm:w-auto text-[var(--font-color)] transition-all"
+            >
               Cancelar
             </Button>
-            <Button type="submit">
+            <Button
+              type="submit"
+              className="w-full sm:w-auto bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all"
+            >
               {mode === "create" ? "Criar" : "Salvar"}
             </Button>
           </DialogFooter>
