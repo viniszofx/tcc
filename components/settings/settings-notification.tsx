@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Bell, Mail } from "lucide-react"
+import { Tabs, TabsContent } from "@/components/ui/tabs"
+import { Mail } from "lucide-react"
 import { useState } from "react"
 
 export function NotificationSettings() {
@@ -22,20 +22,6 @@ export function NotificationSettings() {
       <Separator className="bg-[var(--header-color)]" />
 
       <Tabs defaultValue="channels" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-[var(--card-color)]">
-          <TabsTrigger
-            value="channels"
-            className="data-[state=active]:bg-[var(--button-color)] data-[state=active]:text-[var(--font-color2)] cursor-pointer"
-          >
-            Canais
-          </TabsTrigger>
-          <TabsTrigger
-            value="preferences"
-            className="data-[state=active]:bg-[var(--button-color)] data-[state=active]:text-[var(--font-color2)] cursor-pointer"
-          >
-            Preferências
-          </TabsTrigger>
-        </TabsList>
 
         <TabsContent value="channels" className="mt-4 space-y-4">
           <div className="space-y-4">
@@ -60,68 +46,6 @@ export function NotificationSettings() {
             </div>
 
             <Separator className="bg-[var(--header-color)]" />
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Bell className="h-4 w-4 text-[var(--font-color)]" />
-                <div className="space-y-0.5">
-                  <Label htmlFor="push-notifications" className="text-[var(--font-color)]">
-                    Notificações Push
-                  </Label>
-                  <p className="text-xs text-[var(--font-color)] opacity-70">
-                    Receba notificações em tempo real no navegador
-                  </p>
-                </div>
-              </div>
-              <Switch
-                id="push-notifications"
-                checked={pushNotifications}
-                onCheckedChange={setPushNotifications}
-                className="data-[state=checked]:bg-[var(--button-color)]"
-              />
-            </div>
-
-            <Separator className="bg-[var(--header-color)]" />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="preferences" className="mt-4 space-y-4">
-          <div className="space-y-4">
-
-            <Separator className="bg-[var(--header-color)]" />
-
-            <h4 className="text-sm font-medium text-[var(--font-color)]">Tipos de Notificações</h4>
-
-            <div className="space-y-2">
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Bell className="h-4 w-4 text-[var(--font-color)]" />
-                  <Label htmlFor="system-notifications" className="text-[var(--font-color)]">
-                    Atualizações do Sistema
-                  </Label>
-                </div>
-                <Switch
-                  id="system-notifications"
-                  defaultChecked={true}
-                  className="data-[state=checked]:bg-[var(--button-color)]"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-[var(--font-color)]" />
-                  <Label htmlFor="marketing-notifications" className="text-[var(--font-color)]">
-                    Marketing e Novidades
-                  </Label>
-                </div>
-                <Switch
-                  id="marketing-notifications"
-                  defaultChecked={false}
-                  className="data-[state=checked]:bg-[var(--button-color)]"
-                />
-              </div>
-            </div>
           </div>
         </TabsContent>
       </Tabs>

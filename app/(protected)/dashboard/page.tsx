@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Clock, Landmark } from "lucide-react";
+import { Landmark } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -35,10 +35,10 @@ export default function ProcessingPage() {
       </CardHeader>
 
       <CardContent className="flex flex-col items-center justify-center py-8">
-        <div className="grid grid-cols-1 gap-6 w-full max-w-2xl md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-8 md:w-xs w-full">
           <Link
             href="/dashboard/comissions"
-            className="flex flex-col items-center justify-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-color)] px-6 py-8 shadow transition hover:shadow-lg hover:bg-[var(--hover-3-color)] group"
+            className="flex flex-col w-full items-center justify-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-color)] px-6 py-12 shadow transition hover:shadow-lg hover:bg-[var(--hover-3-color)] group"
           >
             <Landmark
               size={28}
@@ -46,18 +46,6 @@ export default function ProcessingPage() {
             />
             <span className="font-medium text-[var(--font-color)] group-hover:text-white transition">
               Acessar comissões
-            </span>
-          </Link>
-          <Link
-            href={"/dashboard/comissions/${commissionId}/history"}
-            className="flex flex-col items-center justify-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-color)] px-6 py-8 shadow transition hover:shadow-lg hover:bg-[var(--hover-3-color)] group"
-          >
-            <Clock
-              size={28}
-              className="text-[var(--font-color)] group-hover:text-white transition"
-            />
-            <span className="font-medium text-[var(--font-color)] group-hover:text-white transition">
-              Histórico
             </span>
           </Link>
         </div>
