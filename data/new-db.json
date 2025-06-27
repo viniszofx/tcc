@@ -55,6 +55,7 @@
         {
             "id": "04160162-6ebf-4dcd-95dc-5e2e4599baad",
             "name": "Aline Souza",
+            "email": "aline@ifms.edu.br",
             "active": true,
             "profile": {
                 "description": "Administrador do sistema",
@@ -64,6 +65,7 @@
         {
             "id": "506b65ae-5f3b-4caf-b95f-6306fbb4211f",
             "name": "Lucas Ferreira",
+            "email": "lucas@ifms.edu.br",
             "active": true,
             "profile": {
                 "description": "Operador de inventário",
@@ -73,6 +75,7 @@
         {
             "id": "89aa7d0b-8ed9-46c0-b9cb-8ab9bcb22f45",
             "name": "Paulo Lima",
+            "email": "paulo@ifms.edu.br",
             "active": true,
             "profile": {
                 "description": "Presidente da comissão CG",
@@ -82,6 +85,7 @@
         {
             "id": "02ce701c-3db7-4ae1-80b3-47b2fa2a15ef",
             "name": "Fernanda Gomes",
+            "email": "fernanda@ifms.edu.br",
             "active": true,
             "profile": {
                 "description": "Membro da comissão CG",
@@ -91,6 +95,7 @@
         {
             "id": "b7c1e1a3-ffd7-48ca-a4c9-0d7b3ca0f1f1",
             "name": "Wanderson Batista",
+            "email": "wanderson@ifms.edu.br",
             "active": true,
             "profile": {
                 "description": "Responsável pelo setor de TI",
@@ -100,6 +105,7 @@
         {
             "id": "d4af6d9e-774e-4d4e-8c11-8c558cba1a2e",
             "name": "Maria Clara",
+            "email": "maria.clara@ifms.edu.br",
             "active": true,
             "profile": {
                 "description": "Coordenadora do campus CG",

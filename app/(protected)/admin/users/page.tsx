@@ -7,82 +7,63 @@ import { UserListCard } from "@/components/manager-users/user-list-card"
 import { UserSearchCard } from "@/components/manager-users/user-search-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import type { Campus, Usuario } from "@/lib/interface"
+import data from "@/data/new-db.json"
+import type { Campus, UserProfile } from "@/lib/new-interface"
 import { ArrowLeft, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useState } from "react"
+import { v4 as uuidv4 } from "uuid"
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<Usuario | null>(null)
-  const [users, setUsers] = useState<Usuario[]>([])
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
+  const [users, setUsers] = useState<UserProfile[]>([])
   const [campuses, setCampuses] = useState<Campus[]>([])
   const router = useRouter()
 
-  const getCampusNameById = (campusId: string): string => {
-    const campus = campuses.find((c: Campus) => c.campus_id === campusId)
-    return campus?.nome || "Sem campus"
-  }
+  const initialCampuses: Campus[] = (data.campus || []).map((campus: any) => ({
+    ...campus,
+  }));
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [usersRes, campusesRes] = await Promise.all([
-          fetch("/api/v1/users"),
-          fetch("/api/v1/campuses")
-        ])
+  const initialUsers: UserProfile[] = (data.user_profiles || []).map((user: any) => ({
+    ...user,
+  }));
 
-        const usersData: Usuario[] = await usersRes.json()
-        const campusesData: Campus[] = await campusesRes.json()
-
-        setUsers(usersData)
-        setCampuses(campusesData)
-      } catch (error) {
-        console.error("Error fetching data:", error)
-      }
-    }
-
-    fetchData()
-  }, [])
-
-  const filteredUsers = users.filter((usuario: Usuario) => {
+  const filteredUsers = users.filter((usuario: UserProfile) => {
     const searchLower = searchTerm.toLowerCase()
     return (
-      usuario.nome.toLowerCase().includes(searchLower) ||
+      usuario.name.toLowerCase().includes(searchLower) ||
       usuario.email.toLowerCase().includes(searchLower) ||
-      usuario.papel.toLowerCase().includes(searchLower) ||
-      (usuario.campus_id && getCampusNameById(usuario.campus_id).toLowerCase().includes(searchLower))
+      usuario.active.toString().toLowerCase().includes(searchLower) ||
+      usuario.id.includes(searchLower)
     )
   })
 
-  const handleAddUser = (newUser: Partial<Usuario>) => {
-    const userToAdd: Usuario = {
+  const handleAddUser = (newUser: Partial<UserProfile>) => {
+    const userToAdd: UserProfile = {
       ...newUser,
-      usuario_id: `user-${Date.now()}`,
-      nome: newUser.nome || "",
+      id: uuidv4(),
+      name: newUser.name || "",
       email: newUser.email || "",
-      papel: newUser.papel || "operador",
-      campus_id: newUser.campus_id || "",
-      habilitado: true,
-      perfil: {
-        descricao: newUser.perfil?.descricao || "",
-        imagem_url: newUser.perfil?.imagem_url || "/logo.svg",
+      active: newUser.active !== undefined ? newUser.active : true,
+      profile: {
+        description: newUser.profile?.description || "",
+        image: newUser.profile?.image || "/logo.svg",
       },
-      organizacao_id: "2000"
-    } as Usuario
+    } as UserProfile
 
     setUsers([...users, userToAdd])
   }
 
-  const handleEditUser = (updatedUser: Partial<Usuario>) => {
+  const handleEditUser = (updatedUser: Partial<UserProfile>) => {
     setUsers(users.map(user =>
-      user.usuario_id === updatedUser.usuario_id ? { ...user, ...updatedUser } : user
+      user.id === updatedUser.id ? { ...user, ...updatedUser } : user
     ))
   }
 
-  const handleEditClick = (user: Usuario) => {
+  const handleEditClick = (user: UserProfile) => {
     setSelectedUser(user)
     setIsEditModalOpen(true)
   }

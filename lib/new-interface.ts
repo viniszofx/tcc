@@ -8,6 +8,7 @@ export interface User {
 export interface UserProfile {
   id: string;
   name: string;
+  email: string;
   active: boolean;
   profile: {
     description: string;

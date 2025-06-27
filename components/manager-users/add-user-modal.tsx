@@ -12,26 +12,24 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { Campus, Usuario } from "@/lib/interface"
+import type { Campus, UserProfile } from "@/lib/new-interface"
 import { useState } from "react"
 
 interface AddUserModalProps {
   isOpen: boolean
   onClose: () => void
-  onAddUser: (user: Partial<Usuario>) => void
+  onAddUser: (user: Partial<UserProfile>) => void
   campusList: Campus[]
 }
 
 export function AddUserModal({ isOpen, onClose, onAddUser, campusList }: AddUserModalProps) {
-  const [formData, setFormData] = useState<Partial<Usuario>>({
-    nome: "",
+  const [formData, setFormData] = useState<Partial<UserProfile>>({
+    name: "",
     email: "",
-    senha_hash: "",
-    campus_id: "",
-    papel: "",
-    perfil: {
-      imagem_url: "/logo.svg",
-      descricao: ""
+    active: false,
+    profile: {
+      image: "/logo.svg",
+      description: ""
     }
   })
 
@@ -50,13 +48,13 @@ export function AddUserModal({ isOpen, onClose, onAddUser, campusList }: AddUser
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
-    if (!formData.nome?.trim()) newErrors.nome = "Nome é obrigatório"
+    if (!formData.name?.trim()) newErrors.name = "Nome é obrigatório"
     if (!formData.email?.trim()) newErrors.email = "Email é obrigatório"
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email inválido"
-    if (!formData.senha_hash) newErrors.senha_hash = "Senha é obrigatória"
-    else if (formData.senha_hash.length < 6) newErrors.senha_hash = "Senha deve ter pelo menos 6 caracteres"
-    if (!formData.papel) newErrors.papel = "Papel é obrigatório"
-    if (!formData.campus_id) newErrors.campus_id = "Campus é obrigatório"
+    // if (!formData.password) newErrors.password = "Senha é obrigatória"
+    // else if (formData.password.length < 6) newErrors.password = "Senha deve ter pelo menos 6 caracteres"
+    if (!formData.active) newErrors.active = "Papel é obrigatório"
+    if (!formData.id) newErrors.campus_id = "Campus é obrigatório"
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -67,14 +65,14 @@ export function AddUserModal({ isOpen, onClose, onAddUser, campusList }: AddUser
     if (validateForm()) {
       onAddUser(formData)
       setFormData({
-        nome: "",
+        name: "",
         email: "",
-        senha_hash: "",
-        campus_id: "",
-        papel: "",
-        perfil: {
-          imagem_url: "/logo.svg",
-          descricao: ""
+        // password: "",
+        id: "",
+        active: false,
+        profile: {
+          image: "/logo.svg",
+          description: ""
         }
       })
       onClose()
@@ -96,13 +94,13 @@ export function AddUserModal({ isOpen, onClose, onAddUser, campusList }: AddUser
             <div className="grid gap-2">
               <Label htmlFor="nome" className="text-[var(--font-color)]">Nome</Label>
               <Input
-                id="nome"
-                name="nome"
-                value={formData.nome || ""}
+                id="name"
+                name="name"
+                value={formData.name || ""}
                 onChange={handleChange}
                 className="border-[var(--border-input)]"
               />
-              {errors.nome && <p className="text-xs text-red-500">{errors.nome}</p>}
+              {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
             </div>
 
             <div className="grid gap-2">
@@ -118,7 +116,7 @@ export function AddUserModal({ isOpen, onClose, onAddUser, campusList }: AddUser
               {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
             </div>
 
-            <div className="grid gap-2">
+            {/* <div className="grid gap-2">
               <Label htmlFor="senha_hash" className="text-[var(--font-color)]">Senha</Label>
               <Input
                 id="senha_hash"
@@ -129,12 +127,12 @@ export function AddUserModal({ isOpen, onClose, onAddUser, campusList }: AddUser
                 className="border-[var(--border-input)]"
               />
               {errors.senha_hash && <p className="text-xs text-red-500">{errors.senha_hash}</p>}
-            </div>
+            </div> */}
 
             <div className="grid gap-2">
               <Label className="text-[var(--font-color)]">Campus</Label>
               <Select 
-                value={formData.campus_id || ""}
+                value={formData.id || ""}
                 onValueChange={value => handleSelectChange("campus_id", value)}
               >
                 <SelectTrigger className="border-[var(--border-input)]">
@@ -142,8 +140,8 @@ export function AddUserModal({ isOpen, onClose, onAddUser, campusList }: AddUser
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)]">
                   {campusList.map(campus => (
-                    <SelectItem key={campus.campus_id} value={campus.campus_id}>
-                      {campus.nome}
+                    <SelectItem key={campus.id} value={campus.id}>
+                      {campus.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
