@@ -26,7 +26,7 @@ export interface Organization {
 export interface OrganizationMember {
   userId: string;
   organizationId: string;
-  role: 'admin' | 'member';
+  role: 'admin' | 'president' | 'member';
 }
 
 export interface Campus {

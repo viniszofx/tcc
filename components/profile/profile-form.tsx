@@ -1,22 +1,19 @@
 "use client"
 
+import type { Campus, UserProfile } from "@/lib/new-interface"
 import ProfileField from "./profile-field"
 
 interface ProfileFormProps {
-  nome: string
-  email: string
-  campus: string
-  descricao: string
+  usuario: UserProfile
+  campus?: Campus
   onNomeChange: (value: string) => void
   onEmailChange: (value: string) => void
   onDescricaoChange: (value: string) => void
 }
 
 export default function ProfileForm({
-  nome,
-  email,
+  usuario,
   campus,
-  descricao,
   onNomeChange,
   onEmailChange,
   onDescricaoChange,
@@ -32,12 +29,12 @@ export default function ProfileForm({
 
   return (
     <div className="space-y-6">
-      <ProfileField id="nome" label="Nome" value={nome} onChange={onNomeChange} maxLength={MAX_NOME_LENGTH} />
+      <ProfileField id="nome" label="Nome" value={usuario.name} onChange={onNomeChange} maxLength={MAX_NOME_LENGTH} />
 
       <ProfileField
         id="email"
         label="Email"
-        value={email}
+        value={usuario.email}
         onChange={onEmailChange}
         maxLength={MAX_EMAIL_LENGTH}
         type="email"
@@ -46,12 +43,12 @@ export default function ProfileForm({
         errorMessage="Formato de e-mail inválido"
       />
 
-      <ProfileField id="campus" label="Campus" value={campus} onChange={() => {}} disabled={true} />
+      <ProfileField id="campus" label="Campus" value={campus?.name || ""} onChange={() => {}} disabled={true} />
 
       <ProfileField
         id="descricao"
         label="Descrição"
-        value={descricao}
+        value={usuario.profile?.description || ""}
         onChange={onDescricaoChange}
         maxLength={MAX_DESCRICAO_LENGTH}
         isTextarea={true}

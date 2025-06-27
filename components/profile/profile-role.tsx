@@ -1,13 +1,13 @@
 "use client"
 
 interface RoleProfileProps {
-  papel: string;
+  role: string
 }
 
-export default function RoleProfile({ papel }: RoleProfileProps) {
+export default function RoleProfile({ role }: RoleProfileProps) {
   return (
     <div className="w-full text-center font-bold text-lg md:text-xl mb-4 text-[var(--font-color)]">
-      {papel.toUpperCase()}
+      {role.toUpperCase()}
     </div>
   )
 }

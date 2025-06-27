@@ -12,27 +12,27 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { Campus, Usuario } from "@/lib/interface"
+import type { Campus, CampusMember, UserProfile } from "@/lib/new-interface"
 import { useEffect, useState } from "react"
 
 interface EditUserModalProps {
   isOpen: boolean
   onClose: () => void
-  user: Usuario | null
-  onEditUser: (user: Partial<Usuario>) => void
+  user: UserProfile | null
+  userMembers?: CampusMember[]
+  onEditUser: (user: Partial<UserProfile>) => void
   campusList: Campus[]
 }
 
 export function EditUserModal({ isOpen, onClose, user, onEditUser, campusList }: EditUserModalProps) {
-  const [formData, setFormData] = useState<Partial<Usuario>>({
-    usuario_id: "",
-    nome: "",
+  const [formData, setFormData] = useState<Partial<UserProfile>>({
+    id: "",
+    name: "",
     email: "",
-    papel: "",
-    campus_id: "",
-    perfil: {
-      imagem_url: "/logo.svg",
-      descricao: ""
+    active: false,
+    profile: {
+      image: "/logo.svg",
+      description: ""
     }
   })
 
@@ -41,14 +41,13 @@ export function EditUserModal({ isOpen, onClose, user, onEditUser, campusList }:
   useEffect(() => {
     if (user) {
       setFormData({
-        usuario_id: user.usuario_id,
-        nome: user.nome,
+        id: user.id,
+        name: user.name,
         email: user.email,
-        papel: user.papel,
-        campus_id: user.campus_id,
-        perfil: user.perfil || {
-          imagem_url: "/logo.svg",
-          descricao: ""
+        active: user.active,
+        profile: user.profile || {
+          image: "/logo.svg",
+          description: ""
         }
       })
     }
@@ -67,11 +66,10 @@ export function EditUserModal({ isOpen, onClose, user, onEditUser, campusList }:
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
-    if (!formData.nome?.trim()) newErrors.nome = "Nome é obrigatório"
+    if (!formData.name?.trim()) newErrors.name = "Nome é obrigatório"
     if (!formData.email?.trim()) newErrors.email = "Email é obrigatório"
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email inválido"
-    if (!formData.papel) newErrors.papel = "Papel é obrigatório"
-    if (!formData.campus_id) newErrors.campus_id = "Campus é obrigatório"
+    if (!formData.id) newErrors.campus_id = "Campus é obrigatório"
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -100,13 +98,13 @@ export function EditUserModal({ isOpen, onClose, user, onEditUser, campusList }:
             <div className="grid gap-2">
               <Label htmlFor="nome" className="text-[var(--font-color)]">Nome</Label>
               <Input
-                id="nome"
-                name="nome"
-                value={formData.nome || ""}
+                id="name"
+                name="name"
+                value={formData.name || ""}
                 onChange={handleChange}
                 className="border-[var(--border-input)]"
               />
-              {errors.nome && <p className="text-xs text-red-500">{errors.nome}</p>}
+              {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
             </div>
 
             <div className="grid gap-2">

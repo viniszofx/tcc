@@ -1,7 +1,7 @@
 export const routes = [
     // admin routes
     { prefix: "/admin/about", title: "Sobre o Sistema" },
-    { prefix: "/admin/profile", title: "Perfil" },
+    { prefix: "/admin/profile/[id]", title: "Perfil" },
     { prefix: "/admin/settings", title: "Configurações do Sistema" },
     { prefix: "/admin/comissions", title: "Comissões" },
     { prefix: "/admin/campus", title: "Gerenciar Campus" },
@@ -20,7 +20,7 @@ export const routes = [
     // dashboard routes
     { prefix: "/dashboard/about", title: "Sobre o Sistema" },
     { prefix: "/admin/settings", title: "Configurações do Sistema" },
-    { prefix: "/dashboard/profile", title: "Perfil" },
+    { prefix: "/dashboard/profile[id]", title: "Perfil" },
     { prefix: "/dashboard/comissions", title: "Comissões" },
     { prefix: "/dashboard/comissions/[commission_id]", title: "Comissões" },
     { prefix: "/dashboard/comissions/[comissao_id]/history", title: "Histórico" },

@@ -3,17 +3,18 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { Campus, UserProfile } from "@/lib/new-interface"
+import type { Campus, CampusMember, UserProfile } from "@/lib/new-interface"
 import { Eye, Pencil } from "lucide-react"
 import Link from "next/link"
 
 interface UserListCardProps {
   users: UserProfile[]
+  campusMembers?: CampusMember[]
+  campus?: Campus[]
   onEditUser: (user: UserProfile) => void
-  getCampusName: (campusId: Campus) => string
 }
 
-export function UserListCard({ users, onEditUser, getCampusName }: UserListCardProps) {
+export function UserListCard({ users, onEditUser, campus, campusMembers }: UserListCardProps) {
   const getRoleBadgeColor = (active: string) => {
     switch (active) {
       case "ativo": return "bg-green-500 hover:bg-green-600"
@@ -62,7 +63,7 @@ export function UserListCard({ users, onEditUser, getCampusName }: UserListCardP
                   </div>
                   <div className="col-span-4 md:col-span-3 truncate">{usuario.email}</div>
                   <div className="col-span-2 hidden md:block truncate">
-                    {getCampusName(usuario || "")}
+                    {campus.name}
                   </div>
                   <div className="col-span-4 md:col-span-2 flex justify-end gap-2">
                     <Button

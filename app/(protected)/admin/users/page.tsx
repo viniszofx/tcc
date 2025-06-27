@@ -8,10 +8,10 @@ import { UserSearchCard } from "@/components/manager-users/user-search-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import data from "@/data/new-db.json"
-import type { Campus, UserProfile } from "@/lib/new-interface"
+import type { Campus, CampusMember, UserProfile } from "@/lib/new-interface"
 import { ArrowLeft, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { v4 as uuidv4 } from "uuid"
 
 export default function UsersPage() {
@@ -21,15 +21,14 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
   const [users, setUsers] = useState<UserProfile[]>([])
   const [campuses, setCampuses] = useState<Campus[]>([])
+  const [campusMembers, setCampusMembers] = useState<CampusMember[]>([])
   const router = useRouter()
 
-  const initialCampuses: Campus[] = (data.campus || []).map((campus: any) => ({
-    ...campus,
-  }));
-
-  const initialUsers: UserProfile[] = (data.user_profiles || []).map((user: any) => ({
-    ...user,
-  }));
+  useEffect(() => {
+    setCampuses((data.campus || []).map((campus: any) => ({ ...campus })))
+    setUsers((data.user_profiles || []).map((user: any) => ({ ...user })))
+    setCampusMembers((data.campus_members || []).map((member: any) => ({ ...member })))
+  }, [])
 
   const filteredUsers = users.filter((usuario: UserProfile) => {
     const searchLower = searchTerm.toLowerCase()
@@ -68,10 +67,23 @@ export default function UsersPage() {
     setIsEditModalOpen(true)
   }
 
-  if (users.length === 0 || campuses.length === 0) {
-    return (
-      <LoadingScreen />
-    )
+  if (!users.length || !campuses.length || !campusMembers.length) {
+    return <LoadingScreen />
+  }
+
+  for (const user of users) {
+    const campusMember = campusMembers.find(member => member.userId === user.id)
+    if (campusMember) {
+      const campus = campuses.find(c => c.id === campusMember.campusId)
+      if (campus) {
+        user.name = campus.name
+      } else {
+        user.name = "Sem campus associado"
+      }
+    } else {
+      user.name = "Sem campus associado"
+    }
+    console.log("cu:", user)
   }
 
   return (
@@ -110,7 +122,7 @@ export default function UsersPage() {
         <UserListCard
           users={filteredUsers}
           onEditUser={handleEditClick}
-          getCampusName={getCampusNameById}
+          campus={campuses}
         />
       </CardContent>
 
