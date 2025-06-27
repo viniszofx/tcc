@@ -1,36 +1,55 @@
-"use client"
+"use client";
 
-import type { Campus, UserProfile } from "@/lib/new-interface"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import type { Campus, UserProfile } from "@/lib/new-interface";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
-import LoadingScreen from "@/components/custom/loading"
-import ProfileActions from "@/components/profile/profile-actions"
-import ProfileEditor from "@/components/profile/profile-editor"
-import ProfileSidebar from "@/components/profile/profile-sidebar"
-import { Card } from "@/components/ui/card"
-import data from "@/data/new-db.json"
-import { useParams } from "next/navigation"
+import LoadingScreen from "@/components/custom/loading";
+import ProfileActions from "@/components/profile/profile-actions";
+import ProfileEditor from "@/components/profile/profile-editor";
+import ProfileSidebar from "@/components/profile/profile-sidebar";
+import { Card } from "@/components/ui/card";
+import data from "@/data/new-db.json";
+import { useParams } from "next/navigation";
 
 export default function ProfilePage() {
-  const router = useRouter()
-  const params = useParams()
-  const userId = params.id as string
-  const [isSaving, setIsSaving] = useState(false)
-  const [usuario, setUsuario] = useState<UserProfile | null>(null)
-  const [campuses, setCampuses] = useState<Campus[]>([])
+  const router = useRouter();
+  const params = useParams();
+  const userId = params.id as string;
+  const [isSaving, setIsSaving] = useState(false);
+  const [usuario, setUsuario] = useState<UserProfile | null>(null);
+  const [campuses, setCampuses] = useState<Campus[]>([]);
 
   const initialUsers = (data.user_profiles || []).map((user: any) => ({
     ...user,
-  }))
+  }));
+
+  const getCampusForUser = (userId: string) => {
+    // Busca o campus_member para encontrar o campusId do usuário
+    const campusMember = data.campus_members.find(
+      (member) => member.userId === userId
+    );
+    if (campusMember) {
+      // Busca o campus pelo campusId
+      return data.campus.find((campus) => campus.id === campusMember.campusId);
+    }
+    return null;
+  };
 
   useEffect(() => {
-  setCampuses((data.campus || []).map((campus: any) => ({ ...campus })));
-  if (userId) {
-    const foundUser = initialUsers.find(user => user.id === userId);
-    setUsuario(foundUser || null);
-  }
-}, [userId]);
+    setCampuses((data.campus || []).map((campus: any) => ({ ...campus })));
+    if (userId) {
+      const foundUser = initialUsers.find((user) => user.id === userId);
+      if (foundUser) {
+        // Busca o campus do usuário
+        const userCampus = getCampusForUser(userId);
+        setUsuario({
+          ...foundUser,
+          campusName: userCampus?.name || "Campus não encontrado",
+        });
+      }
+    }
+  }, [userId]);
 
   const handleSave = async () => {
     if (!usuario) return;
@@ -53,35 +72,34 @@ export default function ProfilePage() {
   };
 
   const handleBack = () => {
-    router.push("/admin")
-  }
+    router.push("/admin");
+  };
 
-  const handleFieldChange = (field: keyof UserProfile, value: string) => {
-  if (!usuario) return;
+  const handleFieldChange = (field: string, value: string) => {
+    if (!usuario) return;
 
-  if (field === "profile") {
-    setUsuario({
-      ...usuario,
-      profile: {
-        ...usuario.profile,
-        description: value
-      }
-    });
-  } else {
-    setUsuario({
-      ...usuario,
-      [field]: value
-    });
-  }
-};
+    if (field === "description") {
+      setUsuario({
+        ...usuario,
+        profile: {
+          ...usuario.profile,
+          description: value,
+        },
+      });
+    } else {
+      setUsuario({
+        ...usuario,
+        [field]: value,
+      });
+    }
+  };
 
   if (!usuario || campuses.length === 0) {
-    return (
-      <LoadingScreen />
-    )
+    return <LoadingScreen />;
   }
 
-  const campusNome = initialUsers.find(user => user.id === usuario.id)?.campusName || ""
+  const campusNome =
+    getCampusForUser(usuario.id)?.name || "Campus não encontrado";
 
   return (
     <div className="flex-1 w-full p-3 xs:p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center">
@@ -89,7 +107,7 @@ export default function ProfilePage() {
         <div className="flex flex-col md:flex-row h-full p-6 sm:p-8 gap-8">
           <ProfileSidebar
             usuario={usuario}
-            campus={campuses.find((c) => c.name === campusNome)}
+            campus={getCampusForUser(usuario.id) || undefined}
           />
 
           <div className="hidden md:block w-px bg-border h-auto" />
@@ -97,7 +115,7 @@ export default function ProfilePage() {
           <ProfileEditor
             usuario={usuario}
             onFieldChange={handleFieldChange}
-            campus={campuses.find((c) => c.name === campusNome) || undefined}
+            campus={getCampusForUser(usuario.id) || undefined}
           />
         </div>
 
@@ -108,5 +126,5 @@ export default function ProfilePage() {
         />
       </Card>
     </div>
-  )
+  );
 }

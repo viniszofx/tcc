@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import type { Campus, UserProfile } from "@/lib/new-interface"
-import ProfileForm from "./profile-form"
+import type { Campus, UserProfile } from "@/lib/new-interface";
+import ProfileForm from "./profile-form";
 
 interface ProfileEditorProps {
-  usuario: UserProfile
-  campus? : Campus
-  onFieldChange: (field: keyof UserProfile, value: any) => void
+  usuario: UserProfile;
+  campus?: Campus;
+  onFieldChange: (field: string, value: string) => void;
 }
 
 export default function ProfileEditor({
@@ -14,19 +14,17 @@ export default function ProfileEditor({
   campus,
   onFieldChange,
 }: ProfileEditorProps) {
-  const handleNomeChange = (value: string) => onFieldChange('name', value)
-  const handleEmailChange = (value: string) => onFieldChange('email', value)
-  const handleDescricaoChange = (value: string) => {
-    onFieldChange('profile', {
-      ...usuario.profile,
-      description: value
-    })
-  }
+  const handleNomeChange = (value: string) => onFieldChange("name", value);
+  const handleEmailChange = (value: string) => onFieldChange("email", value);
+  const handleDescricaoChange = (value: string) =>
+    onFieldChange("description", value);
 
   return (
     <div className="w-full md:w-2/3">
       <div className="bg-[var(--bg-simple)] rounded-lg p-6 border border-[var(--border-color)] shadow-sm h-auto md:h-full">
-        <h3 className="text-lg font-medium text-[var(--font-color)] mb-6">Editar Perfil</h3>
+        <h3 className="text-lg font-medium text-[var(--font-color)] mb-6">
+          Editar Perfil
+        </h3>
         <ProfileForm
           usuario={usuario}
           campus={campus}
@@ -36,5 +34,5 @@ export default function ProfileEditor({
         />
       </div>
     </div>
-  )
+  );
 }

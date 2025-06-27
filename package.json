@@ -79,6 +79,7 @@
     "cross-env": "^7.0.3",
     "eslint": "^9.28.0",
     "eslint-config-next": "15.3.3",
+    "prisma": "^6.10.1",
     "tailwindcss": "^4",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"

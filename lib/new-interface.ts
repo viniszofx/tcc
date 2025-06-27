@@ -14,6 +14,7 @@ export interface UserProfile {
     description: string;
     image: string;
   };
+  campusName?: string;
 }
 
 export interface Organization {
@@ -26,7 +27,7 @@ export interface Organization {
 export interface OrganizationMember {
   userId: string;
   organizationId: string;
-  role: 'admin' | 'president' | 'member';
+  role: "admin" | "president" | "member";
 }
 
 export interface Campus {
@@ -46,7 +47,7 @@ export interface Commission {
   id: string;
   campusId: string;
   name: string;
-  type: 'inventory' | string;
+  type: "inventory" | string;
   description: string;
   spreadsheet_url: string | null;
   active: boolean;
@@ -56,7 +57,7 @@ export interface Commission {
 export interface CommissionMember {
   userId: string;
   commissionId: string;
-  roleInCommission: 'Presidente' | 'Membro' | string;
+  roleInCommission: "Presidente" | "Membro" | string;
 }
 
 export interface InventoryItem {
@@ -66,11 +67,11 @@ export interface InventoryItem {
   description: string;
   brandModel: string;
   currentResponsibility: string;
-  conservationState: 'BOM' | 'REGULAR' | 'RUIM' | string;
+  conservationState: "BOM" | "REGULAR" | "RUIM" | string;
   location: string;
   tags: string[];
   ed: string;
-  updatedAt: string; 
+  updatedAt: string;
   sector: string;
   campusCode: string;
 }

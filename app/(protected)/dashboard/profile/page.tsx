@@ -1,97 +1,99 @@
-"use client"
+"use client";
 
-import type { Campus, Usuario } from "@/lib/interface"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import type { Campus, Usuario } from "@/lib/interface";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
-import LoadingScreen from "@/components/custom/loading"
-import ProfileActions from "@/components/profile/profile-actions"
-import ProfileEditor from "@/components/profile/profile-editor"
-import ProfileSidebar from "@/components/profile/profile-sidebar"
-import { Card } from "@/components/ui/card"
+import LoadingScreen from "@/components/custom/loading";
+import ProfileActions from "@/components/profile/profile-actions";
+import ProfileEditor from "@/components/profile/profile-editor";
+import ProfileSidebar from "@/components/profile/profile-sidebar";
+import { Card } from "@/components/ui/card";
 
 export default function ProfilePage() {
-  const router = useRouter()
-  const [isSaving, setIsSaving] = useState(false)
-  const [usuario, setUsuario] = useState<Usuario | null>(null)
-  const [campuses, setCampuses] = useState<Campus[]>([])
+  const router = useRouter();
+  const [isSaving, setIsSaving] = useState(false);
+  const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [campuses, setCampuses] = useState<Campus[]>([]);
 
   const getCampusNameById = (campusId: string): string => {
-    const campus = campuses.find((c: Campus) => c.campus_id === campusId)
-    return campus?.nome || "Sem campus"
-  }
+    const campus = campuses.find((c: Campus) => c.campus_id === campusId);
+    return campus?.nome || "Sem campus";
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [userRes, campusesRes] = await Promise.all([
           fetch("/api/v1/user"),
-          fetch("/api/v1/campuses")
-        ])
+          fetch("/api/v1/campuses"),
+        ]);
 
-        const userData: Usuario = await userRes.json()
-        const campusesData: Campus[] = await campusesRes.json()
+        const userData: Usuario = await userRes.json();
+        const campusesData: Campus[] = await campusesRes.json();
 
-        setUsuario(userData)
-        setCampuses(campusesData)
+        setUsuario(userData);
+        setCampuses(campusesData);
       } catch (error) {
-        console.error("Error fetching data:", error)
+        console.error("Error fetching data:", error);
       }
-    }
+    };
 
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   const handleSave = async () => {
-    if (!usuario) return
+    if (!usuario) return;
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(usuario.email)) {
-      alert("Por favor, insira um e-mail válido antes de salvar.")
-      return
+      alert("Por favor, insira um e-mail válido antes de salvar.");
+      return;
     }
 
     try {
-      setIsSaving(true)
+      setIsSaving(true);
       await fetch("/api/v1/user", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(usuario)
-      })
-      alert("Perfil salvo com sucesso!")
+        body: JSON.stringify(usuario),
+      });
+      alert("Perfil salvo com sucesso!");
     } catch (error) {
-      console.error("Error saving profile:", error)
-      alert("Erro ao salvar perfil. Tente novamente.")
+      console.error("Error saving profile:", error);
+      alert("Erro ao salvar perfil. Tente novamente.");
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   const handleBack = () => {
-    router.push("/dashboard")
-  }
+    router.push("/dashboard");
+  };
 
   const handleFieldChange = (field: keyof Usuario, value: any) => {
     if (usuario) {
       setUsuario({
         ...usuario,
-        [field]: field === 'perfil' ? {
-          ...usuario.perfil,
-          descricao: value
-        } : value
-      })
+        [field]:
+          field === "perfil"
+            ? {
+                ...usuario.perfil,
+                descricao: value,
+              }
+            : value,
+      });
     }
-  }
+  };
 
   if (!usuario || campuses.length === 0) {
-    return (
-      <LoadingScreen />
-    )
+    return <LoadingScreen />;
   }
 
-  const campusNome = getCampusNameById(usuario.campus_id || "")
+  const userCampus = getUserCampus(usuario.id);
+  const campusNome = userCampus?.name || "Sem campus";
 
   return (
     <div className="flex-1 w-full p-3 xs:p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center">
@@ -104,9 +106,9 @@ export default function ProfilePage() {
               papel: usuario.papel as "admin" | "operador" | "presidente",
               perfil: {
                 descricao: usuario.perfil?.descricao || "",
-                imagem_url: usuario.perfil?.imagem_url || "/logo.svg"
+                imagem_url: usuario.perfil?.imagem_url || "/logo.svg",
               },
-              campusName: campusNome
+              campusName: campusNome,
             }}
           />
 
@@ -126,5 +128,5 @@ export default function ProfilePage() {
         />
       </Card>
     </div>
-  )
+  );
 }
