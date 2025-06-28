@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,12 +8,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { Campus } from "@/lib/interface"
-import { useState } from "react"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { Campus } from "@/lib/new-interface";
+import { useState } from "react";
 
 export interface AddComissionModalProps {
   isOpen: boolean;
@@ -27,70 +33,78 @@ export interface AddComissionModalProps {
   campuses: Campus[];
 }
 
-export function AddComissionModal({ isOpen, onClose, onAddComission }: AddComissionModalProps) {
+export function AddComissionModal({
+  isOpen,
+  onClose,
+  onAddComission,
+}: AddComissionModalProps) {
   const [formData, setFormData] = useState({
     nome: "",
     descricao: "",
-    tipo: "inventory"
-  })
-  
-  const [errors, setErrors] = useState<Record<string, string>>({})
+    tipo: "inventory",
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const tiposComissao = [
     { value: "inventory", label: "Inventário" },
     { value: "disposal", label: "Desfazimento" },
-    { value: "other", label: "Outra" }
-  ]
+    { value: "other", label: "Outra" },
+  ];
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }))
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
-  }
+  };
 
   const handleSelectChange = (value: string) => {
-    setFormData(prev => ({ ...prev, tipo: value }))
-  }
+    setFormData((prev) => ({ ...prev, tipo: value }));
+  };
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {}
+    const newErrors: Record<string, string> = {};
 
     if (!formData.nome.trim()) {
-      newErrors.nome = "Nome da comissão é obrigatório"
+      newErrors.nome = "Nome da comissão é obrigatório";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (validateForm()) {
       onAddComission({
         nome: formData.nome,
         descricao: formData.descricao,
-        tipo: formData.tipo
-      })
+        tipo: formData.tipo,
+      });
 
       setFormData({
         nome: "",
         descricao: "",
-        tipo: "inventory"
-      })
+        tipo: "inventory",
+      });
 
-      onClose()
+      onClose();
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] bg-[var(--bg-simple)]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="text-[var(--font-color)]">Nova Comissão</DialogTitle>
+            <DialogTitle className="text-[var(--font-color)]">
+              Nova Comissão
+            </DialogTitle>
             <DialogDescription className="text-[var(--font-color)]">
               Preencha os dados para criar uma nova comissão
             </DialogDescription>
@@ -109,24 +123,23 @@ export function AddComissionModal({ isOpen, onClose, onAddComission }: AddComiss
                 className="border-[var(--border-input)]"
                 placeholder="Ex: Comissão de Inventário 2024"
               />
-              {errors.nome && <p className="text-xs text-red-500">{errors.nome}</p>}
+              {errors.nome && (
+                <p className="text-xs text-red-500">{errors.nome}</p>
+              )}
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="tipo" className="text-[var(--font-color)]">
                 Tipo*
               </Label>
-              <Select 
-                value={formData.tipo} 
-                onValueChange={handleSelectChange}
-              >
+              <Select value={formData.tipo} onValueChange={handleSelectChange}>
                 <SelectTrigger className="border-[var(--border-input)]">
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)] border-[var(--border-input)]">
                   {tiposComissao.map((tipo) => (
-                    <SelectItem 
-                      key={tipo.value} 
+                    <SelectItem
+                      key={tipo.value}
                       value={tipo.value}
                       className="hover:bg-[var(--hover-color)]"
                     >
@@ -171,5 +184,5 @@ export function AddComissionModal({ isOpen, onClose, onAddComission }: AddComiss
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

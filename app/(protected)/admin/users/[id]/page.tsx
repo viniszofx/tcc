@@ -1,71 +1,96 @@
-"use client"
+"use client";
 
-import LoadingScreen from "@/components/custom/loading"
-import { DeleteUserDialog } from "@/components/manager-users/delete-user-dialog"
-import { EditUserModal } from "@/components/manager-users/edit-user-modal"
-import { UserDetailsCard } from "@/components/manager-users/user-details-card"
-import { UserProfileCard } from "@/components/manager-users/user-profile-card"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react"
-import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-
-function getCampusNameById(campusId: string, campuses: any[]) {
-  const campus = campuses.find((c) => String(c.id) === String(campusId))
-  return campus ? campus.name : "Sem campus"
-}
+import LoadingScreen from "@/components/custom/loading";
+import { DeleteUserDialog } from "@/components/manager-users/delete-user-dialog";
+import { EditUserModal } from "@/components/manager-users/edit-user-modal";
+import { UserDetailsCard } from "@/components/manager-users/user-details-card";
+import { UserProfileCard } from "@/components/manager-users/user-profile-card";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import data from "@/data/new-db.json";
+import { getCampusByUser, getCampuses } from "@/lib/data-service";
+import type { Campus, UserProfile } from "@/lib/new-interface";
+import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function UserDetailsPage() {
-  const params = useParams()
-  const router = useRouter()
-  const id = typeof params.id === "string" ? params.id : Array.isArray(params.id) ? params.id[0] : ""
-  const [userData, setUserData] = useState<any>(null)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [campuses, setCampuses] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const params = useParams();
+  const router = useRouter();
+  const id =
+    typeof params.id === "string"
+      ? params.id
+      : Array.isArray(params.id)
+      ? params.id[0]
+      : "";
+  const [userData, setUserData] = useState<UserProfile | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [campuses, setCampuses] = useState<Campus[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchData() {
-      setLoading(true)
-      const [userRes, campusRes] = await Promise.all([
-        fetch("/api/v1/users"),
-        fetch("/api/v1/campuses"),
-      ])
-      const users = await userRes.json()
-      const campusesData = await campusRes.json()
-      setCampuses(campusesData)
-      const foundUser = users.find(
-        (u: any) =>
-          String(u.id) === String(id) ||
-          String(u.usuario_id) === String(id)
-      )
-      setUserData(foundUser || null)
-      setLoading(false)
+    setLoading(true);
+
+    // Carregar dados dos campus
+    const loadedCampuses = getCampuses();
+    setCampuses(loadedCampuses);
+
+    // Buscar usuário por ID
+    const foundUser = data.user_profiles.find((user) => user.id === id);
+
+    if (foundUser) {
+      const userCampus = getCampusByUser(foundUser.id);
+      const userWithCampus: UserProfile & { campusName?: string } = {
+        ...foundUser,
+        campusName: userCampus ? userCampus.name : "Sem campus associado",
+        profile: foundUser.profile || { description: "", image: "/logo.svg" },
+      };
+      setUserData(userWithCampus as UserProfile);
+    } else {
+      setUserData(null);
     }
-    fetchData()
-  }, [id])
+
+    setLoading(false);
+  }, [id]);
 
   const handleDeleteUser = () => {
-    router.push("/admin/users")
-  }
+    router.push("/admin/users");
+  };
 
-  const handleEditUser = (updatedUser: any) => {
-    setUserData(updatedUser)
-  }
+  const handleEditUser = (updatedUser: Partial<UserProfile>) => {
+    if (updatedUser.id === userData?.id && updatedUser.id) {
+      const userCampus = getCampusByUser(updatedUser.id);
+      const userWithCampus = {
+        ...userData,
+        ...updatedUser,
+        campusName: userCampus ? userCampus.name : "Sem campus associado",
+        profile: updatedUser.profile ||
+          userData?.profile || { description: "", image: "/logo.svg" },
+      };
+      setUserData(userWithCampus as UserProfile);
+    }
+    setIsEditModalOpen(false);
+  };
 
   if (loading) {
-    return (
-      <LoadingScreen />
-    )
+    return <LoadingScreen />;
   }
 
   if (!userData) {
     return (
       <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300">
         <CardContent className="flex flex-col items-center justify-center p-8">
-          <div className="text-xl text-[var(--font-color)]">Usuário não encontrado</div>
+          <div className="text-xl text-[var(--font-color)]">
+            Usuário não encontrado
+          </div>
           <Button
             className="mt-4 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white"
             onClick={() => router.back()}
@@ -75,14 +100,16 @@ export default function UserDetailsPage() {
           </Button>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
         <div>
-          <CardTitle className="text-xl font-bold text-[var(--font-color)] md:text-2xl">Detalhes do Usuário</CardTitle>
+          <CardTitle className="text-xl font-bold text-[var(--font-color)] md:text-2xl">
+            Detalhes do Usuário
+          </CardTitle>
           <CardDescription className="text-[var(--font-color)] opacity-70">
             Visualize e gerencie as informações do usuário
           </CardDescription>
@@ -100,22 +127,22 @@ export default function UserDetailsPage() {
       <CardContent className="flex flex-col gap-6 p-6">
         <UserProfileCard
           usuario={{
-            nome: userData.nome,
-            papel: userData.papel,
+            nome: userData.name,
+            papel: "Usuário", // Valor padrão já que não temos papel específico
             perfil: {
-              imagem_url: userData.perfil?.imagem_url || "/logo.svg",
-              descricao: userData.perfil?.descricao || ""
-            }
+              imagem_url: userData.profile?.image || "/logo.svg",
+              descricao: userData.profile?.description || "",
+            },
           }}
         />
 
         <UserDetailsCard
           usuario={{
-            usuario_id: userData.usuario_id,
+            usuario_id: userData.id,
             email: userData.email,
-            campus_id: userData.campus_id,
-            papel: userData.papel,
-            campusName: getCampusNameById(userData.campus_id, campuses)
+            campus_id: "", // Não usado mais
+            papel: "Usuário", // Valor padrão
+            campusName: (userData as any).campusName || "Sem campus associado",
           }}
         />
       </CardContent>
@@ -143,7 +170,7 @@ export default function UserDetailsPage() {
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleDeleteUser}
-        userName={userData.name || userData.nome}
+        userName={userData.name}
       />
 
       <EditUserModal
@@ -154,5 +181,5 @@ export default function UserDetailsPage() {
         campusList={campuses}
       />
     </Card>
-  )
+  );
 }

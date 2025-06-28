@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import data from "@/data/db.json";
+import data from "@/data/new-db.json";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -22,13 +22,13 @@ interface PageProps {
 }
 
 export default function ComissionsPage({ params }: any) {
-  const campus_id = params.campus_id || "corumba";
-  const comissoes = data.comissoes.filter(
-    (comissao) => comissao.campus_id === campus_id
+  const campus_id = params.campus_id || "99dcee11-52de-4f4b-b5d5-6e46e4d30191"; // Câmpus Corumbá por padrão
+  const comissoes = data.commissions.filter(
+    (comissao) => comissao.campusId === campus_id
   );
 
-  const campus = data.campuses.find((campus) => campus.campus_id === campus_id);
-  const campusName = campus ? campus.nome : "Câmpus";
+  const campus = data.campus.find((campus) => campus.id === campus_id);
+  const campusName = campus ? campus.name : "Câmpus";
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -69,28 +69,28 @@ export default function ComissionsPage({ params }: any) {
         <div className="grid gap-6 md:grid-cols-2">
           {comissoes.map((comissao) => (
             <Card
-              key={comissao.comissao_id}
+              key={comissao.id}
               className="border-[var(--border-color)] bg-[var(--bg-simple)]"
             >
               <CardHeader>
                 <CardTitle className="text-[var(--font-color)]">
-                  {comissao.nome}
+                  {comissao.name}
                 </CardTitle>
                 <CardDescription className="text-[var(--font-color)]">
-                  Tipo: {comissao.tipo} | Ano: {comissao.ano}
+                  Tipo: {comissao.type} | Ano: {comissao.year}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-[var(--font-color)]">
-                  {comissao.descricao || "Sem descrição"}
+                  {comissao.description || "Sem descrição"}
                 </p>
                 <p className="text-sm text-[var(--font-color)] mt-2">
-                  Status: {comissao.ativo ? "Ativa" : "Inativa"}
+                  Status: {comissao.active ? "Ativa" : "Inativa"}
                 </p>
               </CardContent>
               <CardFooter>
                 <Link
-                  href={`/dashboard/comissions/${comissao.comissao_id}`}
+                  href={`/dashboard/comissions/${comissao.id}`}
                   className="w-full"
                 >
                   <Button className="w-full text-[var(--font-color2)] bg-[var(--button-color)] hover:bg-[var(--hover-3-color)]">

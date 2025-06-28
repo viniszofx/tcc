@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import data from "@/data/db.json";
+import data from "@/data/new-db.json";
 import { Clock, Database } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -20,7 +20,7 @@ export default function ComissionPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [comission, setComission] = useState(() =>
-    data.comissoes.find((c) => c.comissao_id === commission_id)
+    data.commissions.find((c) => c.id === commission_id)
   );
 
   useEffect(() => {
@@ -46,8 +46,17 @@ export default function ComissionPage() {
     );
   }
 
-  const campus = data.campuses.find((c) => c.campus_id === comission.campus_id);
-  const presidente = data.users.find((u) => u.usuario_id === comission.presidente_id);
+  const campus = data.campus.find((c) => c.id === comission.campusId);
+
+  // Busca o presidente da comissão
+  const presidenteMember = data.commission_members.find(
+    (member) =>
+      member.commissionId === commission_id &&
+      member.roleInCommission === "Presidente"
+  );
+  const presidente = presidenteMember
+    ? data.user_profiles.find((user) => user.id === presidenteMember.userId)
+    : null;
 
   const routes = [
     {
@@ -68,13 +77,21 @@ export default function ComissionPage() {
     <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
       <CardHeader className="pb-4 text-center">
         <CardTitle className="text-xl font-bold text-[var(--font-color)] md:text-2xl lg:text-3xl">
-          {comission.nome}
+          {comission.name}
         </CardTitle>
         <CardDescription className="text-sm text-[var(--font-color)]">
-          {comission.descricao || "Nenhuma descrição fornecida"}
+          {comission.description || "Nenhuma descrição fornecida"}
         </CardDescription>
-        {campus && <CardDescription className="text-[var(--font-color)]">Campus: {campus.nome}</CardDescription>}
-        {presidente && <CardDescription className="text-[var(--font-color)]">Presidente: {presidente.nome}</CardDescription>}
+        {campus && (
+          <CardDescription className="text-[var(--font-color)]">
+            Campus: {campus.name}
+          </CardDescription>
+        )}
+        {presidente && (
+          <CardDescription className="text-[var(--font-color)]">
+            Presidente: {presidente.name}
+          </CardDescription>
+        )}
       </CardHeader>
 
       <CardContent className="flex flex-col items-center justify-center py-8">
@@ -89,7 +106,9 @@ export default function ComissionPage() {
               <span className="text-base font-medium text-[var(--font-color)] group-hover:text-white transition text-center">
                 {route.title}
               </span>
-              <p className="text-sm text-muted-foreground text-center">{route.description}</p>
+              <p className="text-sm text-muted-foreground text-center">
+                {route.description}
+              </p>
             </Link>
           ))}
         </div>

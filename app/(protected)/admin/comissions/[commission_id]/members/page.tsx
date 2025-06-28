@@ -10,12 +10,37 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import data from "@/data/db.json";
-import type { Comissao, Usuario } from "@/lib/interface";
+import {
+  getCommissionById,
+  getUserById,
+  getUsersByCommission,
+} from "@/lib/data-service";
 import { ArrowLeft, Plus, Trash2, Users } from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
+interface Commission {
+  id: string;
+  campusId: string;
+  name: string;
+  type: string;
+  description: string;
+  active: boolean;
+  year: number;
+}
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  active: boolean;
+  profile?: {
+    description: string;
+    image: string;
+  };
+  roleInCommission?: string;
+}
 
 export default function ComissionMembersPage() {
   const router = useRouter();
@@ -23,29 +48,20 @@ export default function ComissionMembersPage() {
   const comissionId = params.commission_id as string;
 
   const [isLoading, setIsLoading] = useState(true);
-  const [comissao, setComissao] = useState<Comissao | null>(null);
-  const [membros, setMembros] = useState<Usuario[]>([]);
+  const [comissao, setComissao] = useState<Commission | null>(null);
+  const [membros, setMembros] = useState<User[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = () => {
       try {
-        const comissaoEncontrada = data.comissoes.find(
-          (c: Comissao) => c.comissao_id === comissionId && c.ativo !== false
-        );
+        const comissaoEncontrada = getCommissionById(comissionId);
 
-        if (comissaoEncontrada) {
+        if (comissaoEncontrada && comissaoEncontrada.active) {
           setComissao(comissaoEncontrada);
 
-          const membrosComissao = data.users.filter(
-            (u: Usuario) => u.comissao_id === comissionId
-          );
-
-          const membrosUnicos = Array.from(new Map(
-            membrosComissao.map(membro => [membro.usuario_id, membro])
-          ).values());
-
-          setMembros(membrosUnicos);
+          const membrosComissao = getUsersByCommission(comissionId);
+          setMembros(membrosComissao as User[]);
         } else {
           console.error("Comissão não encontrada ou inativa");
         }
@@ -64,25 +80,24 @@ export default function ComissionMembersPage() {
   };
 
   const handleRemoveMember = (memberId: string) => {
-    setMembros(membros.filter(m => m.usuario_id !== memberId));
+    setMembros(membros.filter((m) => m.id !== memberId));
     console.log(`Membro removido: ${memberId}`);
   };
 
   const handleAddNewMember = (userId: string, role: string) => {
-    const userToAdd = data.users.find(u => u.usuario_id === userId);
+    const userToAdd = getUserById(userId);
 
     if (userToAdd) {
-      const alreadyMember = membros.some(m => m.usuario_id === userId);
+      const alreadyMember = membros.some((m) => m.id === userId);
 
       if (alreadyMember) {
         alert("Este usuário já é membro da comissão");
         return;
       }
 
-      const newMember = {
+      const newMember: User = {
         ...userToAdd,
-        comissao_id: comissionId,
-        papel: role
+        roleInCommission: role,
       };
 
       setMembros([...membros, newMember]);
@@ -92,9 +107,7 @@ export default function ComissionMembersPage() {
   };
 
   if (isLoading) {
-    return (
-      <LoadingScreen />
-    );
+    return <LoadingScreen />;
   }
 
   if (!comissao) {
@@ -123,10 +136,11 @@ export default function ComissionMembersPage() {
     <>
       <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
         <CardHeader className="pb-4">
+          {" "}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
-                Membros da Comissão: {comissao.nome}
+                Membros da Comissão: {comissao.name}
               </CardTitle>
               <CardDescription className="text-[var(--font-color)]">
                 Gerencie os membros desta comissão
@@ -176,24 +190,24 @@ export default function ComissionMembersPage() {
             <div className="grid gap-4">
               {membros.map((membro) => (
                 <div
-                  key={`${membro.usuario_id}-${membro.comissao_id}`}
+                  key={`${membro.id}-${comissionId}`}
                   className="flex items-center justify-between p-4 border rounded-lg bg-[var(--card-color)] shadow-sm"
                 >
                   <div className="flex items-center gap-4">
                     <div className="relative h-12 w-12 rounded-full overflow-hidden">
                       <Image
-                        src={membro.perfil?.imagem_url || "/logo.svg"}
-                        alt={`Foto de ${membro.nome}`}
+                        src={membro.profile?.image || "/logo.svg"}
+                        alt={`Foto de ${membro.name}`}
                         fill
                         className="object-cover"
                       />
                     </div>
                     <div>
                       <h3 className="font-medium text-[var(--font-color)]">
-                        {membro.nome}
+                        {membro.name}
                       </h3>
                       <p className="text-sm text-muted-foreground capitalize">
-                        {membro.papel}
+                        {membro.roleInCommission || "Membro"}
                       </p>
                     </div>
                   </div>
@@ -201,7 +215,7 @@ export default function ComissionMembersPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleRemoveMember(membro.usuario_id)}
+                      onClick={() => handleRemoveMember(membro.id)}
                       className="text-red-500 hover:text-red-700"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -219,7 +233,7 @@ export default function ComissionMembersPage() {
         onClose={() => setIsAddModalOpen(false)}
         onSave={handleAddNewMember}
         commissionId={comissionId}
-        currentMembers={membros.map(m => m.usuario_id)}
+        currentMembers={membros.map((m) => m.id)}
       />
     </>
   );

@@ -8,17 +8,23 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import db from "@/data/db.json";
+import db from "@/data/new-db.json";
 import HeaderTitle from "../../../components/custom/header-title";
-
-const { users } = db;
 
 export default async function Layout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const usuarioData = users.find((u) => u.papel === "admin");
+  // Busca um usuário admin ou o primeiro usuário disponível
+  const adminUser = db.user_profiles.find((u) => {
+    const orgMember = db.organization_members.find(
+      (member) => member.userId === u.id
+    );
+    return orgMember?.role === "admin";
+  });
+
+  const usuarioData = adminUser || db.user_profiles[0];
 
   return (
     <ThemeProvider>
@@ -40,9 +46,7 @@ export default async function Layout({
 
                   <div className="flex items-center gap-4">
                     <DarkModeToggle />
-                    {usuarioData && (
-                      <UserAvatar/>
-                    )}
+                    {usuarioData && <UserAvatar />}
                   </div>
                 </div>
               </div>

@@ -11,15 +11,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import data from "@/data/db.json";
-import type { Comissao } from "@/lib/interface";
+import data from "@/data/new-db.json";
+import type { Commission } from "@/lib/new-interface";
 import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function CommissionsPage() {
-  const [comissoes, setComissoes] = useState<Comissao[]>(data.comissoes);
+  const [comissoes, setComissoes] = useState<Commission[]>(data.commissions);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -28,8 +28,8 @@ export default function CommissionsPage() {
   }, []);
 
   const getDefaultCampusId = (): string => {
-    const defaultCampus = data.campuses.find(c => c.campus_ativo);
-    return defaultCampus?.campus_id || data.campuses[0]?.campus_id || "";
+    const defaultCampus = data.campus.find((c) => c.active);
+    return defaultCampus?.id || data.campus[0]?.id || "";
   };
 
   const handleAddComission = (newComission: {
@@ -37,16 +37,15 @@ export default function CommissionsPage() {
     descricao: string;
     tipo: string;
   }) => {
-    const novaComissao: Comissao = {
-      comissao_id: `${Date.now()}`,
-      campus_id: getDefaultCampusId(),
-      nome: newComission.nome,
-      descricao: newComission.descricao,
-      tipo: newComission.tipo,
-      ativo: true,
-      ano: new Date().getFullYear(),
-      presidente_id: "",
-      organizacao_id: data.organizations[0]?.organizacao_id || ""
+    const novaComissao: Commission = {
+      id: `${Date.now()}`,
+      campusId: getDefaultCampusId(),
+      name: newComission.nome,
+      description: newComission.descricao,
+      type: newComission.tipo,
+      active: true,
+      year: new Date().getFullYear(),
+      spreadsheet_url: null,
     };
 
     setComissoes([...comissoes, novaComissao]);
@@ -54,8 +53,8 @@ export default function CommissionsPage() {
   };
 
   const getCampusName = (campusId: string): string => {
-    const campus = data.campuses.find(c => c.campus_id === campusId);
-    return campus?.nome || "Câmpus";
+    const campus = data.campus.find((c) => c.id === campusId);
+    return campus?.name || "Câmpus";
   };
 
   const router = useRouter();
@@ -73,7 +72,7 @@ export default function CommissionsPage() {
           </CardTitle>
           <CardDescription className="text-[var(--font-color)] opacity-70">
             {comissoes.length > 0
-              ? `Lista de comissões do ${getCampusName(comissoes[0].campus_id)}`
+              ? `Lista de comissões do ${getCampusName(comissoes[0].campusId)}`
               : "Nenhuma comissão cadastrada"}
           </CardDescription>
         </div>
@@ -90,7 +89,7 @@ export default function CommissionsPage() {
           <Button
             onClick={() => setIsAddModalOpen(true)}
             className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all w-full sm:w-auto"
-            disabled={data.campuses.length === 0}
+            disabled={data.campus.length === 0}
           >
             <Plus className="mr-2 h-4 w-4" />
             Adicionar Comissão
@@ -103,41 +102,40 @@ export default function CommissionsPage() {
           <div className="grid gap-6 md:grid-cols-2">
             {comissoes.map((comissao) => (
               <Card
-                key={comissao.comissao_id}
+                key={comissao.id}
                 className="border border-[var(--border-color)] bg-[var(--bg-simple)]"
               >
                 <CardHeader>
                   <CardTitle className="text-[var(--font-color)]">
-                    {comissao.nome}
+                    {comissao.name}
                   </CardTitle>
                   <CardDescription className="text-[var(--font-color)]">
-                    Tipo: {comissao.tipo} | Ano: {comissao.ano}
+                    Tipo: {comissao.type} | Ano: {comissao.year}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-[var(--font-color)]">
-                    {comissao.descricao || "Sem descrição"}
+                    {comissao.description || "Sem descrição"}
                   </p>
                   <div className="mt-2 flex items-center gap-2">
                     <span className="text-sm text-[var(--font-color)]">
                       Status:
                     </span>
                     <span
-                      className={`text-sm ${comissao.ativo
-                        ? "text-green-500"
-                        : "text-red-500"
-                        }`}
+                      className={`text-sm ${
+                        comissao.active ? "text-green-500" : "text-red-500"
+                      }`}
                     >
-                      {comissao.ativo ? "Ativa" : "Inativa"}
+                      {comissao.active ? "Ativa" : "Inativa"}
                     </span>
                   </div>
                   <p className="text-sm text-[var(--font-color)] mt-2">
-                    Campus: {getCampusName(comissao.campus_id)}
+                    Campus: {getCampusName(comissao.campusId)}
                   </p>
                 </CardContent>
                 <CardFooter>
                   <Link
-                    href={`/admin/comissions/${comissao.comissao_id}`}
+                    href={`/admin/comissions/${comissao.id}`}
                     className="w-full"
                   >
                     <Button className="w-full text-[var(--font-color2)] bg-[var(--button-color)] transition-all hover:bg-[var(--hover-3-color)] hover:text-white">
@@ -168,7 +166,7 @@ export default function CommissionsPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAddComission={handleAddComission}
-        campuses={data.campuses}
+        campuses={data.campus}
       />
     </Card>
   );

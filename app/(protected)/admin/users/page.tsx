@@ -1,49 +1,71 @@
-﻿"use client"
+﻿"use client";
 
-import LoadingScreen from "@/components/custom/loading"
-import { AddUserModal } from "@/components/manager-users/add-user-modal"
-import { EditUserModal } from "@/components/manager-users/edit-user-modal"
-import { UserListCard } from "@/components/manager-users/user-list-card"
-import { UserSearchCard } from "@/components/manager-users/user-search-card"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import data from "@/data/new-db.json"
-import type { Campus, CampusMember, UserProfile } from "@/lib/new-interface"
-import { ArrowLeft, Plus } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { v4 as uuidv4 } from "uuid"
+import LoadingScreen from "@/components/custom/loading";
+import { AddUserModal } from "@/components/manager-users/add-user-modal";
+import { EditUserModal } from "@/components/manager-users/edit-user-modal";
+import { UserListCard } from "@/components/manager-users/user-list-card";
+import { UserSearchCard } from "@/components/manager-users/user-search-card";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import data from "@/data/new-db.json";
+import { getCampusByUser, getCampuses } from "@/lib/data-service";
+import type { Campus, CampusMember, UserProfile } from "@/lib/new-interface";
+import { ArrowLeft, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 export default function UsersPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
-  const [users, setUsers] = useState<UserProfile[]>([])
-  const [campuses, setCampuses] = useState<Campus[]>([])
-  const [campusMembers, setCampusMembers] = useState<CampusMember[]>([])
-  const router = useRouter()
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [campuses, setCampuses] = useState<Campus[]>([]);
+  const [campusMembers, setCampusMembers] = useState<CampusMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    setCampuses((data.campus || []).map((campus: any) => ({ ...campus })))
-    setUsers((data.user_profiles || []).map((user: any) => ({ ...user })))
-    setCampusMembers((data.campus_members || []).map((member: any) => ({ ...member })))
-  }, [])
+    const loadedCampuses = getCampuses();
+    setCampuses(loadedCampuses);
+
+    const loadedUsers = data.user_profiles.map((user) => {
+      const userCampus = getCampusByUser(user.id);
+      return {
+        ...user,
+        campusName: userCampus ? userCampus.name : "Sem campus associado",
+        profile: user.profile || { description: "", image: "/logo.svg" },
+      };
+    });
+
+    setUsers(loadedUsers);
+    setCampusMembers(data.campus_members || []);
+    setIsLoading(false);
+  }, []);
 
   const filteredUsers = users.filter((usuario: UserProfile) => {
-    const searchLower = searchTerm.toLowerCase()
+    const searchLower = searchTerm.toLowerCase();
     return (
       usuario.name.toLowerCase().includes(searchLower) ||
       usuario.email.toLowerCase().includes(searchLower) ||
       usuario.active.toString().toLowerCase().includes(searchLower) ||
       usuario.id.includes(searchLower)
-    )
-  })
+    );
+  });
 
-  const handleAddUser = (newUser: Partial<UserProfile>) => {
+  const handleAddUser = (
+    newUser: Partial<UserProfile> & { campusId?: string }
+  ) => {
+    const userId = uuidv4();
     const userToAdd: UserProfile = {
-      ...newUser,
-      id: uuidv4(),
+      id: userId,
       name: newUser.name || "",
       email: newUser.email || "",
       active: newUser.active !== undefined ? newUser.active : true,
@@ -51,39 +73,40 @@ export default function UsersPage() {
         description: newUser.profile?.description || "",
         image: newUser.profile?.image || "/logo.svg",
       },
-    } as UserProfile
+    };
 
-    setUsers([...users, userToAdd])
-  }
+    // Adicionar campusName baseado no campus selecionado no modal
+    let campusName = "Sem campus associado";
+    if (newUser.campusId) {
+      const selectedCampus = campuses.find((c) => c.id === newUser.campusId);
+      campusName = selectedCampus
+        ? selectedCampus.name
+        : "Sem campus associado";
+    }
+
+    const userWithCampus = {
+      ...userToAdd,
+      campusName,
+    };
+
+    setUsers([...users, userWithCampus]);
+  };
 
   const handleEditUser = (updatedUser: Partial<UserProfile>) => {
-    setUsers(users.map(user =>
-      user.id === updatedUser.id ? { ...user, ...updatedUser } : user
-    ))
-  }
+    setUsers(
+      users.map((user) =>
+        user.id === updatedUser.id ? { ...user, ...updatedUser } : user
+      )
+    );
+  };
 
   const handleEditClick = (user: UserProfile) => {
-    setSelectedUser(user)
-    setIsEditModalOpen(true)
-  }
+    setSelectedUser(user);
+    setIsEditModalOpen(true);
+  };
 
-  if (!users.length || !campuses.length || !campusMembers.length) {
-    return <LoadingScreen />
-  }
-
-  for (const user of users) {
-    const campusMember = campusMembers.find(member => member.userId === user.id)
-    if (campusMember) {
-      const campus = campuses.find(c => c.id === campusMember.campusId)
-      if (campus) {
-        user.name = campus.name
-      } else {
-        user.name = "Sem campus associado"
-      }
-    } else {
-      user.name = "Sem campus associado"
-    }
-    console.log("cu:", user)
+  if (isLoading) {
+    return <LoadingScreen />;
   }
 
   return (
@@ -143,5 +166,5 @@ export default function UsersPage() {
         />
       )}
     </Card>
-  )
+  );
 }

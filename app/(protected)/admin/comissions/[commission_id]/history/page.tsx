@@ -3,27 +3,61 @@
 import LoadingScreen from "@/components/custom/loading";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
+import data from "@/data/new-db.json";
+import { getUserById } from "@/lib/data-service";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-const historicoMock = [
-  "Mesa superfaturada foi movida para casa do Vinicius",
-  "Monitor de Françozo foi removido pelo Joaquim",
-];
+interface HistoryItem {
+  id: string;
+  inventoryItemId: string;
+  userId: string;
+  action: string;
+  changes: any;
+  timestamp: string;
+}
 
 export default function Page() {
-  const [historico] = useState(historicoMock);
+  const params = useParams();
+  const commissionId = params.commission_id as string;
+  const [historico, setHistorico] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    setIsLoading(false);
-  }, []);
+    const fetchHistorico = () => {
+      try {
+        // Buscar todos os itens de inventário da comissão
+        const commissionItems = data.inventory_items.filter(
+          (item) => item.commissionId === commissionId
+        );
+
+        // Buscar histórico para esses itens
+        const commissionHistory = data.inventory_history.filter((historyItem) =>
+          commissionItems.some(
+            (item) => item.id === historyItem.inventoryItemId
+          )
+        );
+
+        // Ordenar por data mais recente
+        const sortedHistory = commissionHistory.sort(
+          (a, b) =>
+            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+
+        setHistorico(sortedHistory);
+      } catch (error) {
+        console.error("Erro ao buscar histórico:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchHistorico();
+  }, [commissionId]);
 
   if (isLoading) {
-    return (
-      <LoadingScreen />
-    );
+    return <LoadingScreen />;
   }
 
   return (
@@ -42,14 +76,56 @@ export default function Page() {
                 Nenhum evento registrado.
               </div>
             ) : (
-              historico.map((evento, index) => (
-                <div
-                  key={index}
-                  className="border text-sm bg-[var(--card-color)] border-[var(--border-color)] rounded-md min-h-[36px] flex items-center px-4 py-2 text-[var(--font-color)]"
-                >
-                  {evento}
-                </div>
-              ))
+              historico.map((historyItem) => {
+                const user = getUserById(historyItem.userId);
+                const inventoryItem = data.inventory_items.find(
+                  (item) => item.id === historyItem.inventoryItemId
+                );
+                const formattedDate = new Date(
+                  historyItem.timestamp
+                ).toLocaleString("pt-BR");
+
+                return (
+                  <div
+                    key={historyItem.id}
+                    className="border text-sm bg-[var(--card-color)] border-[var(--border-color)] rounded-md min-h-[50px] flex flex-col justify-center px-4 py-3 text-[var(--font-color)]"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <span className="font-medium">
+                          {historyItem.action}
+                        </span>
+                        {inventoryItem && (
+                          <span className="text-xs text-muted-foreground ml-2">
+                            - {inventoryItem.description} (#
+                            {inventoryItem.number})
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {formattedDate}
+                      </span>
+                    </div>
+                    {user && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Por: {user.name}
+                      </div>
+                    )}
+                    {historyItem.changes &&
+                      Object.keys(historyItem.changes).length > 0 && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Alterações:{" "}
+                          {Object.entries(historyItem.changes)
+                            .map(
+                              ([key, value]: [string, any]) =>
+                                `${key}: ${value.old} → ${value.new}`
+                            )
+                            .join(", ")}
+                        </div>
+                      )}
+                  </div>
+                );
+              })
             )}
           </div>
         </div>

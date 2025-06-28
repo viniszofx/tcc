@@ -8,10 +8,10 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
-import data from "@/data/db.json";
-import type { Comissao } from "@/lib/interface";
+import data from "@/data/new-db.json";
+import type { Commission } from "@/lib/new-interface";
 import { ArrowLeft, Database, Edit, Trash2, Upload, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -24,13 +24,13 @@ export default function ComissionDetailsPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [comissao, setComissao] = useState<Comissao | null>(null); // Alterado para armazenar uma única comissão
+  const [comissao, setComissao] = useState<Commission | null>(null); // Alterado para armazenar uma única comissão
 
   useEffect(() => {
     const fetchComissao = () => {
       try {
-        const comissaoEncontrada = data.comissoes.find(
-          (c: Comissao) => c.comissao_id === comissionId && c.ativo !== false
+        const comissaoEncontrada = data.commissions.find(
+          (c: Commission) => c.id === comissionId && c.active !== false
         );
 
         if (comissaoEncontrada) {
@@ -50,14 +50,30 @@ export default function ComissionDetailsPage() {
 
   console.log("ID recebido:", comissionId);
 
-  const campus = data.campuses.find(c => c.campus_id === comissao?.campus_id);
-  const presidente = data.users.find(u => u.usuario_id === comissao?.presidente_id);
-  const membros = data.users.filter(u => u.comissao_id === comissionId);
+  const campus = data.campus.find((c) => c.id === comissao?.campusId);
+
+  // Busca o presidente da comissão
+  const presidenteMember = data.commission_members.find(
+    (member) =>
+      member.commissionId === comissionId &&
+      member.roleInCommission === "Presidente"
+  );
+  const presidente = presidenteMember
+    ? data.user_profiles.find((user) => user.id === presidenteMember.userId)
+    : null;
+
+  // Busca todos os membros da comissão
+  const commissionMembers = data.commission_members.filter(
+    (member) => member.commissionId === comissionId
+  );
+  const membros = commissionMembers
+    .map((member) =>
+      data.user_profiles.find((user) => user.id === member.userId)
+    )
+    .filter(Boolean);
 
   if (isLoading) {
-    return (
-      <LoadingScreen />
-    );
+    return <LoadingScreen />;
   }
 
   if (!comissao) {
@@ -71,7 +87,7 @@ export default function ComissionDetailsPage() {
             ID: {comissionId} não corresponde a nenhuma comissão ativa
           </p>
           <p className="text-muted-foreground mt-1">
-            IDs válidos: {data.comissoes.map(c => c.comissao_id).join(", ")}
+            IDs válidos: {data.commissions.map((c) => c.id).join(", ")}
           </p>
           <Button
             variant="outline"
@@ -85,7 +101,7 @@ export default function ComissionDetailsPage() {
     );
   }
 
-  const handleSave = (updatedComission: Comissao) => {
+  const handleSave = (updatedComission: Commission) => {
     setComissao(updatedComission);
     setIsEditModalOpen(false);
   };
@@ -100,10 +116,10 @@ export default function ComissionDetailsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
-              {comissao.nome}
+              {comissao.name}
             </CardTitle>
             <CardDescription className="text-[var(--font-color)]">
-              {campus?.nome} • {comissao.tipo}
+              {campus?.name} • {comissao.type}
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -143,51 +159,56 @@ export default function ComissionDetailsPage() {
           <div className="space-y-3">
             <h3 className="font-medium text-[var(--font-color)]">Descrição</h3>
             <p className="text-sm text-[var(--font-color)]">
-              {comissao.descricao || "Nenhuma descrição fornecida"}
+              {comissao.description || "Nenhuma descrição fornecida"}
             </p>
           </div>
 
           <div className="space-y-3">
             <h3 className="font-medium text-[var(--font-color)]">Presidente</h3>
             <p className="text-sm text-[var(--font-color)]">
-              {presidente?.nome || "Não definido"}
+              {presidente?.name || "Não definido"}
             </p>
           </div>
 
           <div className="space-y-3">
             <h3 className="font-medium text-[var(--font-color)]">Status</h3>
             <p className="text-sm text-[var(--font-color)]">
-              {comissao.ativo ? "Ativa" : "Inativa"} • Ano: {comissao.ano}
+              {comissao.active ? "Ativa" : "Inativa"} • Ano: {comissao.year}
             </p>
           </div>
 
           <div className="space-y-3">
             <h3 className="font-medium text-[var(--font-color)]">Membros</h3>
             <p className="text-sm text-[var(--font-color)]">
-              {membros.length} membro{membros.length !== 1 ? 's' : ''}
+              {membros.length} membro{membros.length !== 1 ? "s" : ""}
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-4 pt-4">
-          <Link href={`/admin/comissions/${comissionId}/members`} className="flex-1 min-w-[200px]">
+          <Link
+            href={`/admin/comissions/${comissionId}/members`}
+            className="flex-1 min-w-[200px]"
+          >
             <Button className="w-full gap-2 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)]">
               <Users className="h-4 w-4" />
               Gerenciar Membros
             </Button>
           </Link>
-          <Link href={`/admin/comissions/${comissionId}/upload`} className="flex-1 min-w-[200px]">
-            <Button
-              className="w-full gap-2 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)]"
-            >
+          <Link
+            href={`/admin/comissions/${comissionId}/upload`}
+            className="flex-1 min-w-[200px]"
+          >
+            <Button className="w-full gap-2 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)]">
               <Upload className="h-4 w-4" />
               Fazer Upload do Arquivo
             </Button>
           </Link>
-          <Link href={`/admin/comissions/${comissionId}/inventories`} className="flex-1 min-w-[200px]">
-            <Button
-              className="w-full gap-2 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)]"
-            >
+          <Link
+            href={`/admin/comissions/${comissionId}/inventories`}
+            className="flex-1 min-w-[200px]"
+          >
+            <Button className="w-full gap-2 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)]">
               <Database className="h-4 w-4" />
               Acessar inventário
             </Button>
