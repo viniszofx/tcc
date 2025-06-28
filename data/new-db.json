@@ -69,7 +69,7 @@
             "active": true,
             "profile": {
                 "description": "Operador de inventário",
-                "image": "/images/lucas.svg"
+                "image": "/logo.svg"
             }
         },
         {
@@ -79,7 +79,7 @@
             "active": true,
             "profile": {
                 "description": "Presidente da comissão CG",
-                "image": "/images/paulo.svg"
+                "image": "/logo.svg"
             }
         },
         {
@@ -89,7 +89,7 @@
             "active": true,
             "profile": {
                 "description": "Membro da comissão CG",
-                "image": "/images/fernanda.svg"
+                "image": "/logo.svg"
             }
         },
         {
@@ -99,7 +99,7 @@
             "active": true,
             "profile": {
                 "description": "Responsável pelo setor de TI",
-                "image": "/images/wanderson.svg"
+                "image": "/logo.svg"
             }
         },
         {
@@ -109,7 +109,7 @@
             "active": true,
             "profile": {
                 "description": "Coordenadora do campus CG",
-                "image": "/images/maria_clara.svg"
+                "image": "/logo.svg"
             }
         }
     ],
@@ -192,7 +192,7 @@
             "id": "3c4a2525-9f71-4c10-a91c-e7be16cf4890",
             "campusId": "99dcee11-52de-4f4b-b5d5-6e46e4d30191",
             "name": "Comissão de Inventário Corumbá 2024",
-            "type": "inventory",
+            "type": "inventário",
             "description": "Inventário anual 2024 em Corumbá",
             "spreadsheet_url": null,
             "active": true,
@@ -202,7 +202,7 @@
             "id": "cf1737d5-1c9c-4f99-97e6-52e9d51b73d5",
             "campusId": "c17a2f0b-1c0a-4e4a-9f57-4ef1b2b1e199",
             "name": "Comissão de Inventário CG 2024",
-            "type": "inventory",
+            "type": "inventário",
             "description": "Inventário anual 2024 em Campo Grande",
             "spreadsheet_url": null,
             "active": true,

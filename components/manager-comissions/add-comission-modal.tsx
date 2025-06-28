@@ -41,15 +41,15 @@ export function AddComissionModal({
   const [formData, setFormData] = useState({
     nome: "",
     descricao: "",
-    tipo: "inventory",
+    tipo: "inventário",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const tiposComissao = [
-    { value: "inventory", label: "Inventário" },
-    { value: "disposal", label: "Desfazimento" },
-    { value: "other", label: "Outra" },
+    { value: "inventário", label: "Inventário" },
+    { value: "desfazimento", label: "Desfazimento" },
+    { value: "outra", label: "Outra" },
   ];
 
   const handleChange = (
@@ -90,7 +90,7 @@ export function AddComissionModal({
       setFormData({
         nome: "",
         descricao: "",
-        tipo: "inventory",
+        tipo: "inventário",
       });
 
       onClose();

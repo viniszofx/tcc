@@ -19,7 +19,6 @@ export function UserAvatar() {
   const [user, setUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    // Busca o primeiro usuário admin ou o primeiro usuário disponível
     const adminUser = db.user_profiles.find((u) => {
       const orgMember = db.organization_members.find(
         (member) => member.userId === u.id
@@ -38,7 +37,6 @@ export function UserAvatar() {
     );
   }
 
-  // Busca o role do usuário na organização
   const orgMember = db.organization_members.find(
     (member) => member.userId === user.id
   );

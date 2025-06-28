@@ -52,7 +52,6 @@ export default function ComissionDetailsPage() {
 
   const campus = data.campus.find((c) => c.id === comissao?.campusId);
 
-  // Busca o presidente da comissão
   const presidenteMember = data.commission_members.find(
     (member) =>
       member.commissionId === comissionId &&
@@ -62,7 +61,6 @@ export default function ComissionDetailsPage() {
     ? data.user_profiles.find((user) => user.id === presidenteMember.userId)
     : null;
 
-  // Busca todos os membros da comissão
   const commissionMembers = data.commission_members.filter(
     (member) => member.commissionId === comissionId
   );

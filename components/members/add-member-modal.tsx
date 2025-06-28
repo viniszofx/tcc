@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import data from "@/data/new-db.json";
+import type { UserProfile } from "@/lib/new-interface";
 import { useEffect, useState } from "react";
 
 interface AddMemberModalProps {
@@ -28,13 +29,6 @@ interface AddMemberModalProps {
   currentMembers: string[];
 }
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  active: boolean;
-}
-
 export default function AddMemberModal({
   isOpen,
   onClose,
@@ -43,11 +37,10 @@ export default function AddMemberModal({
   currentMembers,
 }: AddMemberModalProps) {
   const [selectedUser, setSelectedUser] = useState<string>("");
-  const [selectedRole, setSelectedRole] = useState<string>("operador");
-  const [availableUsers, setAvailableUsers] = useState<User[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<UserProfile[]>([]);
 
   useEffect(() => {
-    const available = data.user_profiles.filter(
+    const available = (data.user_profiles as UserProfile[]).filter(
       (u) => !currentMembers.includes(u.id) && u.active
     );
     setAvailableUsers(available);
@@ -56,9 +49,8 @@ export default function AddMemberModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedUser) {
-      onSave(selectedUser, selectedRole); // Passa apenas o ID e role
+      onSave(selectedUser, "member");
       setSelectedUser("");
-      setSelectedRole("operador");
     }
   };
 
@@ -82,12 +74,12 @@ export default function AddMemberModal({
                 onValueChange={setSelectedUser}
                 required
               >
-                <SelectTrigger className="border-[var(--border-color)] bg-[var(--input-bg-color)] text-[var(--font-color)]">
+                <SelectTrigger className="border-[var(--border-color)] bg-[var(--bg-color)] text-[var(--font-color)]">
                   <SelectValue placeholder="Selecione um usuário" />
                 </SelectTrigger>
-                {availableUsers.length > 0 ? (
-                  <SelectContent className="bg-[var(--input-bg-color)] border-[var(--border-color)]">
-                    {availableUsers.map((user) => (
+                <SelectContent className="border-[var(--border-color)]">
+                  {availableUsers.length > 0 ? (
+                    availableUsers.map((user) => (
                       <SelectItem
                         key={user.id}
                         value={user.id}
@@ -95,13 +87,13 @@ export default function AddMemberModal({
                       >
                         {user.name} ({user.email})
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                ) : (
-                  <p className="text-sm text-muted-foreground mt-2 px-2">
-                    Nenhum usuário disponível
-                  </p>
-                )}
+                    ))
+                  ) : (
+                    <div className="text-sm text-muted-foreground mt-2 px-2">
+                      Nenhum usuário disponível
+                    </div>
+                  )}
+                </SelectContent>
               </Select>
             </div>
           </div>

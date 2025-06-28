@@ -11,36 +11,23 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  getCommissionById,
-  getUserById,
-  getUsersByCommission,
-} from "@/lib/data-service";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import data from "@/data/new-db.json";
+import type {
+  Commission,
+  CommissionMember,
+  UserProfile,
+} from "@/lib/new-interface";
 import { ArrowLeft, Plus, Trash2, Users } from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-interface Commission {
-  id: string;
-  campusId: string;
-  name: string;
-  type: string;
-  description: string;
-  active: boolean;
-  year: number;
-}
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  active: boolean;
-  profile?: {
-    description: string;
-    image: string;
-  };
-  roleInCommission?: string;
-}
 
 export default function ComissionMembersPage() {
   const router = useRouter();
@@ -49,23 +36,43 @@ export default function ComissionMembersPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [comissao, setComissao] = useState<Commission | null>(null);
-  const [membros, setMembros] = useState<User[]>([]);
+  const [membros, setMembros] = useState<
+    (UserProfile & { roleInCommission?: string })[]
+  >([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [userToRemove, setUserToRemove] = useState<UserProfile & { roleInCommission?: string } | null>(null);
 
   useEffect(() => {
     const fetchData = () => {
       try {
-        const comissaoEncontrada = getCommissionById(comissionId);
-
-        if (comissaoEncontrada && comissaoEncontrada.active) {
+        const comissaoEncontrada = (data.commissions as Commission[]).find(
+          (c) => c.id === comissionId && c.active
+        );
+        if (comissaoEncontrada) {
           setComissao(comissaoEncontrada);
 
-          const membrosComissao = getUsersByCommission(comissionId);
-          setMembros(membrosComissao as User[]);
+          const membrosComissao = (data.commission_members as CommissionMember[])
+            .filter((cm) => cm.commissionId === comissionId);
+
+          const perfis = (data.user_profiles as UserProfile[]);
+
+          const membrosDetalhados = membrosComissao
+            .map((cm) => {
+              const user = perfis.find((u) => u.id === cm.userId);
+              return user
+                ? { ...user, roleInCommission: cm.roleInCommission }
+                : null;
+            })
+            .filter(Boolean) as (UserProfile & { roleInCommission?: string })[];
+
+          setMembros(membrosDetalhados);
         } else {
-          console.error("Comissão não encontrada ou inativa");
+          setComissao(null);
         }
       } catch (error) {
+        setComissao(null);
         console.error("Erro ao buscar dados:", error);
       } finally {
         setIsLoading(false);
@@ -79,13 +86,23 @@ export default function ComissionMembersPage() {
     setIsAddModalOpen(true);
   };
 
-  const handleRemoveMember = (memberId: string) => {
-    setMembros(membros.filter((m) => m.id !== memberId));
-    console.log(`Membro removido: ${memberId}`);
+  const handleAskRemove = (membro: UserProfile & { roleInCommission?: string }) => {
+    setUserToRemove(membro);
+    setShowConfirm(true);
+  };
+
+  const handleConfirmRemove = () => {
+    if (userToRemove) {
+      setMembros(membros.filter((m) => m.id !== userToRemove.id));
+      setShowConfirm(false);
+      alert(`Membro "${userToRemove.name}" (${userToRemove.roleInCommission || "Membro"}) removido com sucesso!`);
+      setUserToRemove(null);
+    }
   };
 
   const handleAddNewMember = (userId: string, role: string) => {
-    const userToAdd = getUserById(userId);
+    const perfis = (data.user_profiles as UserProfile[]);
+    const userToAdd = perfis.find((u) => u.id === userId);
 
     if (userToAdd) {
       const alreadyMember = membros.some((m) => m.id === userId);
@@ -95,14 +112,13 @@ export default function ComissionMembersPage() {
         return;
       }
 
-      const newMember: User = {
+      const newMember: UserProfile & { roleInCommission?: string } = {
         ...userToAdd,
         roleInCommission: role,
       };
 
       setMembros([...membros, newMember]);
       setIsAddModalOpen(false);
-      console.log(`Novo membro adicionado: ${userId} como ${role}`);
     }
   };
 
@@ -136,7 +152,6 @@ export default function ComissionMembersPage() {
     <>
       <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
         <CardHeader className="pb-4">
-          {" "}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
@@ -215,7 +230,7 @@ export default function ComissionMembersPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleRemoveMember(membro.id)}
+                      onClick={() => handleAskRemove(membro)}
                       className="text-red-500 hover:text-red-700"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -227,6 +242,42 @@ export default function ComissionMembersPage() {
           )}
         </CardContent>
       </Card>
+
+
+      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <DialogContent className="sm:max-w-md max-w-[95vw] p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle className="text-[var(--font-color)]">Confirmar Exclusão</DialogTitle>
+            <DialogDescription className="text-[var(--font-color)]/70">
+              Tem certeza que deseja excluir o membro
+              <span className="font-semibold text-[var(--font-color)]"> {userToRemove?.name} </span>
+              {userToRemove?.roleInCommission && (
+                <span className="text-xs text-[var(--font-color)]/70">
+                  ({userToRemove.roleInCommission})
+                </span>
+              )}?
+              Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowConfirm(false)}
+              className="w-full sm:w-auto text-[var(--font-color)] transition-all"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              className="w-full sm:w-auto bg-red-600 text-white hover:bg-red-700 transition-all"
+              onClick={handleConfirmRemove}
+            >
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AddMemberModal
         isOpen={isAddModalOpen}
