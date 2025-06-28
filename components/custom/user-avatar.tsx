@@ -75,7 +75,7 @@ export function UserAvatar() {
         <DropdownMenuSeparator className="bg-[var(--font-color2)]" />
 
         {(cargo === "admin" || cargo === "president") && (
-          <a href={`/admin`}>
+          <a href={`/admin/profile/${user.id}`}>
             <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
               <User size={16} className="text-[var(--font-color2)]" />
               <span>Perfil</span>
@@ -84,7 +84,7 @@ export function UserAvatar() {
         )}
 
         {cargo === "member" && (
-          <a href={`/dashboard`}>
+          <a href={`/dashboard/profile/${user.id}`}>
             <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
               <User size={16} className="text-[var(--font-color2)]" />
               <span>Perfil</span>
