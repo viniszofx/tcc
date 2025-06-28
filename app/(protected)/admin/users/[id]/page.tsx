@@ -39,11 +39,9 @@ export default function UserDetailsPage() {
   useEffect(() => {
     setLoading(true);
 
-    // Carregar dados dos campus
     const loadedCampuses = getCampuses();
     setCampuses(loadedCampuses);
 
-    // Buscar usuário por ID
     const foundUser = data.user_profiles.find((user) => user.id === id);
 
     if (foundUser) {
@@ -128,7 +126,9 @@ export default function UserDetailsPage() {
         <UserProfileCard
           usuario={{
             nome: userData.name,
-            papel: "Usuário", // Valor padrão já que não temos papel específico
+            papel: "Usuário",
+            active: userData.active,
+            descricao: userData.profile?.description || "",
             perfil: {
               imagem_url: userData.profile?.image || "/logo.svg",
               descricao: userData.profile?.description || "",
@@ -140,8 +140,8 @@ export default function UserDetailsPage() {
           usuario={{
             usuario_id: userData.id,
             email: userData.email,
-            campus_id: "", // Não usado mais
-            papel: "Usuário", // Valor padrão
+            campus_id: "",
+            papel: "Usuário",
             campusName: (userData as any).campusName || "Sem campus associado",
           }}
         />
