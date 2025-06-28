@@ -5,47 +5,45 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import data from "@/data/new-db.json";
 import { getUserById } from "@/lib/data-service";
+import type { InventoryHistory } from "@/lib/new-interface";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-interface HistoryItem {
-  id: string;
-  inventoryItemId: string;
-  userId: string;
-  action: string;
-  changes: any;
-  timestamp: string;
-}
 
 export default function Page() {
   const params = useParams();
   const commissionId = params.commission_id as string;
-  const [historico, setHistorico] = useState<HistoryItem[]>([]);
+  const [historico, setHistorico] = useState<InventoryHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     const fetchHistorico = () => {
       try {
-        // Buscar todos os itens de inventário da comissão
         const commissionItems = data.inventory_items.filter(
           (item) => item.commissionId === commissionId
         );
 
-        // Buscar histórico para esses itens
         const commissionHistory = data.inventory_history.filter((historyItem) =>
           commissionItems.some(
             (item) => item.id === historyItem.inventoryItemId
           )
         );
 
-        // Ordenar por data mais recente
         const sortedHistory = commissionHistory.sort(
           (a, b) =>
             new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
         );
 
-        setHistorico(sortedHistory);
+        const sanitizedHistory = sortedHistory.map((item) => ({
+          ...item,
+          changes: Object.fromEntries(
+            Object.entries(item.changes || {}).filter(
+              ([, value]) => value && typeof value.old === "string" && typeof value.new === "string"
+            )
+          ),
+        }));
+
+        setHistorico(sanitizedHistory as InventoryHistory[]);
       } catch (error) {
         console.error("Erro ao buscar histórico:", error);
       } finally {

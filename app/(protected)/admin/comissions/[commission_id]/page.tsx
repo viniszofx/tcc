@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import data from "@/data/new-db.json";
 import type { Commission } from "@/lib/new-interface";
-import { ArrowLeft, Database, Edit, Trash2, Upload, Users } from "lucide-react";
+import { ArrowLeft, Clock, Database, Edit, Trash2, Upload, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -123,7 +123,7 @@ export default function ComissionDetailsPage() {
     <>
       <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
         <CardHeader className="pb-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
                 {comissao.name}
@@ -132,12 +132,12 @@ export default function ComissionDetailsPage() {
                 {campus?.name} • {comissao.type}
               </CardDescription>
             </div>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:flex-row sm:w-auto sm:gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => router.push("/admin/comissions")}
-                className="text-[var(--font-color)] transition-all"
+                className="text-[var(--font-color)] transition-all w-full sm:w-auto"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Voltar
@@ -146,7 +146,7 @@ export default function ComissionDetailsPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsEditModalOpen(true)}
-                className="text-[var(--font-color)]"
+                className="text-[var(--font-color)] w-full sm:w-auto"
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Editar
@@ -155,11 +155,24 @@ export default function ComissionDetailsPage() {
                 variant="outline"
                 size="sm"
                 onClick={handleAskDelete}
-                className="text-red-500 hover:text-red-700"
+                className="text-red-500 hover:text-red-700 w-full sm:w-auto"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Excluir
               </Button>
+              <Link
+                href={`/admin/comissions/${comissionId}/history`}
+                className="w-full sm:w-auto"
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-[var(--font-color)] w-full sm:w-auto"
+                >
+                  <Clock className="h-4 w-4 mr-2" />
+                  Histórico
+                </Button>
+              </Link>
             </div>
           </div>
         </CardHeader>
