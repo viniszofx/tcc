@@ -55,7 +55,8 @@ export default function UsersPage() {
     return (
       usuario.name.toLowerCase().includes(searchLower) ||
       usuario.email.toLowerCase().includes(searchLower) ||
-      usuario.active.toString().toLowerCase().includes(searchLower) ||
+      (usuario.campusName?.toLowerCase().includes(searchLower) ?? false) ||
+      (usuario.active ? "ativo" : "inativo").includes(searchLower) ||
       usuario.id.includes(searchLower)
     );
   });
@@ -75,7 +76,6 @@ export default function UsersPage() {
       },
     };
 
-    // Adicionar campusName baseado no campus selecionado no modal
     let campusName = "Sem campus associado";
     if (newUser.campusId) {
       const selectedCampus = campuses.find((c) => c.id === newUser.campusId);

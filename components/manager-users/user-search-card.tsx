@@ -15,7 +15,7 @@ export function UserSearchCard({ searchTerm, setSearchTerm }: UserSearchCardProp
       <CardContent className="p-4">
         <div className="relative">
           <Input
-            placeholder="Buscar usuários por nome, email, papel ou campus..."
+            placeholder="Buscar usuários por nome, email, status ou campus..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="border-[var(--border-input)] pl-10 w-full"
