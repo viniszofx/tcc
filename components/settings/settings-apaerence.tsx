@@ -27,7 +27,6 @@ export function AppearanceSettings() {
         <div className="grid gap-3">
           <h4 className="text-sm font-medium text-[var(--font-color)]">Tema</h4>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Tema Claro */}
             <Card
               className={`p-4 cursor-pointer border-2 transition-all ${
                 theme === "light" ? "border-[var(--button-color)]" : "border-transparent"
@@ -44,7 +43,6 @@ export function AppearanceSettings() {
               <div className="h-16 rounded-md bg-[#f8f9fa] border border-[#e9ecef]"></div>
             </Card>
 
-            {/* Tema Escuro */}
             <Card
               className={`p-4 cursor-pointer border-2 transition-all ${
                 theme === "dark" ? "border-[var(--button-color)]" : "border-transparent"
@@ -61,7 +59,6 @@ export function AppearanceSettings() {
               <div className="h-16 rounded-md bg-[#212529] border border-[#343a40]"></div>
             </Card>
 
-            {/* Tema Sistema */}
             <Card
               className={`p-4 cursor-pointer border-2 transition-all ${
                 theme === "system" ? "border-[var(--button-color)]" : "border-transparent"

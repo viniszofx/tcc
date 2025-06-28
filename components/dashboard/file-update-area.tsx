@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { FileSpreadsheet, Upload, X } from "lucide-react"
-import { useCallback, useState } from "react"
+import { useCallback } from "react"
 import { useDropzone } from "react-dropzone"
 
 interface FileUploadAreaProps {
@@ -12,7 +12,6 @@ interface FileUploadAreaProps {
 }
 
 export default function FileUploadArea({ file, onFileChange }: FileUploadAreaProps) {
-  const [dragActive, setDragActive] = useState(false)
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {

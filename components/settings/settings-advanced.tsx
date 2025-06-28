@@ -12,7 +12,6 @@ import { useState } from "react"
 
 export function AdvancedSettings() {
   const { hardwareAcceleration, setHardwareAcceleration } = useSettings()
-  const [debugMode, setDebugMode] = useState(false)
   const [language] = useState("pt-BR")
 
   return (

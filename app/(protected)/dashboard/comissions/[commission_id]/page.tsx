@@ -105,7 +105,7 @@ export default function ComissionPage() {
               <span className="text-base font-medium text-[var(--font-color)] group-hover:text-white transition text-center">
                 {route.title}
               </span>
-              <p className="text-sm text-muted-foreground text-center">
+              <p className="text-sm text-center text-[var(--font-color)] group-hover:text-white transition">
                 {route.description}
               </p>
             </Link>

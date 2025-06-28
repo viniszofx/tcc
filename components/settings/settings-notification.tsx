@@ -10,8 +10,6 @@ import { useState } from "react"
 
 export function NotificationSettings() {
   const [emailNotifications, setEmailNotifications] = useState(true)
-  const [pushNotifications, setPushNotifications] = useState(true)
-  const [notificationFrequency, setNotificationFrequency] = useState("immediate")
 
   return (
     <div className="space-y-6">
