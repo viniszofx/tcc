@@ -14,15 +14,8 @@ import data from "@/data/new-db.json";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-interface PageProps {
-  params: {
-    campus_id?: string;
-  };
-  searchParams?: Record<string, string | string[] | undefined>;
-}
-
 export default function ComissionsPage({ params }: any) {
-  const campus_id = params.campus_id || "99dcee11-52de-4f4b-b5d5-6e46e4d30191"; // Câmpus Corumbá por padrão
+  const campus_id = params.campus_id || "99dcee11-52de-4f4b-b5d5-6e46e4d30191";
   const comissoes = data.commissions.filter(
     (comissao) => comissao.campusId === campus_id
   );

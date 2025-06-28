@@ -48,7 +48,6 @@ export default function ComissionPage() {
 
   const campus = data.campus.find((c) => c.id === comission.campusId);
 
-  // Busca o presidente da comissão
   const presidenteMember = data.commission_members.find(
     (member) =>
       member.commissionId === commission_id &&

@@ -143,6 +143,24 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
                   </li>
                 </>
               )}
+              {cargo === "operador" && (
+                <>
+                  <li className="p-2 gap-2 flex items-center">
+                    <Button
+                      className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
+                      asChild
+                    >
+                      <Link
+                        href={`/dashboard/comissions`}
+                        className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
+                      >
+                        <Landmark className="text-[var(--font-color2)]" />
+                        Acessar Comissões
+                      </Link>
+                    </Button>
+                  </li>
+                </>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

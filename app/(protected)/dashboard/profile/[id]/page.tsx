@@ -27,12 +27,10 @@ export default function ProfileDynamicPage() {
   }));
 
   const getCampusForUser = (userId: string) => {
-    // Busca o campus_member para encontrar o campusId do usuário
     const campusMember = data.campus_members.find(
       (member) => member.userId === userId
     );
     if (campusMember) {
-      // Busca o campus pelo campusId
       return data.campus.find((campus) => campus.id === campusMember.campusId);
     }
     return null;
@@ -51,7 +49,6 @@ export default function ProfileDynamicPage() {
           return;
         }
 
-        // Busca o campus do usuário
         const userCampus = getCampusForUser(profileId);
         setUsuario({
           ...user,

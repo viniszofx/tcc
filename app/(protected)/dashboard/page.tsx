@@ -1,4 +1,4 @@
-// Essa página somente sera acessada pelo Admin
+// Essa página somente sera acessada pelo Operador
 "use client";
 
 import LoadingScreen from "@/components/custom/loading";
@@ -45,7 +45,7 @@ export default function ProcessingPage() {
               className="text-[var(--font-color)] group-hover:text-white transition"
             />
             <span className="font-medium text-[var(--font-color)] group-hover:text-white transition">
-              Acessar comissões
+              Acessar Comissões
             </span>
           </Link>
         </div>
