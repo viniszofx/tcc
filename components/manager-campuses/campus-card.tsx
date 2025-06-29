@@ -1,25 +1,37 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import type { Campus } from "@/lib/new-interface"
-import { Eye, Pencil, Trash2 } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import type { Campus } from "@/interface";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 
 interface CampusCardProps {
-  campus: Campus
-  onEdit: () => void
-  onDelete: () => void
-  onClick: () => void
-  disableDelete?: boolean
+  campus: Campus;
+  onEdit: () => void;
+  onDelete: () => void;
+  onClick: () => void;
+  disableDelete?: boolean;
 }
 
-export default function CampusCard({ campus, onEdit, onDelete, disableDelete, onClick }: CampusCardProps) {
+export default function CampusCard({
+  campus,
+  onEdit,
+  onDelete,
+  disableDelete,
+  onClick,
+}: CampusCardProps) {
   return (
     <Card
       className="border border-[var(--border-color)] bg-[var(--bg-simple)] transition-all duration-300 rounded-xl shadow-sm flex flex-col justify-between min-h-[180px] cursor-pointer"
       onClick={(e) => {
-        if ((e.target as HTMLElement).closest("button")) return
-        onClick()
+        if ((e.target as HTMLElement).closest("button")) return;
+        onClick();
       }}
     >
       <CardHeader className="pb-2">
@@ -51,8 +63,8 @@ export default function CampusCard({ campus, onEdit, onDelete, disableDelete, on
           variant="default"
           title="Ver"
           onClick={(e) => {
-            e.stopPropagation()
-            onClick()
+            e.stopPropagation();
+            onClick();
           }}
         >
           <Eye size={18} />
@@ -61,8 +73,8 @@ export default function CampusCard({ campus, onEdit, onDelete, disableDelete, on
         <Button
           variant="outline"
           onClick={(e) => {
-            e.stopPropagation()
-            onEdit()
+            e.stopPropagation();
+            onEdit();
           }}
           className="text-[var(--font-color)] border-[var(--border-color)]"
           size="icon"
@@ -71,19 +83,19 @@ export default function CampusCard({ campus, onEdit, onDelete, disableDelete, on
           <Pencil size={18} />
         </Button>
         {!disableDelete && (
-        <Button
-          variant="destructive"
-          onClick={(e) => {
-            e.stopPropagation()
-            onDelete()
-          }}
-          size="icon"
-          title="Excluir"
-        >
-          <Trash2 size={18} />
-        </Button>
+          <Button
+            variant="destructive"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            size="icon"
+            title="Excluir"
+          >
+            <Trash2 size={18} />
+          </Button>
         )}
       </CardFooter>
     </Card>
-  )
+  );
 }

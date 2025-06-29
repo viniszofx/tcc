@@ -13,44 +13,79 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import data from "@/data/new-db.json";
-import { getCampusByUser, getCampuses } from "@/lib/data-service";
-import type { Campus, CampusMember, UserProfile } from "@/lib/new-interface";
+import type { Campus, CampusMember, UserProfile } from "@/interface";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
+
+type UserWithCampus = UserProfile & {
+  campusName?: string;
+};
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [users, setUsers] = useState<UserWithCampus[]>([]);
   const [campuses, setCampuses] = useState<Campus[]>([]);
   const [campusMembers, setCampusMembers] = useState<CampusMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const loadedCampuses = getCampuses();
-    setCampuses(loadedCampuses);
+    const fetchData = async () => {
+      try {
+        // Buscar usuários
+        const usersResponse = await fetch("/api/user");
+        const usersData = await usersResponse.json();
 
-    const loadedUsers = data.user_profiles.map((user) => {
-      const userCampus = getCampusByUser(user.id);
-      return {
-        ...user,
-        campusName: userCampus ? userCampus.name : "Sem campus associado",
-        profile: user.profile || { description: "", image: "/logo.svg" },
-      };
-    });
+        // Buscar campus
+        const campusesResponse = await fetch("/api/campus");
+        const campusesData = await campusesResponse.json();
 
-    setUsers(loadedUsers);
-    setCampusMembers(data.campus_members || []);
-    setIsLoading(false);
+        // Buscar membros de campus
+        const campusMembersResponse = await fetch("/api/campus-member");
+        const campusMembersData = await campusMembersResponse.json();
+
+        if (
+          usersResponse.ok &&
+          campusesResponse.ok &&
+          campusMembersResponse.ok
+        ) {
+          setCampuses(campusesData);
+          setCampusMembers(campusMembersData);
+
+          // Mapear usuários com seus campus
+          const usersWithCampus = usersData.map((user: UserProfile) => {
+            const userCampusMember = campusMembersData.find(
+              (cm: CampusMember) => cm.userId === user.id
+            );
+            const userCampus = userCampusMember
+              ? campusesData.find(
+                  (c: Campus) => c.id === userCampusMember.campusId
+                )
+              : null;
+
+            return {
+              ...user,
+              campusName: userCampus ? userCampus.name : "Sem campus associado",
+            };
+          });
+
+          setUsers(usersWithCampus);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  const filteredUsers = users.filter((usuario: UserProfile) => {
+  const filteredUsers = users.filter((usuario: UserWithCampus) => {
     const searchLower = searchTerm.toLowerCase();
     return (
       usuario.name.toLowerCase().includes(searchLower) ||
@@ -61,43 +96,75 @@ export default function UsersPage() {
     );
   });
 
-  const handleAddUser = (
+  const handleAddUser = async (
     newUser: Partial<UserProfile> & { campusId?: string }
   ) => {
-    const userId = uuidv4();
-    const userToAdd: UserProfile = {
-      id: userId,
-      name: newUser.name || "",
-      email: newUser.email || "",
-      active: newUser.active !== undefined ? newUser.active : true,
-      profile: {
-        description: newUser.profile?.description || "",
-        image: newUser.profile?.image || "/logo.svg",
-      },
-    };
+    try {
+      // Criar o usuário
+      const userToAdd = {
+        name: newUser.name || "",
+        email: newUser.email || "",
+        description: newUser.description || "",
+        avatar: newUser.avatar || "/logo.svg",
+        active: newUser.active !== undefined ? newUser.active : true,
+      };
 
-    let campusName = "Sem campus associado";
-    if (newUser.campusId) {
-      const selectedCampus = campuses.find((c) => c.id === newUser.campusId);
-      campusName = selectedCampus
-        ? selectedCampus.name
-        : "Sem campus associado";
+      const userResponse = await fetch("/api/user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userToAdd),
+      });
+
+      if (userResponse.ok) {
+        const createdUser = await userResponse.json();
+
+        // Se foi especificado um campus, criar a associação
+        if (newUser.campusId) {
+          const campusMemberData = {
+            userId: createdUser.id,
+            campusId: newUser.campusId,
+          };
+
+          await fetch("/api/campus-member", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(campusMemberData),
+          });
+        }
+
+        // Recarregar a lista de usuários
+        window.location.reload();
+      } else {
+        console.error("Erro ao criar usuário");
+      }
+    } catch (error) {
+      console.error("Erro ao adicionar usuário:", error);
     }
-
-    const userWithCampus = {
-      ...userToAdd,
-      campusName,
-    };
-
-    setUsers([...users, userWithCampus]);
   };
 
-  const handleEditUser = (updatedUser: Partial<UserProfile>) => {
-    setUsers(
-      users.map((user) =>
-        user.id === updatedUser.id ? { ...user, ...updatedUser } : user
-      )
-    );
+  const handleEditUser = async (updatedUser: Partial<UserProfile>) => {
+    try {
+      const response = await fetch("/api/user", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedUser),
+      });
+
+      if (response.ok) {
+        // Recarregar a lista de usuários
+        window.location.reload();
+      } else {
+        console.error("Erro ao atualizar usuário");
+      }
+    } catch (error) {
+      console.error("Erro ao editar usuário:", error);
+    }
   };
 
   const handleEditClick = (user: UserProfile) => {

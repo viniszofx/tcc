@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import type { Commission } from "@/lib/new-interface";
+import type { Commission } from "@/interface";
 import { useState } from "react";
 
 interface EditComissionModalProps {

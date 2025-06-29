@@ -3,9 +3,7 @@
 import LoadingScreen from "@/components/custom/loading";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import data from "@/data/new-db.json";
-import { getUserById } from "@/lib/data-service";
-import type { InventoryHistory } from "@/lib/new-interface";
+import type { InventoryHistory } from "@/interface";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -17,35 +15,29 @@ export default function Page() {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchHistorico = () => {
+    const fetchHistorico = async () => {
       try {
-        const commissionItems = data.inventory_items.filter(
-          (item) => item.commissionId === commissionId
+        // Buscar histórico de inventário filtrado pela comissão
+        const response = await fetch(
+          `/api/inventory-history?commissionId=${commissionId}`
         );
+        const historyData = await response.json();
 
-        const commissionHistory = data.inventory_history.filter((historyItem) =>
-          commissionItems.some(
-            (item) => item.id === historyItem.inventoryItemId
-          )
-        );
+        if (response.ok) {
+          // Ordenar por timestamp mais recente
+          const sortedHistory = historyData.sort(
+            (a: any, b: any) =>
+              new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          );
 
-        const sortedHistory = commissionHistory.sort(
-          (a, b) =>
-            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        );
-
-        const sanitizedHistory = sortedHistory.map((item) => ({
-          ...item,
-          changes: Object.fromEntries(
-            Object.entries(item.changes || {}).filter(
-              ([, value]) => value && typeof value.old === "string" && typeof value.new === "string"
-            )
-          ),
-        }));
-
-        setHistorico(sanitizedHistory as InventoryHistory[]);
+          setHistorico(sortedHistory);
+        } else {
+          console.error("Erro ao buscar histórico");
+          setHistorico([]);
+        }
       } catch (error) {
         console.error("Erro ao buscar histórico:", error);
+        setHistorico([]);
       } finally {
         setIsLoading(false);
       }
@@ -75,10 +67,6 @@ export default function Page() {
               </div>
             ) : (
               historico.map((historyItem) => {
-                const user = getUserById(historyItem.userId);
-                const inventoryItem = data.inventory_items.find(
-                  (item) => item.id === historyItem.inventoryItemId
-                );
                 const formattedDate = new Date(
                   historyItem.timestamp
                 ).toLocaleString("pt-BR");
@@ -93,22 +81,11 @@ export default function Page() {
                         <span className="font-medium">
                           {historyItem.action}
                         </span>
-                        {inventoryItem && (
-                          <span className="text-xs text-muted-foreground ml-2">
-                            - {inventoryItem.description} (#
-                            {inventoryItem.number})
-                          </span>
-                        )}
                       </div>
                       <span className="text-xs text-muted-foreground">
                         {formattedDate}
                       </span>
                     </div>
-                    {user && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Por: {user.name}
-                      </div>
-                    )}
                     {historyItem.changes &&
                       Object.keys(historyItem.changes).length > 0 && (
                         <div className="text-xs text-muted-foreground mt-1">

@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Campus, UserProfile } from "@/lib/new-interface";
+import type { Campus, UserProfile } from "@/interface";
 import { useState } from "react";
 
 interface AddUserFormData extends Partial<UserProfile> {
@@ -42,11 +42,9 @@ export function AddUserModal({
   const [formData, setFormData] = useState<AddUserFormData>({
     name: "",
     email: "",
+    description: "",
+    avatar: "/logo.svg",
     active: true,
-    profile: {
-      image: "/logo.svg",
-      description: "",
-    },
     campusId: "",
     papel: "operador",
   });
@@ -90,8 +88,9 @@ export function AddUserModal({
       const userProfileData = {
         name: formData.name,
         email: formData.email,
+        description: formData.description,
+        avatar: formData.avatar,
         active: formData.active,
-        profile: formData.profile,
         campusId: formData.campusId, // Incluir campusId para a página principal
       };
 
@@ -99,11 +98,9 @@ export function AddUserModal({
       setFormData({
         name: "",
         email: "",
+        description: "",
+        avatar: "/logo.svg",
         active: true,
-        profile: {
-          image: "/logo.svg",
-          description: "",
-        },
         campusId: "",
         papel: "operador",
       });

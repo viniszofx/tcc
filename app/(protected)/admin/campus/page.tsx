@@ -11,32 +11,40 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import data from "@/data/new-db.json";
-import type { Campus } from "@/lib/new-interface";
+import type { Campus } from "@/interface";
 import { ArrowLeft, Plus, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
-
 
 export default function CampusPage() {
   const router = useRouter();
   const [campuses, setCampuses] = useState<Campus[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentCampus, setCurrentCampus] = useState<Campus | null>(null);
-  const [modalMode, setModalMode] = useState<"create" | "edit" | "delete">("create");
+  const [modalMode, setModalMode] = useState<"create" | "edit" | "delete">(
+    "create"
+  );
   const [isLoading, setIsLoading] = useState(true);
 
-  const initialCampuses: Campus[] = (data.campus || []).map((campus: any) => ({
-    ...campus,
-  }));
-
-  useState(() => {
-    setCampuses(initialCampuses);
-  });
-
   useEffect(() => {
-    setIsLoading(false);
+    const fetchCampuses = async () => {
+      try {
+        const response = await fetch("/api/campus");
+        const data = await response.json();
+
+        if (response.ok) {
+          setCampuses(data);
+        } else {
+          console.error("Erro ao buscar campus:", data);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar campus:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCampuses();
   }, []);
 
   const handleOpenModal = (
@@ -53,23 +61,61 @@ export default function CampusPage() {
     setCurrentCampus(null);
   };
 
-  const handleSaveCampus = (campus: Campus) => {
-    if (modalMode === "create") {
-      const newCampus: Campus = {
-        ...campus,
-        id: uuidv4(),
-      };
-      setCampuses([...campuses, newCampus]);
-    } else if (modalMode === "edit") {
-      setCampuses(
-        campuses.map((c) => (c.id === campus.id ? campus : c))
-      );
+  const handleSaveCampus = async (campus: Campus) => {
+    try {
+      if (modalMode === "create") {
+        const response = await fetch("/api/campus", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(campus),
+        });
+
+        if (response.ok) {
+          const newCampus = await response.json();
+          setCampuses([...campuses, newCampus]);
+        } else {
+          console.error("Erro ao criar campus");
+        }
+      } else if (modalMode === "edit") {
+        const response = await fetch("/api/campus", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(campus),
+        });
+
+        if (response.ok) {
+          const updatedCampus = await response.json();
+          setCampuses(
+            campuses.map((c) => (c.id === campus.id ? updatedCampus : c))
+          );
+        } else {
+          console.error("Erro ao atualizar campus");
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao salvar campus:", error);
     }
     handleCloseModal();
   };
 
-  const handleDeleteCampus = (campusId: string) => {
-    setCampuses(campuses.filter((c) => c.id !== campusId));
+  const handleDeleteCampus = async (campusId: string) => {
+    try {
+      const response = await fetch(`/api/campus?id=${campusId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setCampuses(campuses.filter((c) => c.id !== campusId));
+      } else {
+        console.error("Erro ao deletar campus");
+      }
+    } catch (error) {
+      console.error("Erro ao deletar campus:", error);
+    }
     handleCloseModal();
   };
 

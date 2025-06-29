@@ -14,9 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import data from "@/data/new-db.json";
-import { getCampusByUser, getCampuses } from "@/lib/data-service";
-import type { Campus, UserProfile } from "@/lib/new-interface";
+import type { Campus, UserProfile } from "@/interface";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -37,43 +35,81 @@ export default function UserDetailsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
+    const fetchUserData = async () => {
+      setLoading(true);
+      try {
+        // Buscar usuário específico
+        const userResponse = await fetch(`/api/user?id=${id}`);
+        const userData = await userResponse.json();
 
-    const loadedCampuses = getCampuses();
-    setCampuses(loadedCampuses);
+        // Buscar campus
+        const campusesResponse = await fetch("/api/campus");
+        const campusesData = await campusesResponse.json();
 
-    const foundUser = data.user_profiles.find((user) => user.id === id);
+        // Buscar membros de campus
+        const campusMembersResponse = await fetch("/api/campus-member");
+        const campusMembersData = await campusMembersResponse.json();
 
-    if (foundUser) {
-      const userCampus = getCampusByUser(foundUser.id);
-      const userWithCampus: UserProfile & { campusName?: string } = {
-        ...foundUser,
-        campusName: userCampus ? userCampus.name : "Sem campus associado",
-        profile: foundUser.profile || { description: "", image: "/logo.svg" },
-      };
-      setUserData(userWithCampus as UserProfile);
-    } else {
-      setUserData(null);
-    }
+        if (
+          userResponse.ok &&
+          campusesResponse.ok &&
+          campusMembersResponse.ok
+        ) {
+          setCampuses(campusesData);
 
-    setLoading(false);
+          if (userData) {
+            // Encontrar campus do usuário
+            const userCampusMember = campusMembersData.find(
+              (cm: any) => cm.userId === userData.id
+            );
+            const userCampus = userCampusMember
+              ? campusesData.find(
+                  (c: Campus) => c.id === userCampusMember.campusId
+                )
+              : null;
+
+            const userWithCampus = {
+              ...userData,
+              campusName: userCampus ? userCampus.name : "Sem campus associado",
+            };
+            setUserData(userWithCampus);
+          } else {
+            setUserData(null);
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados do usuário:", error);
+        setUserData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
   }, [id]);
 
   const handleDeleteUser = () => {
     router.push("/admin/users");
   };
 
-  const handleEditUser = (updatedUser: Partial<UserProfile>) => {
-    if (updatedUser.id === userData?.id && updatedUser.id) {
-      const userCampus = getCampusByUser(updatedUser.id);
-      const userWithCampus = {
-        ...userData,
-        ...updatedUser,
-        campusName: userCampus ? userCampus.name : "Sem campus associado",
-        profile: updatedUser.profile ||
-          userData?.profile || { description: "", image: "/logo.svg" },
-      };
-      setUserData(userWithCampus as UserProfile);
+  const handleEditUser = async (updatedUser: Partial<UserProfile>) => {
+    try {
+      const response = await fetch("/api/user", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedUser),
+      });
+
+      if (response.ok) {
+        // Recarregar dados do usuário
+        window.location.reload();
+      } else {
+        console.error("Erro ao atualizar usuário");
+      }
+    } catch (error) {
+      console.error("Erro ao editar usuário:", error);
     }
     setIsEditModalOpen(false);
   };
@@ -128,10 +164,10 @@ export default function UserDetailsPage() {
             nome: userData.name,
             papel: "Usuário",
             active: userData.active,
-            descricao: userData.profile?.description || "",
+            descricao: userData.description || "",
             perfil: {
-              imagem_url: userData.profile?.image || "/logo.svg",
-              descricao: userData.profile?.description || "",
+              imagem_url: userData.avatar || "/logo.svg",
+              descricao: userData.description || "",
             },
           }}
         />

@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import data from "@/data/new-db.json";
+import type { Campus, Organization } from "@/interface";
 import { ArrowLeft, Edit } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -21,14 +21,79 @@ export default function CampusDetailPage() {
   const campusId = params.id as string;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [campus, setCampus] = useState<Campus | null>(null);
+  const [organization, setOrganization] = useState<Organization | null>(null);
 
   useEffect(() => {
-    setIsLoading(false);
-  }, []);
+    const fetchCampusData = async () => {
+      try {
+        // Buscar dados do campus
+        const campusResponse = await fetch(`/api/campus?id=${campusId}`);
+        const campusData = await campusResponse.json();
 
-  const campus = (data.campus || []).find(
-    (c: any) => c.id === campusId
-  );
+        if (campusResponse.ok && campusData) {
+          setCampus(campusData);
+
+          // Buscar dados da organização
+          const orgResponse = await fetch(
+            `/api/organization?id=${campusData.organizationId}`
+          );
+          const orgData = await orgResponse.json();
+
+          if (orgResponse.ok) {
+            setOrganization(orgData);
+          }
+        } else {
+          setCampus(null);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados do campus:", error);
+        setCampus(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCampusData();
+  }, [campusId]);
+
+  const handleSaveCampus = async (updatedCampus: Campus) => {
+    try {
+      const response = await fetch("/api/campus", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedCampus),
+      });
+
+      if (response.ok) {
+        const newCampusData = await response.json();
+        setCampus(newCampusData);
+        setIsModalOpen(false);
+      } else {
+        console.error("Erro ao atualizar campus");
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar campus:", error);
+    }
+  };
+
+  const handleDeleteCampus = async () => {
+    try {
+      const response = await fetch(`/api/campus?id=${campusId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        router.push("/admin/campus");
+      } else {
+        console.error("Erro ao deletar campus");
+      }
+    } catch (error) {
+      console.error("Erro ao deletar campus:", error);
+    }
+  };
 
   if (!campus) {
     return (
@@ -38,10 +103,7 @@ export default function CampusDetailPage() {
             Campus não encontrado
           </h2>
           <p className="text-muted-foreground mt-2">
-            ID: {campusId} não corresponde a nenhum campus
-          </p>
-          <p className="text-muted-foreground mt-1">
-            IDs válidos: {(data.campus || []).map(c => c.id).join(", ")}
+            Campus com ID: {campusId} não foi encontrado
           </p>
           <Button
             variant="outline"
@@ -96,10 +158,10 @@ export default function CampusDetailPage() {
       <CardContent className="space-y-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-3">
-            <h3 className="font-medium text-[var(--font-color)]">ID do Campus</h3>
-            <p className="text-sm text-[var(--font-color)]">
-              {campus.id}
-            </p>
+            <h3 className="font-medium text-[var(--font-color)]">
+              ID do Campus
+            </h3>
+            <p className="text-sm text-[var(--font-color)]">{campus.id}</p>
           </div>
           <div className="space-y-3">
             <h3 className="font-medium text-[var(--font-color)]">Status</h3>
@@ -107,14 +169,26 @@ export default function CampusDetailPage() {
               {campus.active ? "Ativo" : "Inativo"}
             </p>
           </div>
+          <div className="space-y-3">
+            <h3 className="font-medium text-[var(--font-color)]">
+              Organização
+            </h3>
+            <p className="text-sm text-[var(--font-color)]">
+              {organization?.name || "Carregando..."}
+            </p>
+          </div>
+          <div className="space-y-3">
+            <h3 className="font-medium text-[var(--font-color)]">Código</h3>
+            <p className="text-sm text-[var(--font-color)]">{campus.code}</p>
+          </div>
         </div>
       </CardContent>
 
       <CampusModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSave={() => setIsModalOpen(false)}
-        onDelete={() => router.push("/admin/campus")}
+        onSave={handleSaveCampus}
+        onDelete={handleDeleteCampus}
         campus={campus}
         mode="edit"
       />

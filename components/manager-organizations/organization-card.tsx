@@ -9,8 +9,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Organization } from "@/lib/new-interface";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import type { Organization } from "@/interface";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -23,7 +29,13 @@ interface OrganizationCardProps {
   disableDelete?: boolean;
 }
 
-export default function OrganizationCard({ organization, onEdit, onDelete, onClick, disableDelete }: OrganizationCardProps) {
+export default function OrganizationCard({
+  organization,
+  onEdit,
+  onDelete,
+  onClick,
+  disableDelete,
+}: OrganizationCardProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const handleDeleteClick = () => {
@@ -39,7 +51,9 @@ export default function OrganizationCard({ organization, onEdit, onDelete, onCli
     <>
       <Card className="border border-[var(--border-color)] bg-[var(--bg-simple)] transition-all duration-300 rounded-xl shadow-sm flex flex-col justify-between min-h-[180px]">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold text-[var(--font-color)]">{organization.name}</CardTitle>
+          <CardTitle className="text-lg font-semibold text-[var(--font-color)]">
+            {organization.name}
+          </CardTitle>
           <CardDescription className="text-[var(--font-color)] opacity-80">
             Sigla: {organization.shortName}
           </CardDescription>
@@ -90,16 +104,19 @@ export default function OrganizationCard({ organization, onEdit, onDelete, onCli
               <Trash2 size={18} />
             </Button>
           )}
-
         </CardFooter>
       </Card>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir a organização "{organization.name}"? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir a organização "{organization.name}
+              "? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

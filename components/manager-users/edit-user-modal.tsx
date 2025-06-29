@@ -18,8 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getCampusByUser } from "@/lib/data-service";
-import type { Campus, CampusMember, UserProfile } from "@/lib/new-interface";
+import type { Campus, CampusMember, UserProfile } from "@/interface";
 import { useEffect, useState } from "react";
 
 interface EditUserFormData extends Partial<UserProfile> {
@@ -47,11 +46,9 @@ export function EditUserModal({
     id: "",
     name: "",
     email: "",
+    description: "",
+    avatar: "/logo.svg",
     active: false,
-    profile: {
-      image: "/logo.svg",
-      description: "",
-    },
     campusId: "",
     papel: "usuario",
   });
@@ -60,17 +57,14 @@ export function EditUserModal({
 
   useEffect(() => {
     if (user) {
-      const userCampus = getCampusByUser(user.id);
       setFormData({
         id: user.id,
         name: user.name,
         email: user.email,
+        description: user.description,
+        avatar: user.avatar,
         active: user.active,
-        profile: user.profile || {
-          image: "/logo.svg",
-          description: "",
-        },
-        campusId: userCampus?.id || "",
+        campusId: "",
         papel: "usuario",
       });
     }
@@ -107,8 +101,9 @@ export function EditUserModal({
         id: formData.id,
         name: formData.name,
         email: formData.email,
+        description: formData.description,
+        avatar: formData.avatar,
         active: formData.active,
-        profile: formData.profile,
       };
 
       onEditUser(userProfileData);

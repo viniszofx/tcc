@@ -8,10 +8,9 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
-import data from "@/data/new-db.json";
-import type { Organization } from "@/lib/new-interface";
+import type { Organization } from "@/interface";
 import { ArrowLeft, Edit } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -25,16 +24,47 @@ export default function OrganizationDetailsPage() {
   const [organization, setOrganization] = useState<Organization | null>(null);
 
   useEffect(() => {
-    const found = (data.organizations || []).find(
-      (org: any) => org.id === orgId
-    );
-    setOrganization(found || null);
-    setIsLoading(false);
+    const fetchOrganization = async () => {
+      try {
+        const response = await fetch(`/api/organization?id=${orgId}`);
+        const data = await response.json();
+
+        if (response.ok && data) {
+          setOrganization(data);
+        } else {
+          setOrganization(null);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar organização:", error);
+        setOrganization(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrganization();
   }, [orgId]);
 
-  const handleSave = (updatedOrg: Organization) => {
-    setOrganization(updatedOrg);
-    setIsModalOpen(false);
+  const handleSave = async (updatedOrg: Organization) => {
+    try {
+      const response = await fetch("/api/organization", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedOrg),
+      });
+
+      if (response.ok) {
+        const newOrgData = await response.json();
+        setOrganization(newOrgData);
+        setIsModalOpen(false);
+      } else {
+        console.error("Erro ao atualizar organização");
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar organização:", error);
+    }
   };
 
   if (!organization) {
@@ -45,10 +75,7 @@ export default function OrganizationDetailsPage() {
             Organização não encontrada
           </h2>
           <p className="text-muted-foreground mt-2">
-            ID: {orgId} não corresponde a nenhuma organização
-          </p>
-          <p className="text-muted-foreground mt-1">
-            IDs válidos: {(data.organizations || []).map(o => o.id).join(", ")}
+            Organização com ID: {orgId} não foi encontrada
           </p>
           <Button
             variant="outline"
@@ -104,7 +131,9 @@ export default function OrganizationDetailsPage() {
         <CardContent className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-3">
-              <h3 className="font-medium text-[var(--font-color)]">ID da Organização</h3>
+              <h3 className="font-medium text-[var(--font-color)]">
+                ID da Organização
+              </h3>
               <p className="text-sm text-[var(--font-color)]">
                 {organization.id}
               </p>

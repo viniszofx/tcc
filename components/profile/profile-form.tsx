@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import type { Campus, UserProfile } from "@/lib/new-interface"
-import ProfileField from "./profile-field"
+import type { Campus, UserProfile } from "@/interface";
+import ProfileField from "./profile-field";
 
 interface ProfileFormProps {
-  usuario: UserProfile
-  campus?: Campus
-  onNomeChange: (value: string) => void
-  onEmailChange: (value: string) => void
-  onDescricaoChange: (value: string) => void
+  usuario: UserProfile;
+  campus?: Campus;
+  onNomeChange: (value: string) => void;
+  onEmailChange: (value: string) => void;
+  onDescricaoChange: (value: string) => void;
 }
 
 export default function ProfileForm({
@@ -18,18 +18,24 @@ export default function ProfileForm({
   onEmailChange,
   onDescricaoChange,
 }: ProfileFormProps) {
-  const MAX_NOME_LENGTH = 70
-  const MAX_EMAIL_LENGTH = 70
-  const MAX_DESCRICAO_LENGTH = 160
+  const MAX_NOME_LENGTH = 70;
+  const MAX_EMAIL_LENGTH = 70;
+  const MAX_DESCRICAO_LENGTH = 160;
 
   const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return emailRegex.test(email)
-  }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   return (
     <div className="space-y-6">
-      <ProfileField id="nome" label="Nome" value={usuario.name} onChange={onNomeChange} maxLength={MAX_NOME_LENGTH} />
+      <ProfileField
+        id="nome"
+        label="Nome"
+        value={usuario.name}
+        onChange={onNomeChange}
+        maxLength={MAX_NOME_LENGTH}
+      />
 
       <ProfileField
         id="email"
@@ -43,16 +49,22 @@ export default function ProfileForm({
         errorMessage="Formato de e-mail inválido"
       />
 
-      <ProfileField id="campus" label="Campus" value={campus?.name || ""} onChange={() => {}} disabled={true} />
+      <ProfileField
+        id="campus"
+        label="Campus"
+        value={campus?.name || ""}
+        onChange={() => {}}
+        disabled={true}
+      />
 
       <ProfileField
         id="descricao"
         label="Descrição"
-        value={usuario.profile?.description || ""}
+        value={usuario.description || ""}
         onChange={onDescricaoChange}
         maxLength={MAX_DESCRICAO_LENGTH}
         isTextarea={true}
       />
     </div>
-  )
+  );
 }

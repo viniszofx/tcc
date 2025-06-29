@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,79 +8,91 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import type { Campus } from "@/lib/new-interface"
-import { AlertTriangle } from "lucide-react"
-import type React from "react"
-import { useEffect, useState } from "react"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import type { Campus } from "@/interface";
+import { AlertTriangle } from "lucide-react";
+import type React from "react";
+import { useEffect, useState } from "react";
 
 interface CampusModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSave: (campus: Campus) => void
-  onDelete: (campusId: string) => void
-  campus: Campus | null
-  mode: "create" | "edit" | "delete"
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (campus: Campus) => void;
+  onDelete: (campusId: string) => void;
+  campus: Campus | null;
+  mode: "create" | "edit" | "delete";
 }
 
-export default function CampusModal({ isOpen, onClose, onSave, onDelete, campus, mode }: CampusModalProps) {
+export default function CampusModal({
+  isOpen,
+  onClose,
+  onSave,
+  onDelete,
+  campus,
+  mode,
+}: CampusModalProps) {
   const [formData, setFormData] = useState<Campus>({
     id: "",
+    organizationId: "",
     name: "",
     code: "",
     active: false,
-  })
+  });
 
   useEffect(() => {
     if (campus) {
-      setFormData(campus)
+      setFormData(campus);
     } else {
       setFormData({
         id: "",
+        organizationId: "",
         name: "",
         code: "",
         active: true,
-      })
+      });
     }
-  }, [campus, isOpen])
+  }, [campus, isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
+    const { name, value } = e.target;
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
-    }))
-  }
+      [name]: value,
+    }));
+  };
 
   const handleSwitchChange = (checked: boolean) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      active: checked
-    }))
-  }
+      active: checked,
+    }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSave(formData)
-  }
+    e.preventDefault();
+    onSave(formData);
+  };
 
   const handleDelete = () => {
     if (campus) {
-      onDelete(campus.id)
+      onDelete(campus.id);
     }
-  }
+  };
 
   const renderContent = () => {
     if (mode === "delete") {
       return (
         <>
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-[var(--font-color)]">Excluir Campus</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-[var(--font-color)]">
+              Excluir Campus
+            </DialogTitle>
             <DialogDescription className="text-[var(--font-color)] opacity-70">
-              Tem certeza que deseja excluir este campus? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir este campus? Esta ação não pode ser
+              desfeita.
             </DialogDescription>
           </DialogHeader>
           <div className="my-4 sm:my-6 flex items-center justify-center">
@@ -112,7 +124,7 @@ export default function CampusModal({ isOpen, onClose, onSave, onDelete, campus,
             </Button>
           </DialogFooter>
         </>
-      )
+      );
     }
 
     return (
@@ -122,7 +134,9 @@ export default function CampusModal({ isOpen, onClose, onSave, onDelete, campus,
             {mode === "create" ? "Novo Campus" : "Editar Campus"}
           </DialogTitle>
           <DialogDescription className="text-[var(--font-color)] opacity-70">
-            {mode === "create" ? "Preencha os campos para criar um novo campus." : "Edite as informações do campus."}
+            {mode === "create"
+              ? "Preencha os campos para criar um novo campus."
+              : "Edite as informações do campus."}
           </DialogDescription>
         </DialogHeader>
         <div className="my-4 sm:my-6 space-y-4">
@@ -182,12 +196,14 @@ export default function CampusModal({ isOpen, onClose, onSave, onDelete, campus,
           </Button>
         </DialogFooter>
       </form>
-    )
-  }
+    );
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md max-w-[95vw] p-4 sm:p-6">{renderContent()}</DialogContent>
+      <DialogContent className="sm:max-w-md max-w-[95vw] p-4 sm:p-6">
+        {renderContent()}
+      </DialogContent>
     </Dialog>
-  )
+  );
 }

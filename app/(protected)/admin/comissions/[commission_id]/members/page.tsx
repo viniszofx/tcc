@@ -18,12 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import data from "@/data/new-db.json";
-import type {
-  Commission,
-  CommissionMember,
-  UserProfile,
-} from "@/lib/new-interface";
+import type { Commission, CommissionMember, UserProfile } from "@/interface";
 import { ArrowLeft, Plus, Trash2, Users } from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
@@ -39,35 +34,55 @@ export default function ComissionMembersPage() {
   const [membros, setMembros] = useState<
     (UserProfile & { roleInCommission?: string })[]
   >([]);
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const [showConfirm, setShowConfirm] = useState(false);
-  const [userToRemove, setUserToRemove] = useState<UserProfile & { roleInCommission?: string } | null>(null);
+  const [userToRemove, setUserToRemove] = useState<
+    (UserProfile & { roleInCommission?: string }) | null
+  >(null);
 
   useEffect(() => {
-    const fetchData = () => {
+    const fetchData = async () => {
       try {
-        const comissaoEncontrada = (data.commissions as Commission[]).find(
-          (c) => c.id === comissionId && c.active
+        // Buscar a comissão específica
+        const commissionResponse = await fetch(
+          `/api/commission?id=${comissionId}`
         );
-        if (comissaoEncontrada) {
-          setComissao(comissaoEncontrada);
+        const commissionData = await commissionResponse.json();
 
-          const membrosComissao = (data.commission_members as CommissionMember[])
-            .filter((cm) => cm.commissionId === comissionId);
+        if (commissionResponse.ok && commissionData) {
+          setComissao(commissionData);
 
-          const perfis = (data.user_profiles as UserProfile[]);
+          // Buscar membros da comissão
+          const membersResponse = await fetch(
+            `/api/commission-member?commissionId=${comissionId}`
+          );
+          const membersData = await membersResponse.json();
 
-          const membrosDetalhados = membrosComissao
-            .map((cm) => {
-              const user = perfis.find((u) => u.id === cm.userId);
-              return user
-                ? { ...user, roleInCommission: cm.roleInCommission }
-                : null;
-            })
-            .filter(Boolean) as (UserProfile & { roleInCommission?: string })[];
+          // Buscar todos os usuários
+          const usersResponse = await fetch("/api/user");
+          const usersData = await usersResponse.json();
 
-          setMembros(membrosDetalhados);
+          if (membersResponse.ok && usersResponse.ok) {
+            setAllUsers(usersData);
+
+            // Combinar dados dos membros com dados dos usuários
+            const membrosDetalhados = membersData
+              .map((cm: CommissionMember) => {
+                const user = usersData.find(
+                  (u: UserProfile) => u.id === cm.userId
+                );
+                return user
+                  ? { ...user, roleInCommission: cm.roleInCommission }
+                  : null;
+              })
+              .filter(Boolean) as (UserProfile & {
+              roleInCommission?: string;
+            })[];
+
+            setMembros(membrosDetalhados);
+          }
         } else {
           setComissao(null);
         }
@@ -86,23 +101,45 @@ export default function ComissionMembersPage() {
     setIsAddModalOpen(true);
   };
 
-  const handleAskRemove = (membro: UserProfile & { roleInCommission?: string }) => {
+  const handleAskRemove = (
+    membro: UserProfile & { roleInCommission?: string }
+  ) => {
     setUserToRemove(membro);
     setShowConfirm(true);
   };
 
-  const handleConfirmRemove = () => {
+  const handleConfirmRemove = async () => {
     if (userToRemove) {
-      setMembros(membros.filter((m) => m.id !== userToRemove.id));
+      try {
+        const response = await fetch(
+          `/api/commission-member?userId=${userToRemove.id}&commissionId=${comissionId}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (response.ok) {
+          setMembros(membros.filter((m) => m.id !== userToRemove.id));
+          alert(
+            `Membro "${userToRemove.name}" (${
+              userToRemove.roleInCommission || "Membro"
+            }) removido com sucesso!`
+          );
+        } else {
+          alert("Erro ao remover membro");
+        }
+      } catch (error) {
+        console.error("Erro ao remover membro:", error);
+        alert("Erro ao remover membro");
+      }
+
       setShowConfirm(false);
-      alert(`Membro "${userToRemove.name}" (${userToRemove.roleInCommission || "Membro"}) removido com sucesso!`);
       setUserToRemove(null);
     }
   };
 
-  const handleAddNewMember = (userId: string, role: string) => {
-    const perfis = (data.user_profiles as UserProfile[]);
-    const userToAdd = perfis.find((u) => u.id === userId);
+  const handleAddNewMember = async (userId: string, role: string) => {
+    const userToAdd = allUsers.find((u) => u.id === userId);
 
     if (userToAdd) {
       const alreadyMember = membros.some((m) => m.id === userId);
@@ -112,13 +149,34 @@ export default function ComissionMembersPage() {
         return;
       }
 
-      const newMember: UserProfile & { roleInCommission?: string } = {
-        ...userToAdd,
-        roleInCommission: role,
-      };
+      try {
+        const response = await fetch("/api/commission-member", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId,
+            commissionId: comissionId,
+            roleInCommission: role,
+          }),
+        });
 
-      setMembros([...membros, newMember]);
-      setIsAddModalOpen(false);
+        if (response.ok) {
+          const newMember: UserProfile & { roleInCommission?: string } = {
+            ...userToAdd,
+            roleInCommission: role,
+          };
+
+          setMembros([...membros, newMember]);
+          setIsAddModalOpen(false);
+        } else {
+          alert("Erro ao adicionar membro");
+        }
+      } catch (error) {
+        console.error("Erro ao adicionar membro:", error);
+        alert("Erro ao adicionar membro");
+      }
     }
   };
 
@@ -211,7 +269,7 @@ export default function ComissionMembersPage() {
                   <div className="flex items-center gap-4">
                     <div className="relative h-12 w-12 rounded-full overflow-hidden">
                       <Image
-                        src={membro.profile?.image || "/logo.svg"}
+                        src={membro.avatar || "/logo.svg"}
                         alt={`Foto de ${membro.name}`}
                         fill
                         className="object-cover"
@@ -243,20 +301,24 @@ export default function ComissionMembersPage() {
         </CardContent>
       </Card>
 
-
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
         <DialogContent className="sm:max-w-md max-w-[95vw] p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-[var(--font-color)]">Confirmar Exclusão</DialogTitle>
+            <DialogTitle className="text-[var(--font-color)]">
+              Confirmar Exclusão
+            </DialogTitle>
             <DialogDescription className="text-[var(--font-color)]/70">
               Tem certeza que deseja excluir o membro
-              <span className="font-semibold text-[var(--font-color)]"> {userToRemove?.name} </span>
+              <span className="font-semibold text-[var(--font-color)]">
+                {" "}
+                {userToRemove?.name}{" "}
+              </span>
               {userToRemove?.roleInCommission && (
                 <span className="text-xs text-[var(--font-color)]/70">
                   ({userToRemove.roleInCommission})
                 </span>
-              )}?
-              Esta ação não pode ser desfeita.
+              )}
+              ? Esta ação não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">

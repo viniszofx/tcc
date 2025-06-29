@@ -17,8 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import data from "@/data/new-db.json";
-import type { UserProfile } from "@/lib/new-interface";
+import type { UserProfile } from "@/interface";
 import { useEffect, useState } from "react";
 
 interface AddMemberModalProps {
@@ -40,11 +39,26 @@ export default function AddMemberModal({
   const [availableUsers, setAvailableUsers] = useState<UserProfile[]>([]);
 
   useEffect(() => {
-    const available = (data.user_profiles as UserProfile[]).filter(
-      (u) => !currentMembers.includes(u.id) && u.active
-    );
-    setAvailableUsers(available);
-  }, [commissionId, currentMembers]);
+    const fetchAvailableUsers = async () => {
+      try {
+        const response = await fetch("/api/user");
+        const users = await response.json();
+
+        if (response.ok) {
+          const available = users.filter(
+            (u: UserProfile) => !currentMembers.includes(u.id) && u.active
+          );
+          setAvailableUsers(available);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar usuários:", error);
+      }
+    };
+
+    if (isOpen) {
+      fetchAvailableUsers();
+    }
+  }, [commissionId, currentMembers, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

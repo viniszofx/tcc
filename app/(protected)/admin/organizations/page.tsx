@@ -11,27 +11,38 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import data from "@/data/new-db.json";
-import { Organization } from "@/lib/new-interface";
+import { Organization } from "@/interface";
 import { ArrowLeft, Plus, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 
 export default function OrganizationsPage() {
   const router = useRouter();
-  const initialOrgs: Organization[] = (data.organizations || []).map((org: any) => ({
-    ...org,
-  }));
-
-  const [orgs, setOrgs] = useState<Organization[]>(initialOrgs);
+  const [orgs, setOrgs] = useState<Organization[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(false);
+    const fetchOrganizations = async () => {
+      try {
+        const response = await fetch("/api/organization");
+        const data = await response.json();
+
+        if (response.ok) {
+          setOrgs(data);
+        } else {
+          console.error("Erro ao buscar organizações:", data);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar organizações:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrganizations();
   }, []);
 
   const handleOpenModal = (mode: "create" | "edit", org?: Organization) => {
@@ -45,25 +56,59 @@ export default function OrganizationsPage() {
     setCurrentOrg(null);
   };
 
-  const handleSave = (org: Organization) => {
-    if (modalMode === "create") {
-      setOrgs([
-        ...orgs,
-        {
-          ...org,
-          id: uuidv4(),
-        },
-      ]);
-    } else if (modalMode === "edit" && currentOrg) {
-      setOrgs(
-        orgs.map((o) => (o.id === currentOrg.id ? { ...org, id: currentOrg.id } : o))
-      );
+  const handleSave = async (org: Organization) => {
+    try {
+      if (modalMode === "create") {
+        const response = await fetch("/api/organization", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(org),
+        });
+
+        if (response.ok) {
+          const newOrg = await response.json();
+          setOrgs([...orgs, newOrg]);
+        } else {
+          console.error("Erro ao criar organização");
+        }
+      } else if (modalMode === "edit" && currentOrg) {
+        const response = await fetch("/api/organization", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ...org, id: currentOrg.id }),
+        });
+
+        if (response.ok) {
+          const updatedOrg = await response.json();
+          setOrgs(orgs.map((o) => (o.id === currentOrg.id ? updatedOrg : o)));
+        } else {
+          console.error("Erro ao atualizar organização");
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao salvar organização:", error);
     }
     handleCloseModal();
   };
 
-  const handleDelete = (orgId: string) => {
-    setOrgs(orgs.filter((o) => o.id !== orgId));
+  const handleDelete = async (orgId: string) => {
+    try {
+      const response = await fetch(`/api/organization?id=${orgId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setOrgs(orgs.filter((o) => o.id !== orgId));
+      } else {
+        console.error("Erro ao deletar organização");
+      }
+    } catch (error) {
+      console.error("Erro ao deletar organização:", error);
+    }
   };
 
   const handleSaveAll = () => {
@@ -71,9 +116,7 @@ export default function OrganizationsPage() {
   };
 
   if (isLoading) {
-    return (
-      <LoadingScreen />
-    );
+    return <LoadingScreen />;
   }
 
   return (

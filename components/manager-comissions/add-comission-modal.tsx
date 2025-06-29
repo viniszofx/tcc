@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Campus } from "@/lib/new-interface";
+import type { Campus } from "@/interface";
 import { useState } from "react";
 
 export interface AddComissionModalProps {

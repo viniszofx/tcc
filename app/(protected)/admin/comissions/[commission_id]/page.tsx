@@ -18,9 +18,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import data from "@/data/new-db.json";
-import type { Commission } from "@/lib/new-interface";
-import { ArrowLeft, Clock, Database, Edit, Trash2, Upload, Users } from "lucide-react";
+import type {
+  Campus,
+  Commission,
+  CommissionMember,
+  UserProfile,
+} from "@/interface";
+import {
+  ArrowLeft,
+  Clock,
+  Database,
+  Edit,
+  Trash2,
+  Upload,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -33,49 +45,71 @@ export default function ComissionDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [comissao, setComissao] = useState<Commission | null>(null);
-
+  const [campus, setCampus] = useState<Campus | null>(null);
+  const [commissionMembers, setCommissionMembers] = useState<
+    CommissionMember[]
+  >([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
-    const fetchComissao = () => {
+    const fetchData = async () => {
       try {
-        const comissaoEncontrada = data.commissions.find(
-          (c: Commission) => c.id === comissionId && c.active !== false
+        // Buscar a comissão específica
+        const commissionResponse = await fetch(
+          `/api/commission?id=${comissionId}`
         );
+        const commissionData = await commissionResponse.json();
 
-        if (comissaoEncontrada) {
-          setComissao(comissaoEncontrada);
+        if (commissionResponse.ok && commissionData) {
+          setComissao(commissionData);
+
+          // Buscar o campus da comissão
+          const campusResponse = await fetch(
+            `/api/campus?id=${commissionData.campusId}`
+          );
+          const campusData = await campusResponse.json();
+          if (campusResponse.ok) {
+            setCampus(campusData);
+          }
+
+          // Buscar membros da comissão
+          const membersResponse = await fetch(
+            `/api/commission-member?commissionId=${comissionId}`
+          );
+          const membersData = await membersResponse.json();
+          if (membersResponse.ok) {
+            setCommissionMembers(membersData);
+          }
+
+          // Buscar todos os usuários
+          const usersResponse = await fetch("/api/user");
+          const usersData = await usersResponse.json();
+          if (usersResponse.ok) {
+            setUsers(usersData);
+          }
         } else {
-          console.error("Comissão não encontrada ou inativa");
+          console.error("Comissão não encontrada");
         }
       } catch (error) {
-        console.error("Erro ao buscar comissão:", error);
+        console.error("Erro ao buscar dados:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchComissao();
+    fetchData();
   }, [comissionId]);
 
-  const campus = data.campus.find((c) => c.id === comissao?.campusId);
-
-  const presidenteMember = data.commission_members.find(
-    (member) =>
-      member.commissionId === comissionId &&
-      member.roleInCommission === "Presidente"
+  const presidente = commissionMembers.find(
+    (member) => member.roleInCommission === "Presidente"
   );
-  const presidente = presidenteMember
-    ? data.user_profiles.find((user) => user.id === presidenteMember.userId)
+  const presidenteUser = presidente
+    ? users.find((user) => user.id === presidente.userId)
     : null;
 
-  const commissionMembers = data.commission_members.filter(
-    (member) => member.commissionId === comissionId
-  );
   const membros = commissionMembers
-    .map((member) =>
-      data.user_profiles.find((user) => user.id === member.userId)
-    )
+    .map((member) => users.find((user) => user.id === member.userId))
     .filter(Boolean);
 
   if (isLoading) {
@@ -90,10 +124,7 @@ export default function ComissionDetailsPage() {
             Comissão não encontrada
           </h2>
           <p className="text-muted-foreground mt-2">
-            ID: {comissionId} não corresponde a nenhuma comissão ativa
-          </p>
-          <p className="text-muted-foreground mt-1">
-            IDs válidos: {data.commissions.map((c) => c.id).join(", ")}
+            Comissão com ID: {comissionId} não foi encontrada
           </p>
           <Button
             variant="outline"
@@ -107,16 +138,47 @@ export default function ComissionDetailsPage() {
     );
   }
 
-  const handleSave = (updatedComission: Commission) => {
-    setComissao(updatedComission);
-    setIsEditModalOpen(false);
+  const handleSave = async (updatedComission: Commission) => {
+    try {
+      const response = await fetch("/api/commission", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedComission),
+      });
+
+      if (response.ok) {
+        const updatedData = await response.json();
+        setComissao(updatedData);
+        setIsEditModalOpen(false);
+      } else {
+        console.error("Erro ao atualizar comissão");
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar comissão:", error);
+    }
   };
 
-  const handleAskDelete = () => setShowConfirm(true);
-  const handleConfirmDelete = () => {
+  const handleAskDelete = () => {
+    setShowConfirm(true);
+  };
+
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(`/api/commission?id=${comissionId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        router.push("/admin/comissions");
+      } else {
+        console.error("Erro ao deletar comissão");
+      }
+    } catch (error) {
+      console.error("Erro ao deletar comissão:", error);
+    }
     setShowConfirm(false);
-    alert(`Comissão "${comissao?.name}" excluída com sucesso!`);
-    router.push("/admin/comissions");
   };
 
   return (
@@ -180,16 +242,20 @@ export default function ComissionDetailsPage() {
         <CardContent className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-3">
-              <h3 className="font-medium text-[var(--font-color)]">Descrição</h3>
+              <h3 className="font-medium text-[var(--font-color)]">
+                Descrição
+              </h3>
               <p className="text-sm text-[var(--font-color)]">
                 {comissao.description || "Nenhuma descrição fornecida"}
               </p>
             </div>
 
             <div className="space-y-3">
-              <h3 className="font-medium text-[var(--font-color)]">Presidente</h3>
+              <h3 className="font-medium text-[var(--font-color)]">
+                Presidente
+              </h3>
               <p className="text-sm text-[var(--font-color)]">
-                {presidente?.name || "Não definido"}
+                {presidenteUser?.name || "Não definido"}
               </p>
             </div>
 
@@ -275,7 +341,7 @@ export default function ComissionDetailsPage() {
             <Button
               type="button"
               className="w-full sm:w-auto bg-red-600 text-white hover:bg-red-700 transition-all"
-              onClick={handleConfirmDelete}
+              onClick={handleDelete}
             >
               Excluir
             </Button>

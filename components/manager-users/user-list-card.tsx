@@ -3,7 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Campus, CampusMember, UserProfile } from "@/lib/new-interface";
+import type { Campus, CampusMember, UserProfile } from "@/interface";
 import { Eye, Pencil } from "lucide-react";
 import Link from "next/link";
 
@@ -41,12 +41,18 @@ export function UserListCard({
       <CardContent className="p-4">
         <div className="rounded-md border border-[var(--border-color)]">
           <div className="grid grid-cols-12 gap-2 bg-[var(--header-color)] p-4 font-medium text-[var(--font-color)]">
-            <div className="hidden md:block md:col-span-1 text-center">Foto</div>
+            <div className="hidden md:block md:col-span-1 text-center">
+              Foto
+            </div>
             <div className="col-span-6 md:col-span-3 lg:col-span-2">Nome</div>
-            <div className="hidden md:block md:col-span-4 lg:col-span-3">Email</div>
+            <div className="hidden md:block md:col-span-4 lg:col-span-3">
+              Email
+            </div>
             <div className="hidden lg:block lg:col-span-2">Campus</div>
             <div className="hidden lg:block lg:col-span-2">Status</div>
-            <div className="col-span-6 md:col-span-4 lg:col-span-2 text-right">Ações</div>
+            <div className="col-span-6 md:col-span-4 lg:col-span-2 text-right">
+              Ações
+            </div>
           </div>
 
           <div className="divide-y divide-[var(--border-color)]">
@@ -59,7 +65,7 @@ export function UserListCard({
                   <div className="hidden md:flex md:col-span-1 justify-center">
                     <Avatar className="h-10 w-10 border">
                       <AvatarImage
-                        src={usuario.profile?.image || "/placeholder.svg"}
+                        src={usuario.avatar || "/placeholder.svg"}
                         alt={usuario.name}
                       />
                       <AvatarFallback>{usuario.name.charAt(0)}</AvatarFallback>
@@ -80,7 +86,9 @@ export function UserListCard({
 
                   <div className="hidden lg:block lg:col-span-2">
                     <span
-                      className={`inline-flex rounded px-2 py-1 text-xs font-medium text-white ${usuario.active ? "bg-green-500" : "bg-red-500"}`}
+                      className={`inline-flex rounded px-2 py-1 text-xs font-medium text-white ${
+                        usuario.active ? "bg-green-500" : "bg-red-500"
+                      }`}
                     >
                       {usuario.active ? "Ativo" : "Inativo"}
                     </span>

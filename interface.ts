@@ -56,7 +56,7 @@ export interface Commission {
 export interface CommissionMember {
   userId: string;
   commissionId: string;
-  roleInCommission: "presidente" | "Membro";
+  roleInCommission: "Presidente" | "Membro" | "Secretário";
 }
 
 export interface InventoryItem {

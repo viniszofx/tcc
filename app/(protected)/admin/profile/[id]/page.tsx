@@ -1,6 +1,6 @@
 "use client";
 
-import type { Campus, UserProfile } from "@/lib/new-interface";
+import type { Campus, UserProfile } from "@/interface";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -9,46 +9,67 @@ import ProfileActions from "@/components/profile/profile-actions";
 import ProfileEditor from "@/components/profile/profile-editor";
 import ProfileSidebar from "@/components/profile/profile-sidebar";
 import { Card } from "@/components/ui/card";
-import data from "@/data/new-db.json";
 import { useParams } from "next/navigation";
+
+type UserWithCampus = UserProfile & {
+  campusName?: string;
+};
 
 export default function ProfilePage() {
   const router = useRouter();
   const params = useParams();
   const userId = params.id as string;
   const [isSaving, setIsSaving] = useState(false);
-  const [usuario, setUsuario] = useState<UserProfile | null>(null);
+  const [usuario, setUsuario] = useState<UserWithCampus | null>(null);
   const [campuses, setCampuses] = useState<Campus[]>([]);
 
-  const initialUsers = (data.user_profiles || []).map((user: any) => ({
-    ...user,
-  }));
-
-  const getCampusForUser = (userId: string) => {
-    // Busca o campus_member para encontrar o campusId do usuário
-    const campusMember = data.campus_members.find(
-      (member) => member.userId === userId
-    );
-    if (campusMember) {
-      // Busca o campus pelo campusId
-      return data.campus.find((campus) => campus.id === campusMember.campusId);
-    }
-    return null;
-  };
-
   useEffect(() => {
-    setCampuses((data.campus || []).map((campus: any) => ({ ...campus })));
-    if (userId) {
-      const foundUser = initialUsers.find((user) => user.id === userId);
-      if (foundUser) {
-        // Busca o campus do usuário
-        const userCampus = getCampusForUser(userId);
-        setUsuario({
-          ...foundUser,
-          campusName: userCampus?.name || "Campus não encontrado",
-        });
+    const fetchUserData = async () => {
+      if (userId) {
+        try {
+          // Buscar usuário específico
+          const userResponse = await fetch(`/api/user?id=${userId}`);
+          const userData = await userResponse.json();
+
+          // Buscar campus
+          const campusesResponse = await fetch("/api/campus");
+          const campusesData = await campusesResponse.json();
+
+          // Buscar membros de campus
+          const campusMembersResponse = await fetch("/api/campus-member");
+          const campusMembersData = await campusMembersResponse.json();
+
+          if (
+            userResponse.ok &&
+            campusesResponse.ok &&
+            campusMembersResponse.ok
+          ) {
+            setCampuses(campusesData);
+
+            if (userData) {
+              // Encontrar campus do usuário
+              const userCampusMember = campusMembersData.find(
+                (cm: any) => cm.userId === userData.id
+              );
+              const userCampus = userCampusMember
+                ? campusesData.find(
+                    (c: Campus) => c.id === userCampusMember.campusId
+                  )
+                : null;
+
+              setUsuario({
+                ...userData,
+                campusName: userCampus?.name || "Campus não encontrado",
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Erro ao carregar dados do usuário:", error);
+        }
       }
-    }
+    };
+
+    fetchUserData();
   }, [userId]);
 
   const handleSave = async () => {
@@ -62,7 +83,19 @@ export default function ProfilePage() {
 
     try {
       setIsSaving(true);
-      alert("Perfil salvo com sucesso!");
+      const response = await fetch("/api/user", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(usuario),
+      });
+
+      if (response.ok) {
+        alert("Perfil salvo com sucesso!");
+      } else {
+        alert("Erro ao salvar perfil.");
+      }
     } catch (error) {
       console.error("Error saving profile:", error);
       alert("Erro ao salvar perfil. Tente novamente.");
@@ -81,10 +114,7 @@ export default function ProfilePage() {
     if (field === "description") {
       setUsuario({
         ...usuario,
-        profile: {
-          ...usuario.profile,
-          description: value,
-        },
+        description: value,
       });
     } else {
       setUsuario({
@@ -98,8 +128,7 @@ export default function ProfilePage() {
     return <LoadingScreen />;
   }
 
-  const campusNome =
-    getCampusForUser(usuario.id)?.name || "Campus não encontrado";
+  const campusNome = usuario.campusName || "Campus não encontrado";
 
   return (
     <div className="flex-1 w-full p-3 xs:p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center">
@@ -107,7 +136,7 @@ export default function ProfilePage() {
         <div className="flex flex-col md:flex-row h-full p-6 sm:p-8 gap-8">
           <ProfileSidebar
             usuario={usuario}
-            campus={getCampusForUser(usuario.id) || undefined}
+            campus={campuses.find((c) => c.name === usuario.campusName)}
           />
 
           <div className="hidden md:block w-px bg-border h-auto" />
@@ -115,7 +144,7 @@ export default function ProfilePage() {
           <ProfileEditor
             usuario={usuario}
             onFieldChange={handleFieldChange}
-            campus={getCampusForUser(usuario.id) || undefined}
+            campus={campuses.find((c) => c.name === usuario.campusName)}
           />
         </div>
 

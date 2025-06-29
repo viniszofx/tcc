@@ -73,7 +73,7 @@ export interface InventoryItem {
   ed: string;
   updatedAt: string;
   sector: string;
-  campusCode: string;
+  campusId: string;
 }
 
 export interface InventoryHistory {
