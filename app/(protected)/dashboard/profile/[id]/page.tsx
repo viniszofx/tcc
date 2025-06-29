@@ -1,7 +1,6 @@
 "use client";
 
-import data from "@/data/new-db.json";
-import type { Campus, UserProfile } from "@/lib/new-interface";
+import type { Campus, UserProfile } from "@/interface";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -12,56 +11,74 @@ import ProfileSidebar from "@/components/profile/profile-sidebar";
 import { Card } from "@/components/ui/card";
 import NotFound from "./not-found";
 
+type UserWithCampus = UserProfile & {
+  campusName?: string;
+};
+
 export default function ProfileDynamicPage() {
   const params = useParams();
   const router = useRouter();
   const profileId = params.id as string;
 
-  const [usuario, setUsuario] = useState<UserProfile | null>(null);
+  const [usuario, setUsuario] = useState<UserWithCampus | null>(null);
   const [campuses, setCampuses] = useState<Campus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  const initialUsers = (data.user_profiles || []).map((user: any) => ({
-    ...user,
-  }));
-
-  const getCampusForUser = (userId: string) => {
-    const campusMember = data.campus_members.find(
-      (member) => member.userId === userId
-    );
-    if (campusMember) {
-      return data.campus.find((campus) => campus.id === campusMember.campusId);
-    }
-    return null;
-  };
-
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        setCampuses((data.campus || []).map((campus: any) => ({ ...campus })));
+    const fetchUserData = async () => {
+      if (profileId) {
+        try {
+          setIsLoading(true);
 
-        const user = initialUsers.find((u) => u.id === profileId);
+          // Buscar usuário específico
+          const userResponse = await fetch(`/api/user?id=${profileId}`);
+          const userData = await userResponse.json();
 
-        if (!user) {
-          NotFound();
-          return;
+          // Buscar campus
+          const campusesResponse = await fetch("/api/campus");
+          const campusesData = await campusesResponse.json();
+
+          // Buscar membros de campus
+          const campusMembersResponse = await fetch("/api/campus-member");
+          const campusMembersData = await campusMembersResponse.json();
+
+          if (
+            userResponse.ok &&
+            campusesResponse.ok &&
+            campusMembersResponse.ok
+          ) {
+            setCampuses(campusesData);
+
+            if (userData) {
+              // Encontrar campus do usuário
+              const userCampusMember = campusMembersData.find(
+                (cm: any) => cm.userId === userData.id
+              );
+              const userCampus = userCampusMember
+                ? campusesData.find(
+                    (c: Campus) => c.id === userCampusMember.campusId
+                  )
+                : null;
+
+              setUsuario({
+                ...userData,
+                campusName: userCampus?.name || "Campus não encontrado",
+              });
+            } else {
+              setUsuario(null);
+            }
+          }
+        } catch (error) {
+          console.error("Erro ao carregar dados do usuário:", error);
+          setUsuario(null);
+        } finally {
+          setIsLoading(false);
         }
-
-        const userCampus = getCampusForUser(profileId);
-        setUsuario({
-          ...user,
-          campusName: userCampus?.name || "Campus não encontrado",
-        });
-      } catch (error) {
-        console.error("Failed to fetch profile:", error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
-    fetchData();
+    fetchUserData();
   }, [profileId]);
 
   const handleSave = async () => {
@@ -94,10 +111,7 @@ export default function ProfileDynamicPage() {
     if (field === "description") {
       setUsuario({
         ...usuario,
-        profile: {
-          ...usuario.profile,
-          description: value,
-        },
+        description: value,
       });
     } else {
       setUsuario({
@@ -121,7 +135,7 @@ export default function ProfileDynamicPage() {
         <div className="flex flex-col md:flex-row h-full p-6 sm:p-8 gap-8">
           <ProfileSidebar
             usuario={usuario}
-            campus={getCampusForUser(usuario.id) || undefined}
+            campus={campuses.find((c) => c.name === usuario.campusName)}
           />
 
           <div className="hidden md:block w-px bg-border h-auto" />
@@ -129,7 +143,7 @@ export default function ProfileDynamicPage() {
           <ProfileEditor
             usuario={usuario}
             onFieldChange={handleFieldChange}
-            campus={getCampusForUser(usuario.id) || undefined}
+            campus={campuses.find((c) => c.name === usuario.campusName)}
           />
         </div>
 
