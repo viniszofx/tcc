@@ -10,23 +10,45 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import data from "@/data/new-db.json";
+import type { Campus, Commission } from "@/interface";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function ComissionsPage({ params }: any) {
   const campus_id = params.campus_id || "99dcee11-52de-4f4b-b5d5-6e46e4d30191";
-  const comissoes = data.commissions.filter(
-    (comissao) => comissao.campusId === campus_id
-  );
-
-  const campus = data.campus.find((campus) => campus.id === campus_id);
-  const campusName = campus ? campus.name : "Câmpus";
+  const [comissoes, setComissoes] = useState<Commission[]>([]);
+  const [campus, setCampus] = useState<Campus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(false);
-  }, []);
+    const fetchData = async () => {
+      try {
+        // Buscar comissões filtradas por campus
+        const commissionsResponse = await fetch(
+          `/api/commission?campusId=${campus_id}`
+        );
+        const commissionsData = await commissionsResponse.json();
+
+        // Buscar dados do campus específico
+        const campusResponse = await fetch(`/api/campus?id=${campus_id}`);
+        const campusData = await campusResponse.json();
+
+        if (commissionsResponse.ok) {
+          setComissoes(commissionsData);
+        }
+
+        if (campusResponse.ok) {
+          setCampus(campusData);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [campus_id]);
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -54,7 +76,7 @@ export default function ComissionsPage({ params }: any) {
           Comissões
         </CardTitle>
         <CardDescription className="text-[var(--font-color)]">
-          Lista de comissões do {campusName}
+          Lista de comissões do {campus?.name || "Câmpus"}
         </CardDescription>
       </CardHeader>
 

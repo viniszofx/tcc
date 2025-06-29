@@ -3,47 +3,65 @@
 import LoadingScreen from "@/components/custom/loading";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import data from "@/data/new-db.json";
-import { getUserById } from "@/lib/data-service";
-import { InventoryHistory } from "@/lib/new-interface";
+import type { InventoryHistory, InventoryItem, UserProfile } from "@/interface";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function Page() {
+export default function HistoryPage() {
   const params = useParams();
   const commissionId = params.commission_id as string;
   const [historico, setHistorico] = useState<InventoryHistory[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const fetchHistorico = () => {
+    const fetchData = async () => {
       try {
-        const commissionItems = data.inventory_items.filter(
-          (item) => item.commissionId === commissionId
+        // Buscar itens do inventário da comissão
+        const itemsResponse = await fetch(
+          `/api/inventory?commissionId=${commissionId}`
         );
+        const itemsData = await itemsResponse.json();
 
-        const commissionHistory = data.inventory_history.filter((historyItem) =>
-          commissionItems.some(
-            (item) => item.id === historyItem.inventoryItemId
-          )
-        );
-        
-        const sortedHistory = commissionHistory.sort(
-          (a, b) =>
-            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        );
+        if (itemsResponse.ok) {
+          setInventoryItems(itemsData);
 
-        const sanitizedHistory = sortedHistory.map((item) => ({
-          ...item,
-          changes: Object.fromEntries(
-            Object.entries(item.changes || {}).filter(
-              ([, value]) => value && value.old !== undefined && value.new !== undefined
-            )
-          ),
-        }));
+          // Buscar histórico para os itens desta comissão
+          const historyResponse = await fetch(
+            `/api/inventory-history?commissionId=${commissionId}`
+          );
+          const historyData = await historyResponse.json();
 
-        setHistorico(sanitizedHistory as InventoryHistory[]);
+          if (historyResponse.ok) {
+            // Ordenar histórico por timestamp decrescente
+            const sortedHistory = historyData.sort(
+              (a: InventoryHistory, b: InventoryHistory) =>
+                new Date(b.timestamp).getTime() -
+                new Date(a.timestamp).getTime()
+            );
+
+            setHistorico(sortedHistory);
+
+            // Buscar usuários únicos do histórico
+            const userIds = [
+              ...new Set(
+                sortedHistory.map((item: InventoryHistory) => item.userId)
+              ),
+            ];
+            const usersPromises = userIds.map(async (userId) => {
+              const userResponse = await fetch(`/api/user?id=${userId}`);
+              if (userResponse.ok) {
+                return await userResponse.json();
+              }
+              return null;
+            });
+
+            const usersData = await Promise.all(usersPromises);
+            setUsers(usersData.filter((user) => user !== null));
+          }
+        }
       } catch (error) {
         console.error("Erro ao buscar histórico:", error);
       } finally {
@@ -51,8 +69,16 @@ export default function Page() {
       }
     };
 
-    fetchHistorico();
+    fetchData();
   }, [commissionId]);
+
+  const getUserById = (userId: string) => {
+    return users.find((user) => user.id === userId);
+  };
+
+  const getInventoryItemById = (itemId: string) => {
+    return inventoryItems.find((item) => item.id === itemId);
+  };
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -76,8 +102,8 @@ export default function Page() {
             ) : (
               historico.map((historyItem) => {
                 const user = getUserById(historyItem.userId);
-                const inventoryItem = data.inventory_items.find(
-                  (item) => item.id === historyItem.inventoryItemId
+                const inventoryItem = getInventoryItemById(
+                  historyItem.inventoryItemId
                 );
                 const formattedDate = new Date(
                   historyItem.timestamp

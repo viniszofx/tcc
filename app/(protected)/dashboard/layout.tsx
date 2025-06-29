@@ -1,3 +1,5 @@
+"use client";
+
 import { AppSidebar } from "@/components/custom/app-sidebar";
 import DarkModeToggle from "@/components/custom/dark-mode-toggle";
 import { UserAvatar } from "@/components/custom/user-avatar";
@@ -8,23 +10,33 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import db from "@/data/new-db.json";
+import type { UserProfile } from "@/interface";
+import { useEffect, useState } from "react";
 import HeaderTitle from "../../../components/custom/header-title";
 
-export default async function Layout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  // Busca um usuário admin ou o primeiro usuário disponível
-  const adminUser = db.user_profiles.find((u) => {
-    const orgMember = db.organization_members.find(
-      (member) => member.userId === u.id
-    );
-    return orgMember?.role === "admin";
-  });
+export default function Layout({ children }: { children: React.ReactNode }) {
+  const [usuarioData, setUsuarioData] = useState<UserProfile | null>(null);
 
-  const usuarioData = adminUser || db.user_profiles[0];
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Para desenvolvimento, usar um usuário padrão ou buscar da sessão/auth
+        // Por enquanto vou usar a API de usuários
+        const usersResponse = await fetch("/api/user");
+        const usersData = await usersResponse.json();
+
+        if (usersResponse.ok && usersData.length > 0) {
+          // Usar o primeiro usuário por enquanto
+          // Em produção, isso deveria vir da sessão/autenticação
+          setUsuarioData(usersData[0]);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados do usuário:", error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   return (
     <ThemeProvider>

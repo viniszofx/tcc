@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import data from "@/data/new-db.json";
+import type { Commission } from "@/interface";
 import { Clock, Database } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -19,13 +19,65 @@ export default function ComissionPage() {
   const commission_id = params.commission_id as string;
 
   const [isLoading, setIsLoading] = useState(true);
-  const [comission, setComission] = useState(() =>
-    data.commissions.find((c) => c.id === commission_id)
-  );
+  const [comission, setComission] = useState<Commission | null>(null);
+  const [campus, setCampus] = useState<any>(null);
+  const [presidente, setPresidente] = useState<any>(null);
 
   useEffect(() => {
-    setIsLoading(false);
-  }, []);
+    const fetchData = async () => {
+      try {
+        // Buscar comissão específica
+        const commissionResponse = await fetch(
+          `/api/commission?id=${commission_id}`
+        );
+        const commissionData = await commissionResponse.json();
+
+        if (commissionResponse.ok && commissionData) {
+          setComission(commissionData);
+
+          // Buscar campus da comissão
+          const campusResponse = await fetch(
+            `/api/campus?id=${commissionData.campusId}`
+          );
+          const campusData = await campusResponse.json();
+          if (campusResponse.ok) {
+            setCampus(campusData);
+          }
+
+          // Buscar membros da comissão para encontrar o presidente
+          const membersResponse = await fetch(
+            `/api/commission-member?commissionId=${commission_id}`
+          );
+          const membersData = await membersResponse.json();
+
+          if (membersResponse.ok) {
+            const presidenteMember = membersData.find(
+              (member: any) =>
+                member.commissionId === commission_id &&
+                member.role === "presidente"
+            );
+
+            if (presidenteMember) {
+              // Buscar dados do usuário presidente
+              const userResponse = await fetch(
+                `/api/user?id=${presidenteMember.userId}`
+              );
+              const userData = await userResponse.json();
+              if (userResponse.ok) {
+                setPresidente(userData);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados da comissão:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [commission_id]);
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -45,17 +97,6 @@ export default function ComissionPage() {
       </Card>
     );
   }
-
-  const campus = data.campus.find((c) => c.id === comission.campusId);
-
-  const presidenteMember = data.commission_members.find(
-    (member) =>
-      member.commissionId === commission_id &&
-      member.roleInCommission === "Presidente"
-  );
-  const presidente = presidenteMember
-    ? data.user_profiles.find((user) => user.id === presidenteMember.userId)
-    : null;
 
   const routes = [
     {
