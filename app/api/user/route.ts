@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { data } from "../../../data";
+import newData from "../../../data/new-db.json";
 
 /**
  * @swagger
@@ -201,7 +201,17 @@ import { data } from "../../../data";
  */
 
 // Simulando um banco de dados em memória
-let users = [...data.userProfiles];
+// Transformar user_profiles do new-db.json para o formato esperado
+const transformUserProfile = (user: any) => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  description: user.profile?.description || "",
+  avatar: user.profile?.image || "",
+  active: user.active,
+});
+
+let users = newData.user_profiles.map(transformUserProfile);
 
 export async function GET(request: Request) {
   try {

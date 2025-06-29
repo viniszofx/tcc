@@ -92,7 +92,19 @@ export default function ProfileDynamicPage() {
 
     try {
       setIsSaving(true);
-      alert("Perfil salvo com sucesso!");
+      const response = await fetch("/api/user", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(usuario),
+      });
+
+      if (response.ok) {
+        alert("Perfil salvo com sucesso!");
+      } else {
+        alert("Erro ao salvar perfil.");
+      }
     } catch (error) {
       console.error("Error saving profile:", error);
       alert("Erro ao salvar perfil. Tente novamente.");
