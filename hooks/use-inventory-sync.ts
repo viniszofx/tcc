@@ -33,7 +33,7 @@ export function useInventorySync(commissionId: string) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [syncStatus, setSyncStatus] = useState<
-    "synced" | "pending" | "unknown"
+    "synced" | "pending" | "unknown" | "syncing"
   >("unknown");
 
   // Carregar dados da API
@@ -62,7 +62,23 @@ export function useInventorySync(commissionId: string) {
 
       // Verificar status de sincronização
       if (localMetadata && "syncStatus" in localMetadata) {
-        setSyncStatus((localMetadata as any).syncStatus || "unknown");
+        const currentStatus = (localMetadata as any).syncStatus || "unknown";
+        setSyncStatus(currentStatus);
+
+        // Se o status for "pending", verificar se já deveria estar sincronizado
+        if (currentStatus === "pending") {
+          const uploadTime = new Date(localMetadata.timestamp).getTime();
+          const now = new Date().getTime();
+          const timeDiff = now - uploadTime;
+
+          // Se passou mais de 5 minutos e ainda está pending, verificar servidor
+          if (timeDiff > 5 * 60 * 1000) {
+            console.log(
+              "🔍 Verificando status de sincronização no servidor..."
+            );
+            checkServerSyncStatus();
+          }
+        }
       } else {
         setSyncStatus("unknown");
       }
@@ -116,6 +132,9 @@ export function useInventorySync(commissionId: string) {
           timestamp: new Date().toISOString(),
           fileName: `sync_${commissionId}_${Date.now()}.json`,
           usedAcceleration: false,
+          syncStatus: "synced", // Marcar como sincronizado quando vem da API
+          lastSyncUpdate: new Date().toISOString(),
+          commissionId,
         };
 
         await storeProcessedData(convertedData, newMetadata);
@@ -133,6 +152,126 @@ export function useInventorySync(commissionId: string) {
       }
     },
     [commissionId]
+  );
+
+  // Verificar status de sincronização no servidor
+  const checkServerSyncStatus = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `/api/commission/sync-status?commissionId=${commissionId}`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Se há dados no servidor, marcar como sincronizado
+        if (data.inventory.count > 0) {
+          await updateSyncStatus("synced");
+          console.log("✅ Status atualizado para sincronizado");
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao verificar status no servidor:", error);
+    }
+  }, [commissionId]);
+
+  // Atualizar status de sincronização no metadata local
+  const updateSyncStatus = useCallback(
+    async (newStatus: "synced" | "pending" | "unknown" | "syncing") => {
+      try {
+        const { data, metadata } = await getProcessedData();
+
+        if (metadata) {
+          const updatedMetadata = {
+            ...metadata,
+            syncStatus: newStatus,
+            lastSyncUpdate: new Date().toISOString(),
+          };
+
+          await storeProcessedData(data, updatedMetadata);
+          setSyncStatus(newStatus);
+          setMetadata(updatedMetadata);
+        }
+      } catch (error) {
+        console.error("Erro ao atualizar status de sincronização:", error);
+      }
+    },
+    []
+  );
+
+  // Função para salvar item localmente E enviar para servidor (se já sincronizado)
+  const addItemWithAutoSync = useCallback(
+    async (item: BemCopia, campusId: string) => {
+      try {
+        // 1. Sempre salvar localmente primeiro
+        const { data, metadata } = await getProcessedData();
+        const updatedData = [...data, item];
+
+        const updatedMetadata: InventoryMetadata = {
+          recordCount: updatedData.length,
+          timestamp: new Date().toISOString(),
+          fileName: metadata?.fileName || "manual_entry.json",
+          usedAcceleration: false,
+          syncStatus: metadata?.syncStatus === "synced" ? "synced" : "pending",
+        };
+
+        await storeProcessedData(updatedData, updatedMetadata);
+        setLocalData(updatedData);
+        setMetadata(updatedMetadata);
+
+        console.log("💾 Item salvo localmente");
+
+        // 2. Se já está sincronizado, enviar para servidor imediatamente
+        if (metadata?.syncStatus === "synced") {
+          console.log("🔄 Enviando para servidor (sistema já sincronizado)...");
+
+          // Mapear dados para formato da API
+          const apiData = {
+            commissionId,
+            campusId,
+            number: item.NUMERO,
+            description: item.DESCRICAO,
+            brandModel: item.MARCA_MODELO || null,
+            currentResponsibility: item.RESPONSABILIDADE_ATUAL || null,
+            conservationState: item.ESTADO_DE_CONSERVACAO || null,
+            location: item.SALA || null,
+            tags: item.ROTULOS
+              ? item.ROTULOS.split(",")
+                  .map((tag) => tag.trim())
+                  .filter((tag) => tag.length > 0)
+              : [],
+            ed: item.ED || null,
+            sector: item.SETOR_DO_RESPONSAVEL || null,
+          };
+
+          const response = await fetch("/api/inventory", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(apiData),
+          });
+
+          if (response.ok) {
+            console.log("✅ Item enviado para servidor com sucesso");
+          } else {
+            console.warn(
+              "⚠️ Falha ao enviar para servidor, mas salvo localmente"
+            );
+            // Marcar como pending para tentar sincronizar depois
+            await updateSyncStatus("pending");
+          }
+        } else {
+          console.log(
+            "📋 Item salvo localmente (aguardando sincronização inicial)"
+          );
+        }
+      } catch (error) {
+        console.error("Erro ao adicionar item:", error);
+        throw error;
+      }
+    },
+    [commissionId, updateSyncStatus]
   );
 
   // Carregar todos os dados (API + local) e sincronizar
@@ -196,5 +335,8 @@ export function useInventorySync(commissionId: string) {
     forceSync,
     clearLocal,
     syncToLocal,
+    addItemWithAutoSync,
+    updateSyncStatus,
+    checkServerSyncStatus,
   };
 }

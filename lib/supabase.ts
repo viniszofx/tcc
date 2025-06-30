@@ -75,8 +75,14 @@ export const createSupabaseAdmin = () => {
   });
 };
 
-// Para compatibilidade com código existente
+// Para compatibilidade com código existente - apenas no servidor
 export const supabaseAdmin = (() => {
+  // Só tentar criar o admin client se estivermos no servidor
+  if (typeof window !== "undefined") {
+    console.warn("Supabase Admin client should not be used on client-side");
+    return null;
+  }
+
   try {
     return createSupabaseAdmin();
   } catch (error) {

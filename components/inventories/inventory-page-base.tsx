@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useInventorySync } from "@/hooks/use-inventory-sync";
 import type { BemCopia } from "@/lib/interface";
-import { addInventoryItem } from "@/utils/data-storage";
 import { exportToPdfStyled } from "@/utils/pdf-export";
 import { Filter, RefreshCw } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -41,6 +40,7 @@ export default function InventoryPageBase({
     syncStatus,
     forceSync,
     loadAndSync,
+    addItemWithAutoSync,
   } = useInventorySync(commissionId);
 
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -199,22 +199,12 @@ export default function InventoryPageBase({
         console.warn("Não foi possível obter dados da comissão");
       }
 
-      // Usar a função atualizada que faz a chamada à API
-      console.log("Enviando item para API...");
-      await addInventoryItem(item, commissionId, campusId);
-      console.log("✅ Item criado com sucesso na API!");
+      // Usar a nova função que salva localmente e envia para servidor (se já sincronizado)
+      console.log("Salvando item com auto-sync...");
+      await addItemWithAutoSync(item, campusId);
+      console.log("✅ Item salvo com sucesso!");
 
-      // Recarregar dados após adicionar item (em background)
-      setTimeout(async () => {
-        try {
-          console.log("Recarregando dados em background...");
-          await loadAndSync();
-          console.log("✅ Dados recarregados com sucesso");
-        } catch (syncError) {
-          console.warn("Aviso: Erro ao recarregar dados:", syncError);
-          // Não mostrar erro ao usuário, pois o item foi criado
-        }
-      }, 100);
+      // Não precisa mais recarregar dados pois o hook já atualiza o estado local
     } catch (error) {
       console.error("❌ Erro ao salvar item:", error);
       throw error; // Propagar o erro para o modal tratar

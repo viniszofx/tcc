@@ -20,102 +20,78 @@ import {
 import type { UserProfile } from "@/interface";
 import { useEffect, useState } from "react";
 
-interface AddMemberModalProps {
+interface EditMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (userId: string, role: string) => void;
-  commissionId: string;
-  currentMembers: string[];
+  onSave: (userId: string, newRole: string) => void;
+  member: (UserProfile & { roleInCommission?: string }) | null;
 }
 
-export default function AddMemberModal({
+export default function EditMemberModal({
   isOpen,
   onClose,
   onSave,
-  commissionId,
-  currentMembers,
-}: AddMemberModalProps) {
-  const [selectedUser, setSelectedUser] = useState<string>("");
-  const [selectedRole, setSelectedRole] = useState<string>("Membro");
-  const [availableUsers, setAvailableUsers] = useState<UserProfile[]>([]);
+  member,
+}: EditMemberModalProps) {
+  const [selectedRole, setSelectedRole] = useState<string>("");
 
   useEffect(() => {
-    const fetchAvailableUsers = async () => {
-      try {
-        const response = await fetch("/api/user");
-        const users = await response.json();
-
-        if (response.ok) {
-          const available = users.filter(
-            (u: UserProfile) => !currentMembers.includes(u.id) && u.active
-          );
-          setAvailableUsers(available);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar usuários:", error);
-      }
-    };
-
-    if (isOpen) {
-      fetchAvailableUsers();
+    if (member && isOpen) {
+      setSelectedRole(member.roleInCommission || "Membro");
     }
-  }, [commissionId, currentMembers, isOpen]);
+  }, [member, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedUser && selectedRole) {
-      onSave(selectedUser, selectedRole);
-      setSelectedUser("");
-      setSelectedRole("Membro");
+    if (member && selectedRole && selectedRole !== member.roleInCommission) {
+      onSave(member.id, selectedRole);
     }
+    onClose();
   };
 
+  const handleClose = () => {
+    setSelectedRole("");
+    onClose();
+  };
+
+  if (!member) return null;
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-md max-w-[95vw] p-4 sm:p-6">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-[var(--font-color)]">
-              Adicionar Membro
+              Editar Função do Membro
             </DialogTitle>
             <DialogDescription className="text-[var(--font-color)] opacity-70">
-              Selecione um usuário para adicionar à comissão.
+              Altere a função de <strong>{member.name}</strong> na comissão.
             </DialogDescription>
           </DialogHeader>
+
           <div className="my-4 sm:my-6 space-y-4">
+            {/* Informações do Usuário (readonly) */}
             <div className="space-y-2">
               <Label className="text-[var(--font-color)]">Usuário</Label>
-              <Select
-                value={selectedUser}
-                onValueChange={setSelectedUser}
-                required
-              >
-                <SelectTrigger className="border-[var(--border-color)] bg-[var(--bg-color)] text-[var(--font-color)]">
-                  <SelectValue placeholder="Selecione um usuário" />
-                </SelectTrigger>
-                <SelectContent className="border-[var(--border-color)]">
-                  {availableUsers.length > 0 ? (
-                    availableUsers.map((user) => (
-                      <SelectItem
-                        key={user.id}
-                        value={user.id}
-                        className="hover:bg-[var(--hover-color)]"
-                      >
-                        {user.name} ({user.email})
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="text-sm text-muted-foreground mt-2 px-2">
-                      Nenhum usuário disponível
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
+              <div className="p-3 border border-[var(--border-color)] rounded-md bg-gray-50">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-[var(--button-color)] rounded-full flex items-center justify-center text-white text-sm font-medium">
+                    {member.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-medium text-[var(--font-color)]">
+                      {member.name}
+                    </p>
+                    <p className="text-sm text-gray-600">{member.email}</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
+            {/* Seleção de Nova Função */}
             <div className="space-y-2">
               <Label className="text-[var(--font-color)]">
-                Função na Comissão
+                Nova Função na Comissão
               </Label>
               <Select
                 value={selectedRole}
@@ -123,7 +99,7 @@ export default function AddMemberModal({
                 required
               >
                 <SelectTrigger className="border-[var(--border-color)] bg-[var(--bg-color)] text-[var(--font-color)]">
-                  <SelectValue placeholder="Selecione a função" />
+                  <SelectValue placeholder="Selecione a nova função" />
                 </SelectTrigger>
                 <SelectContent className="border-[var(--border-color)]">
                   <SelectItem
@@ -146,13 +122,20 @@ export default function AddMemberModal({
                   </SelectItem>
                 </SelectContent>
               </Select>
+
+              {/* Mostrar função atual */}
+              <p className="text-xs text-gray-500">
+                Função atual:{" "}
+                <strong>{member.roleInCommission || "Membro"}</strong>
+              </p>
             </div>
           </div>
+
           <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
             <Button
               type="button"
               variant="outline"
-              onClick={onClose}
+              onClick={handleClose}
               className="w-full sm:w-auto text-[var(--font-color)] transition-all"
             >
               Cancelar
@@ -160,14 +143,11 @@ export default function AddMemberModal({
             <Button
               type="submit"
               className="w-full sm:w-auto bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all"
-              disabled={!selectedUser || !selectedRole}
+              disabled={
+                !selectedRole || selectedRole === member.roleInCommission
+              }
             >
-              Adicionar{" "}
-              {selectedRole === "Presidente"
-                ? "Presidente"
-                : selectedRole === "Secretario"
-                ? "Secretário"
-                : "Membro"}
+              Salvar Alterações
             </Button>
           </DialogFooter>
         </form>

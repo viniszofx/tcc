@@ -16,9 +16,11 @@ interface InventoryMetadataProps {
     timestamp: string;
     recordCount: number;
     usedAcceleration: boolean;
-    syncStatus?: "synced" | "pending" | "error";
+    syncStatus?: "synced" | "pending" | "error" | "unknown" | "syncing";
     syncedAt?: string;
     lastSyncError?: string;
+    lastSyncUpdate?: string;
+    commissionId?: string;
   } | null;
 }
 
@@ -51,6 +53,16 @@ export default function InventoryMetadata({
             <span>Pendente</span>
           </Badge>
         );
+      case "syncing":
+        return (
+          <Badge
+            variant="outline"
+            className="flex items-center gap-1 border-blue-500/20 bg-blue-500/10 text-blue-600"
+          >
+            <Clock className="h-3 w-3 animate-spin" />
+            <span>Sincronizando</span>
+          </Badge>
+        );
       case "error":
         return (
           <Badge
@@ -59,6 +71,17 @@ export default function InventoryMetadata({
           >
             <AlertCircle className="h-3 w-3" />
             <span>Erro</span>
+          </Badge>
+        );
+      case "unknown":
+      default:
+        return (
+          <Badge
+            variant="outline"
+            className="flex items-center gap-1 border-gray-500/20 bg-gray-500/10 text-gray-600"
+          >
+            <AlertCircle className="h-3 w-3" />
+            <span>Desconhecido</span>
           </Badge>
         );
     }

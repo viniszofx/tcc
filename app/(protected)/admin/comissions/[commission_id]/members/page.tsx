@@ -2,6 +2,7 @@
 
 import LoadingScreen from "@/components/custom/loading";
 import AddMemberModal from "@/components/members/add-member-modal";
+import EditMemberModal from "@/components/members/edit-member-modal";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,7 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Commission, CommissionMember, UserProfile } from "@/interface";
-import { ArrowLeft, Plus, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Edit, Plus, Trash2, Users } from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -36,6 +37,10 @@ export default function ComissionMembersPage() {
   >([]);
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [memberToEdit, setMemberToEdit] = useState<
+    (UserProfile & { roleInCommission?: string }) | null
+  >(null);
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [userToRemove, setUserToRemove] = useState<
@@ -99,6 +104,13 @@ export default function ComissionMembersPage() {
 
   const handleAddMember = () => {
     setIsAddModalOpen(true);
+  };
+
+  const handleEditMember = (
+    membro: UserProfile & { roleInCommission?: string }
+  ) => {
+    setMemberToEdit(membro);
+    setIsEditModalOpen(true);
   };
 
   const handleAskRemove = (
@@ -177,6 +189,44 @@ export default function ComissionMembersPage() {
         console.error("Erro ao adicionar membro:", error);
         alert("Erro ao adicionar membro");
       }
+    }
+  };
+
+  const handleEditMemberRole = async (userId: string, newRole: string) => {
+    try {
+      const response = await fetch("/api/commission-member", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          commissionId: comissionId,
+          roleInCommission: newRole,
+        }),
+      });
+
+      if (response.ok) {
+        // Atualizar o estado local
+        setMembros(
+          membros.map((membro) =>
+            membro.id === userId
+              ? { ...membro, roleInCommission: newRole }
+              : membro
+          )
+        );
+
+        setIsEditModalOpen(false);
+        setMemberToEdit(null);
+
+        alert(`Função do membro alterada para ${newRole} com sucesso!`);
+      } else {
+        const errorData = await response.json();
+        alert(`Erro ao alterar função: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error("Erro ao alterar função do membro:", error);
+      alert("Erro ao alterar função do membro");
     }
   };
 
@@ -288,6 +338,14 @@ export default function ComissionMembersPage() {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => handleEditMember(membro)}
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleAskRemove(membro)}
                       className="text-red-500 hover:text-red-700"
                     >
@@ -347,6 +405,16 @@ export default function ComissionMembersPage() {
         onSave={handleAddNewMember}
         commissionId={comissionId}
         currentMembers={membros.map((m) => m.id)}
+      />
+
+      <EditMemberModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setMemberToEdit(null);
+        }}
+        onSave={handleEditMemberRole}
+        member={memberToEdit}
       />
     </>
   );

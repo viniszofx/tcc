@@ -249,4 +249,7 @@ export interface InventoryMetadata {
   timestamp: string;
   recordCount: number;
   usedAcceleration: boolean;
+  syncStatus?: "synced" | "pending" | "unknown" | "syncing";
+  lastSyncUpdate?: string;
+  commissionId?: string;
 }

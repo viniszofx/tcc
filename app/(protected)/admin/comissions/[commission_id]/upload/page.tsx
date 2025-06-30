@@ -8,13 +8,15 @@ import ProcessButton from "@/components/dashboard/process-button";
 import ProcessingIndicator from "@/components/dashboard/processing-indicator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFileProcessor } from "@/hooks/use-file-processor";
+import { usePermissions } from "@/hooks/use-permissions";
 import { useSettings } from "@/hooks/use-settings";
+import type { InventoryMetadata } from "@/lib/interface";
 import { storeProcessedData } from "@/utils/data-storage";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function ProcessingPage() {
-  const isPresident = true;
+  const permissions = usePermissions();
   const [file, setFile] = useState<File | null>(null);
   const { hardwareAcceleration: globalAcceleration } = useSettings();
   const [hardwareAcceleration, setHardwareAcceleration] =
@@ -54,6 +56,39 @@ export default function ProcessingPage() {
     setFile(file);
   };
 
+  // Função para fazer upload do arquivo para o Supabase Storage
+  const uploadFileToStorage = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("commissionId", comissionId);
+
+      const response = await fetch("/api/commission/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro no upload do arquivo");
+      }
+
+      const data = await response.json();
+      console.log("✅ Arquivo enviado para o storage:", data.fileUrl);
+
+      // Atualizar os dados da comissão com a nova URL
+      setCommission((prev: any) => ({
+        ...prev,
+        spreadsheetUrl: data.fileUrl,
+      }));
+
+      return data;
+    } catch (error) {
+      console.error("❌ Erro no upload do arquivo:", error);
+      throw error;
+    }
+  };
+
   const handleProcess = async () => {
     if (!file) {
       alert("Por favor, selecione um arquivo primeiro.");
@@ -63,47 +98,70 @@ export default function ProcessingPage() {
     setStorageError(null);
 
     try {
+      // 1. Primeiro fazer upload do arquivo para o Supabase Storage
+      console.log("📤 Fazendo upload do arquivo para o storage...");
+      await uploadFileToStorage(file);
+      console.log("✅ Arquivo enviado para o storage com sucesso");
+
+      // 2. Processar o arquivo localmente
+      console.log("⚙️ Processando dados do arquivo...");
       const results = await processFile(file, hardwareAcceleration);
 
       if (results && results.length > 0) {
-        // 1. Salvar primeiro localmente no IndexedDB
+        // 3. Salvar dados processados localmente no IndexedDB
         try {
-          const metadata = {
+          const metadata: InventoryMetadata = {
             recordCount: results.length,
             timestamp: new Date().toISOString(),
             fileName: file.name,
             usedAcceleration: hardwareAcceleration,
-            syncStatus: "pending", // Marca como pendente de sincronização
+            syncStatus: "pending" as const, // Marca como pendente de sincronização
+            commissionId: comissionId,
+            lastSyncUpdate: new Date().toISOString(),
           };
 
           await storeProcessedData(results, metadata);
-          console.log("Dados salvos localmente no IndexedDB");
+          console.log("💾 Dados salvos localmente no IndexedDB");
 
           alert(
-            `Sucesso! ${results.length} itens foram processados e salvos localmente. A sincronização com o servidor está sendo feita em segundo plano.`
+            `🎉 Sucesso! ${results.length} itens foram processados e salvos.\n\n` +
+              `📊 Planilha: Armazenada no sistema\n` +
+              `💾 Dados: Salvos localmente\n` +
+              `🔄 Sincronização: Em andamento...\n\n` +
+              `Você será redirecionado para a página de inventários.`
           );
 
           // Redirecionar imediatamente para a página de inventários
           router.push(`/admin/comissions/${comissionId}/inventories`);
 
-          // 2. Fazer upload em background
+          // 4. Fazer sincronização dos dados em background
           uploadToServerInBackground(results);
         } catch (localError) {
-          console.error("Erro ao salvar localmente:", localError);
+          console.error("❌ Erro ao salvar localmente:", localError);
           setStorageError(
             "Erro ao salvar os dados localmente. Tente novamente."
           );
         }
+      } else {
+        console.warn("⚠️ Nenhum dado foi processado do arquivo");
+        alert(
+          "Nenhum dado válido foi encontrado no arquivo. Verifique o formato da planilha."
+        );
       }
     } catch (err) {
-      console.error("Erro no processamento:", err);
+      console.error("❌ Erro no processamento:", err);
+      alert(
+        `Erro durante o processamento: ${
+          err instanceof Error ? err.message : "Erro desconhecido"
+        }`
+      );
     }
   };
 
   // Função para fazer upload em background
   const uploadToServerInBackground = async (results: any[]) => {
     try {
-      console.log("Iniciando upload em background...");
+      console.log("🚀 Iniciando sincronização em background...");
 
       const response = await fetch("/api/inventory/import", {
         method: "POST",
@@ -120,46 +178,59 @@ export default function ProcessingPage() {
       if (response.ok) {
         const data = await response.json();
         console.log(
-          `✅ Upload concluído: ${data.itemsCreated} itens sincronizados com o servidor`
+          `✅ Sincronização concluída: ${data.itemsCreated} itens sincronizados com o servidor`
         );
 
         // Atualizar o status de sincronização no IndexedDB
         try {
-          const updatedMetadata = {
+          const updatedMetadata: InventoryMetadata = {
             recordCount: results.length,
             timestamp: new Date().toISOString(),
             fileName: file?.name || "unknown",
             usedAcceleration: hardwareAcceleration,
-            syncStatus: "synced",
-            syncedAt: new Date().toISOString(),
+            syncStatus: "synced" as const,
+            lastSyncUpdate: new Date().toISOString(),
+            commissionId: comissionId,
           };
 
           await storeProcessedData(results, updatedMetadata);
-          console.log("Status de sincronização atualizado");
+          console.log("📦 Status de sincronização atualizado no storage local");
+
+          // Verificar status final da comissão
+          const statusResponse = await fetch(
+            `/api/commission/sync-status?commissionId=${comissionId}`
+          );
+          if (statusResponse.ok) {
+            const statusData = await statusResponse.json();
+            console.log("📊 Status da comissão:", statusData.status);
+          }
         } catch (updateError) {
           console.warn(
-            "Erro ao atualizar status de sincronização:",
+            "⚠️ Erro ao atualizar status de sincronização:",
             updateError
           );
         }
       } else {
         const errorData = await response.json();
-        console.error("❌ Erro no upload em background:", errorData.message);
+        console.error(
+          "❌ Erro na sincronização em background:",
+          errorData.message
+        );
 
         // Manter os dados locais marcados como pendentes
         console.log(
-          "Os dados permanecem salvos localmente para sincronização posterior"
+          "💾 Os dados permanecem salvos localmente para sincronização posterior"
         );
       }
     } catch (uploadError) {
-      console.error("❌ Falha no upload em background:", uploadError);
+      console.error("❌ Falha na sincronização em background:", uploadError);
       console.log(
-        "Os dados permanecem salvos localmente para sincronização posterior"
+        "💾 Os dados permanecem salvos localmente para sincronização posterior"
       );
     }
   };
 
-  if (isLoading) {
+  if (isLoading || permissions.loading) {
     return <LoadingScreen />;
   }
 
@@ -172,7 +243,7 @@ export default function ProcessingPage() {
       </CardHeader>
 
       <CardContent className="flex flex-col gap-8">
-        {isPresident ? (
+        {permissions.canUploadSpreadsheets ? (
           <>
             <FileUploadArea file={file} onFileChange={handleFileChange} />
 
@@ -219,10 +290,14 @@ export default function ProcessingPage() {
         ) : (
           <div className="text-center py-8">
             <h2 className="text-xl font-semibold text-[var(--font-color)]">
-              Olá Mundo!
+              Acesso Negado
             </h2>
             <p className="text-muted-foreground mt-2">
-              Você não tem permissão para acessar esta página.
+              Você não tem permissão para fazer upload de planilhas.
+            </p>
+            <p className="text-muted-foreground text-sm mt-1">
+              Somente administradores e presidentes podem acessar esta
+              funcionalidade.
             </p>
           </div>
         )}
