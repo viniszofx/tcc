@@ -1,6 +1,7 @@
 "use client";
 
 import LoadingScreen from "@/components/custom/loading";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,13 +10,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { Commission } from "@/interface";
-import { Clock, Database } from "lucide-react";
+import { ArrowLeft, Clock, Database } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function ComissionPage() {
   const params = useParams();
+  const router = useRouter();
   const commission_id = params.commission_id as string;
 
   const [isLoading, setIsLoading] = useState(true);
@@ -109,45 +111,59 @@ export default function ComissionPage() {
   ];
 
   return (
-    <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-lg transition-all duration-300 lg:max-w-5xl xl:max-w-6xl">
-      <CardHeader className="pb-4 text-center">
-        <CardTitle className="text-xl font-bold text-[var(--font-color)] md:text-2xl lg:text-3xl">
-          {comission.name}
-        </CardTitle>
-        <CardDescription className="text-sm text-[var(--font-color)]">
-          {comission.description || "Nenhuma descrição fornecida"}
-        </CardDescription>
-        {campus && (
-          <CardDescription className="text-[var(--font-color)]">
-            Campus: {campus.name}
-          </CardDescription>
-        )}
-        {presidente && (
-          <CardDescription className="text-[var(--font-color)]">
-            Presidente: {presidente.name}
-          </CardDescription>
-        )}
-      </CardHeader>
+    <div className="w-full max-w-3xl mx-auto lg:max-w-5xl xl:max-w-6xl">
+      {/* Botão de Voltar */}
+      <div className="mb-4">
+        <Button
+          variant="outline"
+          onClick={() => router.back()}
+          className="flex items-center gap-2 border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] hover:text-white"
+        >
+          <ArrowLeft size={16} />
+          Voltar
+        </Button>
+      </div>
 
-      <CardContent className="flex flex-col items-center justify-center py-8">
-        <div className="grid w-full max-w-3xl grid-cols-1 gap-4 md:grid-cols-2">
-          {routes.map((route) => (
-            <Link
-              key={route.href}
-              href={route.href}
-              className="flex flex-col items-center justify-center gap-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] px-6 py-6 shadow-sm transition hover:shadow-md hover:bg-[var(--hover-3-color)] group w-full"
-            >
-              <route.icon className="text-[var(--font-color)] group-hover:text-white transition" />
-              <span className="text-base font-medium text-[var(--font-color)] group-hover:text-white transition text-center">
-                {route.title}
-              </span>
-              <p className="text-sm text-center text-[var(--font-color)] group-hover:text-white transition">
-                {route.description}
-              </p>
-            </Link>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+      <Card className="bg-[var(--bg-simple)] shadow-lg transition-all duration-300">
+        <CardHeader className="pb-4 text-center">
+          <CardTitle className="text-xl font-bold text-[var(--font-color)] md:text-2xl lg:text-3xl">
+            {comission.name}
+          </CardTitle>
+          <CardDescription className="text-sm text-[var(--font-color)]">
+            {comission.description || "Nenhuma descrição fornecida"}
+          </CardDescription>
+          {campus && (
+            <CardDescription className="text-[var(--font-color)]">
+              Campus: {campus.name}
+            </CardDescription>
+          )}
+          {presidente && (
+            <CardDescription className="text-[var(--font-color)]">
+              Presidente: {presidente.name}
+            </CardDescription>
+          )}
+        </CardHeader>
+
+        <CardContent className="flex flex-col items-center justify-center py-8">
+          <div className="grid w-full max-w-3xl grid-cols-1 gap-4 md:grid-cols-2">
+            {routes.map((route) => (
+              <Link
+                key={route.href}
+                href={route.href}
+                className="flex flex-col items-center justify-center gap-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] px-6 py-6 shadow-sm transition hover:shadow-md hover:bg-[var(--hover-3-color)] group w-full"
+              >
+                <route.icon className="text-[var(--font-color)] group-hover:text-white transition" />
+                <span className="text-base font-medium text-[var(--font-color)] group-hover:text-white transition text-center">
+                  {route.title}
+                </span>
+                <p className="text-sm text-center text-[var(--font-color)] group-hover:text-white transition">
+                  {route.description}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
