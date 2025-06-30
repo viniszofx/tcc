@@ -73,6 +73,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(histories);
   } catch (error) {
+    console.error("Erro na API de histórico:", error);
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 }

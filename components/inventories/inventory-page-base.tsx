@@ -196,9 +196,16 @@ export default function InventoryPageBase({
 
       // Usar a função atualizada que faz a chamada à API
       await addInventoryItem(item, commissionId, campusId);
+      console.log("Item criado com sucesso, recarregando dados...");
 
       // Recarregar dados após adicionar item
-      await loadAndSync();
+      try {
+        await loadAndSync();
+        console.log("Dados recarregados com sucesso");
+      } catch (syncError) {
+        console.warn("Aviso: Erro ao recarregar dados:", syncError);
+        // Não propagar este erro, pois o item foi criado
+      }
     } catch (error) {
       console.error("Error saving new item:", error);
       alert("Erro ao salvar item: " + (error as Error).message);

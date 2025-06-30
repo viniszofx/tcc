@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     let user;
 
     if (process.env.NODE_ENV === "development") {
-      user = { id: "dev-user-uuid", email: "dev@example.com" };
+      user = { id: "550e8400-e29b-41d4-a716-446655440000", email: "dev@example.com" };
     } else {
       const {
         data: { user: realUser },
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
     let user;
 
     if (process.env.NODE_ENV === "development") {
-      user = { id: "dev-user-uuid", email: "dev@example.com" };
+      user = { id: "550e8400-e29b-41d4-a716-446655440000", email: "dev@example.com" };
     } else {
       const {
         data: { user: realUser },
@@ -163,7 +163,7 @@ export async function PUT(request: Request) {
     let user;
 
     if (process.env.NODE_ENV === "development") {
-      user = { id: "dev-user-uuid", email: "dev@example.com" };
+      user = { id: "550e8400-e29b-41d4-a716-446655440000", email: "dev@example.com" };
     } else {
       const {
         data: { user: realUser },
@@ -225,7 +225,7 @@ export async function DELETE(request: Request) {
     let user;
 
     if (process.env.NODE_ENV === "development") {
-      user = { id: "dev-user-uuid", email: "dev@example.com" };
+      user = { id: "550e8400-e29b-41d4-a716-446655440000", email: "dev@example.com" };
     } else {
       const {
         data: { user: realUser },

@@ -9,9 +9,9 @@ export async function GET(request: Request) {
     let user;
 
     if (process.env.NODE_ENV === "development") {
-      // Em desenvolvimento, usar um usuário fake
+      // Em desenvolvimento, usar um usuário fake com UUID válido
       user = {
-        id: "dev-user-uuid",
+        id: "550e8400-e29b-41d4-a716-446655440000",
         email: "dev@example.com",
       };
     } else {
@@ -94,12 +94,18 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    console.log("=== POST /api/inventory iniciado ===");
+
     // Verificar autenticação - desenvolvimento vs produção
     const supabase = await createServerSupabaseClient();
     let user;
 
     if (process.env.NODE_ENV === "development") {
-      user = { id: "dev-user-uuid", email: "dev@example.com" };
+      user = {
+        id: "550e8400-e29b-41d4-a716-446655440000",
+        email: "dev@example.com",
+      };
+      console.log("Usando usuário de desenvolvimento:", user);
     } else {
       const {
         data: { user: realUser },
@@ -107,12 +113,15 @@ export async function POST(request: Request) {
       } = await supabase.auth.getUser();
 
       if (authError || !realUser) {
+        console.error("Erro de autenticação:", authError);
         return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
       }
       user = realUser;
     }
 
     const body = await request.json();
+    console.log("Dados recebidos no POST:", body);
+
     const {
       commissionId,
       campusId,
@@ -127,27 +136,87 @@ export async function POST(request: Request) {
       sector,
     } = body;
 
+    // Validações obrigatórias
     if (!commissionId || !campusId || !number || !description) {
+      const missingFields = [];
+      if (!commissionId) missingFields.push("commissionId");
+      if (!campusId) missingFields.push("campusId");
+      if (!number) missingFields.push("number");
+      if (!description) missingFields.push("description");
+
+      console.error("Campos obrigatórios faltando:", missingFields);
       return NextResponse.json(
         {
-          error:
-            "ID da comissão, ID do campus, número e descrição são obrigatórios",
+          error: `Campos obrigatórios faltando: ${missingFields.join(", ")}`,
         },
         { status: 400 }
       );
     }
 
+    // Verificar se a comissão existe
+    const commission = await prisma.commission.findUnique({
+      where: { id: commissionId },
+    });
+
+    if (!commission) {
+      console.error("Comissão não encontrada:", commissionId);
+      return NextResponse.json(
+        { error: "Comissão não encontrada" },
+        { status: 404 }
+      );
+    }
+
+    // Verificar se o campus existe
+    const campus = await prisma.campus.findUnique({
+      where: { id: campusId },
+    });
+
+    if (!campus) {
+      console.error("Campus não encontrado:", campusId);
+      return NextResponse.json(
+        { error: "Campus não encontrado" },
+        { status: 404 }
+      );
+    }
+
+    // Verificar se o número já existe
+    const existingItem = await prisma.inventoryItem.findUnique({
+      where: { number: number.toString() },
+    });
+
+    if (existingItem) {
+      console.error("Número já existe no banco:", number);
+      return NextResponse.json(
+        { error: `Item com número ${number} já existe` },
+        { status: 409 }
+      );
+    }
+
+    console.log("Criando item com dados:", {
+      commissionId,
+      campusId,
+      number: number.toString(),
+      description,
+      brandModel: brandModel || null,
+      currentResponsibility: currentResponsibility || null,
+      conservationState: conservationState || null,
+      location: location || null,
+      tags: Array.isArray(tags) ? tags : [],
+      ed: ed || null,
+      sector: sector || null,
+    });
+
     const newItem = await prisma.inventoryItem.create({
       data: {
         commissionId,
         campusId,
-        number,
+        number: number.toString(),
         description,
         brandModel: brandModel || null,
         currentResponsibility: currentResponsibility || null,
         conservationState: conservationState || null,
         location: location || null,
-        tags: tags || [],
+        tags: Array.isArray(tags) ? tags : [],
         ed: ed || null,
         sector: sector || null,
       },
@@ -157,7 +226,10 @@ export async function POST(request: Request) {
       },
     });
 
-    // Criar registro no histórico
+    console.log("Item criado com sucesso:", newItem.id);
+
+    // Criar registro no histórico do item
+    console.log("Criando histórico para o item...");
     await prisma.inventoryHistory.create({
       data: {
         inventoryItemId: newItem.id,
@@ -168,7 +240,9 @@ export async function POST(request: Request) {
         imageUrl: [],
       },
     });
+    console.log("Histórico criado com sucesso");
 
+    console.log("Retornando resposta de sucesso");
     return NextResponse.json(newItem, { status: 201 });
   } catch (error) {
     console.error("Erro ao criar item:", error);
@@ -186,7 +260,10 @@ export async function PUT(request: Request) {
     let user;
 
     if (process.env.NODE_ENV === "development") {
-      user = { id: "dev-user-uuid", email: "dev@example.com" };
+      user = {
+        id: "550e8400-e29b-41d4-a716-446655440000",
+        email: "dev@example.com",
+      };
     } else {
       const {
         data: { user: realUser },
@@ -252,7 +329,7 @@ export async function PUT(request: Request) {
       },
     });
 
-    // Criar registro no histórico
+    // Criar registro no histórico do item
     await prisma.inventoryHistory.create({
       data: {
         inventoryItemId: id,
@@ -284,7 +361,10 @@ export async function DELETE(request: Request) {
     let user;
 
     if (process.env.NODE_ENV === "development") {
-      user = { id: "dev-user-uuid", email: "dev@example.com" };
+      user = {
+        id: "550e8400-e29b-41d4-a716-446655440000",
+        email: "dev@example.com",
+      };
     } else {
       const {
         data: { user: realUser },
@@ -316,18 +396,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    // Criar registro no histórico antes de deletar
-    await prisma.inventoryHistory.create({
-      data: {
-        inventoryItemId: id,
-        userId: user.id,
-        action: "delete",
-        changes: JSON.stringify({ deleted: itemToDelete }),
-        observation: "Item removido",
-        imageUrl: [],
-      },
-    });
-
+    // Deletar o item (o histórico relacionado será deletado automaticamente por CASCADE)
     await prisma.inventoryItem.delete({
       where: { id },
     });

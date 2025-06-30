@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     if (process.env.NODE_ENV === "development") {
       // Em desenvolvimento, usar um usuário fake
       user = {
-        id: "dev-user-uuid",
+        id: "550e8400-e29b-41d4-a716-446655440000",
         email: "dev@example.com",
       };
       console.log("Modo desenvolvimento - usuário fake:", user.id);
