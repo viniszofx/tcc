@@ -1,8 +1,5 @@
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { data } from "../../../data";
-
-// Simulando um banco de dados em memória
-let campusMembers = [...data.campusMembers];
 
 export async function GET(request: Request) {
   try {
@@ -11,9 +8,19 @@ export async function GET(request: Request) {
     const campusId = searchParams.get("campusId");
 
     if (userId && campusId) {
-      const member = campusMembers.find(
-        (m) => m.userId === userId && m.campusId === campusId
-      );
+      const member = await prisma.campusMember.findUnique({
+        where: {
+          userId_campusId: {
+            userId,
+            campusId,
+          },
+        },
+        include: {
+          user: true,
+          campus: true,
+        },
+      });
+
       if (!member) {
         return NextResponse.json(
           { error: "Membro do campus não encontrado" },
@@ -23,17 +30,29 @@ export async function GET(request: Request) {
       return NextResponse.json(member);
     }
 
+    // Construir filtros dinamicamente
+    const where: any = {};
+
     if (userId) {
-      const members = campusMembers.filter((m) => m.userId === userId);
-      return NextResponse.json(members);
+      where.userId = userId;
     }
 
     if (campusId) {
-      const members = campusMembers.filter((m) => m.campusId === campusId);
-      return NextResponse.json(members);
+      where.campusId = campusId;
     }
 
-    return NextResponse.json(campusMembers);
+    const members = await prisma.campusMember.findMany({
+      where,
+      include: {
+        user: true,
+        campus: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return NextResponse.json(members);
   } catch (error) {
     return NextResponse.json(
       { error: "Erro interno do servidor" },
@@ -54,10 +73,39 @@ export async function POST(request: Request) {
       );
     }
 
+    // Verificar se o usuário existe
+    const user = await prisma.userProfile.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Usuário não encontrado" },
+        { status: 404 }
+      );
+    }
+
+    // Verificar se o campus existe
+    const campus = await prisma.campus.findUnique({
+      where: { id: campusId },
+    });
+
+    if (!campus) {
+      return NextResponse.json(
+        { error: "Campus não encontrado" },
+        { status: 404 }
+      );
+    }
+
     // Verificar se já existe
-    const existingMember = campusMembers.find(
-      (m) => m.userId === userId && m.campusId === campusId
-    );
+    const existingMember = await prisma.campusMember.findUnique({
+      where: {
+        userId_campusId: {
+          userId,
+          campusId,
+        },
+      },
+    });
 
     if (existingMember) {
       return NextResponse.json(
@@ -66,12 +114,16 @@ export async function POST(request: Request) {
       );
     }
 
-    const newMember = {
-      userId,
-      campusId,
-    };
-
-    campusMembers.push(newMember);
+    const newMember = await prisma.campusMember.create({
+      data: {
+        userId,
+        campusId,
+      },
+      include: {
+        user: true,
+        campus: true,
+      },
+    });
 
     return NextResponse.json(newMember, { status: 201 });
   } catch (error) {
@@ -95,18 +147,32 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const memberIndex = campusMembers.findIndex(
-      (m) => m.userId === userId && m.campusId === campusId
-    );
+    // Verificar se o membro existe
+    const existingMember = await prisma.campusMember.findUnique({
+      where: {
+        userId_campusId: {
+          userId,
+          campusId,
+        },
+      },
+    });
 
-    if (memberIndex === -1) {
+    if (!existingMember) {
       return NextResponse.json(
         { error: "Membro do campus não encontrado" },
         { status: 404 }
       );
     }
 
-    campusMembers.splice(memberIndex, 1);
+    // Remover o membro
+    await prisma.campusMember.delete({
+      where: {
+        userId_campusId: {
+          userId,
+          campusId,
+        },
+      },
+    });
 
     return NextResponse.json(
       { message: "Membro removido do campus com sucesso" },

@@ -1,8 +1,5 @@
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { data } from "../../../data";
-
-// Simulando um banco de dados em memória
-let organizationMembers = [...data.organizationMembers];
 
 export async function GET(request: Request) {
   try {
@@ -11,9 +8,19 @@ export async function GET(request: Request) {
     const organizationId = searchParams.get("organizationId");
 
     if (userId && organizationId) {
-      const member = organizationMembers.find(
-        (m) => m.userId === userId && m.organizationId === organizationId
-      );
+      const member = await prisma.organizationMember.findUnique({
+        where: {
+          userId_organizationId: {
+            userId,
+            organizationId,
+          },
+        },
+        include: {
+          user: true,
+          organization: true,
+        },
+      });
+
       if (!member) {
         return NextResponse.json(
           { error: "Membro da organização não encontrado" },
@@ -23,19 +30,29 @@ export async function GET(request: Request) {
       return NextResponse.json(member);
     }
 
+    // Construir filtros dinamicamente
+    const where: any = {};
+
     if (userId) {
-      const members = organizationMembers.filter((m) => m.userId === userId);
-      return NextResponse.json(members);
+      where.userId = userId;
     }
 
     if (organizationId) {
-      const members = organizationMembers.filter(
-        (m) => m.organizationId === organizationId
-      );
-      return NextResponse.json(members);
+      where.organizationId = organizationId;
     }
 
-    return NextResponse.json(organizationMembers);
+    const members = await prisma.organizationMember.findMany({
+      where,
+      include: {
+        user: true,
+        organization: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return NextResponse.json(members);
   } catch (error) {
     return NextResponse.json(
       { error: "Erro interno do servidor" },
@@ -57,9 +74,14 @@ export async function POST(request: Request) {
     }
 
     // Verificar se já existe
-    const existingMember = organizationMembers.find(
-      (m) => m.userId === userId && m.organizationId === organizationId
-    );
+    const existingMember = await prisma.organizationMember.findUnique({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId,
+        },
+      },
+    });
 
     if (existingMember) {
       return NextResponse.json(
@@ -68,13 +90,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const newMember = {
-      userId,
-      organizationId,
-      role: role || "member",
-    };
-
-    organizationMembers.push(newMember);
+    const newMember = await prisma.organizationMember.create({
+      data: {
+        userId,
+        organizationId,
+        role: role || "member",
+      },
+      include: {
+        user: true,
+        organization: true,
+      },
+    });
 
     return NextResponse.json(newMember, { status: 201 });
   } catch (error) {
@@ -97,23 +123,41 @@ export async function PUT(request: Request) {
       );
     }
 
-    const memberIndex = organizationMembers.findIndex(
-      (m) => m.userId === userId && m.organizationId === organizationId
-    );
+    // Verificar se o membro existe
+    const existingMember = await prisma.organizationMember.findUnique({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId,
+        },
+      },
+    });
 
-    if (memberIndex === -1) {
+    if (!existingMember) {
       return NextResponse.json(
         { error: "Membro da organização não encontrado" },
         { status: 404 }
       );
     }
 
-    organizationMembers[memberIndex] = {
-      ...organizationMembers[memberIndex],
-      ...(role && { role }),
-    };
+    const updatedMember = await prisma.organizationMember.update({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId,
+        },
+      },
+      data: {
+        ...(role && { role }),
+        updatedAt: new Date(),
+      },
+      include: {
+        user: true,
+        organization: true,
+      },
+    });
 
-    return NextResponse.json(organizationMembers[memberIndex]);
+    return NextResponse.json(updatedMember);
   } catch (error) {
     return NextResponse.json(
       { error: "Erro interno do servidor" },
@@ -135,18 +179,32 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const memberIndex = organizationMembers.findIndex(
-      (m) => m.userId === userId && m.organizationId === organizationId
-    );
+    // Verificar se o membro existe
+    const existingMember = await prisma.organizationMember.findUnique({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId,
+        },
+      },
+    });
 
-    if (memberIndex === -1) {
+    if (!existingMember) {
       return NextResponse.json(
         { error: "Membro da organização não encontrado" },
         { status: 404 }
       );
     }
 
-    organizationMembers.splice(memberIndex, 1);
+    // Remover o membro
+    await prisma.organizationMember.delete({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId,
+        },
+      },
+    });
 
     return NextResponse.json(
       { message: "Membro removido da organização com sucesso" },

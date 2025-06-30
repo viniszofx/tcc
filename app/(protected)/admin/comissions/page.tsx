@@ -11,24 +11,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type {
-  Campus,
-  Commission,
-  CommissionMember,
-  UserProfile,
-} from "@/interface";
+import type { Campus, CommissionWithRelations } from "@/interface";
 import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function CommissionsPage() {
-  const [comissoes, setComissoes] = useState<Commission[]>([]);
+  const [comissoes, setComissoes] = useState<CommissionWithRelations[]>([]);
   const [campuses, setCampuses] = useState<Campus[]>([]);
-  const [commissionMembers, setCommissionMembers] = useState<
-    CommissionMember[]
-  >([]);
-  const [users, setUsers] = useState<UserProfile[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -36,32 +27,20 @@ export default function CommissionsPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Buscar comissões
+        // Buscar comissões (já incluem campus e membros com usuários)
         const commissionsResponse = await fetch("/api/commission");
         const commissionsData = await commissionsResponse.json();
 
-        // Buscar campuses
+        // Buscar campuses para o modal de adicionar
         const campusesResponse = await fetch("/api/campus");
         const campusesData = await campusesResponse.json();
 
-        // Buscar membros das comissões
-        const commissionMembersResponse = await fetch("/api/commission-member");
-        const commissionMembersData = await commissionMembersResponse.json();
-
-        // Buscar usuários
-        const usersResponse = await fetch("/api/user");
-        const usersData = await usersResponse.json();
-
         setComissoes(commissionsData);
         setCampuses(campusesData);
-        setCommissionMembers(commissionMembersData);
-        setUsers(usersData);
 
         console.log("Dados carregados:");
         console.log("Comissões:", commissionsData);
         console.log("Campuses:", campusesData);
-        console.log("Membros das comissões:", commissionMembersData);
-        console.log("Usuários:", usersData);
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
       } finally {
@@ -111,28 +90,25 @@ export default function CommissionsPage() {
     }
   };
 
-  const getCampusName = (campusId: string): string => {
-    const campus = campuses.find((c) => c.id === campusId);
-    return campus?.name || "Câmpus";
+  const getCampusName = (commission: CommissionWithRelations): string => {
+    // Com Prisma, o campus já vem incluído na comissão
+    return commission.campus?.name || "Câmpus";
   };
 
-  const getPresidentName = (commissionId: string): string => {
-    console.log("Buscando presidente para comissão:", commissionId);
-    console.log("Membros da comissão:", commissionMembers);
-    console.log("Usuários:", users);
+  const getPresidentName = (commission: CommissionWithRelations): string => {
+    console.log("Buscando presidente para comissão:", commission.id);
+    console.log("Membros da comissão:", commission.members);
 
-    const president = commissionMembers.find(
-      (member) =>
-        member.commissionId === commissionId &&
-        member.roleInCommission === "Presidente"
+    // Com Prisma, os membros já vêm incluídos na comissão
+    const president = commission.members?.find(
+      (member) => member.roleInCommission === "Presidente"
     );
 
     console.log("Presidente encontrado:", president);
 
-    if (president) {
-      const user = users.find((u) => u.id === president.userId);
-      console.log("Usuário presidente:", user);
-      return user?.name || "Presidente não encontrado";
+    if (president && president.user) {
+      console.log("Usuário presidente:", president.user);
+      return president.user.name || "Presidente não encontrado";
     }
 
     return "Sem presidente definido";
@@ -151,7 +127,7 @@ export default function CommissionsPage() {
           </CardTitle>
           <CardDescription className="text-[var(--font-color)] opacity-70">
             {comissoes.length > 0
-              ? `Lista de comissões do ${getCampusName(comissoes[0].campusId)}`
+              ? `Lista de comissões do ${getCampusName(comissoes[0])}`
               : "Nenhuma comissão cadastrada"}
           </CardDescription>
         </div>
@@ -209,10 +185,10 @@ export default function CommissionsPage() {
                     </span>
                   </div>
                   <p className="text-sm text-[var(--font-color)] mt-2">
-                    Campus: {getCampusName(comissao.campusId)}
+                    Campus: {getCampusName(comissao)}
                   </p>
                   <p className="text-sm text-[var(--font-color)] mt-2">
-                    Responsável: {getPresidentName(comissao.id)}
+                    Responsável: {getPresidentName(comissao)}
                   </p>
                 </CardContent>
                 <CardFooter>

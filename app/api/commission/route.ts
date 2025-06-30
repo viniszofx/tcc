@@ -1,8 +1,5 @@
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { data } from "../../../data";
-
-// Simulando um banco de dados em memória
-let commissions = [...data.commissions];
 
 export async function GET(request: Request) {
   try {
@@ -12,7 +9,18 @@ export async function GET(request: Request) {
     const year = searchParams.get("year");
 
     if (id) {
-      const commission = commissions.find((c) => c.id === id);
+      const commission = await prisma.commission.findUnique({
+        where: { id },
+        include: {
+          campus: true,
+          members: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      });
+
       if (!commission) {
         return NextResponse.json(
           { error: "Comissão não encontrada" },
@@ -22,21 +30,33 @@ export async function GET(request: Request) {
       return NextResponse.json(commission);
     }
 
-    let filteredCommissions = commissions;
+    // Construir filtros dinamicamente
+    const where: any = {};
 
     if (campusId) {
-      filteredCommissions = filteredCommissions.filter(
-        (c) => c.campusId === campusId
-      );
+      where.campusId = campusId;
     }
 
     if (year) {
-      filteredCommissions = filteredCommissions.filter(
-        (c) => c.year === parseInt(year)
-      );
+      where.year = parseInt(year);
     }
 
-    return NextResponse.json(filteredCommissions);
+    const commissions = await prisma.commission.findMany({
+      where,
+      include: {
+        campus: true,
+        members: {
+          include: {
+            user: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return NextResponse.json(commissions);
   } catch (error) {
     return NextResponse.json(
       { error: "Erro interno do servidor" },
@@ -58,18 +78,37 @@ export async function POST(request: Request) {
       );
     }
 
-    const newCommission = {
-      id: `commission-uuid-${Date.now()}`,
-      campusId,
-      name,
-      type,
-      description: description || "",
-      spreadsheet_url: spreadsheet_url || "",
-      active: active !== undefined ? active : true,
-      year,
-    };
+    // Verificar se o campus existe
+    const campus = await prisma.campus.findUnique({
+      where: { id: campusId },
+    });
 
-    commissions.push(newCommission);
+    if (!campus) {
+      return NextResponse.json(
+        { error: "Campus não encontrado" },
+        { status: 404 }
+      );
+    }
+
+    const newCommission = await prisma.commission.create({
+      data: {
+        campusId,
+        name,
+        type,
+        description: description || "",
+        spreadsheetUrl: spreadsheet_url || "",
+        active: active !== undefined ? active : true,
+        year,
+      },
+      include: {
+        campus: true,
+        members: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
 
     return NextResponse.json(newCommission, { status: 201 });
   } catch (error) {
@@ -98,26 +137,57 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "ID é obrigatório" }, { status: 400 });
     }
 
-    const commissionIndex = commissions.findIndex((c) => c.id === id);
-    if (commissionIndex === -1) {
+    // Verificar se a comissão existe
+    const existingCommission = await prisma.commission.findUnique({
+      where: { id },
+    });
+
+    if (!existingCommission) {
       return NextResponse.json(
         { error: "Comissão não encontrada" },
         { status: 404 }
       );
     }
 
-    commissions[commissionIndex] = {
-      ...commissions[commissionIndex],
-      ...(campusId && { campusId }),
-      ...(name && { name }),
-      ...(type && { type }),
-      ...(description !== undefined && { description }),
-      ...(spreadsheet_url !== undefined && { spreadsheet_url }),
-      ...(active !== undefined && { active }),
-      ...(year && { year }),
-    };
+    // Se campusId for fornecido, verificar se o campus existe
+    if (campusId) {
+      const campus = await prisma.campus.findUnique({
+        where: { id: campusId },
+      });
 
-    return NextResponse.json(commissions[commissionIndex]);
+      if (!campus) {
+        return NextResponse.json(
+          { error: "Campus não encontrado" },
+          { status: 404 }
+        );
+      }
+    }
+
+    const updatedCommission = await prisma.commission.update({
+      where: { id },
+      data: {
+        ...(campusId && { campusId }),
+        ...(name && { name }),
+        ...(type && { type }),
+        ...(description !== undefined && { description }),
+        ...(spreadsheet_url !== undefined && {
+          spreadsheetUrl: spreadsheet_url,
+        }),
+        ...(active !== undefined && { active }),
+        ...(year && { year }),
+        updatedAt: new Date(),
+      },
+      include: {
+        campus: true,
+        members: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json(updatedCommission);
   } catch (error) {
     return NextResponse.json(
       { error: "Erro interno do servidor" },
@@ -135,15 +205,22 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "ID é obrigatório" }, { status: 400 });
     }
 
-    const commissionIndex = commissions.findIndex((c) => c.id === id);
-    if (commissionIndex === -1) {
+    // Verificar se a comissão existe
+    const existingCommission = await prisma.commission.findUnique({
+      where: { id },
+    });
+
+    if (!existingCommission) {
       return NextResponse.json(
         { error: "Comissão não encontrada" },
         { status: 404 }
       );
     }
 
-    commissions.splice(commissionIndex, 1);
+    // Deletar a comissão (isso também deletará os membros relacionados se houver CASCADE)
+    await prisma.commission.delete({
+      where: { id },
+    });
 
     return NextResponse.json(
       { message: "Comissão deletada com sucesso" },

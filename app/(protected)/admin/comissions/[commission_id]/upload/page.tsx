@@ -1,82 +1,166 @@
-"use client"
+"use client";
 
-import LoadingScreen from "@/components/custom/loading"
-import ErrorDisplay from "@/components/dashboard/error-display"
-import FileUploadArea from "@/components/dashboard/file-update-area"
-import HardwareAccelerationToggle from "@/components/dashboard/hardware-acceleration-toggle"
-import ProcessButton from "@/components/dashboard/process-button"
-import ProcessingIndicator from "@/components/dashboard/processing-indicator"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useFileProcessor } from "@/hooks/use-file-processor"
-import { useSettings } from "@/hooks/use-settings"
-import { storeProcessedData } from "@/utils/data-storage"
-import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import LoadingScreen from "@/components/custom/loading";
+import ErrorDisplay from "@/components/dashboard/error-display";
+import FileUploadArea from "@/components/dashboard/file-update-area";
+import HardwareAccelerationToggle from "@/components/dashboard/hardware-acceleration-toggle";
+import ProcessButton from "@/components/dashboard/process-button";
+import ProcessingIndicator from "@/components/dashboard/processing-indicator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFileProcessor } from "@/hooks/use-file-processor";
+import { useSettings } from "@/hooks/use-settings";
+import { storeProcessedData } from "@/utils/data-storage";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function ProcessingPage() {
-  const isPresident = true
-  const [file, setFile] = useState<File | null>(null)
-  const { hardwareAcceleration: globalAcceleration } = useSettings()
-  const [hardwareAcceleration, setHardwareAcceleration] = useState(globalAcceleration)
-  const [storageError, setStorageError] = useState<string | null>(null)
+  const isPresident = true;
+  const [file, setFile] = useState<File | null>(null);
+  const { hardwareAcceleration: globalAcceleration } = useSettings();
+  const [hardwareAcceleration, setHardwareAcceleration] =
+    useState(globalAcceleration);
+  const [storageError, setStorageError] = useState<string | null>(null);
   const params = useParams();
   const comissionId = params.commission_id as string;
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter()
+  const [commission, setCommission] = useState<any>(null);
+  const router = useRouter();
 
-  const { processFile, isProcessing, error, progress } = useFileProcessor()
-
-  useEffect(() => {
-    setHardwareAcceleration(globalAcceleration)
-  }, [globalAcceleration])
+  const { processFile, isProcessing, error, progress } = useFileProcessor();
 
   useEffect(() => {
-    setIsLoading(false)
-  }, [])
+    setHardwareAcceleration(globalAcceleration);
+  }, [globalAcceleration]);
+
+  useEffect(() => {
+    const fetchCommission = async () => {
+      try {
+        const response = await fetch(`/api/commission?id=${comissionId}`);
+        if (response.ok) {
+          const commissionData = await response.json();
+          setCommission(commissionData);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar comissão:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCommission();
+  }, [comissionId]);
 
   const handleFileChange = (file: File) => {
-    setFile(file)
-  }
+    setFile(file);
+  };
 
   const handleProcess = async () => {
     if (!file) {
-      alert("Por favor, selecione um arquivo primeiro.")
-      return
+      alert("Por favor, selecione um arquivo primeiro.");
+      return;
     }
 
-    setStorageError(null)
+    setStorageError(null);
 
     try {
-      const results = await processFile(file, hardwareAcceleration)
+      const results = await processFile(file, hardwareAcceleration);
 
       if (results && results.length > 0) {
+        // 1. Salvar primeiro localmente no IndexedDB
         try {
           const metadata = {
-            fileName: file.name,
-            timestamp: new Date().toISOString(),
             recordCount: results.length,
+            timestamp: new Date().toISOString(),
+            fileName: file.name,
             usedAcceleration: hardwareAcceleration,
-          }
+            syncStatus: "pending", // Marca como pendente de sincronização
+          };
 
-          await storeProcessedData(results, metadata)
+          await storeProcessedData(results, metadata);
+          console.log("Dados salvos localmente no IndexedDB");
 
-          router.push(`/admin/comissions/${comissionId}/inventories`)
-        } catch (storageError) {
-          console.error("Erro ao armazenar resultados:", storageError)
+          alert(
+            `Sucesso! ${results.length} itens foram processados e salvos localmente. A sincronização com o servidor está sendo feita em segundo plano.`
+          );
+
+          // Redirecionar imediatamente para a página de inventários
+          router.push(`/admin/comissions/${comissionId}/inventories`);
+
+          // 2. Fazer upload em background
+          uploadToServerInBackground(results);
+        } catch (localError) {
+          console.error("Erro ao salvar localmente:", localError);
           setStorageError(
-            "O conjunto de dados é muito grande para ser armazenado. Tente um arquivo menor ou filtre os dados antes de processar."
-          )
+            "Erro ao salvar os dados localmente. Tente novamente."
+          );
         }
       }
     } catch (err) {
-      console.error("Erro no processamento:", err)
+      console.error("Erro no processamento:", err);
     }
-  }
+  };
+
+  // Função para fazer upload em background
+  const uploadToServerInBackground = async (results: any[]) => {
+    try {
+      console.log("Iniciando upload em background...");
+
+      const response = await fetch("/api/inventory/import", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items: results,
+          commissionId: comissionId,
+          campusId: commission?.campusId || "campus-uuid-1",
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(
+          `✅ Upload concluído: ${data.itemsCreated} itens sincronizados com o servidor`
+        );
+
+        // Atualizar o status de sincronização no IndexedDB
+        try {
+          const updatedMetadata = {
+            recordCount: results.length,
+            timestamp: new Date().toISOString(),
+            fileName: file?.name || "unknown",
+            usedAcceleration: hardwareAcceleration,
+            syncStatus: "synced",
+            syncedAt: new Date().toISOString(),
+          };
+
+          await storeProcessedData(results, updatedMetadata);
+          console.log("Status de sincronização atualizado");
+        } catch (updateError) {
+          console.warn(
+            "Erro ao atualizar status de sincronização:",
+            updateError
+          );
+        }
+      } else {
+        const errorData = await response.json();
+        console.error("❌ Erro no upload em background:", errorData.message);
+
+        // Manter os dados locais marcados como pendentes
+        console.log(
+          "Os dados permanecem salvos localmente para sincronização posterior"
+        );
+      }
+    } catch (uploadError) {
+      console.error("❌ Falha no upload em background:", uploadError);
+      console.log(
+        "Os dados permanecem salvos localmente para sincronização posterior"
+      );
+    }
+  };
 
   if (isLoading) {
-    return (
-      <LoadingScreen />
-    );
+    return <LoadingScreen />;
   }
 
   return (
@@ -144,5 +228,5 @@ export default function ProcessingPage() {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

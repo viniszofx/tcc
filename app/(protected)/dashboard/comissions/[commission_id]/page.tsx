@@ -54,18 +54,13 @@ export default function ComissionPage() {
             const presidenteMember = membersData.find(
               (member: any) =>
                 member.commissionId === commission_id &&
-                member.role === "presidente"
+                (member.roleInCommission === "Presidente" ||
+                  member.roleInCommission === "presidente")
             );
 
             if (presidenteMember) {
-              // Buscar dados do usuário presidente
-              const userResponse = await fetch(
-                `/api/user?id=${presidenteMember.userId}`
-              );
-              const userData = await userResponse.json();
-              if (userResponse.ok) {
-                setPresidente(userData);
-              }
+              // Os dados do usuário já vêm incluídos na resposta
+              setPresidente(presidenteMember.user);
             }
           }
         }

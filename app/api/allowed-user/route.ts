@@ -1,8 +1,5 @@
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { data } from "../../../data";
-
-// Simulando um banco de dados em memória
-let allowedUsers = [...data.allowedUsers];
 
 export async function GET(request: Request) {
   try {
@@ -10,7 +7,10 @@ export async function GET(request: Request) {
     const id = searchParams.get("id");
 
     if (id) {
-      const allowedUser = allowedUsers.find((u) => u.id === id);
+      const allowedUser = await prisma.allowedUser.findUnique({
+        where: { id },
+      });
+
       if (!allowedUser) {
         return NextResponse.json(
           { error: "Usuário permitido não encontrado" },
@@ -19,6 +19,12 @@ export async function GET(request: Request) {
       }
       return NextResponse.json(allowedUser);
     }
+
+    const allowedUsers = await prisma.allowedUser.findMany({
+      orderBy: {
+        name: "asc",
+      },
+    });
 
     return NextResponse.json(allowedUsers);
   } catch (error) {
@@ -41,14 +47,25 @@ export async function POST(request: Request) {
       );
     }
 
-    const newAllowedUser = {
-      id: `allowed-user-uuid-${Date.now()}`,
-      name,
-      email,
-      status: status || "ativo",
-    };
+    // Verificar se já existe um usuário com este email
+    const existingUser = await prisma.allowedUser.findUnique({
+      where: { email },
+    });
 
-    allowedUsers.push(newAllowedUser);
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "Já existe um usuário com este email" },
+        { status: 409 }
+      );
+    }
+
+    const newAllowedUser = await prisma.allowedUser.create({
+      data: {
+        name,
+        email,
+        status: status !== undefined ? status : true,
+      },
+    });
 
     return NextResponse.json(newAllowedUser, { status: 201 });
   } catch (error) {
@@ -68,22 +85,43 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "ID é obrigatório" }, { status: 400 });
     }
 
-    const userIndex = allowedUsers.findIndex((u) => u.id === id);
-    if (userIndex === -1) {
+    // Verificar se o usuário existe
+    const existingUser = await prisma.allowedUser.findUnique({
+      where: { id },
+    });
+
+    if (!existingUser) {
       return NextResponse.json(
         { error: "Usuário permitido não encontrado" },
         { status: 404 }
       );
     }
 
-    allowedUsers[userIndex] = {
-      ...allowedUsers[userIndex],
-      ...(name && { name }),
-      ...(email && { email }),
-      ...(status && { status }),
-    };
+    // Se email for fornecido, verificar se não há conflito
+    if (email && email !== existingUser.email) {
+      const conflictingUser = await prisma.allowedUser.findUnique({
+        where: { email },
+      });
 
-    return NextResponse.json(allowedUsers[userIndex]);
+      if (conflictingUser) {
+        return NextResponse.json(
+          { error: "Já existe um usuário com este email" },
+          { status: 409 }
+        );
+      }
+    }
+
+    const updatedUser = await prisma.allowedUser.update({
+      where: { id },
+      data: {
+        ...(name && { name }),
+        ...(email && { email }),
+        ...(status !== undefined && { status }),
+        updatedAt: new Date(),
+      },
+    });
+
+    return NextResponse.json(updatedUser);
   } catch (error) {
     return NextResponse.json(
       { error: "Erro interno do servidor" },
@@ -101,15 +139,22 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "ID é obrigatório" }, { status: 400 });
     }
 
-    const userIndex = allowedUsers.findIndex((u) => u.id === id);
-    if (userIndex === -1) {
+    // Verificar se o usuário existe
+    const existingUser = await prisma.allowedUser.findUnique({
+      where: { id },
+    });
+
+    if (!existingUser) {
       return NextResponse.json(
         { error: "Usuário permitido não encontrado" },
         { status: 404 }
       );
     }
 
-    allowedUsers.splice(userIndex, 1);
+    // Deletar o usuário
+    await prisma.allowedUser.delete({
+      where: { id },
+    });
 
     return NextResponse.json(
       { message: "Usuário permitido deletado com sucesso" },

@@ -1,19 +1,68 @@
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
-import { formatDateTime } from "@/utils/data-utils"
-import { Database, FileSpreadsheet, Zap } from "lucide-react"
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { formatDateTime } from "@/utils/data-utils";
+import {
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Database,
+  FileSpreadsheet,
+  Zap,
+} from "lucide-react";
 
 interface InventoryMetadataProps {
   metadata: {
-    fileName: string
-    timestamp: string
-    recordCount: number
-    usedAcceleration: boolean
-  } | null
+    fileName: string;
+    timestamp: string;
+    recordCount: number;
+    usedAcceleration: boolean;
+    syncStatus?: "synced" | "pending" | "error";
+    syncedAt?: string;
+    lastSyncError?: string;
+  } | null;
 }
 
-export default function InventoryMetadata({ metadata }: InventoryMetadataProps) {
-  if (!metadata) return null
+export default function InventoryMetadata({
+  metadata,
+}: InventoryMetadataProps) {
+  if (!metadata) return null;
+
+  const getSyncStatusBadge = () => {
+    const status = metadata.syncStatus || "pending";
+
+    switch (status) {
+      case "synced":
+        return (
+          <Badge
+            variant="outline"
+            className="flex items-center gap-1 border-green-500/20 bg-green-500/10 text-green-600"
+          >
+            <CheckCircle className="h-3 w-3" />
+            <span>Sincronizado</span>
+          </Badge>
+        );
+      case "pending":
+        return (
+          <Badge
+            variant="outline"
+            className="flex items-center gap-1 border-yellow-500/20 bg-yellow-500/10 text-yellow-600"
+          >
+            <Clock className="h-3 w-3" />
+            <span>Pendente</span>
+          </Badge>
+        );
+      case "error":
+        return (
+          <Badge
+            variant="outline"
+            className="flex items-center gap-1 border-red-500/20 bg-red-500/10 text-red-600"
+          >
+            <AlertCircle className="h-3 w-3" />
+            <span>Erro</span>
+          </Badge>
+        );
+    }
+  };
 
   return (
     <Card className="border-[var(--border-input)] bg-[var(--card-color)]">
@@ -21,7 +70,9 @@ export default function InventoryMetadata({ metadata }: InventoryMetadataProps) 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5 text-[var(--font-color)]" />
-            <span className="font-medium text-[var(--font-color)]">{metadata.fileName}</span>
+            <span className="font-medium text-[var(--font-color)]">
+              {metadata.fileName}
+            </span>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -43,6 +94,8 @@ export default function InventoryMetadata({ metadata }: InventoryMetadataProps) 
               </Badge>
             )}
 
+            {getSyncStatusBadge()}
+
             <Badge
               variant="outline"
               className="flex items-center gap-1 border-[var(--border-input)] text-[var(--font-color)]"
@@ -53,5 +106,5 @@ export default function InventoryMetadata({ metadata }: InventoryMetadataProps) 
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

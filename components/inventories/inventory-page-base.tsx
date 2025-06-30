@@ -9,12 +9,13 @@ import InventoryPagination from "@/components/inventories/inventory-pagination";
 import NewItemModal from "@/components/inventories/new-item-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useInventorySync } from "@/hooks/use-inventory-sync";
 import type { BemCopia } from "@/lib/interface";
-import { addInventoryItem, getProcessedData } from "@/utils/data-storage";
+import { addInventoryItem } from "@/utils/data-storage";
 import { exportToPdfStyled } from "@/utils/pdf-export";
-import { Filter } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { Filter, RefreshCw } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 
 interface InventoryPageBaseProps {
   backRoute: string;
@@ -27,11 +28,22 @@ export default function InventoryPageBase({
   errorRoute,
 }: InventoryPageBaseProps) {
   const router = useRouter();
-  const [inventoryData, setInventoryData] = useState<any[]>([]);
-  const [metadata, setMetadata] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const params = useParams();
+  const commissionId = params?.commission_id as string;
 
+  // Usar o hook de sincronização
+  const {
+    localData: inventoryData,
+    metadata,
+    isLoading,
+    isSyncing,
+    lastSync,
+    syncStatus,
+    forceSync,
+    loadAndSync,
+  } = useInventorySync(commissionId);
+
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [showAll, setShowAll] = useState(false);
@@ -47,42 +59,7 @@ export default function InventoryPageBase({
   const [itemsPerPage, setItemsPerPage] = useState(9);
 
   const [isNewItemModalOpen, setIsNewItemModalOpen] = useState(false);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadData() {
-      console.log("🔄 Iniciando carregamento de dados...");
-
-      if (!isMounted) return;
-      setIsLoading(true);
-      setLoadError(null);
-
-      try {
-        const { data, metadata } = await getProcessedData();
-        console.log("📦 Dados carregados:", {
-          itemCount: data.length,
-          metadata,
-          sampleData: data.slice(0, 2),
-        });
-
-        if (!isMounted) return;
-
-        setInventoryData(data);
-        setMetadata(metadata);
-      } catch (error) {
-        console.error("❌ Erro no carregamento:", error);
-        setLoadError("Erro ao carregar os dados. Tente novamente.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadData();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  // Remover o useEffect antigo, agora o hook cuida do carregamento
 
   const uniqueValues = useMemo(() => {
     const maxItemsToCheck =
@@ -100,13 +77,12 @@ export default function InventoryPageBase({
 
     fields.forEach((field) => {
       const uniqueSet = new Set<string>();
-
       sampleData.forEach((item) => {
-        if (item[field]) {
-          uniqueSet.add(item[field]);
+        const value = (item as any)[field];
+        if (value) {
+          uniqueSet.add(value);
         }
       });
-
       values[field] = Array.from(uniqueSet).sort();
     });
 
@@ -130,7 +106,7 @@ export default function InventoryPageBase({
       // Check filters first
       if (hasFilters) {
         const matchesFilters = Object.entries(selectedFilters).every(
-          ([field, value]) => item[field] === value
+          ([field, value]) => (item as any)[field] === value
         );
         if (!matchesFilters) return false;
       }
@@ -207,12 +183,25 @@ export default function InventoryPageBase({
 
   const handleSaveNewItem = async (item: BemCopia) => {
     try {
-      await addInventoryItem(item);
-      const { data, metadata } = await getProcessedData();
-      setInventoryData(data);
-      setMetadata(metadata);
+      // Primeiro, buscar dados da comissão para obter o campusId
+      const commissionResponse = await fetch(
+        `/api/commission?id=${commissionId}`
+      );
+      let campusId = "default-campus-id";
+
+      if (commissionResponse.ok) {
+        const commission = await commissionResponse.json();
+        campusId = commission.campusId;
+      }
+
+      // Usar a função atualizada que faz a chamada à API
+      await addInventoryItem(item, commissionId, campusId);
+
+      // Recarregar dados após adicionar item
+      await loadAndSync();
     } catch (error) {
       console.error("Error saving new item:", error);
+      alert("Erro ao salvar item: " + (error as Error).message);
     }
   };
 
@@ -261,18 +250,36 @@ export default function InventoryPageBase({
       exportToPdfStyled(
         pdfData,
         `inventario_${new Date().toISOString().split("T")[0]}`,
-        metadata?.comissao ?? { comissao_id: 0, nome: "Comissão Desconhecida" },
-        metadata?.campus ?? { campus_id: "", nome: "Campus Desconhecido" },
-        metadata?.presidente ?? {
+        {
+          comissao_id: "0",
+          nome: "Comissão Desconhecida",
+          tipo: "Desconhecida",
+          campus_id: "",
+        },
+        {
+          campus_id: "",
+          nome: "Campus Desconhecido",
+          campus_codigo: "",
+          campus_ativo: true,
+        },
+        {
           usuario_id: "",
           nome: "Presidente Desconhecido",
+          papel: "",
+          email: "",
+          habilitado: true,
+          organizacao_id: "",
         },
-        metadata?.inventariante ?? {
+        {
           usuario_id: "",
           nome: "Inventariante Desconhecido",
+          papel: "",
+          email: "",
+          habilitado: true,
+          organizacao_id: "",
         },
-        safeDate(metadata?.dataAbertura),
-        safeDate(metadata?.dataFechamento),
+        new Date(),
+        new Date(),
         displayFields
       );
     }
@@ -426,6 +433,35 @@ export default function InventoryPageBase({
           </div>
 
           <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2 mb-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={forceSync}
+                disabled={isSyncing}
+                className="flex items-center gap-2 border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] hover:text-white"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
+                />
+                {isSyncing ? "Sincronizando..." : "Sincronizar"}
+              </Button>
+              {lastSync && (
+                <span className="text-xs text-[var(--font-color)]/70">
+                  Última sync: {lastSync.toLocaleTimeString()}
+                </span>
+              )}
+              {syncStatus === "pending" && (
+                <span className="text-xs text-orange-500 font-medium">
+                  ⏳ Sincronização pendente
+                </span>
+              )}
+              {syncStatus === "synced" && (
+                <span className="text-xs text-green-500 font-medium">
+                  ✅ Sincronizado
+                </span>
+              )}
+            </div>
             <InventoryFilters
               onFilterChange={handleFilterChange}
               selectedFilters={selectedFilters}

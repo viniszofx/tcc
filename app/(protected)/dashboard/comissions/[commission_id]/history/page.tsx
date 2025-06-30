@@ -3,81 +3,104 @@
 import LoadingScreen from "@/components/custom/loading";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { InventoryHistory, InventoryItem, UserProfile } from "@/interface";
+import type { InventoryHistoryWithRelations } from "@/interface";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function HistoryPage() {
   const params = useParams();
   const commissionId = params.commission_id as string;
-  const [historico, setHistorico] = useState<InventoryHistory[]>([]);
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [historico, setHistorico] = useState<InventoryHistoryWithRelations[]>(
+    []
+  );
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchHistorico = async () => {
       try {
-        // Buscar itens do inventário da comissão
-        const itemsResponse = await fetch(
-          `/api/inventory?commissionId=${commissionId}`
+        // Buscar histórico de inventário filtrado pela comissão
+        const response = await fetch(
+          `/api/inventory-history?commissionId=${commissionId}`
         );
-        const itemsData = await itemsResponse.json();
+        const historyData = await response.json();
 
-        if (itemsResponse.ok) {
-          setInventoryItems(itemsData);
-
-          // Buscar histórico para os itens desta comissão
-          const historyResponse = await fetch(
-            `/api/inventory-history?commissionId=${commissionId}`
-          );
-          const historyData = await historyResponse.json();
-
-          if (historyResponse.ok) {
-            // Ordenar histórico por timestamp decrescente
-            const sortedHistory = historyData.sort(
-              (a: InventoryHistory, b: InventoryHistory) =>
-                new Date(b.timestamp).getTime() -
-                new Date(a.timestamp).getTime()
-            );
-
-            setHistorico(sortedHistory);
-
-            // Buscar usuários únicos do histórico
-            const userIds = [
-              ...new Set(
-                sortedHistory.map((item: InventoryHistory) => item.userId)
-              ),
-            ];
-            const usersPromises = userIds.map(async (userId) => {
-              const userResponse = await fetch(`/api/user?id=${userId}`);
-              if (userResponse.ok) {
-                return await userResponse.json();
-              }
-              return null;
-            });
-
-            const usersData = await Promise.all(usersPromises);
-            setUsers(usersData.filter((user) => user !== null));
-          }
+        if (response.ok) {
+          setHistorico(historyData);
+        } else {
+          console.error("Erro ao buscar histórico");
+          setHistorico([]);
         }
       } catch (error) {
         console.error("Erro ao buscar histórico:", error);
+        setHistorico([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
+    fetchHistorico();
   }, [commissionId]);
 
-  const getUserById = (userId: string) => {
-    return users.find((user) => user.id === userId);
+  // Função para formatar as mudanças de forma mais legível
+  const formatChanges = (changes: any) => {
+    if (!changes) return null;
+
+    const entries = Object.entries(changes);
+    if (entries.length === 0) return null;
+
+    const relevantChanges = entries.filter(([key, value]: [string, any]) => {
+      // Filtrar apenas mudanças que realmente aconteceram
+      return (
+        value &&
+        value.old !== value.new &&
+        value.old !== undefined &&
+        value.new !== undefined &&
+        value.old !== null &&
+        value.new !== null
+      );
+    });
+
+    if (relevantChanges.length === 0) return null;
+
+    return (
+      <div className="mt-2 space-y-1">
+        {relevantChanges.map(([key, value]: [string, any]) => {
+          const fieldName = getFieldDisplayName(key);
+          return (
+            <div key={key} className="text-xs">
+              <span className="font-medium text-blue-600">{fieldName}:</span>
+              <span className="ml-1 px-1 py-0.5 bg-red-100 text-red-700 rounded text-xs">
+                {value.old}
+              </span>
+              <span className="mx-1">→</span>
+              <span className="px-1 py-0.5 bg-green-100 text-green-700 rounded text-xs">
+                {value.new}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
-  const getInventoryItemById = (itemId: string) => {
-    return inventoryItems.find((item) => item.id === itemId);
+  // Função para obter nome amigável dos campos
+  const getFieldDisplayName = (fieldName: string): string => {
+    const fieldMap: Record<string, string> = {
+      description: "Descrição",
+      number: "Número",
+      model: "Modelo",
+      brand: "Marca",
+      color: "Cor",
+      serialNumber: "Número de Série",
+      location: "Localização",
+      condition: "Condição",
+      observations: "Observações",
+      value: "Valor",
+      status: "Status",
+      commissionId: "Comissão",
+    };
+    return fieldMap[fieldName] || fieldName;
   };
 
   if (isLoading) {
@@ -101,10 +124,6 @@ export default function HistoryPage() {
               </div>
             ) : (
               historico.map((historyItem) => {
-                const user = getUserById(historyItem.userId);
-                const inventoryItem = getInventoryItemById(
-                  historyItem.inventoryItemId
-                );
                 const formattedDate = new Date(
                   historyItem.timestamp
                 ).toLocaleString("pt-BR");
@@ -112,41 +131,55 @@ export default function HistoryPage() {
                 return (
                   <div
                     key={historyItem.id}
-                    className="border text-sm bg-[var(--card-color)] border-[var(--border-color)] rounded-md min-h-[50px] flex flex-col justify-center px-4 py-3 text-[var(--font-color)]"
+                    className="border bg-[var(--card-color)] border-[var(--border-color)] rounded-lg p-4 space-y-2"
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <span className="font-medium">
-                          {historyItem.action}
-                        </span>
-                        {inventoryItem && (
-                          <span className="text-xs text-muted-foreground ml-2">
-                            - {inventoryItem.description} (#
-                            {inventoryItem.number})
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                              historyItem.action === "create"
+                                ? "bg-green-100 text-green-700"
+                                : historyItem.action === "update"
+                                ? "bg-blue-100 text-blue-700"
+                                : historyItem.action === "delete"
+                                ? "bg-red-100 text-red-700"
+                                : historyItem.action === "move"
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
+                            {historyItem.action === "create"
+                              ? "Criado"
+                              : historyItem.action === "update"
+                              ? "Atualizado"
+                              : historyItem.action === "delete"
+                              ? "Removido"
+                              : historyItem.action === "move"
+                              ? "Movido"
+                              : historyItem.action}
                           </span>
-                        )}
+                          {historyItem.inventoryItem && (
+                            <span className="text-sm font-medium text-[var(--font-color)]">
+                              {historyItem.inventoryItem.description} (#
+                              {historyItem.inventoryItem.number})
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <span className="text-xs text-muted-foreground">
                         {formattedDate}
                       </span>
                     </div>
-                    {user && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Por: {user.name}
+
+                    {historyItem.user && (
+                      <div className="text-sm text-muted-foreground">
+                        <span className="font-medium">Por:</span>{" "}
+                        {historyItem.user.name}
                       </div>
                     )}
-                    {historyItem.changes &&
-                      Object.keys(historyItem.changes).length > 0 && (
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Alterações:{" "}
-                          {Object.entries(historyItem.changes)
-                            .map(
-                              ([key, value]: [string, any]) =>
-                                `${key}: ${value.old} → ${value.new}`
-                            )
-                            .join(", ")}
-                        </div>
-                      )}
+
+                    {formatChanges(historyItem.changes)}
                   </div>
                 );
               })

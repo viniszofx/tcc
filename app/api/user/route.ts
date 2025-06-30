@@ -1,5 +1,5 @@
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import newData from "../../../data/new-db.json";
 
 /**
  * @swagger
@@ -200,26 +200,27 @@ import newData from "../../../data/new-db.json";
  *               $ref: '#/components/schemas/Error'
  */
 
-// Simulando um banco de dados em memória
-// Transformar user_profiles do new-db.json para o formato esperado
-const transformUserProfile = (user: any) => ({
-  id: user.id,
-  name: user.name,
-  email: user.email,
-  description: user.profile?.description || "",
-  avatar: user.profile?.image || "",
-  active: user.active,
-});
-
-let users = newData.user_profiles.map(transformUserProfile);
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 
     if (id) {
-      const user = users.find((u) => u.id === id);
+      const user = await prisma.userProfile.findUnique({
+        where: { id },
+        include: {
+          commissionMembers: {
+            include: {
+              commission: {
+                include: {
+                  campus: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
       if (!user) {
         return NextResponse.json(
           { error: "Usuário não encontrado" },
@@ -228,6 +229,23 @@ export async function GET(request: Request) {
       }
       return NextResponse.json(user);
     }
+
+    const users = await prisma.userProfile.findMany({
+      include: {
+        commissionMembers: {
+          include: {
+            commission: {
+              include: {
+                campus: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
 
     return NextResponse.json(users);
   } catch (error) {
@@ -250,16 +268,44 @@ export async function POST(request: Request) {
       );
     }
 
-    const newUser = {
-      id: `user-uuid-${Date.now()}`,
-      name,
-      email,
-      description: description || "",
-      avatar: avatar || "",
-      active: true,
-    };
+    // Verificar se já existe um usuário com este email
+    const existingUser = await prisma.userProfile.findUnique({
+      where: { email },
+    });
 
-    users.push(newUser);
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "Já existe um usuário com este email" },
+        { status: 409 }
+      );
+    }
+
+    const newUser = await prisma.userProfile.create({
+      data: {
+        name,
+        email,
+        description: description || "",
+        avatar: avatar || "",
+        active: true,
+      },
+      include: {
+        organizationMembers: {
+          include: {
+            organization: true,
+          },
+        },
+        campusMembers: {
+          include: {
+            campus: true,
+          },
+        },
+        commissionMembers: {
+          include: {
+            commission: true,
+          },
+        },
+      },
+    });
 
     return NextResponse.json(newUser, { status: 201 });
   } catch (error) {
@@ -279,24 +325,62 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "ID é obrigatório" }, { status: 400 });
     }
 
-    const userIndex = users.findIndex((u) => u.id === id);
-    if (userIndex === -1) {
+    // Verificar se o usuário existe
+    const existingUser = await prisma.userProfile.findUnique({
+      where: { id },
+    });
+
+    if (!existingUser) {
       return NextResponse.json(
         { error: "Usuário não encontrado" },
         { status: 404 }
       );
     }
 
-    users[userIndex] = {
-      ...users[userIndex],
-      ...(name && { name }),
-      ...(email && { email }),
-      ...(description !== undefined && { description }),
-      ...(avatar !== undefined && { avatar }),
-      ...(active !== undefined && { active }),
-    };
+    // Se email for fornecido, verificar se não há conflito
+    if (email && email !== existingUser.email) {
+      const conflictingUser = await prisma.userProfile.findUnique({
+        where: { email },
+      });
 
-    return NextResponse.json(users[userIndex]);
+      if (conflictingUser) {
+        return NextResponse.json(
+          { error: "Já existe um usuário com este email" },
+          { status: 409 }
+        );
+      }
+    }
+
+    const updatedUser = await prisma.userProfile.update({
+      where: { id },
+      data: {
+        ...(name && { name }),
+        ...(email && { email }),
+        ...(description !== undefined && { description }),
+        ...(avatar !== undefined && { avatar }),
+        ...(active !== undefined && { active }),
+        updatedAt: new Date(),
+      },
+      include: {
+        organizationMembers: {
+          include: {
+            organization: true,
+          },
+        },
+        campusMembers: {
+          include: {
+            campus: true,
+          },
+        },
+        commissionMembers: {
+          include: {
+            commission: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json(updatedUser);
   } catch (error) {
     return NextResponse.json(
       { error: "Erro interno do servidor" },
@@ -314,21 +398,29 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "ID é obrigatório" }, { status: 400 });
     }
 
-    const userIndex = users.findIndex((u) => u.id === id);
-    if (userIndex === -1) {
+    // Verificar se o usuário existe
+    const existingUser = await prisma.userProfile.findUnique({
+      where: { id },
+    });
+
+    if (!existingUser) {
       return NextResponse.json(
         { error: "Usuário não encontrado" },
         { status: 404 }
       );
     }
 
-    users.splice(userIndex, 1);
+    // Deletar o usuário
+    await prisma.userProfile.delete({
+      where: { id },
+    });
 
     return NextResponse.json(
       { message: "Usuário deletado com sucesso" },
       { status: 200 }
     );
   } catch (error) {
+    console.error("Erro ao deletar usuário:", error);
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 }

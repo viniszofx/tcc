@@ -1,6 +1,6 @@
+import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 import { publicRoutes } from "./utils/rotes-public";
-// import { updateSession } from "./utils/supabase/middleware";
 
 let isDevelopment = process.env.NODE_ENV === "development";
 
@@ -27,7 +27,6 @@ export async function middleware(request: NextRequest) {
 
   // In development mode, allow all routes but filter logs
   if (isDevelopment) {
-    console.log("Development mode - all routes are public");
     const shouldLog = !ignoredPaths.some((path) => pathname.includes(path));
 
     if (shouldLog) {
@@ -39,13 +38,66 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Create Supabase client
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value;
+        },
+        set(name: string, value: string, options: any) {
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+        },
+        remove(name: string, options: any) {
+          request.cookies.set({
+            name,
+            value: "",
+            ...options,
+          });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          response.cookies.set({
+            name,
+            value: "",
+            ...options,
+          });
+        },
+      },
+    }
+  );
+
   // Check if it's the login page
   if (pathname === "/login") {
     try {
-      const response = await fetch(
+      const setupResponse = await fetch(
         new URL("/api/v1/setup/status", request.url)
       );
-      const data = await response.json();
+      const data = await setupResponse.json();
 
       if (data.status === "first_user") {
         return NextResponse.redirect(new URL("/setup", request.url));
@@ -55,17 +107,27 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Continue with existing middleware logic
+  // Continue with existing middleware logic for public routes
   if (
     publicRoutes.includes(pathname) ||
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon.ico")
+    pathname.startsWith("/favicon.ico") ||
+    pathname.startsWith("/api")
   ) {
-    return NextResponse.next();
+    return response;
   }
 
-  // Handle authentication for protected routes
-  // return await updateSession(request);
+  // Check if user is authenticated for protected routes
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    // User is not authenticated, redirect to login
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  return response;
 }
 
 export const config = {

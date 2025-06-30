@@ -1,8 +1,5 @@
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { data } from "../../../data";
-
-// Simulando um banco de dados em memória
-let inventoryHistories = [...data.inventoryHistories];
 
 export async function GET(request: Request) {
   try {
@@ -11,9 +8,22 @@ export async function GET(request: Request) {
     const inventoryItemId = searchParams.get("inventoryItemId");
     const userId = searchParams.get("userId");
     const action = searchParams.get("action");
+    const commissionId = searchParams.get("commissionId");
 
     if (id) {
-      const history = inventoryHistories.find((h) => h.id === id);
+      const history = await prisma.inventoryHistory.findUnique({
+        where: { id },
+        include: {
+          inventoryItem: {
+            include: {
+              commission: true,
+              campus: true,
+            },
+          },
+          user: true,
+        },
+      });
+
       if (!history) {
         return NextResponse.json(
           { error: "Histórico não encontrado" },
@@ -23,29 +33,45 @@ export async function GET(request: Request) {
       return NextResponse.json(history);
     }
 
-    let filteredHistories = inventoryHistories;
+    // Construir filtros dinamicamente
+    const where: any = {};
 
     if (inventoryItemId) {
-      filteredHistories = filteredHistories.filter(
-        (h) => h.inventoryItemId === inventoryItemId
-      );
+      where.inventoryItemId = inventoryItemId;
     }
 
     if (userId) {
-      filteredHistories = filteredHistories.filter((h) => h.userId === userId);
+      where.userId = userId;
     }
 
     if (action) {
-      filteredHistories = filteredHistories.filter((h) => h.action === action);
+      where.action = action;
     }
 
-    // Ordenar por timestamp decrescente (mais recente primeiro)
-    filteredHistories.sort(
-      (a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
+    // Filtrar por commissionId através do relacionamento com inventoryItem
+    if (commissionId) {
+      where.inventoryItem = {
+        commissionId: commissionId,
+      };
+    }
 
-    return NextResponse.json(filteredHistories);
+    const histories = await prisma.inventoryHistory.findMany({
+      where,
+      include: {
+        inventoryItem: {
+          include: {
+            commission: true,
+            campus: true,
+          },
+        },
+        user: true,
+      },
+      orderBy: {
+        timestamp: "desc",
+      },
+    });
+
+    return NextResponse.json(histories);
   } catch (error) {
     return NextResponse.json(
       { error: "Erro interno do servidor" },
@@ -67,18 +93,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const newHistory = {
-      id: `history-uuid-${Date.now()}`,
-      inventoryItemId,
-      userId,
-      action,
-      changes: changes || "",
-      observation: observation || "",
-      image_url: image_url || [],
-      timestamp: new Date().toISOString(),
-    };
-
-    inventoryHistories.push(newHistory);
+    const newHistory = await prisma.inventoryHistory.create({
+      data: {
+        inventoryItemId,
+        userId,
+        action,
+        changes: changes || "",
+        observation: observation || "",
+        imageUrl: image_url || [],
+        timestamp: new Date(),
+      },
+      include: {
+        inventoryItem: true,
+        user: true,
+      },
+    });
 
     return NextResponse.json(newHistory, { status: 201 });
   } catch (error) {
@@ -98,22 +127,32 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "ID é obrigatório" }, { status: 400 });
     }
 
-    const historyIndex = inventoryHistories.findIndex((h) => h.id === id);
-    if (historyIndex === -1) {
+    // Verificar se o histórico existe
+    const existingHistory = await prisma.inventoryHistory.findUnique({
+      where: { id },
+    });
+
+    if (!existingHistory) {
       return NextResponse.json(
         { error: "Histórico não encontrado" },
         { status: 404 }
       );
     }
 
-    inventoryHistories[historyIndex] = {
-      ...inventoryHistories[historyIndex],
-      ...(changes !== undefined && { changes }),
-      ...(observation !== undefined && { observation }),
-      ...(image_url !== undefined && { image_url }),
-    };
+    const updatedHistory = await prisma.inventoryHistory.update({
+      where: { id },
+      data: {
+        ...(changes !== undefined && { changes }),
+        ...(observation !== undefined && { observation }),
+        ...(image_url !== undefined && { imageUrl: image_url }),
+      },
+      include: {
+        inventoryItem: true,
+        user: true,
+      },
+    });
 
-    return NextResponse.json(inventoryHistories[historyIndex]);
+    return NextResponse.json(updatedHistory);
   } catch (error) {
     return NextResponse.json(
       { error: "Erro interno do servidor" },
@@ -131,15 +170,22 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "ID é obrigatório" }, { status: 400 });
     }
 
-    const historyIndex = inventoryHistories.findIndex((h) => h.id === id);
-    if (historyIndex === -1) {
+    // Verificar se o histórico existe
+    const existingHistory = await prisma.inventoryHistory.findUnique({
+      where: { id },
+    });
+
+    if (!existingHistory) {
       return NextResponse.json(
         { error: "Histórico não encontrado" },
         { status: 404 }
       );
     }
 
-    inventoryHistories.splice(historyIndex, 1);
+    // Deletar o histórico
+    await prisma.inventoryHistory.delete({
+      where: { id },
+    });
 
     return NextResponse.json(
       { message: "Histórico deletado com sucesso" },

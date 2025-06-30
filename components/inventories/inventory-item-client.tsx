@@ -1,23 +1,22 @@
-"use client"
+"use client";
 
-import DeleteItemModal from "@/components/inventories/delete-item-modal"
-import EditItemModal from "@/components/inventories/edit-item-modal"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import type { BemCopia } from "@/lib/interface"
-import { getProcessedData, saveProcessedData } from "@/utils/data-storage"
-import { formatDate } from "@/utils/data-utils"
-import { ArrowLeft, Edit, Trash2 } from "lucide-react"
-import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import DeleteItemModal from "@/components/inventories/delete-item-modal";
+import EditItemModal from "@/components/inventories/edit-item-modal";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import type { InventoryItemWithRelations } from "@/interface";
+import { formatDate } from "@/utils/data-utils";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface InventoryItemClientProps {
-  id: string
-  commissionId?: string
-  basePath: string 
-  backButtonText?: string
+  id: string;
+  commissionId?: string;
+  basePath: string;
+  backButtonText?: string;
 }
 
 export default function InventoryItemClient({
@@ -26,115 +25,123 @@ export default function InventoryItemClient({
   basePath,
   backButtonText = "Voltar para Inventário",
 }: InventoryItemClientProps) {
-  const router = useRouter()
-  const params = useParams()
-  const [item, setItem] = useState<BemCopia | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [editModalOpen, setEditModalOpen] = useState(false)
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [inventoryData, setInventoryData] = useState<BemCopia[]>([])
-  const commissionId = propCommissionId || params?.commission_id
-  const [isMounted, setIsMounted] = useState(false)
+  const router = useRouter();
+  const params = useParams();
+  const [item, setItem] = useState<InventoryItemWithRelations | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const commissionId = propCommissionId || params?.commission_id;
+  const [isMounted, setIsMounted] = useState(false);
 
   const getBackUrl = () => {
     if (commissionId) {
-      return `${basePath}/${commissionId}/inventories`
+      return `${basePath}/${commissionId}/inventories`;
     }
-    return `${basePath}/inventories`
-  }
+    return `${basePath}/inventories`;
+  };
 
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     async function loadItem() {
-      setLoading(true)
+      setLoading(true);
       try {
-        const { data } = await getProcessedData()
-        setInventoryData(data)
-        const foundItem = data.find((item) => item.bem_id === id || item.NUMERO === id)
-
-        if (foundItem) {
-          setItem(foundItem)
-        } else {
-          router.push(getBackUrl())
+        // Buscar o item diretamente da API
+        const response = await fetch(`/api/inventory?id=${id}`);
+        if (!response.ok) {
+          throw new Error("Item não encontrado");
         }
+
+        const foundItem = await response.json();
+        console.log("Item carregado da API:", foundItem); // Debug
+        console.log("Campus do item:", foundItem.campus); // Debug específico do campus
+        setItem(foundItem);
       } catch (error) {
-        console.error("Error loading item:", error)
-        router.push(getBackUrl())
+        console.error("Error loading item:", error);
+        router.push(getBackUrl());
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    loadItem()
-  }, [id, router, commissionId, basePath])
+    loadItem();
+  }, [id, router, commissionId, basePath]);
 
-  const handleSaveItem = async (updatedItem: BemCopia) => {
+  const handleSaveItem = async (updatedItem: InventoryItemWithRelations) => {
     try {
-      const updatedData = inventoryData.map((item) => (item.bem_id === updatedItem.bem_id ? updatedItem : item))
+      console.log("Dados sendo enviados para a API:", updatedItem); // Debug
 
-      await saveProcessedData(updatedData, {
-        recordCount: updatedData.length,
-        timestamp: new Date().toISOString(),
-        fileName: "inventory_update.json",
-        usedAcceleration: false,
-      })
+      const response = await fetch(`/api/inventory`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedItem),
+      });
 
-      setItem(updatedItem)
-      setInventoryData(updatedData)
-      setEditModalOpen(false)
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Erro da API:", errorData);
+        throw new Error("Erro ao atualizar item");
+      }
+
+      const updatedItemFromApi = await response.json();
+      console.log("Item atualizado retornado da API:", updatedItemFromApi); // Debug
+      setItem(updatedItemFromApi);
+      setEditModalOpen(false);
     } catch (error) {
-      console.error("Error saving item:", error)
+      console.error("Error saving item:", error);
+      alert("Erro ao salvar item. Verifique o console para mais detalhes.");
     }
-  }
+  };
 
   const handleDeleteItem = async () => {
-    if (!item) return
+    if (!item) return;
 
     try {
-      const updatedData = inventoryData.filter((i) => i.bem_id !== item.bem_id)
+      const response = await fetch(`/api/inventory?id=${item.id}`, {
+        method: "DELETE",
+      });
 
-      await saveProcessedData(updatedData, {
-        recordCount: updatedData.length,
-        timestamp: new Date().toISOString(),
-        fileName: "inventory_update.json",
-        usedAcceleration: false,
-      })
+      if (!response.ok) {
+        throw new Error("Erro ao excluir item");
+      }
 
-      setDeleteModalOpen(false)
-      router.push(getBackUrl())
+      setDeleteModalOpen(false);
+      router.push(getBackUrl());
     } catch (error) {
-      console.error("Error deleting item:", error)
+      console.error("Error deleting item:", error);
     }
-  }
+  };
 
   const truncateDescription = (description: string) => {
-    const index = description.indexOf("[")
-    return index >= 0 ? description.substring(0, index).trim() : description
-  }
+    const index = description.indexOf("[");
+    return index >= 0 ? description.substring(0, index).trim() : description;
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ATIVO":
       case "Ativo":
-        return "bg-green-500"
+        return "bg-green-500";
       case "EM_USO":
       case "Em Manutenção":
-        return "bg-amber-500"
+        return "bg-amber-500";
       case "BAIXA_SOLICITADA":
       case "Inativo":
-        return "bg-gray-500"
+        return "bg-gray-500";
       case "BAIXADO":
       case "Baixado":
-        return "bg-red-500"
+        return "bg-red-500";
       case "Transferido":
-        return "bg-blue-500"
+        return "bg-blue-500";
       default:
-        return "bg-gray-500"
+        return "bg-gray-500";
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -148,14 +155,16 @@ export default function InventoryItemClient({
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (!item) {
     return (
       <Card className="w-full bg-[var(--bg-simple)] shadow-md mx-auto">
         <CardContent className="p-4 sm:p-8 text-center">
-          <h2 className="text-lg sm:text-xl font-bold text-[var(--font-color)]">Item não encontrado</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-[var(--font-color)]">
+            Item não encontrado
+          </h2>
           <p className="text-[var(--font-color)]/70 mt-2 text-sm sm:text-base">
             O item que você está procurando não existe ou foi removido.
           </p>
@@ -167,7 +176,7 @@ export default function InventoryItemClient({
           </Button>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -203,9 +212,11 @@ export default function InventoryItemClient({
             </div>
           </div>
           <CardTitle className="mt-4 text-lg font-bold text-[var(--font-color)] sm:text-xl md:text-2xl lg:text-3xl">
-            {truncateDescription(item.DESCRICAO)}
-            <Badge className={`ml-2 sm:ml-4 ${getStatusColor(item.STATUS)} text-white text-xs sm:text-sm`}>
-              {item.STATUS}
+            {item.description}
+            <Badge
+              className={`ml-2 sm:ml-4 bg-green-500 text-white text-xs sm:text-sm`}
+            >
+              ATIVO
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -221,23 +232,23 @@ export default function InventoryItemClient({
               <CardContent className="space-y-2 text-[var(--font-color)] px-4 sm:px-6 pb-4">
                 <div className="flex justify-between text-sm sm:text-base">
                   <span className="font-medium">Número:</span>
-                  <span>{item.NUMERO}</span>
+                  <span>{item.number}</span>
                 </div>
                 <div className="flex justify-between text-sm sm:text-base">
                   <span className="font-medium">Marca/Modelo:</span>
-                  <span>{item.MARCA_MODELO}</span>
+                  <span>{item.brandModel || "N/A"}</span>
                 </div>
                 <div className="flex justify-between text-sm sm:text-base">
                   <span className="font-medium">Estado de Conservação:</span>
-                  <span>{item.ESTADO_DE_CONSERVACAO}</span>
+                  <span>{item.conservationState || "N/A"}</span>
                 </div>
                 <div className="flex justify-between text-sm sm:text-base">
                   <span className="font-medium">Última Atualização:</span>
-                  <span>{formatDate(item.data_ultima_atualizacao)}</span>
+                  <span>{formatDate(item.updatedAt)}</span>
                 </div>
                 <div className="flex justify-between text-sm sm:text-base">
                   <span className="font-medium">Atualizado por:</span>
-                  <span>{item.ultimo_atualizado_por || "N/A"}</span>
+                  <span>N/A</span>
                 </div>
               </CardContent>
             </Card>
@@ -251,23 +262,23 @@ export default function InventoryItemClient({
               <CardContent className="space-y-2 text-[var(--font-color)] px-4 sm:px-6 pb-4">
                 <div className="flex justify-between text-sm sm:text-base">
                   <span className="font-medium">Campus:</span>
-                  <span>{item.CAMPUS_DA_LOTACAO_DO_BEM || "N/A"}</span>
+                  <span>{item.campus?.name || "N/A"}</span>
                 </div>
                 <div className="flex justify-between text-sm sm:text-base">
                   <span className="font-medium">Sala:</span>
-                  <span>{item.SALA || "N/A"}</span>
+                  <span>{item.location || "N/A"}</span>
                 </div>
                 <div className="flex justify-between text-sm sm:text-base">
                   <span className="font-medium">Responsável:</span>
-                  <span>{item.RESPONSABILIDADE_ATUAL || "N/A"}</span>
+                  <span>{item.currentResponsibility || "N/A"}</span>
                 </div>
                 <div className="flex justify-between text-sm sm:text-base">
                   <span className="font-medium">Setor:</span>
-                  <span>{item.SETOR_DO_RESPONSAVEL || "N/A"}</span>
+                  <span>{item.sector || "N/A"}</span>
                 </div>
                 <div className="flex justify-between text-sm sm:text-base">
                   <span className="font-medium">ED:</span>
-                  <span>{item.ED || "N/A"}</span>
+                  <span>{item.ed || "N/A"}</span>
                 </div>
               </CardContent>
             </Card>
@@ -282,23 +293,20 @@ export default function InventoryItemClient({
             <CardContent className="text-[var(--font-color)] px-4 sm:px-6 pb-4">
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-medium mb-1 text-sm sm:text-base">Descrição Principal</h3>
-                  <p className="text-sm sm:text-base">{item.DESCRICAO_PRINCIPAL || item.DESCRICAO}</p>
+                  <h3 className="font-medium mb-1 text-sm sm:text-base">
+                    Descrição Principal
+                  </h3>
+                  <p className="text-sm sm:text-base">{item.description}</p>
                 </div>
                 <Separator className="bg-[var(--border-input)]" />
                 <div>
-                  <h3 className="font-medium mb-1 text-sm sm:text-base">Rótulos</h3>
-                  <p className="text-sm sm:text-base">{item.ROTULOS || "Nenhum rótulo definido"}</p>
+                  <h3 className="font-medium mb-1 text-sm sm:text-base">
+                    Rótulos
+                  </h3>
+                  <p className="text-sm sm:text-base">
+                    {item.tags?.join(", ") || "Nenhum rótulo definido"}
+                  </p>
                 </div>
-                {item.observacoes && (
-                  <>
-                    <Separator className="bg-[var(--border-input)]" />
-                    <div>
-                      <h3 className="font-medium mb-1 text-sm sm:text-base">Observações</h3>
-                      <p className="text-sm sm:text-base">{item.observacoes}</p>
-                    </div>
-                  </>
-                )}
               </div>
             </CardContent>
           </Card>
@@ -312,7 +320,7 @@ export default function InventoryItemClient({
             <CardContent className="space-y-2 text-[var(--font-color)] px-4 sm:px-6 pb-4">
               <div className="flex justify-between text-sm sm:text-base">
                 <span className="font-medium">ID do Bem:</span>
-                <span>{item.bem_id}</span>
+                <span>{item.id}</span>
               </div>
             </CardContent>
           </Card>
@@ -326,17 +334,16 @@ export default function InventoryItemClient({
             onClose={() => setEditModalOpen(false)}
             onSave={handleSaveItem}
             item={item}
-            inventoryData={inventoryData}
           />
 
           <DeleteItemModal
             isOpen={deleteModalOpen}
             onClose={() => setDeleteModalOpen(false)}
             onConfirm={handleDeleteItem}
-            itemName={item?.DESCRICAO}
+            itemName={item?.description}
           />
         </>
       )}
     </>
-  )
+  );
 }

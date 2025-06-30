@@ -45,3 +45,5 @@ next-env.d.ts
 
 postgres/
 /lib/generated/prisma
+
+/lib/generated/prisma

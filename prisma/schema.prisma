@@ -1,0 +1,203 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// User Profile - Corresponde ao auth.users do Supabase
+model UserProfile {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  email       String   @unique
+  description String?
+  avatar      String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Many-to-many relations
+  organizationMembers OrganizationMember[]
+  campusMembers       CampusMember[]
+  commissionMembers   CommissionMember[]
+  inventoryHistory    InventoryHistory[]
+
+  @@map("user_profiles")
+}
+
+// Allowed Users (whitelist)
+model AllowedUser {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  email     String   @unique
+  status    Boolean  @default(true) // true = "ativo", false = "inativo"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("allowed_users")
+}
+
+// Organizations
+model Organization {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  shortName String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  members  OrganizationMember[]
+  campuses Campus[]
+
+  @@map("organizations")
+}
+
+// Organization Members (many-to-many)
+model OrganizationMember {
+  userId         String   @map("user_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  role           String // "admin", "member"
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  user         UserProfile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, organizationId])
+  @@map("organization_members")
+}
+
+// Campus
+model Campus {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  name           String
+  code           String   @unique
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members        CampusMember[]
+  commissions    Commission[]
+  inventoryItems InventoryItem[]
+
+  @@map("campuses")
+}
+
+// Campus Members (many-to-many)
+model CampusMember {
+  userId    String   @db.Uuid
+  campusId  String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user   UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campus Campus      @relation(fields: [campusId], references: [id], onDelete: Cascade)
+
+  @@id([userId, campusId])
+  @@map("campus_members")
+}
+
+// Commissions
+model Commission {
+  id             String   @id @default(uuid()) @db.Uuid
+  campusId       String   @db.Uuid
+  name           String
+  type           String // "Permanente", "Temporária", "Especial"
+  description    String?
+  spreadsheetUrl String?  @map("spreadsheet_url")
+  active         Boolean  @default(true)
+  year           Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  campus         Campus             @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  members        CommissionMember[]
+  inventoryItems InventoryItem[]
+
+  @@map("commissions")
+}
+
+// Commission Members (many-to-many)
+model CommissionMember {
+  userId           String   @db.Uuid
+  commissionId     String   @db.Uuid
+  roleInCommission String // "Presidente", "Membro", "Secretario"
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  user       UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  commission Commission  @relation(fields: [commissionId], references: [id], onDelete: Cascade)
+
+  @@id([userId, commissionId])
+  @@map("commission_members")
+}
+
+// Inventory Items
+model InventoryItem {
+  id                    String   @id @default(uuid()) @db.Uuid
+  commissionId          String   @db.Uuid
+  campusId              String   @db.Uuid
+  number                String   @unique
+  description           String
+  brandModel            String?
+  currentResponsibility String?
+  conservationState     String? // "bom", "regular", "ruim", "inservível"
+  location              String?
+  tags                  String[] @default([]) // Array de tags
+  ed                    String?
+  sector                String?
+  updatedAt             DateTime @updatedAt
+  createdAt             DateTime @default(now())
+
+  // Relations
+  commission Commission         @relation(fields: [commissionId], references: [id], onDelete: Cascade)
+  campus     Campus             @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  history    InventoryHistory[]
+
+  @@map("inventory_items")
+}
+
+// Define enum para actions
+enum InventoryAction {
+  create
+  update
+  delete
+  move
+
+  @@map("inventory_action")
+}
+
+// Inventory History
+model InventoryHistory {
+  id              String          @id @default(uuid()) @db.Uuid
+  inventoryItemId String          @map("inventory_item_id") @db.Uuid
+  userId          String          @db.Uuid
+  action          InventoryAction
+  changes         String?
+  observation     String?
+  imageUrl        String[]        @map("image_url")
+  timestamp       DateTime        @default(now())
+
+  // Relations
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  user          UserProfile   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("inventory_history")
+}

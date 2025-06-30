@@ -1,8 +1,5 @@
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { data } from "../../../data";
-
-// Simulando um banco de dados em memória
-let organizations = [...data.organizations];
 
 export async function GET(request: Request) {
   try {
@@ -10,7 +7,22 @@ export async function GET(request: Request) {
     const id = searchParams.get("id");
 
     if (id) {
-      const organization = organizations.find((o) => o.id === id);
+      const organization = await prisma.organization.findUnique({
+        where: { id },
+        include: {
+          campuses: {
+            include: {
+              commissions: true,
+            },
+          },
+          members: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      });
+
       if (!organization) {
         return NextResponse.json(
           { error: "Organização não encontrada" },
@@ -19,6 +31,24 @@ export async function GET(request: Request) {
       }
       return NextResponse.json(organization);
     }
+
+    const organizations = await prisma.organization.findMany({
+      include: {
+        campuses: {
+          include: {
+            commissions: true,
+          },
+        },
+        members: {
+          include: {
+            user: true,
+          },
+        },
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
 
     return NextResponse.json(organizations);
   } catch (error) {
@@ -41,14 +71,25 @@ export async function POST(request: Request) {
       );
     }
 
-    const newOrganization = {
-      id: `org-uuid-${Date.now()}`,
-      name,
-      shortName,
-      active: active !== undefined ? active : true,
-    };
-
-    organizations.push(newOrganization);
+    const newOrganization = await prisma.organization.create({
+      data: {
+        name,
+        shortName,
+        active: active !== undefined ? active : true,
+      },
+      include: {
+        campuses: {
+          include: {
+            commissions: true,
+          },
+        },
+        members: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
 
     return NextResponse.json(newOrganization, { status: 201 });
   } catch (error) {
@@ -68,22 +109,41 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "ID é obrigatório" }, { status: 400 });
     }
 
-    const orgIndex = organizations.findIndex((o) => o.id === id);
-    if (orgIndex === -1) {
+    // Verificar se a organização existe
+    const existingOrganization = await prisma.organization.findUnique({
+      where: { id },
+    });
+
+    if (!existingOrganization) {
       return NextResponse.json(
         { error: "Organização não encontrada" },
         { status: 404 }
       );
     }
 
-    organizations[orgIndex] = {
-      ...organizations[orgIndex],
-      ...(name && { name }),
-      ...(shortName && { shortName }),
-      ...(active !== undefined && { active }),
-    };
+    const updatedOrganization = await prisma.organization.update({
+      where: { id },
+      data: {
+        ...(name && { name }),
+        ...(shortName && { shortName }),
+        ...(active !== undefined && { active }),
+        updatedAt: new Date(),
+      },
+      include: {
+        campuses: {
+          include: {
+            commissions: true,
+          },
+        },
+        members: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
 
-    return NextResponse.json(organizations[orgIndex]);
+    return NextResponse.json(updatedOrganization);
   } catch (error) {
     return NextResponse.json(
       { error: "Erro interno do servidor" },
@@ -101,15 +161,22 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "ID é obrigatório" }, { status: 400 });
     }
 
-    const orgIndex = organizations.findIndex((o) => o.id === id);
-    if (orgIndex === -1) {
+    // Verificar se a organização existe
+    const existingOrganization = await prisma.organization.findUnique({
+      where: { id },
+    });
+
+    if (!existingOrganization) {
       return NextResponse.json(
         { error: "Organização não encontrada" },
         { status: 404 }
       );
     }
 
-    organizations.splice(orgIndex, 1);
+    // Deletar a organização (isso também deletará os campuses relacionados se houver CASCADE)
+    await prisma.organization.delete({
+      where: { id },
+    });
 
     return NextResponse.json(
       { message: "Organização deletada com sucesso" },
