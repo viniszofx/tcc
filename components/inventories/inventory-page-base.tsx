@@ -184,7 +184,7 @@ export default function InventoryPageBase({
   const handleSaveNewItem = async (item: BemCopia) => {
     try {
       console.log("Iniciando criação de item...");
-      
+
       // Primeiro, buscar dados da comissão para obter o campusId
       const commissionResponse = await fetch(
         `/api/commission?id=${commissionId}`
@@ -215,7 +215,6 @@ export default function InventoryPageBase({
           // Não mostrar erro ao usuário, pois o item foi criado
         }
       }, 100);
-
     } catch (error) {
       console.error("❌ Erro ao salvar item:", error);
       throw error; // Propagar o erro para o modal tratar

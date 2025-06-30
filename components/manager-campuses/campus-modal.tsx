@@ -11,11 +11,25 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import type { Campus } from "@/interface";
 import { AlertTriangle } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
+
+interface Organization {
+  id: string;
+  name: string;
+  shortName: string;
+  active: boolean;
+}
 
 interface CampusModalProps {
   isOpen: boolean;
@@ -42,7 +56,31 @@ export default function CampusModal({
     active: false,
   });
 
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [loadingOrganizations, setLoadingOrganizations] = useState(false);
+
+  // Buscar organizações disponíveis para o usuário
+  const fetchOrganizations = async () => {
+    try {
+      setLoadingOrganizations(true);
+      const response = await fetch("/api/organization");
+      if (response.ok) {
+        const data = await response.json();
+        setOrganizations(data.filter((org: Organization) => org.active));
+      }
+    } catch (error) {
+      console.error("Erro ao buscar organizações:", error);
+    } finally {
+      setLoadingOrganizations(false);
+    }
+  };
+
   useEffect(() => {
+    if (isOpen) {
+      // Buscar organizações quando o modal abrir
+      fetchOrganizations();
+    }
+
     if (campus) {
       setFormData(campus);
     } else {
@@ -64,6 +102,13 @@ export default function CampusModal({
     }));
   };
 
+  const handleSelectChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
   const handleSwitchChange = (checked: boolean) => {
     setFormData((prev) => ({
       ...prev,
@@ -73,6 +118,13 @@ export default function CampusModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validar se uma organização foi selecionada
+    if (!formData.organizationId) {
+      alert("Por favor, selecione uma organização.");
+      return;
+    }
+
     onSave(formData);
   };
 
@@ -140,6 +192,38 @@ export default function CampusModal({
           </DialogDescription>
         </DialogHeader>
         <div className="my-4 sm:my-6 space-y-4">
+          <div className="space-y-2">
+            <Label
+              htmlFor="organizationId"
+              className="text-[var(--font-color)]"
+            >
+              Organização <span className="text-red-500">*</span>
+            </Label>
+            <Select
+              value={formData.organizationId}
+              onValueChange={(value) =>
+                handleSelectChange("organizationId", value)
+              }
+              disabled={loadingOrganizations}
+            >
+              <SelectTrigger className="border-[var(--border-color)] bg-[var(--input-bg-color)] text-[var(--font-color)]">
+                <SelectValue
+                  placeholder={
+                    loadingOrganizations
+                      ? "Carregando..."
+                      : "Selecione uma organização"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {organizations.map((org) => (
+                  <SelectItem key={org.id} value={org.id}>
+                    {org.name} ({org.shortName})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="nome" className="text-[var(--font-color)]">
               Nome
