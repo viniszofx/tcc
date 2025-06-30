@@ -1,7 +1,7 @@
 "use client";
 
 import { signIn } from "@/app/(auth)/auth/_action";
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { Button } from "../ui/button";
 import { CardContent, CardFooter } from "../ui/card";
 import { Input } from "../ui/input";
@@ -16,7 +16,7 @@ type State = {
 export default function AuthForm() {
   const initialState: State = { message: "" };
 
-  const [state, formAction] = useFormState(
+  const [state, formAction] = useActionState(
     async (prevState: State, formData: FormData) => {
       try {
         await signIn(formData);

@@ -2,6 +2,7 @@
 
 "use client";
 
+import LoadingScreen from "@/components/custom/loading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,11 +16,51 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const router = useRouter();
   const [cameraModalOpen, setCameraModalOpen] = useState(false);
+  const [isValidating, setIsValidating] = useState(true);
+  const [showLanding, setShowLanding] = useState(false);
+
+  useEffect(() => {
+    const validateSystemAndRedirect = async () => {
+      try {
+        // Verificar se o sistema precisa de configuração inicial
+        const systemCheck = await fetch("/api/auth/check-system", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (systemCheck.ok) {
+          const { needsOnboarding, isFirstRun } = await systemCheck.json();
+
+          if (needsOnboarding && isFirstRun) {
+            // Sistema não configurado - ir para onboarding
+            console.log(
+              "Sistema não configurado. Redirecionando para setup..."
+            );
+            router.replace("/setup");
+            return;
+          }
+        }
+
+        // Sistema configurado - mostrar landing page
+        setShowLanding(true);
+      } catch (error) {
+        console.error("Erro na validação inicial:", error);
+        // Em caso de erro, assumir que precisa de onboarding
+        router.replace("/setup");
+      } finally {
+        setIsValidating(false);
+      }
+    };
+
+    validateSystemAndRedirect();
+  }, [router]);
 
   const handleStartNow = () => {
     console.log("Iniciando o processo de registro...");
@@ -51,6 +92,16 @@ export default function Home() {
       alert("Por favor, permita o acesso à câmera para usar esta função.");
     }
   };
+
+  // Mostrar loading durante validação
+  if (isValidating) {
+    return <LoadingScreen />;
+  }
+
+  // Se não deve mostrar a landing page, não renderizar nada (será redirecionado)
+  if (!showLanding) {
+    return null;
+  }
 
   const features = [
     {

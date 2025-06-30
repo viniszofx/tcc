@@ -6,7 +6,10 @@
     "dev": "cross-env NODE_ENV=development next dev --turbopack ",
     "build": "cross-env NODE_ENV=production next build",
     "start": "cross-env NODE_ENV=production next start -p 8000 -H 0.0.0.0",
-    "lint": "next lint"
+    "lint": "next lint",
+    "clean-db": "tsx scripts/clean-database.ts",
+    "seed-basic": "tsx scripts/seed-basic-data.ts",
+    "reset-db": "tsx scripts/seed-basic-data.ts --reset"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
