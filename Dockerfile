@@ -30,9 +30,8 @@ ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 # AQUI USAMOS --mount=type=secret para as "super keys".
 # Elas serão montadas temporariamente em /run/secrets/ e estarão disponíveis para o 'pnpm build'.
 RUN --mount=type=secret,id=supabase_service_role_key \
-  --mount=type=secret,id=resend_api_key \
+  --mount=type=secret \
   SUPABASE_SERVICE_ROLE_KEY=$(cat /run/secrets/supabase_service_role_key) \
-  RESEND_API_KEY=$(cat /run/secrets/resend_api_key) \
   pnpm build
 
 # Remove as dependências de desenvolvimento.

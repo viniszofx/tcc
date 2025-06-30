@@ -98,12 +98,6 @@ app/
 - Node.js 18+
 - NPM ou PNPM
 
-### Variáveis de Ambiente
-
-```env
-RESEND_API_KEY=sua_chave_api
-```
-
 ### Instalação
 
 ```bash

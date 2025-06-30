@@ -62,4 +62,3 @@ jobs:
           # Passa as "super keys" como build-secrets
           secrets: |
             supabase_service_role_key=${{ secrets.SUPABASE_SERVICE_ROLE_KEY_PROD }}
-            resend_api_key=${{ secrets.RESEND_API_KEY_PROD }}
