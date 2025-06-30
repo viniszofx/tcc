@@ -1,5 +1,6 @@
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { SupabaseProvider } from "@/components/providers/supabase-provider";
+import { UserProvider } from "@/contexts/user-context";
 import { Urbanist } from "next/font/google";
 import "./globals.css";
 
@@ -22,7 +23,9 @@ export default function RootLayout({
       <link rel="icon" href="/logo.svg" type="image/svg+xml" />
       <body className={`${urbanist.variable} font-sans antialiased`}>
         <SupabaseProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          <UserProvider>
+            <ThemeProvider>{children}</ThemeProvider>
+          </UserProvider>
         </SupabaseProvider>
       </body>
     </html>

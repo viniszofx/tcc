@@ -143,24 +143,32 @@ export function useAuth() {
 
         if (userResponse.ok) {
           const userData = await userResponse.json();
-          console.log("==== DADOS DO USUÁRIO ====");
+          console.log("===== DEBUG REDIRECIONAMENTO =====");
           console.log("userData completo:", userData);
           console.log("userData.user:", userData.user);
           console.log("userData.user.role:", userData.user?.role);
           console.log("userData.role:", userData.role);
-          console.log("==========================");
+          console.log(
+            "userData.user.redirectPath:",
+            userData.user?.redirectPath
+          );
 
           // Redirecionar com base na role - verificar múltiplas propriedades
           const userRole = userData.user?.role || userData.role;
           console.log("Role final detectada:", userRole);
 
           if (userRole === "admin") {
-            console.log("Redirecionando para /admin");
+            console.log("✅ Redirecionando ADMIN para /admin");
             router.push("/admin");
           } else {
-            console.log("Redirecionando para /dashboard (role:", userRole, ")");
+            console.log(
+              "➡️ Redirecionando USER para /dashboard (role:",
+              userRole,
+              ")"
+            );
             router.push("/dashboard");
           }
+          console.log("=================================");
         } else {
           console.warn(
             "Não foi possível determinar a role, redirecionando para dashboard"

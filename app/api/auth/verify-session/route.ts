@@ -1,13 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import {
-  checkRateLimit,
-  emailSchema,
-  sanitizeUserData,
-  validateApiInput,
-} from "@/lib/validation";
+import { createSupabaseServer } from "@/lib/supabase-server";
+import { checkRateLimit, sanitizeUserData } from "@/lib/validation";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     // Rate limiting por IP
     const clientIP =
@@ -15,54 +11,45 @@ export async function POST(request: NextRequest) {
       request.headers.get("x-real-ip") ||
       "unknown";
 
-    if (!checkRateLimit(`get-user-role:${clientIP}`, 50, 60000)) {
+    if (!checkRateLimit(`verify-session:${clientIP}`, 60, 60000)) {
       return NextResponse.json(
         { error: "Muitas tentativas. Tente novamente em alguns minutos." },
         { status: 429 }
       );
     }
 
-    let body;
-    try {
-      body = await request.json();
-    } catch (jsonError) {
+    // Verificar sessão do Supabase
+    const supabase = await createSupabaseServer();
+
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
       return NextResponse.json(
-        { error: "JSON inválido no corpo da requisição" },
-        { status: 400 }
+        { error: "Sessão inválida ou expirada", authenticated: false },
+        { status: 401 }
       );
     }
 
-    // Verificar se o body tem a estrutura esperada
-    if (!body || typeof body !== "object" || !body.email) {
-      return NextResponse.json(
-        { error: "Email é obrigatório no corpo da requisição" },
-        { status: 400 }
-      );
-    }
-
-    // Validar entrada
-    const validation = validateApiInput(emailSchema, body.email);
-    if (!validation.success) {
-      return NextResponse.json({ error: validation.error }, { status: 400 });
-    }
-
-    const email = validation.data;
-
-    // Verificar se o usuário está autorizado a acessar o sistema
+    // Verificar se o usuário ainda está autorizado
     const allowedUser = await prisma.allowedUser.findUnique({
-      where: { email },
+      where: { email: user.email! },
     });
 
     if (!allowedUser || !allowedUser.status) {
+      // Fazer logout se o usuário não estiver mais autorizado
+      await supabase.auth.signOut();
       return NextResponse.json(
-        { error: "Usuário não autorizado" },
+        { error: "Usuário não autorizado", authenticated: false },
         { status: 403 }
       );
     }
 
-    // Buscar o usuário e suas roles
+    // Buscar perfil do usuário
     const userProfile = await prisma.userProfile.findUnique({
-      where: { email },
+      where: { email: user.email! },
       include: {
         organizationMembers: {
           include: {
@@ -74,21 +61,20 @@ export async function POST(request: NextRequest) {
 
     if (!userProfile) {
       return NextResponse.json(
-        { error: "Usuário não encontrado" },
+        { error: "Perfil do usuário não encontrado", authenticated: false },
         { status: 404 }
       );
     }
 
-    // Determinar a role principal e o redirecionamento
+    // Determinar role e organização
     let role = "member";
-    let redirectPath = "/dashboard";
     let organization = null;
+    let redirectPath = "/dashboard";
 
     if (
       userProfile.organizationMembers &&
       userProfile.organizationMembers.length > 0
     ) {
-      // Se o usuário tem múltiplas organizações, pegar a primeira onde ele é admin
       const adminMembership = userProfile.organizationMembers.find(
         (member) => member.role === "admin"
       );
@@ -98,14 +84,12 @@ export async function POST(request: NextRequest) {
         redirectPath = "/admin";
         organization = adminMembership.organization;
       } else {
-        // Se não é admin, pegar a primeira organização onde é member
         const memberMembership = userProfile.organizationMembers[0];
         role = memberMembership.role;
         organization = memberMembership.organization;
       }
     }
 
-    // Sanitizar e estruturar dados do usuário
     const userData = {
       id: userProfile.id,
       name: userProfile.name,
@@ -115,19 +99,21 @@ export async function POST(request: NextRequest) {
       redirectPath,
     };
 
-    // Sanitizar dados antes de enviar ao cliente
     const safeUserData = sanitizeUserData(userData);
 
     return NextResponse.json({
+      authenticated: true,
       user: safeUserData,
-      role, // Adicionar role também no nível raiz para compatibilidade
+      session: {
+        expires_at: user.user_metadata?.exp || null,
+        created_at: user.created_at,
+      },
     });
   } catch (error) {
-    console.error("Erro ao buscar role do usuário:", error);
+    console.error("Erro ao verificar sessão:", error);
 
-    // Não expor detalhes do erro para o cliente
     return NextResponse.json(
-      { error: "Erro interno do servidor" },
+      { error: "Erro interno do servidor", authenticated: false },
       { status: 500 }
     );
   }

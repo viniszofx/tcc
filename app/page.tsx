@@ -5,6 +5,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSystemStatus } from "@/hooks/use-system-status";
 import {
   ArrowRight,
   Building2,
@@ -20,38 +21,51 @@ import { useState } from "react";
 export default function Home() {
   const router = useRouter();
   const [cameraModalOpen, setCameraModalOpen] = useState(false);
+  const {
+    status,
+    loading: statusLoading,
+    error: statusError,
+    needsSetup,
+  } = useSystemStatus();
 
   const handleStartNow = async () => {
     console.log("Iniciando o processo...");
+    console.log("Status atual:", {
+      status,
+      needsSetup,
+      statusLoading,
+      statusError,
+    });
 
-    try {
-      // Verificar se há usuários permitidos na tabela allowed_users
-      const response = await fetch("/api/allowed-user", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+    // Se ainda está carregando, aguardar
+    if (statusLoading) {
+      console.log("Aguardando verificação do sistema...");
+      return;
+    }
 
-      if (response.ok) {
-        const allowedUsers = await response.json();
+    // Se há erro de rate limiting, mostrar alerta
+    if (statusError?.includes("Muitas tentativas")) {
+      alert("Muitas tentativas. Tente novamente em alguns minutos.");
+      return;
+    }
 
-        // Se não há usuários permitidos, redirecionar para setup
-        if (!allowedUsers || allowedUsers.length === 0) {
-          console.log(
-            "Tabela allowed_users vazia. Redirecionando para setup..."
-          );
-          router.push("/setup");
-          return;
-        }
-      }
-
-      // Se há usuários permitidos, ir para login
-      router.push("/login");
-    } catch (error) {
-      console.error("Erro na verificação inicial:", error);
-      // Em caso de erro, assumir que precisa de setup
+    // Se há erro e não conseguiu determinar o status, ir para setup por segurança
+    if (statusError && !status) {
+      console.warn("Erro na verificação do sistema, redirecionando para setup");
       router.push("/setup");
+      return;
+    }
+
+    // Usar os dados do hook para decidir o redirecionamento
+    console.log("Verificando needsSetup:", needsSetup);
+    if (needsSetup) {
+      console.log(
+        "Sistema precisa ser configurado. Redirecionando para setup..."
+      );
+      router.push("/setup");
+    } else {
+      console.log("Sistema configurado. Redirecionando para login...");
+      router.push("/login");
     }
   };
 
@@ -150,9 +164,12 @@ export default function Home() {
               size="lg"
               className="bg-white text-[var(--secondary-color)] hover:bg-gray-100 transform hover:scale-105 transition-all"
               onClick={handleStartNow}
+              disabled={statusLoading}
             >
-              Começar Gratuitamente
-              <ArrowRight className="ml-2 h-4 w-4" />
+              {statusLoading
+                ? "Verificando sistema..."
+                : "Começar Gratuitamente"}
+              {!statusLoading && <ArrowRight className="ml-2 h-4 w-4" />}
             </Button>
             <Button
               size="lg"
@@ -243,8 +260,9 @@ export default function Home() {
               size="lg"
               className="bg-white text-[var(--secondary-color)] hover:bg-gray-100"
               onClick={handleStartNow}
+              disabled={statusLoading}
             >
-              Começar Gratuitamente
+              {statusLoading ? "Verificando..." : "Começar Gratuitamente"}
             </Button>
             <Button
               size="lg"

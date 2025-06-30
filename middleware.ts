@@ -2,6 +2,37 @@ import { createSupabaseMiddleware } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 import { publicRoutes } from "./utils/rotes-public";
 
+// Função para verificar role do usuário e determinar redirecionamento
+async function getUserRoleAndRedirect(
+  userEmail: string,
+  request: NextRequest
+): Promise<{ role: string; redirectPath: string } | null> {
+  try {
+    const getUserRoleUrl = new URL("/api/auth/get-user-role", request.url);
+    const response = await fetch(getUserRoleUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email: userEmail }),
+    });
+
+    if (!response.ok) {
+      console.warn("Erro ao buscar role do usuário:", userEmail);
+      return null;
+    }
+
+    const userData = await response.json();
+    return {
+      role: userData.user?.role || userData.role || "member",
+      redirectPath: userData.user?.redirectPath || "/dashboard",
+    };
+  } catch (error) {
+    console.error("Erro ao buscar role do usuário:", error);
+    return null;
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -18,23 +49,62 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    // Para rotas protegidas, primeiro verificar se o sistema precisa de onboarding
+    // Verificar se usuário autenticado está tentando acessar rotas públicas
+    if (pathname === "/" || pathname === "/login") {
+      let response = NextResponse.next({
+        request: {
+          headers: request.headers,
+        },
+      });
+
+      const supabase = createSupabaseMiddleware(request, response);
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      // Se usuário está autenticado, redirecionar baseado na role
+      if (!error && user) {
+        const userRoleData = await getUserRoleAndRedirect(user.email!, request);
+
+        if (userRoleData) {
+          const { role, redirectPath } = userRoleData;
+          console.log(
+            `Usuário autenticado acessando ${pathname}, redirecionando para ${redirectPath} (role: ${role})`
+          );
+          return NextResponse.redirect(new URL(redirectPath, request.url));
+        } else {
+          // Fallback para dashboard se não conseguir determinar a role
+          return NextResponse.redirect(new URL("/dashboard", request.url));
+        }
+      }
+    }
+    // Para rotas protegidas, primeiro verificar se o sistema precisa de setup
     if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) {
       // Verificar status do sistema via API
       try {
-        const systemCheckUrl = new URL("/api/auth/check-system", request.url);
-        const response = await fetch(systemCheckUrl);
+        const systemStatusUrl = new URL(
+          "/api/system/check-status",
+          request.url
+        );
+        const response = await fetch(systemStatusUrl);
 
         if (response.ok) {
-          const { needsOnboarding, isFirstRun } = await response.json();
+          const statusData = await response.json();
 
-          if (needsOnboarding && isFirstRun) {
+          if (statusData.needsSetup) {
             return NextResponse.redirect(new URL("/setup", request.url));
           }
+        } else {
+          // Se a API falhou, assumir que precisa de setup
+          console.warn(
+            "Falha ao verificar status do sistema, redirecionando para setup"
+          );
+          return NextResponse.redirect(new URL("/setup", request.url));
         }
       } catch (error) {
         console.error("Erro ao verificar status do sistema:", error);
-        // Em caso de erro, assumir que precisa de onboarding
+        // Em caso de erro, assumir que precisa de setup
         return NextResponse.redirect(new URL("/setup", request.url));
       }
 
@@ -60,7 +130,7 @@ export async function middleware(request: NextRequest) {
       }
       user = realUser;
 
-      // Verificar se o usuário está na lista de permitidos via API
+      // Verificar se o usuário está na lista de permitidos
       try {
         const validateUserUrl = new URL("/api/auth/validate-user", request.url);
         const validateResponse = await fetch(validateUserUrl, {
@@ -72,16 +142,74 @@ export async function middleware(request: NextRequest) {
         });
 
         if (!validateResponse.ok) {
+          console.warn("Usuário não autorizado:", user.email);
           return NextResponse.redirect(new URL("/unauthorized", request.url));
         }
 
-        const { allowed, isAllowed } = await validateResponse.json();
-        if (!allowed && !isAllowed) {
+        const { isAllowed } = await validateResponse.json();
+        if (!isAllowed) {
           return NextResponse.redirect(new URL("/unauthorized", request.url));
+        }
+
+        // Verificar role do usuário e fazer redirecionamento inteligente
+        const userRoleData = await getUserRoleAndRedirect(user.email!, request);
+
+        if (userRoleData) {
+          const { role, redirectPath } = userRoleData;
+
+          // Redirecionamento inteligente baseado na role
+          if (role === "admin") {
+            // Admins devem acessar /admin
+            if (
+              pathname.startsWith("/dashboard") &&
+              !pathname.startsWith("/admin")
+            ) {
+              console.log(`Redirecionando admin de ${pathname} para /admin`);
+              return NextResponse.redirect(new URL("/admin", request.url));
+            }
+          } else {
+            // Members devem acessar /dashboard
+            if (pathname.startsWith("/admin")) {
+              console.log(
+                `Redirecionando member de ${pathname} para /dashboard`
+              );
+              return NextResponse.redirect(new URL("/dashboard", request.url));
+            }
+          }
+
+          // Verificar se é rota admin e usuário tem privilégios
+          if (pathname.startsWith("/admin") && role !== "admin") {
+            console.warn("Usuário sem privilégios de admin:", user.email);
+            return NextResponse.redirect(new URL("/dashboard", request.url));
+          }
+        } else {
+          // Se não conseguiu buscar a role, fazer validação tradicional para rotas admin
+          if (pathname.startsWith("/admin")) {
+            const validateAdminUrl = new URL(
+              "/api/auth/validate-admin",
+              request.url
+            );
+            const adminResponse = await fetch(validateAdminUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+
+            if (!adminResponse.ok) {
+              console.warn("Usuário sem privilégios de admin:", user.email);
+              return NextResponse.redirect(new URL("/dashboard", request.url));
+            }
+
+            const { isAdmin } = await adminResponse.json();
+            if (!isAdmin) {
+              return NextResponse.redirect(new URL("/dashboard", request.url));
+            }
+          }
         }
       } catch (error) {
         console.error("Erro ao validar usuário:", error);
-        return NextResponse.redirect(new URL("/unauthorized", request.url));
+        return NextResponse.redirect(new URL("/login", request.url));
       }
     }
 

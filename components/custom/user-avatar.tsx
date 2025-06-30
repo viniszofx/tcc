@@ -9,57 +9,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useUserData } from "@/contexts/user-context";
 import { useAuth } from "@/hooks/use-auth";
 import { LogOut, User } from "lucide-react";
-import { useEffect, useState } from "react";
-
-interface UserData {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  organization?: {
-    id: string;
-    name: string;
-  };
-}
 
 export function UserAvatar() {
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { user, signOut } = useAuth();
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user?.email) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch("/api/auth/get-user-role", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email: user.email }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUserData(data.user);
-        } else {
-          console.error("Erro ao buscar dados do usuário");
-        }
-      } catch (error) {
-        console.error("Erro ao buscar dados do usuário:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, [user]);
+  const { signOut } = useAuth();
+  const { userData, loading } = useUserData();
 
   if (loading || !userData) {
     return (

@@ -28,7 +28,8 @@ export interface AddComissionModalProps {
     nome: string;
     descricao: string;
     tipo: string;
-    campus_id?: string;
+    campusId: string;
+    ano: number;
   }) => void;
   campuses: Campus[];
 }
@@ -37,19 +38,22 @@ export function AddComissionModal({
   isOpen,
   onClose,
   onAddComission,
+  campuses,
 }: AddComissionModalProps) {
   const [formData, setFormData] = useState({
     nome: "",
     descricao: "",
-    tipo: "inventário",
+    tipo: "Permanente",
+    campusId: "",
+    ano: new Date().getFullYear(),
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const tiposComissao = [
-    { value: "inventário", label: "Inventário" },
-    { value: "desfazimento", label: "Desfazimento" },
-    { value: "outra", label: "Outra" },
+    { value: "Permanente", label: "Permanente" },
+    { value: "Temporária", label: "Temporária" },
+    { value: "Especial", label: "Especial" },
   ];
 
   const handleChange = (
@@ -62,8 +66,19 @@ export function AddComissionModal({
     }
   };
 
-  const handleSelectChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, tipo: value }));
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const handleTipoChange = (value: string) => {
+    handleSelectChange("tipo", value);
+  };
+
+  const handleCampusChange = (value: string) => {
+    handleSelectChange("campusId", value);
   };
 
   const validateForm = () => {
@@ -71,6 +86,14 @@ export function AddComissionModal({
 
     if (!formData.nome.trim()) {
       newErrors.nome = "Nome da comissão é obrigatório";
+    }
+
+    if (!formData.campusId) {
+      newErrors.campusId = "Campus é obrigatório";
+    }
+
+    if (!formData.ano || formData.ano < 2000 || formData.ano > 2100) {
+      newErrors.ano = "Ano deve estar entre 2000 e 2100";
     }
 
     setErrors(newErrors);
@@ -85,12 +108,16 @@ export function AddComissionModal({
         nome: formData.nome,
         descricao: formData.descricao,
         tipo: formData.tipo,
+        campusId: formData.campusId,
+        ano: formData.ano,
       });
 
       setFormData({
         nome: "",
         descricao: "",
-        tipo: "inventário",
+        tipo: "Permanente",
+        campusId: "",
+        ano: new Date().getFullYear(),
       });
 
       onClose();
@@ -132,7 +159,7 @@ export function AddComissionModal({
               <Label htmlFor="tipo" className="text-[var(--font-color)]">
                 Tipo*
               </Label>
-              <Select value={formData.tipo} onValueChange={handleSelectChange}>
+              <Select value={formData.tipo} onValueChange={handleTipoChange}>
                 <SelectTrigger className="border-[var(--border-input)]">
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
@@ -148,6 +175,59 @@ export function AddComissionModal({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="campusId" className="text-[var(--font-color)]">
+                Campus*
+              </Label>
+              <Select
+                value={formData.campusId}
+                onValueChange={handleCampusChange}
+              >
+                <SelectTrigger className="border-[var(--border-input)]">
+                  <SelectValue placeholder="Selecione o campus" />
+                </SelectTrigger>
+                <SelectContent className="bg-[var(--bg-simple)] border-[var(--border-input)]">
+                  {campuses.map((campus) => (
+                    <SelectItem
+                      key={campus.id}
+                      value={campus.id}
+                      className="hover:bg-[var(--hover-color)]"
+                    >
+                      {campus.name} ({campus.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.campusId && (
+                <p className="text-xs text-red-500">{errors.campusId}</p>
+              )}
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="ano" className="text-[var(--font-color)]">
+                Ano*
+              </Label>
+              <Input
+                id="ano"
+                name="ano"
+                type="number"
+                min="2000"
+                max="2100"
+                value={formData.ano}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    ano: parseInt(e.target.value) || new Date().getFullYear(),
+                  }))
+                }
+                className="border-[var(--border-input)]"
+                placeholder="Ex: 2024"
+              />
+              {errors.ano && (
+                <p className="text-xs text-red-500">{errors.ano}</p>
+              )}
             </div>
 
             <div className="grid gap-2">

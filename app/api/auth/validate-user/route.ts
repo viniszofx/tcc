@@ -1,17 +1,35 @@
 import { prisma } from "@/lib/prisma";
+import {
+  checkRateLimit,
+  emailSchema,
+  validateApiInput,
+} from "@/lib/validation";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { email } = body;
+    // Rate limiting por IP
+    const clientIP =
+      request.headers.get("x-forwarded-for") ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
 
-    if (!email) {
+    if (!checkRateLimit(`validate-user:${clientIP}`, 20, 60000)) {
       return NextResponse.json(
-        { error: "Email é obrigatório" },
-        { status: 400 }
+        { error: "Muitas tentativas. Tente novamente em alguns minutos." },
+        { status: 429 }
       );
     }
+
+    const body = await request.json();
+
+    // Validar entrada
+    const validation = validateApiInput(emailSchema, body.email);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+
+    const email = validation.data;
 
     // Verificar se o usuário está na lista de permitidos
     const allowedUser = await prisma.allowedUser.findUnique({
@@ -56,6 +74,8 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Erro ao validar usuário:", error);
+
+    // Não expor detalhes do erro para o cliente
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 }

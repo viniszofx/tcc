@@ -1,41 +1,42 @@
 import { prisma } from "@/lib/prisma";
 import { createSupabaseAdmin } from "@/lib/supabase";
+import {
+  checkRateLimit,
+  setupSchema,
+  validateApiInput,
+} from "@/lib/validation";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   let body: any;
 
   try {
+    // Rate limiting por IP - mais restritivo para setup
+    const clientIP =
+      request.headers.get("x-forwarded-for") ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+
+    if (!checkRateLimit(`setup:${clientIP}`, 3, 300000)) {
+      // 3 tentativas por 5 minutos
+      return NextResponse.json(
+        {
+          error:
+            "Muitas tentativas de setup. Tente novamente em alguns minutos.",
+        },
+        { status: 429 }
+      );
+    }
+
     body = await request.json();
-    const { organization, campus, admin } = body;
 
-    // Validar dados obrigatórios
-    if (!organization?.name || !organization?.shortName) {
-      return NextResponse.json(
-        { error: "Nome e nome curto da organização são obrigatórios" },
-        { status: 400 }
-      );
+    // Validar entrada com schema
+    const validation = validateApiInput(setupSchema, body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    if (!campus?.name || !campus?.code) {
-      return NextResponse.json(
-        { error: "Nome e código do campus são obrigatórios" },
-        { status: 400 }
-      );
-    }
-
-    if (!admin?.name || !admin?.email) {
-      return NextResponse.json(
-        { error: "Nome e email do administrador são obrigatórios" },
-        { status: 400 }
-      );
-    }
-
-    // Validar email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(admin.email)) {
-      return NextResponse.json({ error: "Email inválido" }, { status: 400 });
-    }
+    const { organization, campus, admin } = validation.data!;
 
     // Verificar se já existe um usuário com este email
     const existingUser = await prisma.userProfile.findUnique({
@@ -200,6 +201,7 @@ export async function POST(request: Request) {
       console.error("Erro ao limpar usuário do Supabase:", cleanupError);
     }
 
+    // Não expor detalhes do erro para o cliente
     return NextResponse.json(
       { error: "Erro interno do servidor durante o setup" },
       { status: 500 }
