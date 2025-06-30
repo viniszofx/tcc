@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { createSupabaseAdmin } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
 /**
@@ -280,8 +281,41 @@ export async function POST(request: Request) {
       );
     }
 
+    // Gerar senha temporária para o administrador
+    const tempPassword = `kde${Math.random().toString(36).slice(-6)}!`;
+    console.log("Senha temporária gerada:", tempPassword);
+    // Criar cliente admin do Supabase
+    const supabaseAdmin = createSupabaseAdmin();
+
+    // Criar usuário no Supabase Auth
+    const { data: authData, error: authError } =
+      await supabaseAdmin.auth.admin.createUser({
+        email: email,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: {
+          name: name,
+          role: "member",
+        },
+      });
+
+    if (authError) {
+      return NextResponse.json(
+        { error: `Erro ao criar usuário no Supabase: ${authError.message}` },
+        { status: 500 }
+      );
+    }
+
+    if (!authData.user) {
+      return NextResponse.json(
+        { error: "Falha ao criar usuário no Supabase" },
+        { status: 500 }
+      );
+    }
+
     const newUser = await prisma.userProfile.create({
       data: {
+        id: authData.user.id,
         name,
         email,
         description: description || "",
@@ -309,6 +343,23 @@ export async function POST(request: Request) {
 
     return NextResponse.json(newUser, { status: 201 });
   } catch (error) {
+    let body: any = undefined;
+    try {
+      // Tentar limpar usuário do Supabase se o email já foi criado
+      if (request) {
+        body = await request.json().catch(() => undefined);
+      }
+      if (body?.email) {
+        const supabaseAdmin = createSupabaseAdmin();
+        const { data: users } = await supabaseAdmin.auth.admin.listUsers();
+        const user = users.users.find((u: any) => u.email === body.email);
+        if (user) {
+          await supabaseAdmin.auth.admin.deleteUser(user.id);
+        }
+      }
+    } catch (cleanupError) {
+      console.error("Erro ao limpar usuário do Supabase:", cleanupError);
+    }
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 }

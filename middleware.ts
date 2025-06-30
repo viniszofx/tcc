@@ -96,16 +96,19 @@ export async function middleware(request: NextRequest) {
             return NextResponse.redirect(new URL("/setup", request.url));
           }
         } else {
-          // Se a API falhou, assumir que precisa de setup
+          // Se a API falhou
           console.warn(
-            "Falha ao verificar status do sistema, redirecionando para setup"
+            "Falha ao verificar status do sistema, tente novamente mais tarde."
           );
-          return NextResponse.redirect(new URL("/setup", request.url));
+          return NextResponse.redirect(new URL("/", request.url));
         }
       } catch (error) {
-        console.error("Erro ao verificar status do sistema:", error);
-        // Em caso de erro, assumir que precisa de setup
-        return NextResponse.redirect(new URL("/setup", request.url));
+        console.error(
+          "Erro ao verificar status do sistema, tente novamente ,mais tarde.",
+          error
+        );
+        // Em caso de erro
+        return NextResponse.redirect(new URL("/", request.url));
       }
 
       // Verificar autenticação do usuário
