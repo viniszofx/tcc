@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     if (process.env.NODE_ENV === "development") {
       // Em desenvolvimento, usar um usuário fake com UUID válido
       user = {
-        id: "550e8400-e29b-41d4-a716-446655440000",
+        id: "88ae80f0-4c14-44ea-b98a-235cf37bf170",
         email: "dev@example.com",
       };
     } else {
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
 
     if (process.env.NODE_ENV === "development") {
       user = {
-        id: "550e8400-e29b-41d4-a716-446655440000",
+        id: "88ae80f0-4c14-44ea-b98a-235cf37bf170",
         email: "dev@example.com",
       };
       console.log("Usando usuário de desenvolvimento:", user);
@@ -261,7 +261,7 @@ export async function PUT(request: Request) {
 
     if (process.env.NODE_ENV === "development") {
       user = {
-        id: "550e8400-e29b-41d4-a716-446655440000",
+        id: "88ae80f0-4c14-44ea-b98a-235cf37bf170",
         email: "dev@example.com",
       };
     } else {
@@ -362,7 +362,7 @@ export async function DELETE(request: Request) {
 
     if (process.env.NODE_ENV === "development") {
       user = {
-        id: "550e8400-e29b-41d4-a716-446655440000",
+        id: "88ae80f0-4c14-44ea-b98a-235cf37bf170",
         email: "dev@example.com",
       };
     } else {

@@ -18,7 +18,7 @@ import { useEffect, useState } from "react"
 interface NewItemModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (item: BemCopia) => void
+  onSave: (item: BemCopia) => Promise<void>
   inventoryData?: BemCopia[]
 }
 
@@ -108,49 +108,58 @@ export default function NewItemModal({
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) return
 
     setIsSubmitting(true)
 
-    const newItem: BemCopia = {
-      bem_id: `bem-${Date.now()}`,
-      inventario_id: `inv-${Date.now()}`,
-      grupo_id: `grp-${Date.now()}`,
-      campus_id: `campus-1`,
-      NUMERO: formData.NUMERO || "",
-      DESCRICAO: formData.DESCRICAO || "",
-      MARCA_MODELO: formData.MARCA_MODELO || "",
-      RESPONSABILIDADE_ATUAL: formData.RESPONSABILIDADE_ATUAL || "",
-      SETOR_DO_RESPONSAVEL: formData.SETOR_DO_RESPONSAVEL || "",
-      CAMPUS_DA_LOTACAO_DO_BEM: formData.CAMPUS_DA_LOTACAO_DO_BEM || "Principal",
-      SALA: formData.SALA || "",
-      ESTADO_DE_CONSERVACAO: formData.ESTADO_DE_CONSERVACAO as EstadoConservacao,
-      STATUS: formData.STATUS as StatusBem,
-      ED: formData.ED || "",
-      ROTULOS: formData.ROTULOS || "",
-      DESCRICAO_PRINCIPAL: formData.DESCRICAO || "",
-      ultimo_atualizado_por: "Usuário",
-      data_ultima_atualizacao: new Date(),
+    try {
+      const newItem: BemCopia = {
+        bem_id: `bem-${Date.now()}`,
+        inventario_id: `inv-${Date.now()}`,
+        grupo_id: `grp-${Date.now()}`,
+        campus_id: `campus-1`,
+        NUMERO: formData.NUMERO || "",
+        DESCRICAO: formData.DESCRICAO || "",
+        MARCA_MODELO: formData.MARCA_MODELO || "",
+        RESPONSABILIDADE_ATUAL: formData.RESPONSABILIDADE_ATUAL || "",
+        SETOR_DO_RESPONSAVEL: formData.SETOR_DO_RESPONSAVEL || "",
+        CAMPUS_DA_LOTACAO_DO_BEM: formData.CAMPUS_DA_LOTACAO_DO_BEM || "Principal",
+        SALA: formData.SALA || "",
+        ESTADO_DE_CONSERVACAO: formData.ESTADO_DE_CONSERVACAO as EstadoConservacao,
+        STATUS: formData.STATUS as StatusBem,
+        ED: formData.ED || "",
+        ROTULOS: formData.ROTULOS || "",
+        DESCRICAO_PRINCIPAL: formData.DESCRICAO || "",
+        ultimo_atualizado_por: "Usuário",
+        data_ultima_atualizacao: new Date(),
+      }
+
+      // Aguardar a operação de salvamento
+      await onSave(newItem)
+
+      // Limpar formulário e fechar modal apenas após sucesso
+      setFormData({
+        NUMERO: "",
+        DESCRICAO: "",
+        MARCA_MODELO: "",
+        RESPONSABILIDADE_ATUAL: "",
+        SETOR_DO_RESPONSAVEL: "",
+        CAMPUS_DA_LOTACAO_DO_BEM: "",
+        SALA: "",
+        ESTADO_DE_CONSERVACAO: EstadoConservacao.NOVO,
+        STATUS: StatusBem.ATIVO,
+        ED: "",
+        ROTULOS: "",
+      })
+      
+      onClose()
+    } catch (error) {
+      console.error("Erro ao salvar item:", error)
+      alert("Erro ao salvar item: " + (error as Error).message)
+    } finally {
+      setIsSubmitting(false)
     }
-
-    onSave(newItem)
-
-    setFormData({
-      NUMERO: "",
-      DESCRICAO: "",
-      MARCA_MODELO: "",
-      RESPONSABILIDADE_ATUAL: "",
-      SETOR_DO_RESPONSAVEL: "",
-      CAMPUS_DA_LOTACAO_DO_BEM: "",
-      SALA: "",
-      ESTADO_DE_CONSERVACAO: EstadoConservacao.NOVO,
-      STATUS: StatusBem.ATIVO,
-      ED: "",
-      ROTULOS: "",
-    })
-    setIsSubmitting(false)
-    onClose()
   }
 
   return (

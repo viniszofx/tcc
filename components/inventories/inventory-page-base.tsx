@@ -183,6 +183,8 @@ export default function InventoryPageBase({
 
   const handleSaveNewItem = async (item: BemCopia) => {
     try {
+      console.log("Iniciando criação de item...");
+      
       // Primeiro, buscar dados da comissão para obter o campusId
       const commissionResponse = await fetch(
         `/api/commission?id=${commissionId}`
@@ -192,23 +194,31 @@ export default function InventoryPageBase({
       if (commissionResponse.ok) {
         const commission = await commissionResponse.json();
         campusId = commission.campusId;
+        console.log("Campus ID obtido:", campusId);
+      } else {
+        console.warn("Não foi possível obter dados da comissão");
       }
 
       // Usar a função atualizada que faz a chamada à API
+      console.log("Enviando item para API...");
       await addInventoryItem(item, commissionId, campusId);
-      console.log("Item criado com sucesso, recarregando dados...");
+      console.log("✅ Item criado com sucesso na API!");
 
-      // Recarregar dados após adicionar item
-      try {
-        await loadAndSync();
-        console.log("Dados recarregados com sucesso");
-      } catch (syncError) {
-        console.warn("Aviso: Erro ao recarregar dados:", syncError);
-        // Não propagar este erro, pois o item foi criado
-      }
+      // Recarregar dados após adicionar item (em background)
+      setTimeout(async () => {
+        try {
+          console.log("Recarregando dados em background...");
+          await loadAndSync();
+          console.log("✅ Dados recarregados com sucesso");
+        } catch (syncError) {
+          console.warn("Aviso: Erro ao recarregar dados:", syncError);
+          // Não mostrar erro ao usuário, pois o item foi criado
+        }
+      }, 100);
+
     } catch (error) {
-      console.error("Error saving new item:", error);
-      alert("Erro ao salvar item: " + (error as Error).message);
+      console.error("❌ Erro ao salvar item:", error);
+      throw error; // Propagar o erro para o modal tratar
     }
   };
 
