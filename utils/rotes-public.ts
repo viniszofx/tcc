@@ -7,7 +7,6 @@ export const publicRoutes = [
   "/register-email",
   "/register-password",
   "/setup",
-  "/setup-settings",
   "/redirect",
   "/recover-password",
   "/onboarding",

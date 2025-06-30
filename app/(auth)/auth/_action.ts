@@ -1,5 +1,7 @@
 "use server";
 
+import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { redirect } from "next/navigation";
 
 export async function signIn(formData: FormData): Promise<void> {
@@ -13,53 +15,43 @@ export async function signIn(formData: FormData): Promise<void> {
   }
 
   try {
-    // Primeiro, verificar se o sistema precisa de onboarding
-    const systemResponse = await fetch(
-      `${
-        process.env.NEXT_PUBLIC_URL || "http://localhost:3000"
-      }/api/auth/check-system`
-    );
+    // Primeiro, verificar se o usuário está na tabela allowed_users
+    const allowedUser = await prisma.allowedUser.findUnique({
+      where: { email: data.email },
+    });
 
-    if (systemResponse.ok) {
-      const { needsOnboarding, isFirstRun } = await systemResponse.json();
-
-      if (needsOnboarding && isFirstRun) {
-        throw new Error("Sistema precisa ser configurado primeiro");
-      }
+    if (!allowedUser || !allowedUser.status) {
+      throw new Error("Usuário não autorizado para acessar o sistema");
     }
 
-    // Verificar se o usuário está autorizado
-    const validateResponse = await fetch(
-      `${
-        process.env.NEXT_PUBLIC_URL || "http://localhost:3000"
-      }/api/auth/validate-user`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: data.email }),
-      }
-    );
+    // Autenticar com Supabase
+    const { data: authData, error: authError } =
+      await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
 
-    if (!validateResponse.ok) {
-      if (validateResponse.status === 403) {
-        const { message } = await validateResponse.json();
-        throw new Error(
-          message || "Usuário não autorizado para acessar o sistema"
-        );
-      }
-      throw new Error("Erro ao validar usuário");
+    if (authError) {
+      throw new Error("Email ou senha incorretos");
     }
 
-    // TODO: Integrar com Supabase Auth em produção
-    if (process.env.NODE_ENV === "development") {
-      console.log("Login simulado para desenvolvimento:", data.email);
-      redirect("/dashboard");
-    } else {
-      // Em produção, fazer login real com Supabase
-      throw new Error("Integração com Supabase não implementada");
+    if (!authData.user) {
+      throw new Error("Falha na autenticação");
     }
+
+    // Verificar se o usuário existe na tabela user_profiles
+    const userProfile = await prisma.userProfile.findUnique({
+      where: { email: data.email },
+    });
+
+    if (!userProfile) {
+      throw new Error(
+        "Perfil do usuário não encontrado. Entre em contato com o administrador."
+      );
+    }
+
+    console.log("Login realizado com sucesso:", data.email);
+    redirect("/dashboard");
   } catch (error) {
     console.error("Erro no login:", error);
     throw error;
@@ -120,34 +112,28 @@ export async function signInWithMagicLink(
 }
 
 export async function processOnboarding(formData: FormData): Promise<void> {
-  const data = {
-    organizationName: formData.get("organizationName") as string,
-    organizationShortName: formData.get("organizationShortName") as string,
-    campusName: formData.get("campusName") as string,
-    campusCode: formData.get("campusCode") as string,
-    adminName: formData.get("adminName") as string,
-    adminEmail: formData.get("adminEmail") as string,
-  };
+  const organizationName = formData.get("organizationName") as string;
+  const organizationShortName = formData.get("organizationShortName") as string;
+  const campusName = formData.get("campusName") as string;
+  const campusCode = formData.get("campusCode") as string;
+  const adminName = formData.get("adminName") as string;
+  const adminEmail = formData.get("adminEmail") as string;
 
   // Validar campos obrigatórios
-  const requiredFields = [
-    "organizationName",
-    "organizationShortName",
-    "campusName",
-    "campusCode",
-    "adminName",
-    "adminEmail",
-  ];
-
-  for (const field of requiredFields) {
-    if (!data[field as keyof typeof data]) {
-      throw new Error(`Campo ${field} é obrigatório`);
-    }
+  if (
+    !organizationName ||
+    !organizationShortName ||
+    !campusName ||
+    !campusCode ||
+    !adminName ||
+    !adminEmail
+  ) {
+    throw new Error("Todos os campos são obrigatórios");
   }
 
   // Validar email
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(data.adminEmail)) {
+  if (!emailRegex.test(adminEmail)) {
     throw new Error("Email inválido");
   }
 
@@ -161,19 +147,32 @@ export async function processOnboarding(formData: FormData): Promise<void> {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          organization: {
+            name: organizationName,
+            shortName: organizationShortName,
+          },
+          campus: {
+            name: campusName,
+            code: campusCode,
+          },
+          admin: {
+            name: adminName,
+            email: adminEmail,
+          },
+        }),
       }
     );
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || "Erro ao configurar sistema");
+      throw new Error(errorData.error || "Erro ao configurar sistema");
     }
 
-    console.log("Onboarding concluído com sucesso");
+    console.log("Setup concluído com sucesso");
     redirect("/login");
   } catch (error) {
-    console.error("Erro no onboarding:", error);
+    console.error("Erro no setup:", error);
     throw error;
   }
 }

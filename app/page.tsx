@@ -2,7 +2,6 @@
 
 "use client";
 
-import LoadingScreen from "@/components/custom/loading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,55 +15,44 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function Home() {
   const router = useRouter();
   const [cameraModalOpen, setCameraModalOpen] = useState(false);
-  const [isValidating, setIsValidating] = useState(true);
-  const [showLanding, setShowLanding] = useState(false);
 
-  useEffect(() => {
-    const validateSystemAndRedirect = async () => {
-      try {
-        // Verificar se o sistema precisa de configuração inicial
-        const systemCheck = await fetch("/api/auth/check-system", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+  const handleStartNow = async () => {
+    console.log("Iniciando o processo...");
 
-        if (systemCheck.ok) {
-          const { needsOnboarding, isFirstRun } = await systemCheck.json();
+    try {
+      // Verificar se há usuários permitidos na tabela allowed_users
+      const response = await fetch("/api/allowed-user", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-          if (needsOnboarding && isFirstRun) {
-            // Sistema não configurado - ir para onboarding
-            console.log(
-              "Sistema não configurado. Redirecionando para setup..."
-            );
-            router.replace("/setup");
-            return;
-          }
+      if (response.ok) {
+        const allowedUsers = await response.json();
+
+        // Se não há usuários permitidos, redirecionar para setup
+        if (!allowedUsers || allowedUsers.length === 0) {
+          console.log(
+            "Tabela allowed_users vazia. Redirecionando para setup..."
+          );
+          router.push("/setup");
+          return;
         }
-
-        // Sistema configurado - mostrar landing page
-        setShowLanding(true);
-      } catch (error) {
-        console.error("Erro na validação inicial:", error);
-        // Em caso de erro, assumir que precisa de onboarding
-        router.replace("/setup");
-      } finally {
-        setIsValidating(false);
       }
-    };
 
-    validateSystemAndRedirect();
-  }, [router]);
-
-  const handleStartNow = () => {
-    console.log("Iniciando o processo de registro...");
-    router.push("/login");
+      // Se há usuários permitidos, ir para login
+      router.push("/login");
+    } catch (error) {
+      console.error("Erro na verificação inicial:", error);
+      // Em caso de erro, assumir que precisa de setup
+      router.push("/setup");
+    }
   };
 
   const handleLearnMore = () => {
@@ -92,16 +80,6 @@ export default function Home() {
       alert("Por favor, permita o acesso à câmera para usar esta função.");
     }
   };
-
-  // Mostrar loading durante validação
-  if (isValidating) {
-    return <LoadingScreen />;
-  }
-
-  // Se não deve mostrar a landing page, não renderizar nada (será redirecionado)
-  if (!showLanding) {
-    return null;
-  }
 
   const features = [
     {

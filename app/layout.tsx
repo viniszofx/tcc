@@ -1,3 +1,4 @@
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Urbanist } from "next/font/google";
 import "./globals.css";
 
@@ -18,10 +19,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-      <body
-        className={`${urbanist.variable} font-sans antialiased`}
-      >
-        {children}
+      <body className={`${urbanist.variable} font-sans antialiased`}>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
