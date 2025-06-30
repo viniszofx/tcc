@@ -1,7 +1,8 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseServerClient } from "@/lib/supabase";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 export async function signIn(formData: FormData): Promise<void> {
@@ -24,6 +25,10 @@ export async function signIn(formData: FormData): Promise<void> {
       throw new Error("Usuário não autorizado para acessar o sistema");
     }
 
+    // Criar cliente do servidor
+    const cookieStore = await cookies();
+    const supabase = createSupabaseServerClient(cookieStore);
+
     // Autenticar com Supabase
     const { data: authData, error: authError } =
       await supabase.auth.signInWithPassword({
@@ -39,9 +44,16 @@ export async function signIn(formData: FormData): Promise<void> {
       throw new Error("Falha na autenticação");
     }
 
-    // Verificar se o usuário existe na tabela user_profiles
+    // Verificar se o usuário existe na tabela user_profiles e buscar sua role
     const userProfile = await prisma.userProfile.findUnique({
       where: { email: data.email },
+      include: {
+        organizationMembers: {
+          include: {
+            organization: true,
+          },
+        },
+      },
     });
 
     if (!userProfile) {
@@ -50,8 +62,37 @@ export async function signIn(formData: FormData): Promise<void> {
       );
     }
 
-    console.log("Login realizado com sucesso:", data.email);
-    redirect("/dashboard");
+    // Determinar o redirecionamento com base na role do usuário
+    let redirectPath = "/dashboard"; // Default para members
+
+    if (
+      userProfile.organizationMembers &&
+      userProfile.organizationMembers.length > 0
+    ) {
+      // Se o usuário tem múltiplas organizações, pegar a primeira onde ele é admin
+      // ou a primeira de qualquer forma
+      const adminMembership = userProfile.organizationMembers.find(
+        (member) => member.role === "admin"
+      );
+
+      if (adminMembership) {
+        redirectPath = "/admin";
+      } else {
+        // Se não é admin em nenhuma organização, verificar se é member
+        const memberMembership = userProfile.organizationMembers.find(
+          (member) => member.role === "member"
+        );
+        redirectPath = memberMembership ? "/dashboard" : "/dashboard";
+      }
+    }
+
+    console.log("Login realizado com sucesso:", {
+      email: data.email,
+      role: userProfile.organizationMembers[0]?.role,
+      redirectTo: redirectPath,
+    });
+
+    redirect(redirectPath);
   } catch (error) {
     console.error("Erro no login:", error);
     throw error;
@@ -69,7 +110,23 @@ export async function signUp(formData: FormData): Promise<void> {
 }
 
 export async function signOut(): Promise<void> {
-  console.log("signOut called");
+  try {
+    const cookieStore = await cookies();
+    const supabase = createSupabaseServerClient(cookieStore);
+
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error("Erro ao fazer logout:", error);
+      throw error;
+    }
+
+    console.log("Logout realizado com sucesso");
+    redirect("/login");
+  } catch (error) {
+    console.error("Erro no logout:", error);
+    throw error;
+  }
 }
 
 export async function signInWithGoogle(): Promise<void> {
@@ -173,6 +230,57 @@ export async function processOnboarding(formData: FormData): Promise<void> {
     redirect("/login");
   } catch (error) {
     console.error("Erro no setup:", error);
+    throw error;
+  }
+}
+
+// Função para validar usuário após login client-side e determinar redirecionamento
+export async function validateUserAndRedirect(email: string): Promise<string> {
+  try {
+    // Verificar se o usuário está na tabela allowed_users
+    const allowedUser = await prisma.allowedUser.findUnique({
+      where: { email },
+    });
+
+    if (!allowedUser || !allowedUser.status) {
+      throw new Error("Usuário não autorizado para acessar o sistema");
+    }
+
+    // Verificar se o usuário existe na tabela user_profiles e buscar sua role
+    const userProfile = await prisma.userProfile.findUnique({
+      where: { email },
+      include: {
+        organizationMembers: {
+          include: {
+            organization: true,
+          },
+        },
+      },
+    });
+
+    if (!userProfile) {
+      throw new Error(
+        "Perfil do usuário não encontrado. Entre em contato com o administrador."
+      );
+    }
+
+    // Determinar o redirecionamento com base na role do usuário
+    const organizationMember = userProfile.organizationMembers[0];
+
+    if (!organizationMember) {
+      throw new Error("Usuário não está vinculado a nenhuma organização");
+    }
+
+    // Redirecionamento inteligente baseado na role
+    switch (organizationMember.role) {
+      case "admin":
+        return "/admin";
+      case "member":
+      default:
+        return "/dashboard";
+    }
+  } catch (error) {
+    console.error("Erro na validação do usuário:", error);
     throw error;
   }
 }

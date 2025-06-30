@@ -74,9 +74,23 @@ export function useAuth() {
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
-      console.log("Iniciando processo de login para:", email);
+      // 1. Verificar se o usuário está na lista de permitidos
+      const allowedResponse = await fetch("/api/auth/validate-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
 
-      // 1. Autenticar com Supabase primeiro
+      if (!allowedResponse.ok) {
+        const errorData = await allowedResponse.json();
+        throw new Error(
+          errorData.message || "Usuário não autorizado para acessar o sistema"
+        );
+      }
+
+      // 2. Autenticar com Supabase
       const { data: authData, error: authError } =
         await supabase.auth.signInWithPassword({
           email,
@@ -84,7 +98,6 @@ export function useAuth() {
         });
 
       if (authError) {
-        console.error("Erro de autenticação:", authError);
         throw new Error("Email ou senha incorretos");
       }
 
@@ -92,93 +105,42 @@ export function useAuth() {
         throw new Error("Falha na autenticação");
       }
 
-      console.log("Autenticação bem-sucedida para:", authData.user.email);
-
-      // 2. Aguardar a sessão ser estabelecida
+      // 3. Aguardar a sessão ser estabelecida
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // 3. Verificar se a sessão foi criada
+      // 4. Verificar se a sessão foi criada
       const { data: sessionData } = await supabase.auth.getSession();
 
       if (!sessionData.session) {
         throw new Error("Falha ao estabelecer sessão");
       }
 
-      console.log("Sessão estabelecida com sucesso");
-
-      // 4. Verificar se o usuário está na lista de permitidos (não crítico)
-      try {
-        const allowedResponse = await fetch("/api/auth/validate-user", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email }),
-        });
-
-        if (!allowedResponse.ok) {
-          const errorData = await allowedResponse.json();
-          console.warn(
-            "Usuário não está na lista de permitidos:",
-            errorData.message
-          );
-          // Não vamos falhar aqui - vamos apenas logar e prosseguir
-        }
-      } catch (validationError) {
-        console.warn(
-          "Erro na validação do usuário (continuando):",
-          validationError
-        );
-      }
-
       // 5. Buscar informações do usuário e determinar redirecionamento
-      try {
-        const userResponse = await fetch("/api/auth/get-user-role", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email }),
-        });
+      const userResponse = await fetch("/api/auth/get-user-role", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
 
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          console.log("==== DADOS DO USUÁRIO ====");
-          console.log("userData completo:", userData);
-          console.log("userData.user:", userData.user);
-          console.log("userData.user.role:", userData.user?.role);
-          console.log("userData.role:", userData.role);
-          console.log("==========================");
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
 
-          // Redirecionar com base na role - verificar múltiplas propriedades
-          const userRole = userData.user?.role || userData.role;
-          console.log("Role final detectada:", userRole);
-
-          if (userRole === "admin") {
-            console.log("Redirecionando para /admin");
-            router.push("/admin");
-          } else {
-            console.log("Redirecionando para /dashboard (role:", userRole, ")");
-            router.push("/dashboard");
-          }
+        // Redirecionar com base na role
+        if (userData.role === "admin") {
+          router.push("/admin");
         } else {
-          console.warn(
-            "Não foi possível determinar a role, redirecionando para dashboard"
-          );
           router.push("/dashboard");
         }
-      } catch (roleError) {
-        console.warn(
-          "Erro ao buscar role (redirecionando para dashboard):",
-          roleError
-        );
+      } else {
+        // Fallback para dashboard se não conseguir determinar a role
         router.push("/dashboard");
       }
 
       setState({ user: authData.user, loading: false, error: null });
       return { success: true };
     } catch (error) {
-      console.error("Erro no processo de login:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Erro desconhecido";
       setState((prev) => ({ ...prev, loading: false, error: errorMessage }));

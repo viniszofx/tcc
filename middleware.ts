@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
+import { createSupabaseMiddleware } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 import { publicRoutes } from "./utils/rotes-public";
 
@@ -41,53 +41,24 @@ export async function middleware(request: NextRequest) {
       // Verificar autenticação do usuário
       let user;
 
-      if (process.env.NODE_ENV === "development") {
-        // Em desenvolvimento, usar usuário fake
-        user = {
-          id: "88ae80f0-4c14-44ea-b98a-235cf37bf170",
-          email: "admin@sistema.com",
-        };
-      } else {
-        // Em produção, verificar autenticação real
-        let response = NextResponse.next({
-          request: {
-            headers: request.headers,
-          },
-        });
+      // Sempre verificar autenticação real, mesmo em desenvolvimento
+      let response = NextResponse.next({
+        request: {
+          headers: request.headers,
+        },
+      });
 
-        const supabase = createServerClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-          {
-            cookies: {
-              getAll() {
-                return request.cookies.getAll();
-              },
-              setAll(cookiesToSet) {
-                cookiesToSet.forEach(({ name, value }) =>
-                  request.cookies.set(name, value)
-                );
-                response = NextResponse.next({
-                  request,
-                });
-                cookiesToSet.forEach(({ name, value, options }) =>
-                  response.cookies.set(name, value, options)
-                );
-              },
-            },
-          }
-        );
+      const supabase = createSupabaseMiddleware(request, response);
 
-        const {
-          data: { user: realUser },
-          error,
-        } = await supabase.auth.getUser();
+      const {
+        data: { user: realUser },
+        error,
+      } = await supabase.auth.getUser();
 
-        if (error || !realUser) {
-          return NextResponse.redirect(new URL("/login", request.url));
-        }
-        user = realUser;
+      if (error || !realUser) {
+        return NextResponse.redirect(new URL("/login", request.url));
       }
+      user = realUser;
 
       // Verificar se o usuário está na lista de permitidos via API
       try {
@@ -104,8 +75,8 @@ export async function middleware(request: NextRequest) {
           return NextResponse.redirect(new URL("/unauthorized", request.url));
         }
 
-        const { allowed } = await validateResponse.json();
-        if (!allowed) {
+        const { allowed, isAllowed } = await validateResponse.json();
+        if (!allowed && !isAllowed) {
           return NextResponse.redirect(new URL("/unauthorized", request.url));
         }
       } catch (error) {

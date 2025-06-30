@@ -1,43 +1,31 @@
 "use client";
 
-import { signIn } from "@/app/(auth)/auth/_action";
-import { useActionState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { useState } from "react";
 import { Button } from "../ui/button";
 import { CardContent, CardFooter } from "../ui/card";
 import { Input } from "../ui/input";
 
-type State = {
-  message?: string;
-  errors?: {
-    [key: string]: string[];
-  };
-};
-
 export default function AuthForm() {
-  const initialState: State = { message: "" };
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { signInWithValidation, loading, error } = useAuth();
 
-  const [state, formAction] = useActionState(
-    async (prevState: State, formData: FormData) => {
-      try {
-        await signIn(formData);
-        return { message: "Success" };
-      } catch (error) {
-        return {
-          message: "Error",
-          errors: {
-            form: [(error as Error).message],
-          },
-        };
-      }
-    },
-    initialState
-  );
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!email || !password) {
+      return;
+    }
+
+    await signInWithValidation(email, password);
+  };
 
   return (
     <div className="w-full flex justify-start md:justify-center">
       <div className="w-full md:max-w-[28rem]">
         <CardContent className="space-y-4 text-center p-0">
-          <form action={formAction} className="w-full space-y-3 text-left">
+          <form onSubmit={handleSubmit} className="w-full space-y-3 text-left">
             <div className="flex flex-col space-y-1">
               <label className="text-md font-medium text-[var(--font-color)]">
                 E-mail:
@@ -45,8 +33,11 @@ export default function AuthForm() {
               <Input
                 className="border-[var(--border-input)]"
                 placeholder="Email"
-                name="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 type="email"
+                required
+                disabled={loading}
               />
             </div>
             <div className="flex flex-col space-y-1">
@@ -56,34 +47,31 @@ export default function AuthForm() {
               <Input
                 className="border-[var(--border-input)]"
                 placeholder="Senha"
-                name="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 type="password"
                 required
+                disabled={loading}
               />
             </div>
+            {error && (
+              <div className="text-sm text-red-500 bg-red-50 p-2 rounded border">
+                {error}
+              </div>
+            )}
             <Button
               className="w-full border-[var(--border-color)] bg-[var(--bg-simple)] cursor-pointer hover:!bg-[var(--hover-color)] hover:!text-white transition-all"
               variant={"outline"}
               type="submit"
+              disabled={loading}
             >
-              Entrar
+              {loading ? "Entrando..." : "Entrar"}
             </Button>
-            {/* <Button
-              formAction={signInWithGoogle}
-              className="w-full border-[var(--border-color)] bg-[var(--bg-simple)] cursor-pointer hover:!bg-[var(--hover-color)] hover:!text-white transition-all"
-              variant={"outline"}
-              type="submit"
-            >
-              Entrar com Google
-            </Button> */}
             <p className="block w-full text-xs md:text-sm text-end text-[var(--font-color)]">
               <a href="/forget-password" className="hover:underline">
                 Esqueci minha senha
               </a>
             </p>
-            {state?.message && (
-              <p className="text-sm text-red-500">{state.message}</p>
-            )}
           </form>
         </CardContent>
 

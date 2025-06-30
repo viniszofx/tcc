@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { supabaseAdmin } from "@/lib/supabase";
+import { createSupabaseAdmin } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -52,6 +52,9 @@ export async function POST(request: Request) {
     // Gerar senha temporária para o administrador
     const tempPassword = `Admin${Math.random().toString(36).slice(-6)}!`;
 
+    // Criar cliente admin do Supabase
+    const supabaseAdmin = createSupabaseAdmin();
+
     // Criar usuário no Supabase Auth
     const { data: authData, error: authError } =
       await supabaseAdmin.auth.admin.createUser({
@@ -78,7 +81,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Usar transação para criar tudo de uma vez
+    // Usar transação para criar tudo de uma vez de forma atômica
     const result = await prisma.$transaction(async (tx) => {
       // 1. Criar organização
       const newOrganization = await tx.organization.create({
@@ -89,7 +92,7 @@ export async function POST(request: Request) {
         },
       });
 
-      // 2. Criar campus
+      // 2. Criar campus vinculado à organização
       const newCampus = await tx.campus.create({
         data: {
           organizationId: newOrganization.id,
@@ -99,27 +102,29 @@ export async function POST(request: Request) {
         },
       });
 
-      // 3. Criar usuário administrador usando o ID do Supabase
+      // 3. Criar perfil do usuário administrador usando o ID do Supabase
       const newAdmin = await tx.userProfile.create({
         data: {
-          id: authData.user.id, // Usar o ID do Supabase
+          id: authData.user.id, // Usar o mesmo ID do Supabase Auth
           name: admin.name,
           email: admin.email,
-          description: "Administrador do sistema",
+          description:
+            "Administrador do sistema - Criado durante setup inicial",
           avatar: "",
           active: true,
         },
       });
 
-      // 4. Criar membros da organização e campus para o admin
+      // 4. Vincular o administrador à organização como admin
       await tx.organizationMember.create({
         data: {
           userId: newAdmin.id,
           organizationId: newOrganization.id,
-          role: "admin",
+          role: "admin", // Role de administrador da organização
         },
       });
 
+      // 5. Vincular o administrador ao campus
       await tx.campusMember.create({
         data: {
           userId: newAdmin.id,
@@ -127,12 +132,12 @@ export async function POST(request: Request) {
         },
       });
 
-      // 5. Adicionar usuário à tabela de usuários permitidos
+      // 6. Adicionar usuário à tabela de usuários permitidos (whitelist)
       await tx.allowedUser.create({
         data: {
           email: admin.email,
           name: admin.name,
-          status: true,
+          status: true, // Ativo para acesso ao sistema
         },
       });
 
@@ -148,14 +153,32 @@ export async function POST(request: Request) {
       {
         message: "Setup concluído com sucesso",
         data: {
-          organization: result.organization,
-          campus: result.campus,
+          organization: {
+            id: result.organization.id,
+            name: result.organization.name,
+            shortName: result.organization.shortName,
+          },
+          campus: {
+            id: result.campus.id,
+            name: result.campus.name,
+            code: result.campus.code,
+            organizationId: result.campus.organizationId,
+          },
           admin: {
             id: result.admin.id,
             name: result.admin.name,
             email: result.admin.email,
+            organizationRole: "admin",
+            isAllowedUser: true,
           },
           tempPassword: result.tempPassword,
+          summary: {
+            userCreatedInSupabase: true,
+            userProfileCreated: true,
+            organizationMembershipCreated: true,
+            campusMembershipCreated: true,
+            addedToAllowedUsers: true,
+          },
         },
       },
       { status: 201 }
@@ -166,8 +189,9 @@ export async function POST(request: Request) {
     // Se houve erro, tentar limpar o usuário do Supabase se foi criado
     try {
       if (body?.admin?.email) {
+        const supabaseAdmin = createSupabaseAdmin();
         const { data: users } = await supabaseAdmin.auth.admin.listUsers();
-        const user = users.users.find((u) => u.email === body.admin.email);
+        const user = users.users.find((u: any) => u.email === body.admin.email);
         if (user) {
           await supabaseAdmin.auth.admin.deleteUser(user.id);
         }

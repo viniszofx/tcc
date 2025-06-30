@@ -1,6 +1,5 @@
 "use client";
 
-import { signOut } from "@/app/(auth)/auth/_action";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -10,26 +9,59 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import db from "@/data/new-db.json";
-import { UserProfile } from "@/lib/new-interface";
+import { useAuth } from "@/hooks/use-auth";
 import { LogOut, User } from "lucide-react";
 import { useEffect, useState } from "react";
 
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  organization?: {
+    id: string;
+    name: string;
+  };
+}
+
 export function UserAvatar() {
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
-    const adminUser = db.user_profiles.find((u) => {
-      const orgMember = db.organization_members.find(
-        (member) => member.userId === u.id
-      );
-      return orgMember?.role === "admin";
-    });
+    const fetchUserData = async () => {
+      if (!user?.email) {
+        setLoading(false);
+        return;
+      }
 
-    setUser(adminUser || db.user_profiles[0] || null);
-  }, []);
+      try {
+        const response = await fetch("/api/auth/get-user-role", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: user.email }),
+        });
 
-  if (!user) {
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data.user);
+        } else {
+          console.error("Erro ao buscar dados do usuário");
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados do usuário:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
+
+  if (loading || !userData) {
     return (
       <Avatar className="w-10 h-10 border">
         <AvatarFallback>?</AvatarFallback>
@@ -37,20 +69,12 @@ export function UserAvatar() {
     );
   }
 
-  const orgMember = db.organization_members.find(
-    (member) => member.userId === user.id
-  );
-  const cargo = orgMember?.role || "member";
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="focus:outline-none">
         <Avatar className="w-10 h-10 cursor-pointer border">
-          <AvatarImage
-            src={user.profile?.image || "/logo.svg"}
-            alt="Foto do usuário"
-          />
-          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+          <AvatarImage src="/logo.svg" alt="Foto do usuário" />
+          <AvatarFallback>{userData.name.charAt(0)}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
 
@@ -60,20 +84,20 @@ export function UserAvatar() {
       >
         <DropdownMenuLabel className="flex flex-col">
           <span className="font-bold text-[var(--font-color2)]">
-            {user.name}
+            {userData.name}
           </span>
           <span className="text-sm text-[var(--font-color2)]">
-            {user.email}
+            {userData.email}
           </span>
           <span className="text-xs text-[var(--font-color2)]">
-            {cargo ? cargo.toUpperCase() : ""}
+            {userData.role ? userData.role.toUpperCase() : ""}
           </span>
         </DropdownMenuLabel>
 
         <DropdownMenuSeparator className="bg-[var(--font-color2)]" />
 
-        {(cargo === "admin" || cargo === "president") && (
-          <a href={`/admin/profile/${user.id}`}>
+        {(userData.role === "admin" || userData.role === "president") && (
+          <a href={`/admin/profile/${userData.id}`}>
             <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
               <User size={16} className="text-[var(--font-color2)]" />
               <span>Perfil</span>
@@ -81,8 +105,8 @@ export function UserAvatar() {
           </a>
         )}
 
-        {cargo === "member" && (
-          <a href={`/dashboard/profile/${user.id}`}>
+        {userData.role === "member" && (
+          <a href={`/dashboard/profile/${userData.id}`}>
             <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
               <User size={16} className="text-[var(--font-color2)]" />
               <span>Perfil</span>
@@ -92,17 +116,13 @@ export function UserAvatar() {
 
         <DropdownMenuSeparator className="bg-[var(--font-color2)]" />
 
-        <form>
-          <DropdownMenuItem asChild>
-            <button
-              formAction={signOut}
-              className="w-full flex items-center gap-2 text-[var(--button-2-color)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer"
-            >
-              <LogOut size={16} className="text-[var(--button-2-color)]" />
-              <span>Sair</span>
-            </button>
-          </DropdownMenuItem>
-        </form>
+        <DropdownMenuItem
+          onClick={() => signOut()}
+          className="flex items-center gap-2 text-[var(--button-2-color)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer"
+        >
+          <LogOut size={16} className="text-[var(--button-2-color)]" />
+          <span>Sair</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
