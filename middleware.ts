@@ -2,6 +2,40 @@ import { createSupabaseMiddleware } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 import { publicRoutes } from "./utils/rotes-public";
 
+const isDevelopment = process.env.NODE_ENV === "development";
+
+async function skipAuthCheck(request: NextRequest): Promise<boolean> {
+  // Pular verificação de autenticação em desenvolvimento
+  if (isDevelopment) {
+    console.log("Pular verificação de autenticação em desenvolvimento");
+    NextResponse.next();
+  }
+
+  // Verificar se o usuário está autenticado via cookie
+  const token = request.cookies.get("sb-access-token")?.value;
+
+  if (!token) {
+    return false;
+  }
+
+  try {
+    const supabase = createSupabaseMiddleware(request, null);
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Erro ao verificar autenticação:", error);
+    return false;
+  }
+}
+
 // Função para verificar role do usuário e determinar redirecionamento
 async function getUserRoleAndRedirect(
   userEmail: string,
@@ -45,6 +79,12 @@ export async function middleware(request: NextRequest) {
     pathname.includes(".") ||
     publicRoutes.includes(pathname)
   ) {
+    return NextResponse.next();
+  }
+
+  // Pular verificação de autenticação em desenvolvimento
+  if (isDevelopment) {
+    console.log("Pular verificação de autenticação em desenvolvimento");
     return NextResponse.next();
   }
 
