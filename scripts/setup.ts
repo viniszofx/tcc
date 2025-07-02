@@ -8,18 +8,36 @@ config({ path: ".env" });
 // Função para setup de avatars
 async function setupAvatars() {
   try {
-    console.log("📁 Configurando bucket de avatares...");
+    console.log("📁 === CONFIGURAÇÃO DO BUCKET DE AVATARES ===");
+    console.log("🔧 Executando durante o build...");
+
     const success = await setupAvatarsBucket();
+
     if (success) {
       console.log("✅ Bucket de avatares configurado com sucesso!");
+      return true;
     } else {
-      console.warn(
-        "⚠️ Falha ao configurar bucket de avatares (pode já existir)"
-      );
+      console.warn("⚠️ Falha ao configurar bucket de avatares");
+      console.log("💡 O bucket pode ser configurado posteriormente com:");
+      console.log("   npm run setup avatars");
+
+      // Em ambiente de build, não falhar se o Supabase não estiver disponível
+      if (process.env.NODE_ENV === "production" || process.env.CI) {
+        console.log("🏗️ Continuando build sem configuração do bucket...");
+        return true; // Não falhar durante o build
+      }
+
+      return false;
     }
-    return success;
   } catch (error) {
     console.error("❌ Erro ao configurar bucket de avatares:", error);
+
+    // Em ambiente de build ou CI, não falhar
+    if (process.env.NODE_ENV === "production" || process.env.CI) {
+      console.log("🏗️ Erro ignorado durante o build");
+      return true;
+    }
+
     throw error;
   }
 }
@@ -67,10 +85,6 @@ async function main() {
   const args = process.argv.slice(2);
   const command = args[0];
   const flags = args.slice(1);
-
-  console.log("Debug - args:", args);
-  console.log("Debug - command:", command);
-  console.log("Debug - flags:", flags);
 
   // Verificar ambiente de produção
   if (

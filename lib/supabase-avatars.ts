@@ -6,7 +6,10 @@ if (
   !process.env.NEXT_PUBLIC_SUPABASE_URL ||
   !process.env.SUPABASE_SERVICE_ROLE_KEY
 ) {
-  config({ path: ".env" });
+  // Só carregar .env se não estivermos em produção/CI
+  if (process.env.NODE_ENV !== "production" && !process.env.CI) {
+    config({ path: ".env" });
+  }
 }
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -17,7 +20,7 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 async function setupAvatarsPolicies() {
   try {
     console.log("🔒 Configurando políticas RLS para bucket de avatares...");
-    
+
     console.log("📋 IMPORTANTE: Execute manualmente no Supabase SQL Editor:");
     console.log(`
 -- Habilitar RLS para as tabelas de storage
@@ -44,10 +47,13 @@ DROP POLICY IF EXISTS "Users can delete their own avatars" ON storage.objects;
 CREATE POLICY "Users can delete their own avatars" ON storage.objects 
 FOR DELETE USING (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
     `);
-    
-    console.log("⚠️  Execute as queries SQL acima manualmente no Supabase SQL Editor");
-    console.log("📁 Para acessar: https://app.supabase.com → Seu projeto → SQL Editor");
-    
+
+    console.log(
+      "⚠️  Execute as queries SQL acima manualmente no Supabase SQL Editor"
+    );
+    console.log(
+      "📁 Para acessar: https://app.supabase.com → Seu projeto → SQL Editor"
+    );
   } catch (error) {
     console.error("❌ Erro ao configurar políticas RLS:", error);
   }
@@ -55,35 +61,67 @@ FOR DELETE USING (bucket_id = 'avatars' AND auth.uid()::text = (storage.folderna
 
 export async function setupAvatarsBucket() {
   try {
+    console.log("🔍 Verificando configuração do bucket de avatares...");
+
+    // Verificar se as variáveis de ambiente estão configuradas
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.warn("⚠️ Variáveis de ambiente do Supabase não configuradas");
+      console.log(
+        "📝 Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY"
+      );
+      return false;
+    }
+
     // Verificar se o bucket já existe
-    const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+    const { data: buckets, error: listError } =
+      await supabaseAdmin.storage.listBuckets();
+
+    if (listError) {
+      console.error("❌ Erro ao listar buckets:", listError);
+      return false;
+    }
+
     const avatarsBucket = buckets?.find((bucket) => bucket.name === "avatars");
 
-    if (!avatarsBucket) {
-      // Criar o bucket se não existir
-      const { data, error } = await supabaseAdmin.storage.createBucket(
-        "avatars",
-        {
-          public: true,
-          allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
-          fileSizeLimit: 5242880, // 5MB
-        }
-      );
-
-      if (error) {
-        console.error("Erro ao criar bucket de avatares:", error);
-        return false;
-      }
-
-      console.log("Bucket de avatares criado com sucesso:", data);
+    if (avatarsBucket) {
+      console.log("✅ Bucket 'avatars' já existe");
+      // Configurar políticas RLS para o bucket
+      await setupAvatarsPolicies();
+      return true;
     }
+
+    console.log("📁 Criando bucket 'avatars'...");
+
+    // Criar o bucket se não existir
+    const { data, error } = await supabaseAdmin.storage.createBucket(
+      "avatars",
+      {
+        public: true,
+        allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+        fileSizeLimit: 5242880, // 5MB
+      }
+    );
+
+    if (error) {
+      console.error("❌ Erro ao criar bucket de avatares:", error);
+      console.log("💡 Verifique se:");
+      console.log("   - As credenciais do Supabase estão corretas");
+      console.log("   - O service role key tem permissões adequadas");
+      console.log("   - O projeto Supabase está ativo");
+      return false;
+    }
+
+    console.log("✅ Bucket 'avatars' criado com sucesso!");
 
     // Configurar políticas RLS para o bucket
     await setupAvatarsPolicies();
 
     return true;
   } catch (error) {
-    console.error("Erro ao configurar bucket de avatares:", error);
+    console.error("❌ Erro ao configurar bucket de avatares:", error);
+    console.log(
+      "💡 Este erro pode ser ignorado se o Supabase não estiver disponível durante o build"
+    );
     return false;
   }
 }

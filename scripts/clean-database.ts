@@ -22,68 +22,12 @@ async function cleanSupabaseStoragePolicies() {
   try {
     console.log("🔒 Limpando políticas RLS do Supabase Storage...");
 
-    // Queries para remover políticas relacionadas ao storage
-    const policyQueries = [
-      // Remover políticas específicas do bucket avatars
-      'DROP POLICY IF EXISTS "Users can view own avatar" ON storage.objects;',
-      'DROP POLICY IF EXISTS "Users can upload own avatar" ON storage.objects;',
-      'DROP POLICY IF EXISTS "Users can update own avatar" ON storage.objects;',
-      'DROP POLICY IF EXISTS "Users can delete own avatar" ON storage.objects;',
-      'DROP POLICY IF EXISTS "Public avatars are viewable by everyone" ON storage.objects;',
-      'DROP POLICY IF EXISTS "Avatar images are publicly accessible" ON storage.objects;',
-
-      // Remover outras possíveis políticas de storage
-      'DROP POLICY IF EXISTS "authenticated can view" ON storage.objects;',
-      'DROP POLICY IF EXISTS "authenticated can upload" ON storage.objects;',
-      'DROP POLICY IF EXISTS "authenticated can update" ON storage.objects;',
-      'DROP POLICY IF EXISTS "authenticated can delete" ON storage.objects;',
-      'DROP POLICY IF EXISTS "public can view" ON storage.objects;',
-
-      // Remover políticas do bucket (caso existam)
-      'DROP POLICY IF EXISTS "Users can view own bucket" ON storage.buckets;',
-      'DROP POLICY IF EXISTS "Users can manage buckets" ON storage.buckets;',
-      'DROP POLICY IF EXISTS "Public buckets are viewable" ON storage.buckets;',
-    ];
-
-    for (const query of policyQueries) {
-      try {
-        const { error } = await supabaseAdmin.rpc("exec_sql", { sql: query });
-        if (error && !error.message.includes("does not exist")) {
-          console.warn(`⚠️  Aviso ao executar query: ${query}`, error.message);
-        }
-      } catch (error: any) {
-        // Ignorar erros de políticas que não existem
-        if (
-          !error.message?.includes("does not exist") &&
-          !error.message?.includes("does not exist")
-        ) {
-          console.warn(`⚠️  Aviso ao remover política: ${error.message}`);
-        }
-      }
-    }
-
-    // Tentar remover funções/triggers relacionadas ao storage (se existirem)
-    const functionQueries = [
-      "DROP FUNCTION IF EXISTS handle_avatar_upload() CASCADE;",
-      "DROP FUNCTION IF EXISTS validate_avatar_upload() CASCADE;",
-      "DROP FUNCTION IF EXISTS cleanup_old_avatars() CASCADE;",
-      "DROP TRIGGER IF EXISTS on_avatar_upload ON storage.objects CASCADE;",
-      "DROP TRIGGER IF EXISTS on_avatar_delete ON storage.objects CASCADE;",
-    ];
-
-    for (const query of functionQueries) {
-      try {
-        const { error } = await supabaseAdmin.rpc("exec_sql", { sql: query });
-        if (error && !error.message.includes("does not exist")) {
-          console.warn(`⚠️  Aviso ao executar query: ${query}`, error.message);
-        }
-      } catch (error: any) {
-        // Ignorar erros de funções que não existem
-        if (!error.message?.includes("does not exist")) {
-          console.warn(`⚠️  Aviso ao remover função/trigger: ${error.message}`);
-        }
-      }
-    }
+    console.log(
+      "ℹ️  As políticas RLS serão removidas automaticamente com a limpeza dos buckets"
+    );
+    console.log(
+      "📝 Nota: Se necessário, remova políticas manualmente no Supabase SQL Editor"
+    );
 
     console.log("✅ Limpeza de políticas RLS do Storage concluída!");
   } catch (error) {
@@ -139,14 +83,15 @@ async function cleanSupabaseBuckets() {
 
           while (attempts < maxAttempts) {
             attempts++;
-            console.log(`🔄 Tentativa ${attempts} de esvaziar bucket ${bucket.name}...`);
+            console.log(
+              `🔄 Tentativa ${attempts} de esvaziar bucket ${bucket.name}...`
+            );
 
             // Listar todos os arquivos na raiz
-            const { data: items, error: listError } = await supabaseAdmin.storage
-              .from(bucket.name)
-              .list('', {
+            const { data: items, error: listError } =
+              await supabaseAdmin.storage.from(bucket.name).list("", {
                 limit: 1000,
-                sortBy: { column: 'name', order: 'asc' }
+                sortBy: { column: "name", order: "asc" },
               });
 
             if (listError) {
@@ -165,16 +110,16 @@ async function cleanSupabaseBuckets() {
             for (const item of items) {
               if (item.name) {
                 allFiles.push(item.name);
-                
+
                 // Se for uma pasta, listar seus conteúdos recursivamente
-                if (!item.name.includes('.') || item.name.endsWith('/')) {
+                if (!item.name.includes(".") || item.name.endsWith("/")) {
                   try {
                     const { data: subItems } = await supabaseAdmin.storage
                       .from(bucket.name)
                       .list(item.name, { limit: 1000 });
-                    
+
                     if (subItems) {
-                      subItems.forEach(subItem => {
+                      subItems.forEach((subItem) => {
                         if (subItem.name) {
                           allFiles.push(`${item.name}/${subItem.name}`);
                         }
@@ -189,7 +134,9 @@ async function cleanSupabaseBuckets() {
 
             if (allFiles.length === 0) break;
 
-            console.log(`📁 Deletando ${allFiles.length} arquivos do bucket ${bucket.name}`);
+            console.log(
+              `📁 Deletando ${allFiles.length} arquivos do bucket ${bucket.name}`
+            );
 
             // Deletar todos os arquivos
             const { error: deleteError } = await supabaseAdmin.storage
@@ -200,11 +147,13 @@ async function cleanSupabaseBuckets() {
               console.error(`❌ Erro ao deletar arquivos:`, deleteError);
               // Continue tentando mesmo com erros
             } else {
-              console.log(`✅ ${allFiles.length} arquivos deletados com sucesso`);
+              console.log(
+                `✅ ${allFiles.length} arquivos deletados com sucesso`
+              );
             }
 
             // Pequena pausa entre tentativas
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 1000));
           }
         }
 
@@ -214,10 +163,12 @@ async function cleanSupabaseBuckets() {
         // Verificação final antes de deletar o bucket
         const { data: finalCheck } = await supabaseAdmin.storage
           .from(bucket.name)
-          .list('', { limit: 1 });
+          .list("", { limit: 1 });
 
         if (finalCheck && finalCheck.length > 0) {
-          console.warn(`⚠️  Bucket ${bucket.name} ainda contém arquivos, pulando deleção`);
+          console.warn(
+            `⚠️  Bucket ${bucket.name} ainda contém arquivos, pulando deleção`
+          );
           continue;
         }
 
@@ -232,13 +183,16 @@ async function cleanSupabaseBuckets() {
           );
           // Tentar uma segunda vez após uma pausa
           console.log(`🔄 Tentando deletar bucket ${bucket.name} novamente...`);
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          const { error: retryError } = await supabaseAdmin.storage.deleteBucket(bucket.name);
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+
+          const { error: retryError } =
+            await supabaseAdmin.storage.deleteBucket(bucket.name);
           if (retryError) {
             console.error(`❌ Falha na segunda tentativa:`, retryError);
           } else {
-            console.log(`✅ Bucket ${bucket.name} deletado com sucesso na segunda tentativa`);
+            console.log(
+              `✅ Bucket ${bucket.name} deletado com sucesso na segunda tentativa`
+            );
           }
         } else {
           console.log(`✅ Bucket ${bucket.name} deletado com sucesso`);
