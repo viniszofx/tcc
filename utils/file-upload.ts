@@ -1,6 +1,69 @@
 import { supabase } from "@/lib/supabase";
 
 /**
+ * Garante que o bucket existe no Supabase Storage
+ */
+async function ensureBucketExists(bucketName: string): Promise<void> {
+  try {
+    // Tentar listar arquivos do bucket (teste simples)
+    const { error } = await supabase.storage
+      .from(bucketName)
+      .list("", { limit: 1 });
+
+    if (error && error.message.includes("not found")) {
+      console.log(`🪣 Bucket '${bucketName}' não existe, tentando criar...`);
+
+      // Tentar criar o bucket (pode falhar se não tiver permissões admin)
+      const { error: createError } = await supabase.storage.createBucket(
+        bucketName,
+        {
+          public: true,
+          allowedMimeTypes: [
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.ms-excel",
+            "text/csv",
+            "application/octet-stream",
+            "application/pdf",
+            "text/plain",
+          ],
+          fileSizeLimit: 50 * 1024 * 1024, // 50MB
+        }
+      );
+
+      if (createError) {
+        console.warn(
+          `⚠️ Não foi possível criar o bucket automaticamente: ${createError.message}`
+        );
+
+        // Se for erro de permissão, sugerir criação manual
+        if (
+          createError.message.includes("permission") ||
+          createError.message.includes("unauthorized")
+        ) {
+          throw new Error(
+            `Bucket '${bucketName}' não existe. Crie-o manualmente no Supabase Dashboard: Storage > Create bucket > Nome: '${bucketName}' > Public: true`
+          );
+        } else {
+          throw new Error(
+            `Erro ao criar bucket '${bucketName}': ${createError.message}`
+          );
+        }
+      } else {
+        console.log(`✅ Bucket '${bucketName}' criado com sucesso`);
+      }
+    } else if (error) {
+      console.warn(`⚠️ Erro ao verificar bucket: ${error.message}`);
+      // Não falhar aqui - o upload pode ainda funcionar
+    } else {
+      console.log(`✅ Bucket '${bucketName}' já existe`);
+    }
+  } catch (error) {
+    console.error("❌ Erro ao verificar/criar bucket:", error);
+    throw error;
+  }
+}
+
+/**
  * Faz upload de um arquivo diretamente para o Supabase Storage
  * @param file - Arquivo a ser enviado
  * @param bucket - Nome do bucket (padrão: 'inventory-files')
@@ -13,6 +76,9 @@ export async function uploadFileToSupabase(
   folder?: string
 ): Promise<string> {
   try {
+    // Garantir que o bucket existe
+    await ensureBucketExists(bucket);
+
     // Gerar nome único para o arquivo
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const fileExtension = file.name.split(".").pop();

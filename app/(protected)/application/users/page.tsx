@@ -187,6 +187,47 @@ export default function UsersPage() {
     }
   };
 
+  const handleDeleteUser = async (user: UserProfile) => {
+    try {
+      await deleteUserMutation.mutateAsync(user.id);
+
+      // Mostrar mensagem de sucesso
+      alert(
+        `Usuário "${user.name}" e todas suas relações foram excluídos com sucesso.`
+      );
+    } catch (error) {
+      console.error("Erro ao excluir usuário:", error);
+      alert("Erro ao excluir usuário. Tente novamente.");
+    }
+  };
+
+  const handleRemoveFromCommission = async (
+    user: UserProfile,
+    commissionId: string
+  ) => {
+    try {
+      const response = await fetch(
+        `/api/commission-member/remove?userId=${user.id}&commissionId=${commissionId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(result.message);
+        // Recarregar dados dos usuários
+        // Note: react-query já fará isso automaticamente
+      } else {
+        const errorData = await response.json();
+        alert(`Erro ao remover usuário da comissão: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error("Erro ao remover usuário da comissão:", error);
+      alert("Erro inesperado ao remover usuário da comissão");
+    }
+  };
+
   if (isLoading) {
     return <LoadingScreen />;
   }
@@ -218,6 +259,8 @@ export default function UsersPage() {
         <UserListCard
           users={filteredUsers}
           onEditUser={handleEditClick}
+          onDeleteUser={canManageUsers ? handleDeleteUser : undefined}
+          onRemoveFromCommission={handleRemoveFromCommission}
           campus={campuses}
         />
       </CardContent>

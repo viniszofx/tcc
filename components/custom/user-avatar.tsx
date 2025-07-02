@@ -9,15 +9,42 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useUserData } from "@/contexts/user-context";
 import { useAuth } from "@/hooks/use-auth";
+import { useUserPermissions } from "@/hooks/use-user-permissions";
+import type { UserProfile } from "@/interface";
 import { LogOut, User } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export function UserAvatar() {
   const { signOut } = useAuth();
-  const { userData, loading } = useUserData();
+  const { user, loading: permissionsLoading } = useUserPermissions();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (loading || !userData) {
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user?.id || permissionsLoading) return;
+
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/user?id=${user.id}`);
+        if (response.ok) {
+          const profileData = await response.json();
+          setUserProfile(profileData);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar perfil do usuário:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user?.id && !permissionsLoading) {
+      fetchUserProfile();
+    }
+  }, [user?.id, permissionsLoading]);
+
+  if (loading || permissionsLoading || !user || !userProfile) {
     return (
       <Avatar className="w-10 h-10 border">
         <AvatarFallback>?</AvatarFallback>
@@ -25,12 +52,23 @@ export function UserAvatar() {
     );
   }
 
+  const getUserInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="focus:outline-none">
         <Avatar className="w-10 h-10 cursor-pointer border">
-          <AvatarImage src="/logo.svg" alt="Foto do usuário" />
-          <AvatarFallback>{userData.name.charAt(0)}</AvatarFallback>
+          <AvatarImage src={userProfile.avatar || ""} alt="Foto do usuário" />
+          <AvatarFallback className="bg-[var(--button-color)] text-[var(--font-color2)]">
+            {getUserInitials(userProfile.name)}
+          </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
 
@@ -40,35 +78,24 @@ export function UserAvatar() {
       >
         <DropdownMenuLabel className="flex flex-col">
           <span className="font-bold text-[var(--font-color2)]">
-            {userData.name}
+            {userProfile.name}
           </span>
           <span className="text-sm text-[var(--font-color2)]">
-            {userData.email}
+            {userProfile.email}
           </span>
           <span className="text-xs text-[var(--font-color2)]">
-            {userData.role ? userData.role.toUpperCase() : ""}
+            {user.role ? user.role.toUpperCase() : ""}
           </span>
         </DropdownMenuLabel>
 
         <DropdownMenuSeparator className="bg-[var(--font-color2)]" />
 
-        {(userData.role === "admin" || userData.role === "president") && (
-          <a href={`/application/profile/${userData.id}`}>
-            <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
-              <User size={16} className="text-[var(--font-color2)]" />
-              <span>Perfil</span>
-            </DropdownMenuItem>
-          </a>
-        )}
-
-        {userData.role === "member" && (
-          <a href={`/application/profile/${userData.id}`}>
-            <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
-              <User size={16} className="text-[var(--font-color2)]" />
-              <span>Perfil</span>
-            </DropdownMenuItem>
-          </a>
-        )}
+        <a href="/application/profile">
+          <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
+            <User size={16} className="text-[var(--font-color2)]" />
+            <span>Perfil</span>
+          </DropdownMenuItem>
+        </a>
 
         <DropdownMenuSeparator className="bg-[var(--font-color2)]" />
 

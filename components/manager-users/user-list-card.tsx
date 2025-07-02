@@ -3,23 +3,84 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useUserPermissions } from "@/hooks/use-user-permissions";
 import type { Campus, CampusMember, UserProfile } from "@/interface";
-import { Eye, Pencil } from "lucide-react";
+import { Eye, MoreVertical, Pencil, Trash2, UserMinus } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 interface UserListCardProps {
   users: UserProfile[];
   campusMembers?: CampusMember[];
   campus?: Campus[];
   onEditUser: (user: UserProfile) => void;
+  onDeleteUser?: (user: UserProfile) => void;
+  onRemoveFromCommission?: (user: UserProfile, commissionId: string) => void;
 }
 
 export function UserListCard({
   users,
   onEditUser,
+  onDeleteUser,
+  onRemoveFromCommission,
   campus,
   campusMembers,
 }: UserListCardProps) {
+  const { canDeleteUsers, canRemoveFromCommissions, presidedCommissions } =
+    useUserPermissions();
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [removingUserId, setRemovingUserId] = useState<string | null>(null);
+
+  const handleDeleteClick = async (user: UserProfile) => {
+    if (!onDeleteUser || !canDeleteUsers) return;
+
+    const confirmMessage = `Tem certeza que deseja EXCLUIR DEFINITIVAMENTE o usuário "${user.name}"?\n\nEsta ação irá remover:\n- O usuário do sistema\n- Todas suas associações com campus\n- Todas suas associações com comissões\n- Todas suas associações com organizações\n\nEsta ação não pode ser desfeita.`;
+
+    if (confirm(confirmMessage)) {
+      setDeletingUserId(user.id);
+      try {
+        await onDeleteUser(user);
+      } finally {
+        setDeletingUserId(null);
+      }
+    }
+  };
+
+  const handleRemoveFromCommissionClick = async (
+    user: UserProfile,
+    commissionId: string
+  ) => {
+    if (!onRemoveFromCommission || !canRemoveFromCommissions) return;
+
+    const confirmMessage = `Tem certeza que deseja REMOVER "${user.name}" da comissão?\n\nEsta ação irá:\n- Remover o usuário da comissão\n- Remover suas permissões nesta comissão\n- Manter o usuário no sistema (não exclui o usuário)\n\nEsta ação não pode ser desfeita.`;
+
+    if (confirm(confirmMessage)) {
+      setRemovingUserId(user.id);
+      try {
+        await onRemoveFromCommission(user, commissionId);
+      } finally {
+        setRemovingUserId(null);
+      }
+    }
+  };
+
+  // Verificar se o usuário pode ser removido de alguma comissão presidida
+  const canRemoveUserFromCommissions = (user: UserProfile) => {
+    if (!canRemoveFromCommissions) return [];
+
+    const userWithRelations = user as any;
+    if (!userWithRelations.commissionMembers) return [];
+
+    return userWithRelations.commissionMembers.filter((member: any) =>
+      presidedCommissions.includes(member.commissionId)
+    );
+  };
   const getRoleBadgeColor = (active: string) => {
     switch (active) {
       case "ativo":
@@ -112,6 +173,60 @@ export function UserListCard({
                         <Eye className="h-4 w-4" />
                       </Button>
                     </Link>
+
+                    {/* Menu de ações baseado nas permissões */}
+                    {(canDeleteUsers ||
+                      canRemoveUserFromCommissions(usuario).length > 0) && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 border-[var(--border-color)] hover:bg-[var(--hover-3-color)]"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {/* Remover de comissões (presidentes) */}
+                          {canRemoveUserFromCommissions(usuario).map(
+                            (member: any) => (
+                              <DropdownMenuItem
+                                key={member.commissionId}
+                                onClick={() =>
+                                  handleRemoveFromCommissionClick(
+                                    usuario,
+                                    member.commissionId
+                                  )
+                                }
+                                className="text-orange-600 hover:text-orange-700"
+                                disabled={removingUserId === usuario.id}
+                              >
+                                <UserMinus className="h-4 w-4 mr-2" />
+                                Remover de{" "}
+                                {member.commission?.name || "Comissão"}
+                              </DropdownMenuItem>
+                            )
+                          )}
+
+                          {/* Excluir usuário (apenas admins) */}
+                          {canDeleteUsers && onDeleteUser && (
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteClick(usuario)}
+                              className="text-red-600 hover:text-red-700"
+                              disabled={deletingUserId === usuario.id}
+                            >
+                              {deletingUserId === usuario.id ? (
+                                <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
+                              ) : (
+                                <Trash2 className="h-4 w-4 mr-2" />
+                              )}
+                              Excluir usuário
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 </div>
               ))

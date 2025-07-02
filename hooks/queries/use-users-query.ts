@@ -146,12 +146,11 @@ export function useDeleteUser() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch("/api/user", {
+      const response = await fetch(`/api/user?id=${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id }),
       });
 
       if (!response.ok) {
@@ -161,11 +160,16 @@ export function useDeleteUser() {
 
       return response.json();
     },
-    onSuccess: (_, id) => {
+    onSuccess: (data, id) => {
       // Invalidar listas
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       // Remover do cache específico
       queryClient.removeQueries({ queryKey: userKeys.detail(id) });
+
+      console.log("Usuário excluído com sucesso:", data);
+    },
+    onError: (error) => {
+      console.error("Erro ao excluir usuário:", error);
     },
   });
 }

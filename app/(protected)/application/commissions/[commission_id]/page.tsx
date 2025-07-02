@@ -31,8 +31,12 @@ export default function CommissionDetailPage() {
   const params = useParams();
   const commissionId = params.commission_id as string;
 
-  const { canAccessCommission, loading: permissionsLoading } =
-    useCommissionPermissions(commissionId);
+  const {
+    canAccessCommission,
+    canUploadToCommission,
+    canManageMembers,
+    loading: permissionsLoading,
+  } = useCommissionPermissions(commissionId);
 
   const [commission, setCommission] = useState<CommissionWithRelations | null>(
     null
@@ -89,6 +93,7 @@ export default function CommissionDetailPage() {
       href: `/application/commissions/${commissionId}/inventories`,
       icon: Package,
       color: "bg-blue-500",
+      show: true, // Todos podem ver inventário (mas podem ter restrições de ação)
     },
     {
       title: "Membros",
@@ -96,6 +101,7 @@ export default function CommissionDetailPage() {
       href: `/application/commissions/${commissionId}/members`,
       icon: Users,
       color: "bg-green-500",
+      show: canManageMembers, // Apenas quem pode gerenciar membros
     },
     {
       title: "Upload",
@@ -103,6 +109,7 @@ export default function CommissionDetailPage() {
       href: `/application/commissions/${commissionId}/upload`,
       icon: Upload,
       color: "bg-purple-500",
+      show: canUploadToCommission, // Apenas quem pode fazer upload
     },
     {
       title: "Histórico",
@@ -110,6 +117,7 @@ export default function CommissionDetailPage() {
       href: `/application/commissions/${commissionId}/history`,
       icon: History,
       color: "bg-orange-500",
+      show: true, // Todos podem ver histórico
     },
   ];
 
@@ -156,29 +164,31 @@ export default function CommissionDetailPage() {
 
       {/* Menu de Ações */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {menuItems.map((item, index) => (
-          <Link key={index} href={item.href}>
-            <Card className="h-full bg-[var(--card-color)] border-[var(--border-color)] hover:bg-[var(--hover-color)] transition-all duration-300 cursor-pointer group">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
-                  <div
-                    className={`p-3 rounded-lg ${item.color} text-white group-hover:scale-110 transition-transform`}
-                  >
-                    <item.icon className="w-6 h-6" />
+        {menuItems
+          .filter((item) => item.show)
+          .map((item, index) => (
+            <Link key={index} href={item.href}>
+              <Card className="h-full bg-[var(--card-color)] border-[var(--border-color)] hover:bg-[var(--hover-color)] transition-all duration-300 cursor-pointer group">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-4">
+                    <div
+                      className={`p-3 rounded-lg ${item.color} text-white group-hover:scale-110 transition-transform`}
+                    >
+                      <item.icon className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-[var(--font-color)] group-hover:text-white transition-colors">
+                        {item.title}
+                      </h3>
+                      <p className="text-sm text-[var(--font-color)] opacity-70 group-hover:text-white group-hover:opacity-90 transition-colors">
+                        {item.description}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-[var(--font-color)] group-hover:text-white transition-colors">
-                      {item.title}
-                    </h3>
-                    <p className="text-sm text-[var(--font-color)] opacity-70 group-hover:text-white group-hover:opacity-90 transition-colors">
-                      {item.description}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
       </div>
 
       {/* Informações Adicionais */}

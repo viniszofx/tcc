@@ -19,7 +19,7 @@ export interface UserProfile {
   name: string;
   email: string;
   description: string;
-  avatar: string;
+  avatar: string | null;
   active: boolean;
 }
 

@@ -7,20 +7,42 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useCommission } from "@/hooks/queries/use-commissions-query";
 import { useInventoryItems } from "@/hooks/queries/use-inventory-query";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
+import { useInventorySync } from "@/hooks/use-inventory-sync";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
-import { ArrowLeft } from "lucide-react";
+import { AlertCircle, ArrowLeft, Wifi, WifiOff } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function CommissionInventoriesPage() {
   const { user, loading } = useUserPermissions();
   const router = useRouter();
   const params = useParams();
   const commissionId = params.commission_id as string;
-  const { canAccessCommission, loading: permissionsLoading } =
-    useCommissionPermissions(commissionId);
+  const {
+    canAccessCommission,
+    canUploadToCommission,
+    loading: permissionsLoading,
+  } = useCommissionPermissions(commissionId);
 
-  // React Query hooks
+  // Estado de conectividade
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== "undefined" ? navigator.onLine : true
+  );
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  // Hooks de dados - React Query para API e hook customizado para local
   const {
     data: commission,
     isLoading: commissionLoading,
@@ -28,10 +50,42 @@ export default function CommissionInventoriesPage() {
   } = useCommission(commissionId);
 
   const {
-    data: inventoryItems = [],
-    isLoading: inventoryLoading,
-    error: inventoryError,
+    data: apiInventoryItems = [],
+    isLoading: apiInventoryLoading,
+    error: apiInventoryError,
   } = useInventoryItems(commissionId);
+
+  // Hook para dados locais (IndexedDB)
+  const {
+    localData: localInventoryItems,
+    metadata: localMetadata,
+    isLoading: localLoading,
+    syncStatus,
+  } = useInventorySync(commissionId);
+
+  // Combinar dados da API e locais, priorizando dados mais recentes
+  const combinedInventoryItems = (() => {
+    // Se estiver online e tiver dados da API, usar dados da API
+    if (isOnline && apiInventoryItems.length > 0) {
+      return apiInventoryItems;
+    }
+
+    // Se tiver dados locais, usar dados locais
+    if (localInventoryItems.length > 0) {
+      return localInventoryItems;
+    }
+
+    // Fallback para dados da API mesmo que offline
+    return apiInventoryItems;
+  })();
+
+  const totalItems = combinedInventoryItems.length;
+  const dataSource =
+    isOnline && apiInventoryItems.length > 0
+      ? "api"
+      : localInventoryItems.length > 0
+      ? "local"
+      : "none";
 
   useEffect(() => {
     if (!loading && !permissionsLoading && !canAccessCommission) {
@@ -40,7 +94,11 @@ export default function CommissionInventoriesPage() {
   }, [loading, permissionsLoading, canAccessCommission, router]);
 
   // Loading states
-  const isLoading = loading || permissionsLoading || commissionLoading;
+  const isLoading =
+    loading ||
+    permissionsLoading ||
+    commissionLoading ||
+    (localLoading && apiInventoryLoading);
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -70,28 +128,114 @@ export default function CommissionInventoriesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Botão de voltar */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          onClick={() =>
-            router.push(`/application/commissions/${commissionId}`)
-          }
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Voltar para Comissão
-        </Button>
+      {/* Status de conectividade e sincronização */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            onClick={() =>
+              router.push(`/application/commissions/${commissionId}`)
+            }
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar para Comissão
+          </Button>
 
-        {commission && (
-          <div>
-            <h1 className="text-2xl font-bold">{commission.name}</h1>
-            <p className="text-muted-foreground">
-              Inventário • {inventoryItems.length} itens
-            </p>
+          {commission && (
+            <div>
+              <h1 className="text-2xl font-bold">{commission.name}</h1>
+              <p className="text-muted-foreground">
+                Inventário • {totalItems} itens
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Indicadores de status */}
+        <div className="flex items-center gap-2">
+          {isOnline ? (
+            <div className="flex items-center gap-1 text-green-600">
+              <Wifi className="w-4 h-4" />
+              <span className="text-sm">Online</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 text-red-600">
+              <WifiOff className="w-4 h-4" />
+              <span className="text-sm">Offline</span>
+            </div>
+          )}
+
+          {syncStatus === "pending" && (
+            <div className="flex items-center gap-1 text-orange-600">
+              <AlertCircle className="w-4 h-4" />
+              <span className="text-sm">Sync Pendente</span>
+            </div>
+          )}
+
+          <div className="text-xs text-muted-foreground">
+            {dataSource === "api" && "Dados da API"}
+            {dataSource === "local" && "Dados Locais"}
+            {dataSource === "none" && "Sem dados"}
           </div>
-        )}
+        </div>
       </div>
+
+      {/* Alerta se usando dados locais */}
+      {dataSource === "local" && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-orange-600" />
+              <div>
+                <p className="text-sm font-medium text-orange-800">
+                  Exibindo dados locais
+                </p>
+                <p className="text-xs text-orange-700">
+                  Os dados foram carregados do armazenamento local.{" "}
+                  {isOnline
+                    ? "Sincronização em andamento..."
+                    : "Conecte-se à internet para sincronizar."}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Alerta se não há dados */}
+      {dataSource === "none" && totalItems === 0 && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-blue-600" />
+              <div>
+                <p className="text-sm font-medium text-blue-800">
+                  Nenhum item de inventário encontrado
+                </p>
+                <p className="text-xs text-blue-700">
+                  Faça upload de uma planilha para começar a gerenciar o
+                  inventário.
+                </p>
+                {canUploadToCommission && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() =>
+                      router.push(
+                        `/application/commissions/${commissionId}/upload`
+                      )
+                    }
+                    className="p-0 h-auto text-blue-700 font-medium"
+                  >
+                    Fazer Upload →
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Componente base com todas as funcionalidades */}
       <InventoryPageBase

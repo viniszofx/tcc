@@ -18,9 +18,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function OrganizationsPage() {
-  const { canManageOrganizations, loading, error } = useUserPermissions();
+  const { user, canManageOrganizations, loading, error } = useUserPermissions();
   const router = useRouter();
   const [orgs, setOrgs] = useState<Organization[]>([]);
+  const [organizationMembers, setOrganizationMembers] = useState<
+    Record<string, any[]>
+  >({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
@@ -41,6 +44,30 @@ export default function OrganizationsPage() {
 
         if (response.ok) {
           setOrgs(data);
+
+          // Buscar membros de cada organização
+          const membersPromises = data.map(async (org: Organization) => {
+            try {
+              const membersResponse = await fetch(
+                `/api/organization-member?organizationId=${org.id}`
+              );
+              const membersData = await membersResponse.json();
+              return { orgId: org.id, members: membersData };
+            } catch (error) {
+              console.error(
+                `Erro ao buscar membros da organização ${org.id}:`,
+                error
+              );
+              return { orgId: org.id, members: [] };
+            }
+          });
+
+          const membersResults = await Promise.all(membersPromises);
+          const membersMap: Record<string, any[]> = {};
+          membersResults.forEach(({ orgId, members }) => {
+            membersMap[orgId] = members;
+          });
+          setOrganizationMembers(membersMap);
         } else {
           console.error("Erro ao buscar organizações:", data);
         }
@@ -134,6 +161,27 @@ export default function OrganizationsPage() {
     }
   };
 
+  // Função para verificar se uma organização pode ser deletada
+  const canDeleteOrganization = (organizationId: string) => {
+    // Não pode deletar se for a única organização do sistema
+    if (orgs.length <= 1) {
+      return false;
+    }
+
+    // Verificar se é o último admin da organização
+    const members = organizationMembers[organizationId] || [];
+    const adminMembers = members.filter(
+      (member: any) => member.role === "admin"
+    );
+
+    // Se há apenas um admin e é o usuário atual, não pode deletar
+    if (adminMembers.length === 1 && adminMembers[0]?.userId === user?.id) {
+      return false;
+    }
+
+    return true;
+  };
+
   const handleDeleteOrganization = async (id: string) => {
     try {
       const response = await fetch("/api/organization", {
@@ -198,6 +246,7 @@ export default function OrganizationsPage() {
                 organization={org}
                 onEdit={() => handleOpenModal("edit", org)}
                 onDelete={() => handleDeleteOrganization(org.id)}
+                disableDelete={!canDeleteOrganization(org.id)}
               />
             ))}
           </div>

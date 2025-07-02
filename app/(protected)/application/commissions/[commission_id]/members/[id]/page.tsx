@@ -90,6 +90,42 @@ export default function CommissionMemberDetailPage() {
     router.push(`/application/commissions/${commissionId}/members`);
   };
 
+  const handleRemoveMember = async () => {
+    if (!member) return;
+
+    const confirmRemoval = confirm(
+      `Tem certeza que deseja remover "${
+        member.name || member.email
+      }" da comissão? Esta ação não pode ser desfeita.`
+    );
+
+    if (!confirmRemoval) return;
+
+    try {
+      const response = await fetch(
+        `/api/commission-member?userId=${memberId}&commissionId=${commissionId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        alert(
+          `"${
+            member.name || member.email
+          }" foi removido da comissão com sucesso.`
+        );
+        router.push(`/application/commissions/${commissionId}/members`);
+      } else {
+        const errorData = await response.json();
+        alert(`Erro ao remover membro: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error("Erro ao remover membro:", error);
+      alert("Erro inesperado ao remover membro");
+    }
+  };
+
   if (userLoading || permissionsLoading || isLoading) {
     return <LoadingScreen />;
   }
@@ -125,24 +161,35 @@ export default function CommissionMemberDetailPage() {
       {/* Header com navegação */}
       <Card className="bg-[var(--bg-simple)] shadow-lg">
         <CardHeader>
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={handleGoBack}
-              variant="outline"
-              size="sm"
-              className="border-[var(--border-input)]"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Button>
-            <div>
-              <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
-                {member.name || member.email}
-              </CardTitle>
-              <CardDescription className="text-[var(--font-color)] opacity-70">
-                Membro da Comissão: {commission?.name || "Carregando..."}
-              </CardDescription>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={handleGoBack}
+                variant="outline"
+                size="sm"
+                className="border-[var(--border-input)]"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Voltar
+              </Button>
+              <div>
+                <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
+                  {member.name || member.email}
+                </CardTitle>
+                <CardDescription className="text-[var(--font-color)] opacity-70">
+                  Membro da Comissão: {commission?.name || "Carregando..."}
+                </CardDescription>
+              </div>
             </div>
+            {canManageMembers && (
+              <Button
+                variant="destructive"
+                onClick={handleRemoveMember}
+                className="bg-red-600 text-white hover:bg-red-700"
+              >
+                Remover da Comissão
+              </Button>
+            )}
           </div>
         </CardHeader>
       </Card>

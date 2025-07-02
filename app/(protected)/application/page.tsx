@@ -28,7 +28,7 @@ export default function ApplicationDashboard() {
   }
 
   if (error || !user) {
-    router.push("/auth/login");
+    router.push("/login");
     return <LoadingScreen />;
   }
 

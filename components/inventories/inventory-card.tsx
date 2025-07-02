@@ -23,21 +23,22 @@ export default function InventoryCard({
   const basePath = "/application";
   const itemDetailRoute = `${basePath}/commissions/${commissionId}/inventories/${item.bem_id}`;
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
+  const getStatusColor = (status: string | undefined) => {
+    if (!status) return "bg-gray-500";
+
+    switch (status.toUpperCase()) {
       case "ATIVO":
-      case "Ativo":
+      case "ATIVO":
         return "bg-green-500";
       case "EM_USO":
-      case "Em Manutenção":
+      case "EM MANUTENÇÃO":
         return "bg-amber-500";
       case "BAIXA_SOLICITADA":
-      case "Inativo":
+      case "INATIVO":
         return "bg-gray-500";
       case "BAIXADO":
-      case "Baixado":
         return "bg-red-500";
-      case "Transferido":
+      case "TRANSFERIDO":
         return "bg-blue-500";
       default:
         return "bg-gray-500";
@@ -96,9 +97,9 @@ export default function InventoryCard({
             <Badge
               className={`${getStatusColor(item.STATUS)} text-white text-xs`}
             >
-              {item.STATUS.length > 10
+              {item.STATUS && item.STATUS.length > 10
                 ? `${item.STATUS.substring(0, 8)}...`
-                : item.STATUS}
+                : item.STATUS || "Ativo"}
             </Badge>
           </div>
 

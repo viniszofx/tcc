@@ -524,6 +524,11 @@ export async function DELETE(request: Request) {
     // Verificar se o usuário existe
     const existingUser = await prisma.userProfile.findUnique({
       where: { id },
+      include: {
+        campusMembers: true,
+        commissionMembers: true,
+        organizationMembers: true,
+      },
     });
 
     if (!existingUser) {
@@ -533,13 +538,69 @@ export async function DELETE(request: Request) {
       );
     }
 
-    // Deletar o usuário
-    await prisma.userProfile.delete({
-      where: { id },
+    console.log(`Iniciando exclusão em cascata do usuário ${id}`);
+
+    // Usar uma transação para garantir que todas as operações sejam executadas
+    await prisma.$transaction(async (tx) => {
+      // 1. Deletar membros de campus
+      if (existingUser.campusMembers.length > 0) {
+        await tx.campusMember.deleteMany({
+          where: { userId: id },
+        });
+        console.log(
+          `Deletados ${existingUser.campusMembers.length} membros de campus`
+        );
+      }
+
+      // 2. Deletar membros de comissão
+      if (existingUser.commissionMembers.length > 0) {
+        await tx.commissionMember.deleteMany({
+          where: { userId: id },
+        });
+        console.log(
+          `Deletados ${existingUser.commissionMembers.length} membros de comissão`
+        );
+      }
+
+      // 3. Deletar membros de organização
+      if (existingUser.organizationMembers.length > 0) {
+        await tx.organizationMember.deleteMany({
+          where: { userId: id },
+        });
+        console.log(
+          `Deletados ${existingUser.organizationMembers.length} membros de organização`
+        );
+      }
+
+      // 4. Deletar o usuário do perfil
+      await tx.userProfile.delete({
+        where: { id },
+      });
+      console.log(`Usuário ${id} deletado do banco de dados`);
     });
 
+    // 5. Deletar o usuário do Supabase Auth (opcional, dependendo do fluxo)
+    try {
+      const supabaseAdmin = createSupabaseAdmin();
+      await supabaseAdmin.auth.admin.deleteUser(id);
+      console.log(`Usuário ${id} deletado do Supabase Auth`);
+    } catch (supabaseError) {
+      console.warn(
+        "Erro ao deletar usuário do Supabase Auth (pode não existir):",
+        supabaseError
+      );
+      // Não falhar a operação se o usuário não existir no Supabase
+    }
+
     return NextResponse.json(
-      { message: "Usuário deletado com sucesso" },
+      {
+        message: "Usuário e todas suas relações deletados com sucesso",
+        deletedRelations: {
+          campusMembers: existingUser.campusMembers.length,
+          commissionMembers: existingUser.commissionMembers.length,
+          organizationMembers: existingUser.organizationMembers.length,
+        },
+      },
       { status: 200 }
     );
   } catch (error) {

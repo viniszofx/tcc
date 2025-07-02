@@ -152,21 +152,35 @@ export async function POST(request: Request) {
       const batch = items.slice(i, i + batchSize);
 
       try {
-        // Preparar dados para inserção em lote
+        // Preparar dados para inserção em lote - mapear do formato BemCopia para InventoryItem
         const itemsToCreate = batch.map((item: any) => ({
           commissionId: commissionId,
           campusId: commission.campusId,
           number:
+            item.NUMERO ||
             item.numeroPatrimonio ||
             `ITEM-${Date.now()}-${Math.random().toString(36).substring(2)}`,
-          description: item.item || item.especificacao || "Item importado",
-          brandModel: item.especificacao || null,
-          currentResponsibility: item.observacoes?.split(" - ")[1] || null,
-          conservationState: item.estado || "bom",
-          location: item.subsecao || null,
-          tags: [],
-          ed: item.ed || null,
-          sector: item.setor || null,
+          description:
+            item.DESCRICAO ||
+            item.item ||
+            item.especificacao ||
+            "Item importado",
+          brandModel:
+            item.MARCA_MODELO ||
+            item.DESCRICAO_PRINCIPAL ||
+            item.especificacao ||
+            null,
+          currentResponsibility: item.RESPONSABILIDADE_ATUAL || null,
+          conservationState:
+            item.ESTADO_DE_CONSERVACAO?.toLowerCase() || item.estado || "bom",
+          location: item.SALA || item.subsecao || null,
+          tags: item.ROTULOS
+            ? item.ROTULOS.split(",")
+                .map((tag: string) => tag.trim())
+                .filter(Boolean)
+            : [],
+          ed: item.ED || null,
+          sector: item.SETOR_DO_RESPONSAVEL || item.setor || null,
         }));
 
         // Inserir lote no banco

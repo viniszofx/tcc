@@ -38,6 +38,11 @@ export interface UserPermissions {
   canAccessCommission: boolean;
   canViewInventory: boolean;
 
+  // Funções específicas
+  canDeleteUsers: boolean; // Apenas admins podem excluir usuários
+  canRemoveFromCommissions: boolean; // Presidentes podem remover de suas comissões
+  presidedCommissions: string[]; // IDs das comissões que o usuário preside
+
   // Estado
   loading: boolean;
   error: string | null;
@@ -59,6 +64,11 @@ export function useUserPermissions() {
     // Nível Acesso
     canAccessCommission: false,
     canViewInventory: false,
+
+    // Funções específicas
+    canDeleteUsers: false,
+    canRemoveFromCommissions: false,
+    presidedCommissions: [],
 
     // Estado
     loading: true,
@@ -110,6 +120,11 @@ export function useUserPermissions() {
             canAccessCommission: true,
             canViewInventory: true,
 
+            // Funções específicas - permitir tudo no primeiro acesso
+            canDeleteUsers: true,
+            canRemoveFromCommissions: true,
+            presidedCommissions: [],
+
             // Estado
             loading: false,
             error: null,
@@ -117,6 +132,14 @@ export function useUserPermissions() {
           });
           return;
         }
+
+        // Extrair IDs das comissões que o usuário preside
+        const presidedCommissions =
+          user.commissions
+            ?.filter(
+              (commission) => commission.roleInCommission === "Presidente"
+            )
+            .map((commission) => commission.id) || [];
 
         setPermissions({
           // Nível Organização - apenas admins
@@ -132,6 +155,11 @@ export function useUserPermissions() {
           // Nível Acesso - todos os usuários autorizados
           canAccessCommission: isAdmin || isPresident || isMember,
           canViewInventory: isAdmin || isPresident || isMember,
+
+          // Funções específicas
+          canDeleteUsers: isAdmin, // Apenas admins podem excluir usuários
+          canRemoveFromCommissions: isAdmin || isPresident, // Presidentes podem remover de suas comissões
+          presidedCommissions,
 
           // Estado
           loading: false,

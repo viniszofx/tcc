@@ -312,13 +312,110 @@ export function useInventorySync(commissionId: string) {
     }
   }, [loadFromAPI, loadFromLocal, syncToLocal]);
 
-  // Forçar sincronização
-  const forceSync = useCallback(async () => {
-    const apiItems = await loadFromAPI();
-    if (apiItems.length > 0) {
-      await syncToLocal(apiItems);
+  // Enviar dados locais para a API
+  const syncLocalToAPI = useCallback(async () => {
+    if (!commissionId) return false;
+
+    try {
+      setIsSyncing(true);
+      console.log("🔄 Iniciando sincronização de dados locais para API...");
+
+      // Carregar dados locais
+      const { data: localItems, metadata: localMetadata } =
+        await getProcessedData();
+
+      if (!localItems || localItems.length === 0) {
+        console.log("📭 Nenhum dado local para sincronizar");
+        return false;
+      }
+
+      console.log(`📊 Enviando ${localItems.length} itens para a API...`);
+
+      // Enviar para a API no formato correto
+      const response = await fetch("/api/inventory", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          commissionId,
+          items: localItems,
+          metadata: localMetadata || {
+            fileName: `sync_${commissionId}_${Date.now()}.json`,
+            timestamp: new Date().toISOString(),
+            recordCount: localItems.length,
+            uploadedBy: "Sincronização",
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro ao sincronizar com a API");
+      }
+
+      const result = await response.json();
+      console.log("✅ Dados sincronizados com sucesso:", result);
+
+      // Atualizar metadata local para marcar como sincronizado
+      const updatedMetadata: InventoryMetadata = {
+        ...(localMetadata || {}),
+        syncStatus: "synced",
+        lastSyncUpdate: new Date().toISOString(),
+        recordCount: localItems.length,
+        timestamp: new Date().toISOString(),
+        fileName:
+          localMetadata?.fileName || `sync_${commissionId}_${Date.now()}.json`,
+        usedAcceleration: localMetadata?.usedAcceleration || false,
+      };
+
+      await storeProcessedData(localItems, updatedMetadata);
+      setMetadata(updatedMetadata);
+      setSyncStatus("synced");
+      setLastSync(new Date());
+
+      return true;
+    } catch (error) {
+      console.error("❌ Erro ao sincronizar dados locais para API:", error);
+      setSyncStatus("pending");
+      throw error;
+    } finally {
+      setIsSyncing(false);
     }
-  }, [loadFromAPI, syncToLocal]);
+  }, [commissionId]);
+
+  // Forçar sincronização - agora tenta ambas as direções
+  const forceSync = useCallback(async () => {
+    try {
+      setIsSyncing(true);
+      console.log("🔄 Iniciando sincronização forçada...");
+
+      // 1. Primeiro, tentar sincronizar dados locais para a API (se houver dados locais pending)
+      const { metadata: localMetadata } = await getProcessedData();
+      if (localMetadata && (localMetadata as any).syncStatus === "pending") {
+        console.log(
+          "📤 Dados locais pendentes detectados, sincronizando para API..."
+        );
+        await syncLocalToAPI();
+      }
+
+      // 2. Depois, carregar dados atualizados da API
+      console.log("📥 Carregando dados atualizados da API...");
+      const apiItems = await loadFromAPI();
+      if (apiItems.length > 0) {
+        await syncToLocal(apiItems);
+      }
+
+      console.log("✅ Sincronização forçada concluída");
+    } catch (error) {
+      console.error("❌ Erro na sincronização forçada:", error);
+      setError(
+        error instanceof Error ? error.message : "Erro na sincronização"
+      );
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [loadFromAPI, syncToLocal, syncLocalToAPI]);
 
   // Limpar dados locais
   const clearLocal = useCallback(async () => {
@@ -347,6 +444,7 @@ export function useInventorySync(commissionId: string) {
     syncStatus,
     loadAndSync,
     forceSync,
+    syncLocalToAPI,
     clearLocal,
     syncToLocal,
     addItemWithAutoSync,

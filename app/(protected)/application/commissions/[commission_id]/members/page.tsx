@@ -45,10 +45,20 @@ export default function CommissionMembersPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && !permissionsLoading && !canAccessCommission) {
+    if (
+      !loading &&
+      !permissionsLoading &&
+      (!canAccessCommission || !canManageMembers)
+    ) {
       router.push("/application");
     }
-  }, [loading, permissionsLoading, canAccessCommission, router]);
+  }, [
+    loading,
+    permissionsLoading,
+    canAccessCommission,
+    canManageMembers,
+    router,
+  ]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -118,8 +128,58 @@ export default function CommissionMembersPage() {
     }
   };
 
+  const handleRemoveMember = async (userId: string, userName: string) => {
+    // Confirmar remoção
+    const confirmRemoval = confirm(
+      `Tem certeza que deseja remover "${userName}" desta comissão?\n\nEsta ação irá:\n- Remover o usuário da comissão "${commission?.name}"\n- Remover suas permissões nesta comissão\n- Manter o usuário no sistema (não exclui o usuário)\n\nEsta ação não pode ser desfeita.`
+    );
+
+    if (!confirmRemoval) return;
+
+    try {
+      const response = await fetch(
+        `/api/commission-member?userId=${userId}&commissionId=${commissionId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        // Recarregar dados dos membros
+        const membersResponse = await fetch(
+          `/api/commission-member?commissionId=${commissionId}`
+        );
+        if (membersResponse.ok) {
+          const membersData = await membersResponse.json();
+          setMembers(membersData);
+        }
+        alert(`"${userName}" foi removido da comissão com sucesso.`);
+      } else {
+        const errorData = await response.json();
+        alert(`Erro ao remover membro: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error("Erro ao remover membro:", error);
+      alert("Erro inesperado ao remover membro");
+    }
+  };
+
   if (loading || permissionsLoading || isLoading) {
     return <LoadingScreen />;
+  }
+
+  if (!canAccessCommission || !canManageMembers) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-red-500">
+            {!canAccessCommission
+              ? "Acesso negado a esta comissão"
+              : "Você não tem permissão para gerenciar membros desta comissão"}
+          </p>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (error || !commission) {
@@ -231,19 +291,39 @@ export default function CommissionMembersPage() {
                             <Badge variant="secondary" className="text-xs">
                               {member.roleInCommission}
                             </Badge>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 text-xs px-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                router.push(
-                                  `/application/commissions/${commissionId}/members/${member.userId}`
-                                );
-                              }}
-                            >
-                              Ver Detalhes
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 text-xs px-2"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(
+                                    `/application/commissions/${commissionId}/members/${member.userId}`
+                                  );
+                                }}
+                              >
+                                Ver Detalhes
+                              </Button>
+                              {canManageMembers && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 text-xs px-2 text-red-600 hover:text-red-800 hover:bg-red-50"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveMember(
+                                      member.userId,
+                                      member.user?.name ||
+                                        member.user?.email ||
+                                        "Usuário"
+                                    );
+                                  }}
+                                >
+                                  Remover
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>

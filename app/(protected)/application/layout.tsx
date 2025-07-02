@@ -5,7 +5,6 @@ import DarkModeToggle from "@/components/custom/dark-mode-toggle";
 import HeaderTitle from "@/components/custom/header-title";
 import LoadingScreen from "@/components/custom/loading";
 import { UserAvatar } from "@/components/custom/user-avatar";
-import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
@@ -84,9 +83,5 @@ function ApplicationContent({ children }: ApplicationLayoutProps) {
 export default function ApplicationLayout({
   children,
 }: ApplicationLayoutProps) {
-  return (
-    <ThemeProvider>
-      <ApplicationContent>{children}</ApplicationContent>
-    </ThemeProvider>
-  );
+  return <ApplicationContent>{children}</ApplicationContent>;
 }

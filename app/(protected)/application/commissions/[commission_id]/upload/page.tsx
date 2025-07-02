@@ -29,14 +29,46 @@ import {
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+// Funções auxiliares para processamento dos dados
+const extractBrandModel = (description: string): string => {
+  if (!description) return "";
+
+  // Extrair marca/modelo da descrição usando regex
+  const brandModelMatch = description.match(/\[Marca\/Modelo:([^\]]+)\]/);
+  if (brandModelMatch) {
+    return brandModelMatch[1].trim();
+  }
+
+  // Se não encontrar padrão específico, tentar extrair da descrição
+  return "";
+};
+
+const normalizeConservationState = (state: string): string => {
+  if (!state) return "bom";
+
+  const normalized = state.toLowerCase().trim();
+
+  if (normalized.includes("novo") || normalized.includes("bom")) return "bom";
+  if (normalized.includes("regular") || normalized.includes("médio"))
+    return "regular";
+  if (normalized.includes("ruim") || normalized.includes("mal")) return "ruim";
+  if (normalized.includes("inservível") || normalized.includes("irreversível"))
+    return "inservível";
+
+  return "bom"; // padrão
+};
+
 export default function CommissionUploadPage() {
   const { user, loading } = useUserPermissions();
   const router = useRouter();
   const params = useParams();
   const commissionId = params.commission_id as string;
 
-  const { canAccessCommission, loading: permissionsLoading } =
-    useCommissionPermissions(commissionId);
+  const {
+    canAccessCommission,
+    canUploadToCommission,
+    loading: permissionsLoading,
+  } = useCommissionPermissions(commissionId);
 
   const {
     localData,
@@ -45,6 +77,19 @@ export default function CommissionUploadPage() {
     isSyncing,
     syncStatus: currentSyncStatus,
   } = useInventorySync(commissionId);
+
+  // Estados originais mantidos
+  const [commission, setCommission] = useState<CommissionWithRelations | null>(
+    null
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [description, setDescription] = useState("");
+  const [uploadSuccess, setUploadSuccess] = useState(false);
 
   const [isOnline, setIsOnline] = useState(
     typeof navigator !== "undefined" ? navigator.onLine : true
@@ -63,23 +108,21 @@ export default function CommissionUploadPage() {
     };
   }, []);
 
-  const [commission, setCommission] = useState<CommissionWithRelations | null>(
-    null
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [description, setDescription] = useState("");
-  const [uploadSuccess, setUploadSuccess] = useState(false);
-
   useEffect(() => {
-    if (!loading && !permissionsLoading && !canAccessCommission) {
+    if (
+      !loading &&
+      !permissionsLoading &&
+      (!canAccessCommission || !canUploadToCommission)
+    ) {
       router.push("/application");
     }
-  }, [loading, permissionsLoading, canAccessCommission, router]);
+  }, [
+    loading,
+    permissionsLoading,
+    canAccessCommission,
+    canUploadToCommission,
+    router,
+  ]);
 
   useEffect(() => {
     const fetchCommission = async () => {
@@ -98,10 +141,10 @@ export default function CommissionUploadPage() {
       }
     };
 
-    if (commissionId && canAccessCommission) {
+    if (commissionId && canAccessCommission && canUploadToCommission) {
       fetchCommission();
     }
-  }, [commissionId, canAccessCommission]);
+  }, [commissionId, canAccessCommission, canUploadToCommission]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -165,15 +208,23 @@ export default function CommissionUploadPage() {
 
       if (isOnline) {
         try {
-          // 3. Fazer backup do arquivo bruto diretamente no Supabase (client-side)
+          // 3. Tentar fazer backup do arquivo bruto diretamente no Supabase (client-side)
           console.log("📁 Fazendo backup do arquivo original...");
-          const fileUrl = await uploadFileToSupabase(
-            file,
-            "inventory-files",
-            `commissions/${commissionId}`
-          );
+          let fileUrl = null;
 
-          // 4. Enviar dados processados + URL do arquivo para a API
+          try {
+            fileUrl = await uploadFileToSupabase(
+              file,
+              "inventory-files",
+              `commissions/${commissionId}`
+            );
+            console.log("✅ Arquivo salvo no Supabase:", fileUrl);
+          } catch (uploadError) {
+            console.warn("⚠️ Falha no upload para Supabase:", uploadError);
+            // Continuar sem o backup do arquivo - os dados processados ainda serão salvos
+          }
+
+          // 4. Enviar dados processados + URL do arquivo (se disponível) para a API
           const processResponse = await fetch("/api/inventory", {
             method: "POST",
             headers: {
@@ -185,7 +236,7 @@ export default function CommissionUploadPage() {
               metadata: {
                 fileName: file.name,
                 fileSize: file.size,
-                fileUrl: fileUrl,
+                fileUrl: fileUrl || null, // Pode ser null se o upload falhou
                 description,
                 timestamp: new Date().toISOString(),
                 recordCount: processedData.length,
@@ -202,22 +253,24 @@ export default function CommissionUploadPage() {
           const processResult = await processResponse.json();
           console.log("✅ Dados salvos no banco:", processResult);
 
-          // 5. Atualizar URL da planilha na comissão
-          const updateCommissionResponse = await fetch(
-            `/api/commission/${commissionId}`,
-            {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                spreadsheetUrl: fileUrl,
-              }),
-            }
-          );
+          // 5. Atualizar URL da planilha na comissão (se tiver fileUrl)
+          if (fileUrl) {
+            const updateCommissionResponse = await fetch(
+              `/api/commission/${commissionId}`,
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  spreadsheetUrl: fileUrl,
+                }),
+              }
+            );
 
-          if (updateCommissionResponse.ok) {
-            console.log("📊 URL da planilha atualizada na comissão");
+            if (updateCommissionResponse.ok) {
+              console.log("📊 URL da planilha atualizada na comissão");
+            }
           }
 
           // 6. Atualizar status no IndexedDB para "synced"
@@ -256,9 +309,10 @@ export default function CommissionUploadPage() {
       setSelectedFiles([]);
       setDescription("");
 
+      // Redirecionar para a página de inventários após 2 segundos
       setTimeout(() => {
-        setUploadSuccess(false);
-      }, 5000);
+        router.push(`/application/commissions/${commissionId}/inventories`);
+      }, 2000);
     } catch (error) {
       console.error("❌ Erro no processamento:", error);
       setUploadError(
@@ -294,12 +348,30 @@ export default function CommissionUploadPage() {
               .map((row) =>
                 row.split(",").map((cell) => cell.trim().replace(/^"|"$/g, ""))
               );
+          } else if (file.name.match(/\.(xlsx|xls)$/i)) {
+            // Processar Excel
+            try {
+              const XLSX = await import("xlsx");
+              const workbook = XLSX.read(data, { type: "array" });
+              const sheetName = workbook.SheetNames[0];
+              const worksheet = workbook.Sheets[sheetName];
+              const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+                header: 1,
+              });
+              rows = jsonData as string[][];
+            } catch (xlsxError) {
+              console.error("Erro ao processar Excel:", xlsxError);
+              reject(
+                new Error(
+                  "Erro ao processar arquivo Excel. Verifique se o arquivo não está corrompido."
+                )
+              );
+              return;
+            }
           } else {
-            // Para Excel, seria necessário usar uma biblioteca como xlsx
-            // Por agora, apenas CSV é suportado
             reject(
               new Error(
-                "Processamento de Excel ainda não implementado. Use CSV."
+                "Formato de arquivo não suportado. Use CSV ou Excel (.xlsx, .xls)."
               )
             );
             return;
@@ -313,179 +385,207 @@ export default function CommissionUploadPage() {
 
           const inventoryItems = dataRows.map((row, index) => {
             const item: any = {};
+
+            // Mapear cada coluna pela posição/índice (mais confiável para planilhas estruturadas)
             headers.forEach((header, headerIndex) => {
               const normalizedHeader = header.toLowerCase().trim();
               const value = row[headerIndex]?.trim() || "";
 
+              // Mapeamento baseado na estrutura original da tabela
               switch (normalizedHeader) {
+                case "#":
+                case "id":
+                case "index":
+                  item.INDEX = value;
+                  break;
                 case "numero":
                 case "number":
-                case "nº":
-                case "patrimonio":
-                case "numero_patrimonio":
                   item.NUMERO = value;
                   break;
-                case "descricao":
-                case "description":
-                case "descrição":
-                case "item":
-                case "produto":
-                  item.DESCRICAO = value;
-                  break;
-                case "marca":
-                case "modelo":
-                case "brand":
-                case "model":
-                case "brandmodel":
-                case "marca_modelo":
-                case "especificacao":
-                case "especificação":
-                  item.MARCA_MODELO = value;
-                  break;
-                case "responsavel":
-                case "responsável":
-                case "responsibility":
-                case "responsabilidade_atual":
-                  item.RESPONSABILIDADE_ATUAL = value;
-                  break;
+                case "status":
                 case "estado":
-                case "conservacao":
-                case "conservação":
-                case "conservation":
-                case "estado_de_conservacao":
-                case "condicao":
-                case "condição":
-                  item.ESTADO_DE_CONSERVACAO = value;
-                  break;
-                case "localizacao":
-                case "localização":
-                case "location":
-                case "sala":
-                case "subsecao":
-                case "subseção":
-                  item.SALA = value;
+                  item.STATUS = value || "Ativo";
                   break;
                 case "ed":
                 case "edificio":
                 case "edifício":
-                case "predio":
-                case "prédio":
                   item.ED = value;
                   break;
-                case "setor":
-                case "sector":
-                case "setor_do_responsavel":
-                case "departamento":
-                  item.SETOR_DO_RESPONSAVEL = value;
+                case "descricao":
+                case "descrição":
+                case "description":
+                  item.DESCRICAO = value;
                   break;
+                case "rótulos":
                 case "rotulos":
                 case "tags":
-                case "categoria":
-                case "tipo":
                   item.ROTULOS = value;
                   break;
-                case "campus":
+                case "responsabilidade atual":
+                case "responsabilidade_atual":
+                case "responsavel":
+                case "responsável":
+                  item.RESPONSABILIDADE_ATUAL = value;
+                  break;
+                case "setor do responsável":
+                case "setor_do_responsavel":
+                case "setor":
+                  item.SETOR_DO_RESPONSAVEL = value;
+                  break;
+                case "campus da lotação do bem":
                 case "campus_da_lotacao_do_bem":
+                case "campus":
                   item.CAMPUS_DA_LOTACAO_DO_BEM = value;
                   break;
-                case "descricao_principal":
-                case "detalhes":
-                  item.DESCRICAO_PRINCIPAL = value;
-                  break;
-                case "quantidade":
-                case "qtd":
-                case "qty":
-                  item.QUANTIDADE = parseInt(value) || 1;
-                  break;
+                case "valor aquisição":
+                case "valor_aquisicao":
                 case "valor":
-                case "preco":
-                case "preço":
-                case "valor_unitario":
-                case "custo":
-                  item.VALOR_UNITARIO =
-                    parseFloat(
-                      value.replace(/[^\d.,]/g, "").replace(",", ".")
-                    ) || null;
+                  item.VALOR_AQUISICAO = value
+                    ? parseFloat(
+                        value.replace(/[^\d.,]/g, "").replace(",", ".")
+                      )
+                    : null;
                   break;
-                case "valor_total":
-                case "total":
-                  item.VALOR_TOTAL =
-                    parseFloat(
-                      value.replace(/[^\d.,]/g, "").replace(",", ".")
-                    ) || null;
+                case "valor depreciado":
+                case "valor_depreciado":
+                  item.VALOR_DEPRECIADO = value
+                    ? parseFloat(
+                        value.replace(/[^\d.,]/g, "").replace(",", ".")
+                      )
+                    : null;
                   break;
-                case "data_aquisicao":
-                case "data_compra":
-                case "compra":
-                case "aquisicao":
-                case "aquisição":
-                  item.DATA_AQUISICAO = value;
+                case "numero nota fiscal":
+                case "numero_nota_fiscal":
+                case "nota_fiscal":
+                case "nf":
+                  item.NUMERO_NOTA_FISCAL = value;
                   break;
-                case "observacoes":
-                case "observações":
-                case "obs":
-                case "notas":
-                case "comentarios":
-                case "comentários":
-                  item.OBSERVACOES = value;
+                case "número de série":
+                case "numero_de_serie":
+                case "serie":
+                  item.NUMERO_DE_SERIE = value;
+                  break;
+                case "data da entrada":
+                case "data_da_entrada":
+                case "data_entrada":
+                  item.DATA_DA_ENTRADA = value;
+                  break;
+                case "data da responsabilidade":
+                case "data_da_responsabilidade":
+                case "data_responsabilidade":
+                  item.DATA_DA_RESPONSABILIDADE = value;
+                  break;
+                case "fornecedor":
+                  item.FORNECEDOR = value;
+                  break;
+                case "sala":
+                case "localizacao":
+                case "localização":
+                  item.SALA = value;
+                  break;
+                case "estado de conservação":
+                case "estado_de_conservacao":
+                case "conservacao":
+                case "conservação":
+                  item.ESTADO_DE_CONSERVACAO = value;
+                  break;
+                case "campus da responsabilidade contábil":
+                case "campus_da_responsabilidade_contabil":
+                  item.CAMPUS_DA_RESPONSABILIDADE_CONTABIL = value;
+                  break;
+                case "ug emitente empenho":
+                case "ug_emitente_empenho":
+                  item.UG_EMITENTE_EMPENHO = value;
+                  break;
+                case "número de empenho":
+                case "numero_de_empenho":
+                case "empenho":
+                  item.NUMERO_DE_EMPENHO = value;
+                  break;
+                case "fornecedor empenho":
+                case "fornecedor_empenho":
+                  item.FORNECEDOR_EMPENHO = value;
+                  break;
+                case "processo empenho":
+                case "processo_empenho":
+                  item.PROCESSO_EMPENHO = value;
+                  break;
+                case "tipo entrada":
+                case "tipo_entrada":
+                  item.TIPO_ENTRADA = value;
+                  break;
+                case "cod entrada":
+                case "cod_entrada":
+                  item.COD_ENTRADA = value;
+                  break;
+                case "cod empenho":
+                case "cod_empenho":
+                  item.COD_EMPENHO = value;
                   break;
               }
             });
 
+            // Retornar no formato BemCopia conforme a interface
             return {
-              ed: item.ED || "",
-              setor: item.SETOR_DO_RESPONSAVEL || "",
-              subsecao: item.SALA || "",
-              item: item.DESCRICAO || "",
-              especificacao:
-                item.DESCRICAO_PRINCIPAL || item.MARCA_MODELO || "",
-              estado: item.ESTADO_DE_CONSERVACAO || "BOM",
-              quantidade: item.QUANTIDADE || 1,
-              dataAquisicao: item.DATA_AQUISICAO
-                ? new Date(item.DATA_AQUISICAO)
-                : null,
-              valorUnitario: item.VALOR_UNITARIO || null,
-              valorTotal:
-                item.VALOR_TOTAL ||
-                (item.VALOR_UNITARIO && item.QUANTIDADE
-                  ? item.VALOR_UNITARIO * item.QUANTIDADE
-                  : null),
-              numeroPatrimonio: item.NUMERO || `ITEM-${index + 1}`,
+              bem_id: `${commissionId}-${item.NUMERO || `ITEM-${index + 1}`}`,
+              inventario_id: commissionId,
+              grupo_id: commission?.campusId || `grupo-${commissionId}`,
+              campus_id: commission?.campusId || "",
+              NUMERO: item.NUMERO || `ITEM-${index + 1}`,
+              STATUS: (item.STATUS as any) || "ATIVO",
+              ED: item.ED || "",
+              DESCRICAO: item.DESCRICAO || `Item ${index + 1}`,
+              ROTULOS: item.ROTULOS || "",
+              RESPONSABILIDADE_ATUAL: item.RESPONSABILIDADE_ATUAL || "",
+              SETOR_DO_RESPONSAVEL: item.SETOR_DO_RESPONSAVEL || "",
+              CAMPUS_DA_LOTACAO_DO_BEM:
+                item.CAMPUS_DA_LOTACAO_DO_BEM || commission?.campus?.name || "",
+              SALA: item.SALA || "",
+              ESTADO_DE_CONSERVACAO:
+                (normalizeConservationState(
+                  item.ESTADO_DE_CONSERVACAO
+                ) as any) || "BOM",
+              DESCRICAO_PRINCIPAL:
+                extractBrandModel(item.DESCRICAO) || item.DESCRICAO || "",
+              MARCA_MODELO: extractBrandModel(item.DESCRICAO) || "",
+              ultimo_atualizado_por: user?.name || "Sistema",
+              data_ultima_atualizacao: new Date(),
               observacoes: [
                 `Importado de ${file.name}`,
                 item.RESPONSABILIDADE_ATUAL
                   ? `Responsável: ${item.RESPONSABILIDADE_ATUAL}`
                   : "",
                 item.ROTULOS ? `Tags: ${item.ROTULOS}` : "",
-                item.OBSERVACOES || "",
+                item.NUMERO_NOTA_FISCAL ? `NF: ${item.NUMERO_NOTA_FISCAL}` : "",
+                item.NUMERO_DE_SERIE ? `Série: ${item.NUMERO_DE_SERIE}` : "",
+                item.VALOR_AQUISICAO ? `Valor: R$ ${item.VALOR_AQUISICAO}` : "",
               ]
                 .filter(Boolean)
                 .join(" | "),
-              // Campos de controle para uso interno (será salvo em observacoes ou metadata)
+
+              // Metadados extras (preservados para compatibilidade)
               originalData: {
-                bem_id: `${commissionId}-${item.NUMERO || index}`,
-                inventario_id: commissionId,
-                grupo_id: commission?.campusId || "",
-                campus_id: commission?.campusId || "",
-                comissao_id: commissionId,
-                NUMERO: item.NUMERO || `ITEM-${index + 1}`,
-                STATUS: "ATIVO",
-                ED: item.ED || "",
-                DESCRICAO: item.DESCRICAO || "",
-                ROTULOS: item.ROTULOS || "",
-                RESPONSABILIDADE_ATUAL: item.RESPONSABILIDADE_ATUAL || "",
-                SETOR_DO_RESPONSAVEL: item.SETOR_DO_RESPONSAVEL || "",
-                CAMPUS_DA_LOTACAO_DO_BEM:
-                  item.CAMPUS_DA_LOTACAO_DO_BEM ||
-                  commission?.campus?.name ||
-                  "",
-                SALA: item.SALA || "",
-                ESTADO_DE_CONSERVACAO: item.ESTADO_DE_CONSERVACAO || "BOM",
-                DESCRICAO_PRINCIPAL:
-                  item.DESCRICAO_PRINCIPAL || item.DESCRICAO || "",
-                MARCA_MODELO: item.MARCA_MODELO || "",
-                ultimo_atualizado_por: user?.name || "Sistema",
-                data_ultima_atualizacao: new Date(),
+                index: item.INDEX,
+                campus_da_lotacao_do_bem: item.CAMPUS_DA_LOTACAO_DO_BEM,
+                valor_aquisicao: item.VALOR_AQUISICAO,
+                valor_depreciado: item.VALOR_DEPRECIADO,
+                numero_nota_fiscal: item.NUMERO_NOTA_FISCAL,
+                numero_de_serie: item.NUMERO_DE_SERIE,
+                data_da_entrada: item.DATA_DA_ENTRADA,
+                data_da_responsabilidade: item.DATA_DA_RESPONSABILIDADE,
+                fornecedor: item.FORNECEDOR,
+                campus_da_responsabilidade_contabil:
+                  item.CAMPUS_DA_RESPONSABILIDADE_CONTABIL,
+                ug_emitente_empenho: item.UG_EMITENTE_EMPENHO,
+                numero_de_empenho: item.NUMERO_DE_EMPENHO,
+                fornecedor_empenho: item.FORNECEDOR_EMPENHO,
+                processo_empenho: item.PROCESSO_EMPENHO,
+                tipo_entrada: item.TIPO_ENTRADA,
+                cod_entrada: item.COD_ENTRADA,
+                cod_empenho: item.COD_EMPENHO,
+                imported_from: file.name,
+                imported_at: new Date().toISOString(),
+                commission_id: commissionId,
               },
             };
           });
@@ -497,7 +597,15 @@ export default function CommissionUploadPage() {
       };
 
       reader.onerror = () => reject(reader.error);
-      reader.readAsText(file);
+
+      // Usar método de leitura apropriado baseado no tipo de arquivo
+      if (file.name.endsWith(".csv")) {
+        reader.readAsText(file);
+      } else if (file.name.match(/\.(xlsx|xls)$/i)) {
+        reader.readAsArrayBuffer(file);
+      } else {
+        reject(new Error("Formato de arquivo não suportado"));
+      }
     });
   };
 
@@ -518,6 +626,20 @@ export default function CommissionUploadPage() {
 
   if (loading || permissionsLoading || isLoading) {
     return <LoadingScreen />;
+  }
+
+  if (!canAccessCommission || !canUploadToCommission) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-red-500">
+            {!canAccessCommission
+              ? "Acesso negado a esta comissão"
+              : "Você não tem permissão para fazer upload nesta comissão"}
+          </p>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (error || !commission) {
@@ -668,7 +790,7 @@ export default function CommissionUploadPage() {
                   Upload realizado com sucesso!
                 </p>
                 <p className="text-xs text-green-600">
-                  Dados processados e salvos localmente
+                  Dados processados e salvos. Redirecionando para inventories...
                 </p>
               </div>
             </div>

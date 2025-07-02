@@ -10,6 +10,7 @@
     "clean-db": "tsx scripts/clean-database.ts",
     "seed-basic": "tsx scripts/seed-basic-data.ts",
     "reset-db": "tsx scripts/seed-basic-data.ts --reset",
+    "setup-avatars": "tsx scripts/setup-avatars.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {
@@ -66,6 +67,7 @@
     "react-day-picker": "8.10.1",
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
+    "react-easy-crop": "^5.4.2",
     "react-hook-form": "^7.55.0",
     "react-icons": "^5.5.0",
     "react-resizable-panels": "^2.1.7",
