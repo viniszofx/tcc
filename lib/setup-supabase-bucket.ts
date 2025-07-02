@@ -5,7 +5,7 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 /**
- * Script para configurar o bucket de spreadsheets no Supabase Storage
+ * Script para configurar o bucket de arquivos de inventário no Supabase Storage
  * Execute este script uma vez para configurar o bucket
  */
 export async function setupSupabaseBucket() {
@@ -26,20 +26,21 @@ export async function setupSupabaseBucket() {
     }
 
     const bucketExists = buckets?.some(
-      (bucket) => bucket.name === "spreadsheets"
+      (bucket) => bucket.name === "inventory-files"
     );
 
     if (bucketExists) {
-      console.log("✅ Bucket 'spreadsheets' já existe");
+      console.log("✅ Bucket 'inventory-files' já existe");
     } else {
       // Criar o bucket
       const { data: bucketData, error: createError } =
-        await supabaseAdmin.storage.createBucket("spreadsheets", {
+        await supabaseAdmin.storage.createBucket("inventory-files", {
           public: true,
           allowedMimeTypes: [
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
             "application/vnd.ms-excel", // .xls
             "text/csv", // .csv
+            "application/octet-stream", // Para casos genéricos
           ],
           fileSizeLimit: 50 * 1024 * 1024, // 50MB
         });
@@ -49,7 +50,7 @@ export async function setupSupabaseBucket() {
         return;
       }
 
-      console.log("✅ Bucket 'spreadsheets' criado com sucesso");
+      console.log("✅ Bucket 'inventory-files' criado com sucesso");
     }
 
     // Verificar/configurar políticas de acesso

@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
           ...userToFind,
           role: userToFind.organizationMembers[0]?.role || "member",
           organization: userToFind.organizationMembers[0]?.organization,
-          redirectPath: "/dashboard",
+          redirectPath: "/application",
         });
 
         return NextResponse.json(safeUserData);
@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
           ...userItem,
           role: userItem.organizationMembers[0]?.role || "member",
           organization: userItem.organizationMembers[0]?.organization,
-          redirectPath: "/dashboard",
+          redirectPath: "/application",
         })
       );
 
@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
       const safeUserData = sanitizeUserData({
         ...newUser,
         role: "member",
-        redirectPath: "/dashboard",
+        redirectPath: "/application",
       });
 
       return NextResponse.json(safeUserData, { status: 201 });

@@ -19,7 +19,7 @@ export default function EmptyInventory() {
           Para visualizar o inventário, você precisa processar um arquivo de
           dados primeiro.
         </p>
-        <Link href={`/admin/comissions/${commissionId}/upload`}>
+        <Link href={`/application/commissions/${commissionId}/upload`}>
           <Button className="flex items-center gap-2 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white">
             <Upload className="h-4 w-4" />
             <span>Processar Arquivo</span>

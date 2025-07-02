@@ -35,10 +35,15 @@ export function useInventorySync(commissionId: string) {
   const [syncStatus, setSyncStatus] = useState<
     "synced" | "pending" | "unknown" | "syncing"
   >("unknown");
+  const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Carregar dados da API
   const loadFromAPI = useCallback(async () => {
+    if (!commissionId) return [];
+
     try {
+      setError(null);
       const response = await fetch(
         `/api/inventory?commissionId=${commissionId}`
       );
@@ -46,16 +51,22 @@ export function useInventorySync(commissionId: string) {
         const data = await response.json();
         setApiData(data);
         return data;
+      } else {
+        throw new Error(`API retornou status ${response.status}`);
       }
     } catch (error) {
       console.error("Erro ao carregar dados da API:", error);
+      setError(error instanceof Error ? error.message : "Erro desconhecido");
     }
     return [];
   }, [commissionId]);
 
   // Carregar dados locais do IndexedDB
   const loadFromLocal = useCallback(async () => {
+    if (!commissionId) return [];
+
     try {
+      setError(null);
       const { data, metadata: localMetadata } = await getProcessedData();
       setLocalData(data || []);
       setMetadata(localMetadata);
@@ -91,9 +102,12 @@ export function useInventorySync(commissionId: string) {
       return data || [];
     } catch (error) {
       console.error("Erro ao carregar dados locais:", error);
+      setError(
+        error instanceof Error ? error.message : "Erro ao carregar dados locais"
+      );
       return [];
     }
-  }, []);
+  }, [commissionId]);
 
   // Sincronizar dados da API para o local
   const syncToLocal = useCallback(

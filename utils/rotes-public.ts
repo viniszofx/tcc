@@ -4,6 +4,7 @@ export const publicRoutes = [
   "/register",
   "/verify-email",
   "/forgot-password",
+  "/forget-password",
   "/register-email",
   "/register-password",
   "/setup",
@@ -20,5 +21,8 @@ export const publicRoutes = [
   "/api/onboarding/setup",
   "/api/auth/check-system",
   "/api/auth/validate-user",
+  "/api/system/check-status",
+  "/api/system/status",
   "/manifest.webmanifest",
+  "/manifest",
 ];

@@ -25,10 +25,11 @@ interface InventoryPageBaseProps {
 export default function InventoryPageBase({
   backRoute,
   errorRoute,
+  commissionId: propCommissionId,
 }: InventoryPageBaseProps) {
   const router = useRouter();
   const params = useParams();
-  const commissionId = params?.commission_id as string;
+  const commissionId = propCommissionId || (params?.commission_id as string);
 
   // Usar o hook de sincronização
   const {

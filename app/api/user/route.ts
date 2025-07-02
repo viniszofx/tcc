@@ -210,6 +210,11 @@ export async function GET(request: Request) {
       const user = await prisma.userProfile.findUnique({
         where: { id },
         include: {
+          campusMembers: {
+            include: {
+              campus: true,
+            },
+          },
           commissionMembers: {
             include: {
               commission: {
@@ -233,6 +238,11 @@ export async function GET(request: Request) {
 
     const users = await prisma.userProfile.findMany({
       include: {
+        campusMembers: {
+          include: {
+            campus: true,
+          },
+        },
         commissionMembers: {
           include: {
             commission: {
@@ -260,7 +270,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, description, avatar } = body;
+    const {
+      name,
+      email,
+      description,
+      avatar,
+      campusId,
+      organizationRole = "member",
+    } = body;
 
     if (!name || !email) {
       return NextResponse.json(
@@ -281,9 +298,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Gerar senha temporária para o administrador
+    // Gerar senha temporária para o usuário
     const tempPassword = `kde${Math.random().toString(36).slice(-6)}!`;
     console.log("Senha temporária gerada:", tempPassword);
+
     // Criar cliente admin do Supabase
     const supabaseAdmin = createSupabaseAdmin();
 
@@ -295,7 +313,7 @@ export async function POST(request: Request) {
         email_confirm: true,
         user_metadata: {
           name: name,
-          role: "member",
+          role: "user", // Todos os usuários criados pela interface são usuários normais
         },
       });
 
@@ -313,35 +331,89 @@ export async function POST(request: Request) {
       );
     }
 
-    const newUser = await prisma.userProfile.create({
-      data: {
-        id: authData.user.id,
-        name,
-        email,
-        description: description || "",
-        avatar: avatar || "",
-        active: true,
-      },
-      include: {
-        organizationMembers: {
-          include: {
-            organization: true,
+    // Usar transação para criar tudo de uma vez
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Criar perfil do usuário
+      const newUser = await tx.userProfile.create({
+        data: {
+          id: authData.user.id,
+          name,
+          email,
+          description: description || "",
+          avatar: avatar || "",
+          active: true,
+        },
+      });
+
+      // 2. Criar entrada na tabela AllowedUser
+      await tx.allowedUser.create({
+        data: {
+          name,
+          email,
+          status: true,
+        },
+      });
+
+      // 3. Se campusId foi fornecido, buscar informações do campus e organização
+      if (campusId) {
+        const campus = await tx.campus.findUnique({
+          where: { id: campusId },
+          include: { organization: true },
+        });
+
+        if (campus) {
+          // 4. Criar membro da organização
+          await tx.organizationMember.create({
+            data: {
+              userId: newUser.id,
+              organizationId: campus.organizationId,
+              role: organizationRole, // "admin" ou "member"
+            },
+          });
+
+          // 5. Criar membro do campus
+          await tx.campusMember.create({
+            data: {
+              userId: newUser.id,
+              campusId: campus.id,
+            },
+          });
+        }
+      }
+
+      // 6. Buscar usuário criado com todas as relações
+      const userWithRelations = await tx.userProfile.findUnique({
+        where: { id: newUser.id },
+        include: {
+          organizationMembers: {
+            include: {
+              organization: true,
+            },
+          },
+          campusMembers: {
+            include: {
+              campus: true,
+            },
+          },
+          commissionMembers: {
+            include: {
+              commission: true,
+            },
           },
         },
-        campusMembers: {
-          include: {
-            campus: true,
-          },
-        },
-        commissionMembers: {
-          include: {
-            commission: true,
-          },
-        },
-      },
+      });
+
+      return { user: userWithRelations, tempPassword };
     });
 
-    return NextResponse.json(newUser, { status: 201 });
+    return NextResponse.json(
+      {
+        user: result.user,
+        tempPassword: result.tempPassword,
+        message: "Usuário criado com sucesso",
+      },
+      { status: 201 }
+    );
   } catch (error) {
     let body: any = undefined;
     try {

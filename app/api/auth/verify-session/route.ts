@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
 
       if (adminMembership) {
         role = "admin";
-        redirectPath = "/admin";
+        redirectPath = "/application";
         organization = adminMembership.organization;
       } else {
         const memberMembership = userProfile.organizationMembers[0];

@@ -40,6 +40,31 @@ export async function GET(request: NextRequest) {
 
     const email = session.user.email;
 
+    // Verificar se o sistema precisa de configuração inicial
+    const organizationCount = await prisma.organization.count();
+    const allowedUserCount = await prisma.allowedUser.count();
+
+    // Se não há organizações ou usuários permitidos, é primeiro acesso
+    const isFirstAccess = organizationCount === 0 || allowedUserCount === 0;
+
+    if (isFirstAccess) {
+      // Permitir acesso como admin temporário para configuração inicial
+      return NextResponse.json({
+        user: {
+          id: "temp",
+          name: session.user.user_metadata?.name || "Administrador Temporário",
+          email: email,
+          role: "admin",
+          isPresident: false,
+          organization: null,
+          redirectPath: "/setup",
+        },
+        role: "admin",
+        isPresident: false,
+        isFirstAccess: true,
+      });
+    }
+
     // Verificar se o usuário está autorizado a acessar o sistema
     const allowedUser = await prisma.allowedUser.findUnique({
       where: { email },
@@ -63,7 +88,11 @@ export async function GET(request: NextRequest) {
         },
         commissionMembers: {
           include: {
-            commission: true,
+            commission: {
+              include: {
+                campus: true,
+              },
+            },
           },
         },
       },
@@ -78,7 +107,7 @@ export async function GET(request: NextRequest) {
 
     // Determinar a role principal e o redirecionamento
     let role = "member";
-    let redirectPath = "/dashboard";
+    let redirectPath = "/application"; // Nova rota unificada
     let organization = null;
     let isPresident = false;
 
@@ -93,7 +122,7 @@ export async function GET(request: NextRequest) {
 
       if (adminMembership) {
         role = "admin";
-        redirectPath = "/admin";
+        redirectPath = "/application";
         organization = adminMembership.organization;
       } else {
         const memberMembership = userProfile.organizationMembers[0];
@@ -128,6 +157,13 @@ export async function GET(request: NextRequest) {
       isPresident,
       organization,
       redirectPath,
+      commissions:
+        userProfile.commissionMembers?.map((cm) => ({
+          id: cm.commission.id,
+          name: cm.commission.name,
+          roleInCommission: cm.roleInCommission,
+          campus: cm.commission.campus,
+        })) || [],
     };
 
     // Sanitizar dados antes de enviar ao cliente
@@ -212,6 +248,19 @@ export async function POST(request: NextRequest) {
             organization: true,
           },
         },
+        commissionMembers: {
+          include: {
+            commission: {
+              include: {
+                campus: {
+                  include: {
+                    organization: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -224,7 +273,7 @@ export async function POST(request: NextRequest) {
 
     // Determinar a role principal e o redirecionamento
     let role = "member";
-    let redirectPath = "/dashboard";
+    let redirectPath = "/application";
     let organization = null;
 
     if (
@@ -238,7 +287,7 @@ export async function POST(request: NextRequest) {
 
       if (adminMembership) {
         role = "admin";
-        redirectPath = "/admin";
+        redirectPath = "/application";
         organization = adminMembership.organization;
       } else {
         // Se não é admin, pegar a primeira organização onde é member
@@ -256,6 +305,14 @@ export async function POST(request: NextRequest) {
       role,
       organization,
       redirectPath,
+      commissions:
+        userProfile.commissionMembers?.map((cm) => ({
+          id: cm.commission.id,
+          name: cm.commission.name,
+          roleInCommission: cm.roleInCommission,
+          campusId: cm.commission.campusId,
+          campus: cm.commission.campus,
+        })) || [],
     };
 
     // Sanitizar dados antes de enviar ao cliente

@@ -25,11 +25,11 @@ export interface AddComissionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddComission: (newComission: {
-    nome: string;
-    descricao: string;
-    tipo: string;
+    name: string;
+    description: string;
+    type: string;
     campusId: string;
-    ano: number;
+    year: number;
   }) => void;
   campuses: Campus[];
 }
@@ -105,11 +105,11 @@ export function AddComissionModal({
 
     if (validateForm()) {
       onAddComission({
-        nome: formData.nome,
-        descricao: formData.descricao,
-        tipo: formData.tipo,
+        name: formData.nome,
+        description: formData.descricao,
+        type: formData.tipo,
         campusId: formData.campusId,
-        ano: formData.ano,
+        year: formData.ano,
       });
 
       setFormData({

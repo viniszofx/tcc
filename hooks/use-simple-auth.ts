@@ -44,7 +44,7 @@ export function useSimpleAuth() {
       setState({ user: data.user, loading: false, error: null });
 
       // Redirecionamento simples
-      router.push("/dashboard");
+      router.push("/application");
 
       return { success: true };
     } catch (error: any) {

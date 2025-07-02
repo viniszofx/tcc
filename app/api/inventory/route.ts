@@ -94,158 +94,140 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    console.log("=== POST /api/inventory iniciado ===");
-
     // Verificar autenticação - desenvolvimento vs produção
     const supabase = await createServerSupabaseClient();
     let user;
 
     if (process.env.NODE_ENV === "development") {
+      // Em desenvolvimento, usar um usuário fake com UUID válido
       user = {
         id: "88ae80f0-4c14-44ea-b98a-235cf37bf170",
         email: "dev@example.com",
       };
-      console.log("Usando usuário de desenvolvimento:", user);
     } else {
+      // Em produção, autenticação real
       const {
         data: { user: realUser },
         error: authError,
       } = await supabase.auth.getUser();
 
       if (authError || !realUser) {
-        console.error("Erro de autenticação:", authError);
         return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
       }
       user = realUser;
     }
 
     const body = await request.json();
-    console.log("Dados recebidos no POST:", body);
+    const { commissionId, items, metadata } = body;
 
-    const {
-      commissionId,
-      campusId,
-      number,
-      description,
-      brandModel,
-      currentResponsibility,
-      conservationState,
-      location,
-      tags,
-      ed,
-      sector,
-    } = body;
-
-    // Validações obrigatórias
-    if (!commissionId || !campusId || !number || !description) {
-      const missingFields = [];
-      if (!commissionId) missingFields.push("commissionId");
-      if (!campusId) missingFields.push("campusId");
-      if (!number) missingFields.push("number");
-      if (!description) missingFields.push("description");
-
-      console.error("Campos obrigatórios faltando:", missingFields);
+    if (!commissionId || !items || !Array.isArray(items)) {
       return NextResponse.json(
-        {
-          error: `Campos obrigatórios faltando: ${missingFields.join(", ")}`,
-        },
+        { error: "Dados inválidos: commissionId e items são obrigatórios" },
         { status: 400 }
       );
     }
 
+    console.log(`📝 Recebendo ${items.length} itens para processamento`);
+
     // Verificar se a comissão existe
     const commission = await prisma.commission.findUnique({
       where: { id: commissionId },
+      include: { campus: true },
     });
 
     if (!commission) {
-      console.error("Comissão não encontrada:", commissionId);
       return NextResponse.json(
         { error: "Comissão não encontrada" },
         { status: 404 }
       );
     }
 
-    // Verificar se o campus existe
-    const campus = await prisma.campus.findUnique({
-      where: { id: campusId },
-    });
+    // Processar itens em lotes para melhor performance
+    const batchSize = 100;
+    const results = [];
+    let processedCount = 0;
+    let errorCount = 0;
 
-    if (!campus) {
-      console.error("Campus não encontrado:", campusId);
-      return NextResponse.json(
-        { error: "Campus não encontrado" },
-        { status: 404 }
-      );
+    for (let i = 0; i < items.length; i += batchSize) {
+      const batch = items.slice(i, i + batchSize);
+
+      try {
+        // Preparar dados para inserção em lote
+        const itemsToCreate = batch.map((item: any) => ({
+          commissionId: commissionId,
+          campusId: commission.campusId,
+          number:
+            item.numeroPatrimonio ||
+            `ITEM-${Date.now()}-${Math.random().toString(36).substring(2)}`,
+          description: item.item || item.especificacao || "Item importado",
+          brandModel: item.especificacao || null,
+          currentResponsibility: item.observacoes?.split(" - ")[1] || null,
+          conservationState: item.estado || "bom",
+          location: item.subsecao || null,
+          tags: [],
+          ed: item.ed || null,
+          sector: item.setor || null,
+        }));
+
+        // Inserir lote no banco
+        await prisma.inventoryItem.createMany({
+          data: itemsToCreate,
+          skipDuplicates: true, // Evitar duplicatas
+        });
+
+        processedCount += batch.length;
+        console.log(
+          `✅ Lote ${Math.floor(i / batchSize) + 1} processado: ${
+            batch.length
+          } itens`
+        );
+      } catch (batchError) {
+        console.error(
+          `❌ Erro no lote ${Math.floor(i / batchSize) + 1}:`,
+          batchError
+        );
+        errorCount += batch.length;
+      }
     }
 
-    // Verificar se o número já existe
-    const existingItem = await prisma.inventoryItem.findUnique({
-      where: { number: number.toString() },
-    });
-
-    if (existingItem) {
-      console.error("Número já existe no banco:", number);
-      return NextResponse.json(
-        { error: `Item com número ${number} já existe` },
-        { status: 409 }
-      );
+    // Criar registro de histórico de upload como observação nos itens criados
+    if (metadata && processedCount > 0) {
+      try {
+        // Como não temos um modelo específico para histórico de upload,
+        // vamos log apenas no console por enquanto
+        console.log("📋 Histórico de upload:", {
+          fileName: metadata.fileName,
+          fileSize: metadata.fileSize,
+          fileUrl: metadata.fileUrl,
+          recordCount: metadata.recordCount,
+          uploadedBy: metadata.uploadedBy,
+          timestamp: metadata.timestamp,
+          processedCount,
+          errorCount,
+          commissionId,
+        });
+      } catch (historyError) {
+        console.error("⚠️ Erro ao registrar histórico:", historyError);
+        // Não falhar o upload por causa do histórico
+      }
     }
 
-    console.log("Criando item com dados:", {
-      commissionId,
-      campusId,
-      number: number.toString(),
-      description,
-      brandModel: brandModel || null,
-      currentResponsibility: currentResponsibility || null,
-      conservationState: conservationState || null,
-      location: location || null,
-      tags: Array.isArray(tags) ? tags : [],
-      ed: ed || null,
-      sector: sector || null,
-    });
+    console.log(
+      `🎉 Upload concluído: ${processedCount} processados, ${errorCount} erros`
+    );
 
-    const newItem = await prisma.inventoryItem.create({
-      data: {
+    return NextResponse.json({
+      message: "Dados processados com sucesso",
+      summary: {
+        totalItems: items.length,
+        processedCount,
+        errorCount,
         commissionId,
-        campusId,
-        number: number.toString(),
-        description,
-        brandModel: brandModel || null,
-        currentResponsibility: currentResponsibility || null,
-        conservationState: conservationState || null,
-        location: location || null,
-        tags: Array.isArray(tags) ? tags : [],
-        ed: ed || null,
-        sector: sector || null,
-      },
-      include: {
-        commission: true,
-        campus: true,
+        timestamp: new Date().toISOString(),
       },
     });
-
-    console.log("Item criado com sucesso:", newItem.id);
-
-    // Criar registro no histórico do item
-    console.log("Criando histórico para o item...");
-    await prisma.inventoryHistory.create({
-      data: {
-        inventoryItemId: newItem.id,
-        userId: user.id,
-        action: "create",
-        changes: JSON.stringify({ created: newItem }),
-        observation: "Item criado",
-        imageUrl: [],
-      },
-    });
-    console.log("Histórico criado com sucesso");
-
-    console.log("Retornando resposta de sucesso");
-    return NextResponse.json(newItem, { status: 201 });
   } catch (error) {
-    console.error("Erro ao criar item:", error);
+    console.error("❌ Erro ao processar dados de inventário:", error);
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 }

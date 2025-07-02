@@ -59,11 +59,19 @@ export interface SafeUserResponse {
   name: string;
   email: string;
   role: string;
+  isPresident?: boolean;
   organization?: {
     id: string;
     name: string;
     shortName: string;
   };
+  commissions?: Array<{
+    id: string;
+    name: string;
+    roleInCommission: string;
+    campus?: any;
+    campusId?: string;
+  }>;
   redirectPath: string;
 }
 
@@ -74,6 +82,7 @@ export function sanitizeUserData(userData: any): SafeUserResponse {
     name: userData.name,
     email: userData.email,
     role: userData.role || "member",
+    isPresident: userData.isPresident,
     organization: userData.organization
       ? {
           id: userData.organization.id,
@@ -81,7 +90,8 @@ export function sanitizeUserData(userData: any): SafeUserResponse {
           shortName: userData.organization.shortName,
         }
       : undefined,
-    redirectPath: userData.redirectPath || "/dashboard",
+    commissions: userData.commissions || [],
+    redirectPath: userData.redirectPath || "/application",
   };
 }
 

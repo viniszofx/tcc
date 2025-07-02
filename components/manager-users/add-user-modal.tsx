@@ -23,13 +23,18 @@ import { useState } from "react";
 
 interface AddUserFormData extends Partial<UserProfile> {
   campusId?: string;
-  papel?: string;
+  organizationRole?: string; // "admin" ou "member"
 }
 
 interface AddUserModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddUser: (user: Partial<UserProfile> & { campusId?: string }) => void;
+  onAddUser: (
+    user: Partial<UserProfile> & {
+      campusId?: string;
+      organizationRole?: string;
+    }
+  ) => void;
   campusList: Campus[];
 }
 
@@ -46,7 +51,7 @@ export function AddUserModal({
     avatar: "/logo.svg",
     active: true,
     campusId: "",
-    papel: "operador",
+    organizationRole: "member",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -74,7 +79,8 @@ export function AddUserModal({
       newErrors.email = "Email inválido";
     // if (!formData.password) newErrors.password = "Senha é obrigatória"
     // else if (formData.password.length < 6) newErrors.password = "Senha deve ter pelo menos 6 caracteres"
-    if (!formData.papel) newErrors.papel = "Papel é obrigatório";
+    if (!formData.organizationRole)
+      newErrors.organizationRole = "Papel na organização é obrigatório";
     if (!formData.campusId) newErrors.campusId = "Campus é obrigatório";
 
     setErrors(newErrors);
@@ -84,14 +90,15 @@ export function AddUserModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      // Enviar dados do UserProfile com campusId temporário
+      // Enviar dados do UserProfile com informações adicionais
       const userProfileData = {
         name: formData.name,
         email: formData.email,
         description: formData.description,
         avatar: formData.avatar,
         active: formData.active,
-        campusId: formData.campusId, // Incluir campusId para a página principal
+        campusId: formData.campusId,
+        organizationRole: formData.organizationRole,
       };
 
       onAddUser(userProfileData);
@@ -102,7 +109,7 @@ export function AddUserModal({
         avatar: "/logo.svg",
         active: true,
         campusId: "",
-        papel: "operador",
+        organizationRole: "member",
       });
       onClose();
     }
@@ -212,22 +219,29 @@ export function AddUserModal({
             </div>
 
             <div className="grid gap-2">
-              <Label className="text-[var(--font-color)]">Papel</Label>
+              <Label className="text-[var(--font-color)]">
+                Papel na Organização
+              </Label>
               <Select
-                value={formData.papel || ""}
-                onValueChange={(value) => handleSelectChange("papel", value)}
+                value={formData.organizationRole || ""}
+                onValueChange={(value) =>
+                  handleSelectChange("organizationRole", value)
+                }
               >
                 <SelectTrigger className="border-[var(--border-input)]">
-                  <SelectValue placeholder="Selecione um papel" />
+                  <SelectValue placeholder="Selecione o papel na organização" />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)]">
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="presidente">Presidente</SelectItem>
-                  <SelectItem value="operador">Operador</SelectItem>
+                  <SelectItem value="admin">
+                    Administrador da Organização
+                  </SelectItem>
+                  <SelectItem value="member">Membro</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.papel && (
-                <p className="text-xs text-red-500">{errors.papel}</p>
+              {errors.organizationRole && (
+                <p className="text-xs text-red-500">
+                  {errors.organizationRole}
+                </p>
               )}
             </div>
           </div>

@@ -1,14 +1,16 @@
 "use client";
 
+import LoadingScreen from "@/components/custom/loading";
 import DeleteItemModal from "@/components/inventories/delete-item-modal";
 import EditItemModal from "@/components/inventories/edit-item-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
 import type { InventoryItemWithRelations } from "@/interface";
 import { formatDate } from "@/utils/data-utils";
-import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -34,6 +36,13 @@ export default function InventoryItemClient({
   const commissionId = propCommissionId || params?.commission_id;
   const [isMounted, setIsMounted] = useState(false);
 
+  // Permission checking for commission access
+  const {
+    canAccessCommission,
+    loading: permissionsLoading,
+    error: permissionsError,
+  } = useCommissionPermissions(commissionId as string);
+
   const getBackUrl = () => {
     if (commissionId) {
       return `${basePath}/${commissionId}/inventories`;
@@ -44,6 +53,12 @@ export default function InventoryItemClient({
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!permissionsLoading && !canAccessCommission && commissionId) {
+      router.push("/application");
+    }
+  }, [permissionsLoading, canAccessCommission, commissionId, router]);
 
   useEffect(() => {
     async function loadItem() {
@@ -143,16 +158,26 @@ export default function InventoryItemClient({
     }
   };
 
-  if (loading) {
+  if (loading || permissionsLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (permissionsError || (!canAccessCommission && commissionId)) {
     return (
       <Card className="w-full bg-[var(--bg-simple)] shadow-md mx-auto">
-        <CardContent className="p-4 sm:p-8 flex justify-center items-center">
-          <div className="animate-pulse flex flex-col gap-4 w-full">
-            <div className="h-8 bg-[var(--card-color)] rounded w-1/3"></div>
-            <div className="h-6 bg-[var(--card-color)] rounded w-full"></div>
-            <div className="h-40 bg-[var(--card-color)] rounded w-full"></div>
-            <div className="h-40 bg-[var(--card-color)] rounded w-full"></div>
-          </div>
+        <CardContent className="p-4 sm:p-8 text-center">
+          <h2 className="text-lg sm:text-xl font-bold text-[var(--font-color)]">
+            Acesso negado
+          </h2>
+          <p className="text-[var(--font-color)]/70 mt-2 text-sm sm:text-base">
+            Você não tem permissão para acessar este item.
+          </p>
+          <Button
+            className="mt-4 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white text-sm sm:text-base"
+            onClick={() => router.push("/application")}
+          >
+            Voltar ao Dashboard
+          </Button>
         </CardContent>
       </Card>
     );
@@ -184,14 +209,6 @@ export default function InventoryItemClient({
       <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-md lg:max-w-5xl xl:max-w-6xl mx-auto">
         <CardHeader className="pb-2 px-4 sm:px-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <Button
-              variant="ghost"
-              className="flex items-center gap-2 text-[var(--font-color)] hover:bg-[var(--hover-2-color)] hover:text-white cursor-pointer p-0 sm:p-2"
-              onClick={() => router.push(getBackUrl())}
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="text-sm sm:text-base">{backButtonText}</span>
-            </Button>
             <div className="flex items-center gap-2 justify-end sm:justify-normal">
               <Button
                 variant="outline"

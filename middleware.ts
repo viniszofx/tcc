@@ -59,7 +59,7 @@ async function getUserRoleAndRedirect(
     const userData = await response.json();
     return {
       role: userData.user?.role || userData.role || "member",
-      redirectPath: userData.user?.redirectPath || "/dashboard",
+      redirectPath: userData.user?.redirectPath || "/application",
     };
   } catch (error) {
     console.error("Erro ao buscar role do usuário:", error);
@@ -70,188 +70,124 @@ async function getUserRoleAndRedirect(
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Pular verificação para rotas da API, assets estáticos e onboarding
+  // Sempre permitir rotas públicas primeiro
+  if (publicRoutes.includes(pathname)) {
+    return NextResponse.next();
+  }
+
+  // Pular verificação para rotas da API, assets estáticos
   if (
     pathname.startsWith("/api/") ||
     pathname.startsWith("/_next/") ||
-    pathname.startsWith("/onboarding") ||
-    pathname.startsWith("/setup") ||
     pathname.includes(".") ||
-    publicRoutes.includes(pathname)
+    pathname.startsWith("/manifest")
   ) {
     return NextResponse.next();
   }
 
-  // Pular verificação de autenticação em desenvolvimento
-  if (isDevelopment) {
-    console.log("Pular verificação de autenticação em desenvolvimento");
-    return NextResponse.next();
-  }
+  // REMOVIDO: Pular verificação de autenticação em desenvolvimento
+  // O sistema deve funcionar com autenticação mesmo em desenvolvimento
+  // if (isDevelopment) {
+  //   console.log("Pular verificação de autenticação em desenvolvimento");
+  //   return NextResponse.next();
+  // }
 
   try {
-    // Verificar se usuário autenticado está tentando acessar rotas públicas
-    if (pathname === "/" || pathname === "/login") {
-      let response = NextResponse.next({
-        request: {
-          headers: request.headers,
-        },
-      });
-
-      const supabase = createSupabaseMiddleware(request, response);
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-
-      // Se usuário está autenticado, redirecionar baseado na role
-      if (!error && user) {
-        const userRoleData = await getUserRoleAndRedirect(user.email!, request);
-
-        if (userRoleData) {
-          const { role, redirectPath } = userRoleData;
-          console.log(
-            `Usuário autenticado acessando ${pathname}, redirecionando para ${redirectPath} (role: ${role})`
-          );
-          return NextResponse.redirect(new URL(redirectPath, request.url));
-        } else {
-          // Fallback para dashboard se não conseguir determinar a role
-          return NextResponse.redirect(new URL("/dashboard", request.url));
-        }
-      }
-    }
-    // Para rotas protegidas, primeiro verificar se o sistema precisa de setup
-    if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) {
-      // Verificar status do sistema via API
+    // Para a página inicial, apenas verificar se sistema precisa de setup
+    if (pathname === "/") {
       try {
         const systemStatusUrl = new URL(
           "/api/system/check-status",
           request.url
         );
-        const response = await fetch(systemStatusUrl);
+        const statusResponse = await fetch(systemStatusUrl);
 
-        if (response.ok) {
-          const statusData = await response.json();
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+
+          // Se sistema precisa de setup, redirecionar para setup
+          if (statusData.needsSetup) {
+            return NextResponse.redirect(new URL("/setup", request.url));
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao verificar status do sistema:", error);
+      }
+
+      // Permitir acesso à página inicial
+      return NextResponse.next();
+    }
+
+    // Para todas as outras rotas protegidas, verificar autenticação
+    let response = NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    });
+
+    const supabase = createSupabaseMiddleware(request, response);
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    // Se não há usuário autenticado, redirecionar para login
+    if (error || !user) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    // Verificar se o sistema precisa de configuração inicial para rotas protegidas
+    if (pathname !== "/setup") {
+      try {
+        const systemStatusUrl = new URL(
+          "/api/system/check-status",
+          request.url
+        );
+        const statusResponse = await fetch(systemStatusUrl);
+
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
 
           if (statusData.needsSetup) {
             return NextResponse.redirect(new URL("/setup", request.url));
           }
-        } else {
-          // Se a API falhou
-          console.warn(
-            "Falha ao verificar status do sistema, tente novamente mais tarde."
-          );
-          return NextResponse.redirect(new URL("/", request.url));
         }
       } catch (error) {
-        console.error(
-          "Erro ao verificar status do sistema, tente novamente ,mais tarde.",
-          error
-        );
-        // Em caso de erro
-        return NextResponse.redirect(new URL("/", request.url));
+        console.error("Erro ao verificar status do sistema:", error);
       }
+    }
 
-      // Verificar autenticação do usuário
-      let user;
+    // Redirecionar rotas legacy (/admin e /dashboard antigas) para /application
+    if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) {
+      return NextResponse.redirect(new URL("/application", request.url));
+    }
 
-      // Sempre verificar autenticação real, mesmo em desenvolvimento
-      let response = NextResponse.next({
-        request: {
-          headers: request.headers,
-        },
-      });
-
-      const supabase = createSupabaseMiddleware(request, response);
-
-      const {
-        data: { user: realUser },
-        error,
-      } = await supabase.auth.getUser();
-
-      if (error || !realUser) {
-        return NextResponse.redirect(new URL("/login", request.url));
-      }
-      user = realUser;
-
-      // Verificar se o usuário está na lista de permitidos
+    // Para rotas protegidas /application, verificar se usuário tem acesso
+    if (pathname.startsWith("/application")) {
       try {
-        const validateUserUrl = new URL("/api/auth/validate-user", request.url);
-        const validateResponse = await fetch(validateUserUrl, {
-          method: "POST",
+        const getUserRoleUrl = new URL("/api/auth/get-user-role", request.url);
+        const roleResponse = await fetch(getUserRoleUrl, {
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
+            Cookie: request.headers.get("cookie") || "",
           },
-          body: JSON.stringify({ email: user.email }),
         });
 
-        if (!validateResponse.ok) {
-          console.warn("Usuário não autorizado:", user.email);
+        if (roleResponse.status === 403) {
           return NextResponse.redirect(new URL("/unauthorized", request.url));
+        } else if (!roleResponse.ok) {
+          return NextResponse.redirect(new URL("/login", request.url));
         }
 
-        const { isAllowed } = await validateResponse.json();
-        if (!isAllowed) {
-          return NextResponse.redirect(new URL("/unauthorized", request.url));
-        }
+        const roleData = await roleResponse.json();
 
-        // Verificar role do usuário e fazer redirecionamento inteligente
-        const userRoleData = await getUserRoleAndRedirect(user.email!, request);
-
-        if (userRoleData) {
-          const { role, redirectPath } = userRoleData;
-
-          // Redirecionamento inteligente baseado na role
-          if (role === "admin") {
-            // Admins devem acessar /admin
-            if (
-              pathname.startsWith("/dashboard") &&
-              !pathname.startsWith("/admin")
-            ) {
-              console.log(`Redirecionando admin de ${pathname} para /admin`);
-              return NextResponse.redirect(new URL("/admin", request.url));
-            }
-          } else {
-            // Members devem acessar /dashboard
-            if (pathname.startsWith("/admin")) {
-              console.log(
-                `Redirecionando member de ${pathname} para /dashboard`
-              );
-              return NextResponse.redirect(new URL("/dashboard", request.url));
-            }
-          }
-
-          // Verificar se é rota admin e usuário tem privilégios
-          if (pathname.startsWith("/admin") && role !== "admin") {
-            console.warn("Usuário sem privilégios de admin:", user.email);
-            return NextResponse.redirect(new URL("/dashboard", request.url));
-          }
-        } else {
-          // Se não conseguiu buscar a role, fazer validação tradicional para rotas admin
-          if (pathname.startsWith("/admin")) {
-            const validateAdminUrl = new URL(
-              "/api/auth/validate-admin",
-              request.url
-            );
-            const adminResponse = await fetch(validateAdminUrl, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            });
-
-            if (!adminResponse.ok) {
-              console.warn("Usuário sem privilégios de admin:", user.email);
-              return NextResponse.redirect(new URL("/dashboard", request.url));
-            }
-
-            const { isAdmin } = await adminResponse.json();
-            if (!isAdmin) {
-              return NextResponse.redirect(new URL("/dashboard", request.url));
-            }
-          }
+        // Se é primeiro acesso, redirecionar para setup
+        if (roleData.isFirstAccess) {
+          return NextResponse.redirect(new URL("/setup", request.url));
         }
       } catch (error) {
-        console.error("Erro ao validar usuário:", error);
+        console.error("Erro ao verificar permissões:", error);
         return NextResponse.redirect(new URL("/login", request.url));
       }
     }

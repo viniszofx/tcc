@@ -1,0 +1,257 @@
+"use client";
+
+import LoadingScreen from "@/components/custom/loading";
+import { AddUserModal } from "@/components/manager-users/add-user-modal";
+import { EditUserModal } from "@/components/manager-users/edit-user-modal";
+import { UserCreatedModal } from "@/components/manager-users/user-created-modal";
+import { UserListCard } from "@/components/manager-users/user-list-card";
+import { UserSearchCard } from "@/components/manager-users/user-search-card";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  useCampuses,
+  useCampusMembers,
+} from "@/hooks/queries/use-campus-query";
+import {
+  useCreateUser,
+  useDeleteUser,
+  useUpdateUser,
+  useUsers,
+} from "@/hooks/queries/use-users-query";
+import { useUserPermissions } from "@/hooks/use-user-permissions";
+import type { UserProfile } from "@/interface";
+import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+
+type UserWithCampus = UserProfile & {
+  campusName?: string;
+};
+
+export default function UsersPage() {
+  const {
+    canManageUsers,
+    loading: permissionsLoading,
+    error: permissionsError,
+  } = useUserPermissions();
+  const router = useRouter();
+
+  // React Query hooks
+  const {
+    data: users = [],
+    isLoading: usersLoading,
+    error: usersError,
+  } = useUsers();
+  const { data: campuses = [], isLoading: campusesLoading } = useCampuses();
+  const { data: campusMembers = [], isLoading: campusMembersLoading } =
+    useCampusMembers();
+
+  // Mutations
+  const createUserMutation = useCreateUser();
+  const updateUserMutation = useUpdateUser();
+  const deleteUserMutation = useDeleteUser();
+
+  // Local state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isUserCreatedModalOpen, setIsUserCreatedModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [createdUserData, setCreatedUserData] = useState<{
+    email: string;
+    tempPassword: string;
+    name: string;
+  } | null>(null);
+
+  // Verificar permissões
+  useEffect(() => {
+    if (!permissionsLoading && !canManageUsers) {
+      router.push("/application");
+    }
+  }, [permissionsLoading, canManageUsers, router]);
+
+  // Processar usuários com informações de campus
+  const usersWithCampus: UserWithCampus[] = useMemo(() => {
+    return users.map((user: any) => {
+      let campusName = "Sem campus";
+
+      // Verificar se o usuário tem campusMembers diretos
+      if (user.campusMembers && user.campusMembers.length > 0) {
+        campusName = user.campusMembers[0].campus.name;
+      }
+      // Se não, verificar através das comissões
+      else if (user.commissionMembers && user.commissionMembers.length > 0) {
+        const firstCommission = user.commissionMembers[0];
+        if (firstCommission.commission?.campus) {
+          campusName = firstCommission.commission.campus.name;
+        }
+      }
+
+      return {
+        ...user,
+        campusName,
+      };
+    });
+  }, [users]);
+
+  // Filtrar usuários
+  const filteredUsers = useMemo(() => {
+    return usersWithCampus.filter((user) => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        user.name.toLowerCase().includes(searchLower) ||
+        user.email.toLowerCase().includes(searchLower) ||
+        (user.description &&
+          user.description.toLowerCase().includes(searchLower))
+      );
+    });
+  }, [usersWithCampus, searchTerm]);
+
+  // Loading states
+  const isLoading =
+    permissionsLoading ||
+    usersLoading ||
+    campusesLoading ||
+    campusMembersLoading;
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (!canManageUsers) {
+    return <LoadingScreen />;
+  }
+
+  if (permissionsError || usersError) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-red-500">
+            Erro: {permissionsError || (usersError as Error)?.message}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const handleAddUser = async (
+    userData: Partial<UserProfile> & {
+      campusId?: string;
+      organizationRole?: string;
+    }
+  ) => {
+    try {
+      const result = await createUserMutation.mutateAsync(userData);
+
+      // Salvar dados do usuário criado para o modal
+      setCreatedUserData({
+        email: userData.email || "",
+        tempPassword: result.tempPassword || "",
+        name: userData.name || "",
+      });
+
+      // Fechar modal de adicionar e abrir modal de sucesso
+      setIsAddModalOpen(false);
+      setIsUserCreatedModalOpen(true);
+    } catch (error) {
+      console.error("Erro ao adicionar usuário:", error);
+      alert("Erro inesperado ao criar usuário");
+    }
+  };
+
+  const handleEditClick = (user: UserProfile) => {
+    setSelectedUser(user);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditUser = async (userData: Partial<UserProfile>) => {
+    if (!selectedUser?.id) return;
+
+    try {
+      await updateUserMutation.mutateAsync({
+        id: selectedUser.id,
+        data: userData,
+      });
+
+      setIsEditModalOpen(false);
+      setSelectedUser(null);
+    } catch (error) {
+      console.error("Erro ao editar usuário:", error);
+      alert("Erro ao editar usuário");
+    }
+  };
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  return (
+    <Card className="w-full bg-[var(--bg-simple)] shadow-lg transition-all duration-300">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6">
+        <div>
+          <CardTitle className="text-2xl font-bold text-[var(--font-color)] md:text-3xl">
+            Gerenciar Usuários
+          </CardTitle>
+          <CardDescription className="text-[var(--font-color)] opacity-70">
+            Gerencie os usuários do sistema e suas permissões
+          </CardDescription>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all w-full sm:w-auto"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Adicionar Usuário
+          </Button>
+        </div>
+      </CardHeader>
+
+      <CardContent className="flex flex-col gap-6">
+        <UserSearchCard searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        <UserListCard
+          users={filteredUsers}
+          onEditUser={handleEditClick}
+          campus={campuses}
+        />
+      </CardContent>
+
+      <AddUserModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAddUser={handleAddUser}
+        campusList={campuses}
+      />
+
+      <EditUserModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedUser(null);
+        }}
+        user={selectedUser}
+        onEditUser={handleEditUser}
+        campusList={campuses}
+      />
+
+      {createdUserData && (
+        <UserCreatedModal
+          isOpen={isUserCreatedModalOpen}
+          onClose={() => {
+            setIsUserCreatedModalOpen(false);
+            setCreatedUserData(null);
+          }}
+          userEmail={createdUserData.email}
+          tempPassword={createdUserData.tempPassword}
+          userName={createdUserData.name}
+        />
+      )}
+    </Card>
+  );
+}

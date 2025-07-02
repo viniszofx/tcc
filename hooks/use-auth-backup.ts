@@ -129,13 +129,13 @@ export function useAuth() {
 
         // Redirecionar com base na role
         if (userData.role === "admin") {
-          router.push("/admin");
+          router.push("/application");
         } else {
-          router.push("/dashboard");
+          router.push("/application");
         }
       } else {
-        // Fallback para dashboard se não conseguir determinar a role
-        router.push("/dashboard");
+        // Fallback para application se não conseguir determinar a role
+        router.push("/application");
       }
 
       setState({ user: authData.user, loading: false, error: null });

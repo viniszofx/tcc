@@ -158,29 +158,29 @@ export function useAuth() {
           console.log("Role final detectada:", userRole);
 
           if (userRole === "admin") {
-            console.log("✅ Redirecionando ADMIN para /admin");
-            router.push("/admin");
+            console.log("✅ Redirecionando ADMIN para /application");
+            router.push("/application");
           } else {
             console.log(
-              "➡️ Redirecionando USER para /dashboard (role:",
+              "➡️ Redirecionando USER para /application (role:",
               userRole,
               ")"
             );
-            router.push("/dashboard");
+            router.push("/application");
           }
           console.log("=================================");
         } else {
           console.warn(
             "Não foi possível determinar a role, redirecionando para dashboard"
           );
-          router.push("/dashboard");
+          router.push("/application");
         }
       } catch (roleError) {
         console.warn(
           "Erro ao buscar role (redirecionando para dashboard):",
           roleError
         );
-        router.push("/dashboard");
+        router.push("/application");
       }
 
       setState({ user: authData.user, loading: false, error: null });

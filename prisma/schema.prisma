@@ -137,7 +137,7 @@ model Commission {
 model CommissionMember {
   userId           String   @db.Uuid
   commissionId     String   @db.Uuid
-  roleInCommission String // "Presidente", "Membro", "Secretario"
+  roleInCommission String // "Presidente", "Membro"
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

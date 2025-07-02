@@ -1,0 +1,321 @@
+"use client";
+
+import LoadingScreen from "@/components/custom/loading";
+import OrganizationModal from "@/components/manager-organizations/organization-modal";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useUserPermissions } from "@/hooks/use-user-permissions";
+import type { Campus, Organization } from "@/interface";
+import { Building2, Edit, MapPin, Users } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+export default function OrganizationDetailPage() {
+  const {
+    user,
+    canManageOrganizations,
+    loading: permissionsLoading,
+  } = useUserPermissions();
+  const params = useParams();
+  const router = useRouter();
+  const organizationId = params.id as string;
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [campuses, setCampuses] = useState<Campus[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!permissionsLoading && !canManageOrganizations) {
+      router.push("/application");
+    }
+  }, [permissionsLoading, canManageOrganizations, router]);
+
+  useEffect(() => {
+    const fetchOrganizationData = async () => {
+      try {
+        // Buscar dados da organização
+        const orgResponse = await fetch(
+          `/api/organization?id=${organizationId}`
+        );
+        const orgData = await orgResponse.json();
+
+        if (orgResponse.ok && orgData) {
+          setOrganization(orgData);
+
+          // Buscar campus da organização
+          const campusesResponse = await fetch(
+            `/api/campus?organizationId=${organizationId}`
+          );
+          if (campusesResponse.ok) {
+            const campusesData = await campusesResponse.json();
+            setCampuses(campusesData);
+          }
+
+          // Buscar membros da organização
+          const membersResponse = await fetch(
+            `/api/organization-member?organizationId=${organizationId}`
+          );
+          if (membersResponse.ok) {
+            const membersData = await membersResponse.json();
+            setMembers(membersData);
+          }
+        } else {
+          setOrganization(null);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados da organização:", error);
+        setOrganization(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (organizationId && canManageOrganizations) {
+      fetchOrganizationData();
+    }
+  }, [organizationId, canManageOrganizations]);
+
+  const handleEditOrganization = async (editedOrganization: Organization) => {
+    try {
+      const response = await fetch(`/api/organization/${organizationId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(editedOrganization),
+      });
+
+      if (response.ok) {
+        setOrganization(editedOrganization);
+        setIsModalOpen(false);
+      } else {
+        console.error("Erro ao atualizar organização");
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar organização:", error);
+    }
+  };
+
+  if (permissionsLoading || isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (!canManageOrganizations) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-red-500">Acesso negado</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!organization) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-red-500">Organização não encontrada</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header com ações */}
+      <Card className="bg-[var(--bg-simple)] shadow-lg">
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
+                {organization.name}
+              </CardTitle>
+              <CardDescription className="text-[var(--font-color)] opacity-70">
+                {organization.shortName}
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)]"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Editar Organização
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Informações da Organização */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="bg-[var(--card-color)]">
+          <CardHeader>
+            <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
+              <Building2 className="w-5 h-5" />
+              Informações Básicas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
+                Nome Completo
+              </label>
+              <p className="text-[var(--font-color)]">{organization.name}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
+                Nome Abreviado
+              </label>
+              <p className="text-[var(--font-color)]">
+                {organization.shortName}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
+                Status
+              </label>
+              <div className="flex items-center gap-2">
+                <Badge variant={organization.active ? "default" : "secondary"}>
+                  {organization.active ? "Ativa" : "Inativa"}
+                </Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[var(--card-color)]">
+          <CardHeader>
+            <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Estatísticas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between">
+              <span className="text-[var(--font-color)] opacity-70">
+                Total de Campus
+              </span>
+              <span className="font-semibold text-[var(--font-color)]">
+                {campuses.length}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--font-color)] opacity-70">
+                Total de Membros
+              </span>
+              <span className="font-semibold text-[var(--font-color)]">
+                {members.length}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--font-color)] opacity-70">
+                ID da Organização
+              </span>
+              <span className="font-mono text-sm text-[var(--font-color)] opacity-70">
+                {organization.id}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Campus da Organização */}
+      {campuses.length > 0 && (
+        <Card className="bg-[var(--card-color)]">
+          <CardHeader>
+            <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              Campus ({campuses.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {campuses.map((campus) => (
+                <div
+                  key={campus.id}
+                  className="flex items-center justify-between p-4 bg-[var(--bg-simple)] rounded-lg border border-[var(--border-color)] hover:bg-[var(--hover-color)] transition-colors"
+                >
+                  <div>
+                    <h3 className="font-semibold text-[var(--font-color)]">
+                      {campus.name}
+                    </h3>
+                    <p className="text-sm text-[var(--font-color)] opacity-70">
+                      {campus.code}
+                    </p>
+                  </div>
+                  <Badge variant={campus.active ? "default" : "secondary"}>
+                    {campus.active ? "Ativo" : "Inativo"}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Membros da Organização */}
+      {members.length > 0 && (
+        <Card className="bg-[var(--card-color)]">
+          <CardHeader>
+            <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Membros da Organização ({members.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {members.slice(0, 6).map((member, index) => (
+                <div
+                  key={index}
+                  className="flex items-center space-x-3 p-3 bg-[var(--bg-simple)] rounded-lg border border-[var(--border-color)]"
+                >
+                  <div className="w-8 h-8 bg-[var(--secondary-color)] rounded-full flex items-center justify-center">
+                    <span className="text-sm font-bold text-[var(--font-color)]">
+                      {member.user?.name?.charAt(0) ||
+                        member.user?.email?.charAt(0) ||
+                        "?"}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[var(--font-color)] truncate">
+                      {member.user?.name || member.user?.email || "Usuário"}
+                    </p>
+                    <p className="text-xs text-[var(--font-color)] opacity-70 truncate">
+                      {member.role === "admin" ? "Administrador" : "Membro"}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {members.length > 6 && (
+                <div className="flex items-center justify-center p-3 bg-[var(--bg-simple)] rounded-lg border border-dashed border-[var(--border-color)]">
+                  <span className="text-sm text-[var(--font-color)] opacity-70">
+                    +{members.length - 6} mais
+                  </span>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Modal de Edição */}
+      <OrganizationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleEditOrganization}
+        organization={organization}
+        mode="edit"
+      />
+    </div>
+  );
+}

@@ -103,7 +103,7 @@ export function UserListCard({
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Link href={`/admin/users/${usuario.id}`}>
+                    <Link href={`/application/users/${usuario.id}`}>
                       <Button
                         variant="outline"
                         size="icon"

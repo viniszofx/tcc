@@ -74,7 +74,7 @@ export default function OrganizationCard({
           </CardDescription>
         </CardHeader>
         <CardFooter className="flex items-center justify-end gap-3 pt-0 pb-4 px-6">
-          <Link href={`/admin/organizations/${organization.id}`}>
+          <Link href={`/application/organizations/${organization.id}`}>
             <Button
               className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] hover:text-white"
               size="icon"

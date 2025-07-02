@@ -53,7 +53,7 @@ export function UserAvatar() {
         <DropdownMenuSeparator className="bg-[var(--font-color2)]" />
 
         {(userData.role === "admin" || userData.role === "president") && (
-          <a href={`/admin/profile/${userData.id}`}>
+          <a href={`/application/profile/${userData.id}`}>
             <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
               <User size={16} className="text-[var(--font-color2)]" />
               <span>Perfil</span>
@@ -62,7 +62,7 @@ export function UserAvatar() {
         )}
 
         {userData.role === "member" && (
-          <a href={`/dashboard/profile/${userData.id}`}>
+          <a href={`/application/profile/${userData.id}`}>
             <DropdownMenuItem className="flex items-center gap-2 text-[var(--font-color2)] hover:!bg-[var(--hover-color)] hover:!text-white transition-all cursor-pointer">
               <User size={16} className="text-[var(--font-color2)]" />
               <span>Perfil</span>

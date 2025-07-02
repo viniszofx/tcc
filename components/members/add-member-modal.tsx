@@ -26,6 +26,7 @@ interface AddMemberModalProps {
   onSave: (userId: string, role: string) => void;
   commissionId: string;
   currentMembers: string[];
+  campusId?: string; // Para filtrar usuários do mesmo campus
 }
 
 export default function AddMemberModal({
@@ -34,6 +35,7 @@ export default function AddMemberModal({
   onSave,
   commissionId,
   currentMembers,
+  campusId,
 }: AddMemberModalProps) {
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<string>("Membro");
@@ -46,10 +48,31 @@ export default function AddMemberModal({
         const users = await response.json();
 
         if (response.ok) {
-          const available = users.filter(
+          let filteredUsers = users.filter(
             (u: UserProfile) => !currentMembers.includes(u.id) && u.active
           );
-          setAvailableUsers(available);
+
+          // Se campusId foi fornecido, filtrar apenas usuários do mesmo campus
+          if (campusId) {
+            // Buscar todos os membros do campus
+            const campusMembersResponse = await fetch(
+              `/api/campus-member?campusId=${campusId}`
+            );
+
+            if (campusMembersResponse.ok) {
+              const campusMembers = await campusMembersResponse.json();
+              const campusUserIds = campusMembers.map(
+                (member: any) => member.userId
+              );
+
+              // Filtrar apenas usuários que são membros do campus
+              filteredUsers = filteredUsers.filter((user: UserProfile) =>
+                campusUserIds.includes(user.id)
+              );
+            }
+          }
+
+          setAvailableUsers(filteredUsers);
         }
       } catch (error) {
         console.error("Erro ao buscar usuários:", error);
@@ -59,7 +82,7 @@ export default function AddMemberModal({
     if (isOpen) {
       fetchAvailableUsers();
     }
-  }, [commissionId, currentMembers, isOpen]);
+  }, [commissionId, currentMembers, isOpen, campusId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,12 +156,6 @@ export default function AddMemberModal({
                     👑 Presidente
                   </SelectItem>
                   <SelectItem
-                    value="Secretario"
-                    className="hover:bg-[var(--hover-color)]"
-                  >
-                    📝 Secretário
-                  </SelectItem>
-                  <SelectItem
                     value="Membro"
                     className="hover:bg-[var(--hover-color)]"
                   >
@@ -163,11 +180,7 @@ export default function AddMemberModal({
               disabled={!selectedUser || !selectedRole}
             >
               Adicionar{" "}
-              {selectedRole === "Presidente"
-                ? "Presidente"
-                : selectedRole === "Secretario"
-                ? "Secretário"
-                : "Membro"}
+              {selectedRole === "Presidente" ? "Presidente" : "Membro"}
             </Button>
           </DialogFooter>
         </form>

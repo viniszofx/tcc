@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       apiResponse: data,
       status: response.status,
       roleDetected: data.user?.role,
-      shouldRedirectTo: data.user?.role === "admin" ? "/admin" : "/dashboard",
+      shouldRedirectTo: "/application",
     });
   } catch (error) {
     console.error("Erro no teste:", error);
