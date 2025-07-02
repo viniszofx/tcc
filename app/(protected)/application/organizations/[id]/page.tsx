@@ -132,7 +132,7 @@ export default function OrganizationDetailPage() {
   return (
     <div className="space-y-6">
       {/* Header com ações */}
-      <Card className="bg-[var(--bg-simple)] shadow-lg">
+      <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
@@ -158,7 +158,7 @@ export default function OrganizationDetailPage() {
 
       {/* Informações da Organização */}
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="bg-[var(--bg-simple)]">
+        <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
               <Building2 className="w-5 h-5" />
@@ -193,7 +193,7 @@ export default function OrganizationDetailPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-[var(--bg-simple)]">
+        <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
               <Users className="w-5 h-5" />
@@ -231,7 +231,7 @@ export default function OrganizationDetailPage() {
 
       {/* Campus da Organização */}
       {campuses.length > 0 && (
-        <Card className="bg-[var(--bg-simple)]">
+        <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
               <MapPin className="w-5 h-5" />
@@ -265,7 +265,7 @@ export default function OrganizationDetailPage() {
 
       {/* Membros da Organização */}
       {members.length > 0 && (
-        <Card className="bg-[var(--bg-simple)]">
+        <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
               <Users className="w-5 h-5" />
