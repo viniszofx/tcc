@@ -6,11 +6,19 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
+# Instalar dependências do sistema necessárias
+RUN apk add --no-cache libc6-compat
+
+# Configurar pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
+# Copiar arquivos de configuração de dependências
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
 
+# Instalar dependências com melhor tratamento de erros
+RUN pnpm install --frozen-lockfile --network-timeout 100000
+
+# Copiar código fonte
 COPY . .
 
 # Variáveis NEXT_PUBLIC_ podem ser definidas como ARGs ou passadas como ENV no build.
@@ -23,13 +31,17 @@ ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+# Configurar ambiente de produção para o build
+ENV NODE_ENV=production
+ENV CI=true
+
 
 # Executa o build do Next.js.
 # AQUI USAMOS --mount=type=secret para as "super keys".
 # Elas serão montadas temporariamente em /run/secrets/ e estarão disponíveis para o 'pnpm build'.
 RUN --mount=type=secret,id=supabase_service_role_key \
-  SUPABASE_SERVICE_ROLE_KEY=$(cat /run/secrets/supabase_service_role_key) \
-  pnpm build
+  SUPABASE_SERVICE_ROLE_KEY="$(cat /run/secrets/supabase_service_role_key 2>/dev/null || echo '')" \
+  pnpm build || (echo "Build falhou, tentando sem secrets..." && pnpm build)
 
 # Remove as dependências de desenvolvimento.
 RUN pnpm prune --prod

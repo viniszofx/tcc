@@ -2,14 +2,27 @@ import { setupAvatarsBucket } from "@/lib/supabase-avatars";
 import { config } from "dotenv";
 import { cleanDatabase } from "./clean-database";
 
-// Carregar variáveis de ambiente
-config({ path: ".env" });
+// Carregar variáveis de ambiente apenas em desenvolvimento
+if (!process.env.CI && process.env.NODE_ENV !== 'production') {
+  config({ path: ".env" });
+}
 
 // Função para setup de avatars
 async function setupAvatars() {
   try {
     console.log("📁 === CONFIGURAÇÃO DO BUCKET DE AVATARES ===");
-    console.log("🔧 Executando durante o build...");
+    
+    // Verificar se estamos em ambiente de build/CI
+    const isBuildEnvironment = process.env.CI === 'true' || process.env.NODE_ENV === 'production';
+    
+    if (isBuildEnvironment) {
+      console.log("🏗️ Detectado ambiente de build/CI");
+      console.log("⏭️ Pulando configuração do Supabase durante o build");
+      console.log("� Configure o bucket manualmente após o deploy");
+      return true; // Retornar sucesso para não interromper o build
+    }
+
+    console.log("🔧 Executando configuração do bucket...");
 
     const success = await setupAvatarsBucket();
 
@@ -20,20 +33,13 @@ async function setupAvatars() {
       console.warn("⚠️ Falha ao configurar bucket de avatares");
       console.log("💡 O bucket pode ser configurado posteriormente com:");
       console.log("   npm run setup avatars");
-
-      // Em ambiente de build, não falhar se o Supabase não estiver disponível
-      if (process.env.NODE_ENV === "production" || process.env.CI) {
-        console.log("🏗️ Continuando build sem configuração do bucket...");
-        return true; // Não falhar durante o build
-      }
-
       return false;
     }
   } catch (error) {
     console.error("❌ Erro ao configurar bucket de avatares:", error);
 
     // Em ambiente de build ou CI, não falhar
-    if (process.env.NODE_ENV === "production" || process.env.CI) {
+    if (process.env.NODE_ENV === "production" || process.env.CI === 'true') {
       console.log("🏗️ Erro ignorado durante o build");
       return true;
     }
