@@ -168,7 +168,7 @@ export default function CommissionHistoryPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="bg-[var(--bg-simple)] shadow-lg">
+      <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
             Histórico - {commission.name}
@@ -194,7 +194,7 @@ export default function CommissionHistoryPage() {
                   <div className="absolute left-6 top-12 w-0.5 h-16 bg-[var(--border-color)]" />
                 )}
 
-                <Card className="bg-[var(--card-color)] border-[var(--border-color)] ml-12 relative">
+                <Card className="bg-[var(--bg-simple)] border-[var(--border-color)] ml-12 relative">
                   {/* Ícone da ação */}
                   <div className="absolute -left-12 top-4 w-8 h-8 bg-[var(--bg-simple)] border-2 border-[var(--border-color)] rounded-full flex items-center justify-center">
                     <ActionIcon className="w-4 h-4 text-[var(--font-color)]" />
@@ -279,7 +279,7 @@ export default function CommissionHistoryPage() {
           })}
         </div>
       ) : (
-        <Card className="bg-[var(--card-color)]">
+        <Card className="bg-[var(--bg-simple)] border-[var(--border-color)]">
           <CardContent className="p-12 text-center">
             <div className="space-y-4">
               <div className="w-16 h-16 bg-[var(--secondary-color)] rounded-full flex items-center justify-center mx-auto">
