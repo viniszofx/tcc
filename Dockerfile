@@ -16,12 +16,10 @@ COPY . .
 # Variáveis NEXT_PUBLIC_ podem ser definidas como ARGs ou passadas como ENV no build.
 # Aqui vamos usar ARGs para as NEXT_PUBLIC_, e os secrets para as "super keys".
 # Isso é uma melhor prática para NEXT_PUBLIC_, que são conhecidas no build.
-ARG NEXT_PUBLIC_BASE_URL
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 # Defina as ARGs como ENV para que o Next.js as leia durante o build.
-ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -42,12 +40,14 @@ FROM node:22-alpine AS runner
 
 WORKDIR /app
 
-# Copia apenas os artefatos essenciais do builder.
-# O arquivo .env não é copiado. Os segredos NÃO estão nesta imagem final.
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copia os arquivos necessários do builder (sem modo standalone)
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/node_modules ./node_modules
 
 # Definições de ambiente para o contêiner de produção.
 # Variáveis como PORT e NODE_ENV são seguras.

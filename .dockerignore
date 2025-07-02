@@ -2,7 +2,16 @@ node_modules
 .next
 .env.local
 .env.development
+.env.production
+.env
 *.log
 .git
 Dockerfile
+Dockerfile-slim
 .dockerignore
+README.md
+.github
+.vscode
+.gitignore
+scripts/clean-database.ts
+sql/
