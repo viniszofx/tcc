@@ -218,7 +218,7 @@ export default function CommissionMembersPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="bg-[var(--bg-simple)] shadow-lg">
+      <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -245,7 +245,7 @@ export default function CommissionMembersPage() {
 
       {/* Lista de Membros */}
       {members.length > 0 && (
-        <Card className="bg-[var(--card-color)]">
+        <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
               <Users className="w-5 h-5" />
@@ -253,13 +253,13 @@ export default function CommissionMembersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {members.map((member) => {
                 const RoleIcon = getRoleIcon(member.roleInCommission);
                 return (
                   <Card
                     key={member.userId}
-                    className="bg-[var(--bg-simple)] border border-[var(--border-color)] hover:bg-[var(--hover-color)] transition-colors cursor-pointer"
+                    className="bg-[var(--bg-simple)] border border-[var(--border-color)]"
                     onClick={() =>
                       router.push(
                         `/application/commissions/${commissionId}/members/${member.userId}`
@@ -287,11 +287,11 @@ export default function CommissionMembersPage() {
                           <p className="text-sm text-[var(--font-color)] opacity-70 truncate">
                             {member.user?.email}
                           </p>
-                          <div className="flex items-center justify-between mt-2">
+                          <div className="mt-2 space-y-2">
                             <Badge variant="secondary" className="text-xs">
                               {member.roleInCommission}
                             </Badge>
-                            <div className="flex gap-1">
+                            <div className="flex flex-wrap justify-end gap-2">
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -314,9 +314,7 @@ export default function CommissionMembersPage() {
                                     e.stopPropagation();
                                     handleRemoveMember(
                                       member.userId,
-                                      member.user?.name ||
-                                        member.user?.email ||
-                                        "Usuário"
+                                      member.user?.name || member.user?.email || "Usuário"
                                     );
                                   }}
                                 >
@@ -338,7 +336,7 @@ export default function CommissionMembersPage() {
 
       {/* Quando não há membros */}
       {members.length === 0 && (
-        <Card className="bg-[var(--card-color)]">
+        <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
           <CardContent className="p-12 text-center">
             <div className="space-y-4">
               <div className="w-16 h-16 bg-[var(--secondary-color)] rounded-full flex items-center justify-center mx-auto">
@@ -369,7 +367,7 @@ export default function CommissionMembersPage() {
       {/* Estatísticas dos Membros */}
       {members.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2">
-          <Card className="bg-[var(--card-color)]">
+          <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-yellow-100 rounded-lg">
@@ -390,7 +388,7 @@ export default function CommissionMembersPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[var(--card-color)]">
+          <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-gray-100 rounded-lg">
@@ -413,7 +411,6 @@ export default function CommissionMembersPage() {
         </div>
       )}
 
-      {/* Modal para adicionar membro */}
       <AddMemberModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
