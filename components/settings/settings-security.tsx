@@ -201,7 +201,7 @@ export function SecuritySettings() {
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 mt-6">
+      <div className="flex flex-col gap-2 mt-6 sm:flex-row sm:justify-end">
         <Button
           variant="outline"
           onClick={() => {

@@ -121,7 +121,7 @@ export function AppearanceSettings() {
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 mt-6">
+      <div className="flex flex-col gap-2 mt-6 sm:flex-row sm:justify-end">
         <Button
           variant="outline"
           className="bg-[var(--button-color)] hover:bg-[var(--hover-2-color)] text-[var(--font-color2)] cursor-pointer"
@@ -130,13 +130,11 @@ export function AppearanceSettings() {
         </Button>
         <Button
           onClick={() => {
-            // Salvar configurações de animação
             localStorage.setItem(
               "animations-enabled",
               animationsEnabled.toString()
             );
 
-            // Mostrar feedback de sucesso
             const event = new CustomEvent("settings-saved", {
               detail: {
                 message: "Configurações de aparência salvas com sucesso!",
