@@ -215,7 +215,7 @@ export default function UserDetailsPage() {
             descricao: userData.description,
             active: userData.active,
             perfil: {
-              imagem_url: userData.avatar,
+              imagem_url: userData.avatar || undefined,
               descricao: userData.description,
             },
           }}

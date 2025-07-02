@@ -17,7 +17,7 @@ export default function ProfileSidebar({
     <div className="w-full md:w-1/3 flex flex-col space-y-6">
       <div className="flex flex-col items-center space-y-4 bg-[var(--bg-simple)] rounded-lg p-4 border border-[var(--border-color)] shadow-sm">
         <RoleProfile role={usuario.active ? "ativo" : "inativo"} />
-        <ProfileAvatar foto={usuario.avatar} />
+        <ProfileAvatar foto={usuario.avatar || undefined} />
         <h3 className="font-medium text-[var(--font-color)] text-center break-words w-full max-w-full truncate px-2">
           {usuario.name}
         </h3>
