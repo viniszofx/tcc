@@ -14,6 +14,45 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+async function setupAvatarsPolicies() {
+  try {
+    console.log("🔒 Configurando políticas RLS para bucket de avatares...");
+    
+    console.log("📋 IMPORTANTE: Execute manualmente no Supabase SQL Editor:");
+    console.log(`
+-- Habilitar RLS para as tabelas de storage
+ALTER TABLE storage.buckets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+
+-- Política para upload de avatares
+DROP POLICY IF EXISTS "Users can upload their own avatars" ON storage.objects;
+CREATE POLICY "Users can upload their own avatars" ON storage.objects 
+FOR INSERT WITH CHECK (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+-- Política para visualização de avatares  
+DROP POLICY IF EXISTS "Anyone can view avatars" ON storage.objects;
+CREATE POLICY "Anyone can view avatars" ON storage.objects 
+FOR SELECT USING (bucket_id = 'avatars');
+
+-- Política para atualização de avatares
+DROP POLICY IF EXISTS "Users can update their own avatars" ON storage.objects;
+CREATE POLICY "Users can update their own avatars" ON storage.objects 
+FOR UPDATE USING (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+-- Política para deleção de avatares
+DROP POLICY IF EXISTS "Users can delete their own avatars" ON storage.objects;
+CREATE POLICY "Users can delete their own avatars" ON storage.objects 
+FOR DELETE USING (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
+    `);
+    
+    console.log("⚠️  Execute as queries SQL acima manualmente no Supabase SQL Editor");
+    console.log("📁 Para acessar: https://app.supabase.com → Seu projeto → SQL Editor");
+    
+  } catch (error) {
+    console.error("❌ Erro ao configurar políticas RLS:", error);
+  }
+}
+
 export async function setupAvatarsBucket() {
   try {
     // Verificar se o bucket já existe
@@ -39,14 +78,8 @@ export async function setupAvatarsBucket() {
       console.log("Bucket de avatares criado com sucesso:", data);
     }
 
-    // Configurar política RLS para o bucket
-    const { error: policyError } = await supabaseAdmin.rpc(
-      "create_avatars_policy"
-    );
-
-    if (policyError && !policyError.message.includes("already exists")) {
-      console.error("Erro ao criar política RLS:", policyError);
-    }
+    // Configurar políticas RLS para o bucket
+    await setupAvatarsPolicies();
 
     return true;
   } catch (error) {

@@ -132,72 +132,93 @@ async function cleanSupabaseBuckets() {
           continue;
         }
 
-        // Função recursiva para buscar todos os arquivos incluindo em subpastas
-        async function getAllFiles(path = ""): Promise<string[]> {
-          const { data: items, error } = await supabaseAdmin.storage
-            .from(bucket.name)
-            .list(path, {
-              limit: 1000,
-              sortBy: { column: "name", order: "asc" },
-            });
+        // Função melhorada para listar e deletar TODOS os arquivos
+        async function forceEmptyBucket(): Promise<void> {
+          let attempts = 0;
+          const maxAttempts = 5;
 
-          if (error) {
-            console.error(`❌ Erro ao listar arquivos em ${path}:`, error);
-            return [];
-          }
+          while (attempts < maxAttempts) {
+            attempts++;
+            console.log(`🔄 Tentativa ${attempts} de esvaziar bucket ${bucket.name}...`);
 
-          if (!items) return [];
+            // Listar todos os arquivos na raiz
+            const { data: items, error: listError } = await supabaseAdmin.storage
+              .from(bucket.name)
+              .list('', {
+                limit: 1000,
+                sortBy: { column: 'name', order: 'asc' }
+              });
 
-          const allFiles: string[] = [];
-
-          for (const item of items) {
-            const fullPath = path ? `${path}/${item.name}` : item.name;
-
-            if (item.metadata?.mimetype || !item.name.endsWith("/")) {
-              // É um arquivo
-              allFiles.push(fullPath);
-            } else {
-              // É uma pasta, buscar recursivamente
-              const subFiles = await getAllFiles(fullPath);
-              allFiles.push(...subFiles);
+            if (listError) {
+              console.error(`❌ Erro ao listar arquivos:`, listError);
+              break;
             }
-          }
 
-          return allFiles;
+            if (!items || items.length === 0) {
+              console.log(`✅ Bucket ${bucket.name} está vazio`);
+              break;
+            }
+
+            // Coletar TODOS os caminhos de arquivos
+            const allFiles: string[] = [];
+
+            for (const item of items) {
+              if (item.name) {
+                allFiles.push(item.name);
+                
+                // Se for uma pasta, listar seus conteúdos recursivamente
+                if (!item.name.includes('.') || item.name.endsWith('/')) {
+                  try {
+                    const { data: subItems } = await supabaseAdmin.storage
+                      .from(bucket.name)
+                      .list(item.name, { limit: 1000 });
+                    
+                    if (subItems) {
+                      subItems.forEach(subItem => {
+                        if (subItem.name) {
+                          allFiles.push(`${item.name}/${subItem.name}`);
+                        }
+                      });
+                    }
+                  } catch (error) {
+                    // Ignorar erros de listagem de subpastas
+                  }
+                }
+              }
+            }
+
+            if (allFiles.length === 0) break;
+
+            console.log(`📁 Deletando ${allFiles.length} arquivos do bucket ${bucket.name}`);
+
+            // Deletar todos os arquivos
+            const { error: deleteError } = await supabaseAdmin.storage
+              .from(bucket.name)
+              .remove(allFiles);
+
+            if (deleteError) {
+              console.error(`❌ Erro ao deletar arquivos:`, deleteError);
+              // Continue tentando mesmo com erros
+            } else {
+              console.log(`✅ ${allFiles.length} arquivos deletados com sucesso`);
+            }
+
+            // Pequena pausa entre tentativas
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
         }
 
-        // Buscar todos os arquivos incluindo subpastas
-        const allFiles = await getAllFiles();
+        // Executar limpeza forçada
+        await forceEmptyBucket();
 
-        // Deletar todos os arquivos se existirem
-        if (allFiles && allFiles.length > 0) {
-          console.log(
-            `📁 Deletando ${allFiles.length} arquivos do bucket ${bucket.name}`
-          );
+        // Verificação final antes de deletar o bucket
+        const { data: finalCheck } = await supabaseAdmin.storage
+          .from(bucket.name)
+          .list('', { limit: 1 });
 
-          // Deletar em lotes para evitar timeouts
-          const batchSize = 100;
-          for (let i = 0; i < allFiles.length; i += batchSize) {
-            const batch = allFiles.slice(i, i + batchSize);
-            const { error: deleteFilesError } = await supabaseAdmin.storage
-              .from(bucket.name)
-              .remove(batch);
-
-            if (deleteFilesError) {
-              console.error(
-                `❌ Erro ao deletar lote de arquivos do bucket ${bucket.name}:`,
-                deleteFilesError
-              );
-            } else {
-              console.log(
-                `✅ Lote ${
-                  Math.floor(i / batchSize) + 1
-                } de arquivos deletado (${batch.length} arquivos)`
-              );
-            }
-          }
-        } else {
-          console.log(`ℹ️  Bucket ${bucket.name} já está vazio`);
+        if (finalCheck && finalCheck.length > 0) {
+          console.warn(`⚠️  Bucket ${bucket.name} ainda contém arquivos, pulando deleção`);
+          continue;
         }
 
         // Deletar o bucket
@@ -209,6 +230,16 @@ async function cleanSupabaseBuckets() {
             `❌ Erro ao deletar bucket ${bucket.name}:`,
             deleteBucketError
           );
+          // Tentar uma segunda vez após uma pausa
+          console.log(`🔄 Tentando deletar bucket ${bucket.name} novamente...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          const { error: retryError } = await supabaseAdmin.storage.deleteBucket(bucket.name);
+          if (retryError) {
+            console.error(`❌ Falha na segunda tentativa:`, retryError);
+          } else {
+            console.log(`✅ Bucket ${bucket.name} deletado com sucesso na segunda tentativa`);
+          }
         } else {
           console.log(`✅ Bucket ${bucket.name} deletado com sucesso`);
         }
