@@ -61,7 +61,7 @@ export default function ApplicationDashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome Card */}
-      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 dark:border-blue-800">
+      <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
         <CardHeader className="pb-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
@@ -83,7 +83,7 @@ export default function ApplicationDashboard() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Admin Actions */}
         {permissions.canManageOrganizations && (
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <Card className="border border-[var(--border-color)] hover:shadow-lg transition-shadow cursor-pointer">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-3">
                 <Building2 className="h-6 w-6 text-green-600" />
@@ -115,7 +115,7 @@ export default function ApplicationDashboard() {
         )}
 
         {permissions.canManageUsers && (
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <Card className="border border-[var(--border-color)] hover:shadow-lg transition-shadow cursor-pointer">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-3">
                 <Users className="h-6 w-6 text-blue-600" />
@@ -139,7 +139,7 @@ export default function ApplicationDashboard() {
 
         {/* Comissões Actions */}
         {permissions.canManageCommissions && (
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <Card className="border border-[var(--border-color)] hover:shadow-lg transition-shadow cursor-pointer">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-3">
                 <Database className="h-6 w-6 text-purple-600" />
@@ -192,7 +192,7 @@ export default function ApplicationDashboard() {
       </div>
 
       {/* User Info */}
-      <Card>
+      <Card className="border border-[var(--border-color)]">
         <CardHeader>
           <CardTitle>Informações do Usuário</CardTitle>
         </CardHeader>

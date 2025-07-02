@@ -146,10 +146,10 @@ export default function OrganizationDetailPage() {
             <div className="flex gap-2">
               <Button
                 onClick={() => setIsModalOpen(true)}
-                className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)]"
+                className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] px-4 py-2 text-base sm:px-2 sm:py-1 sm:text-sm"
               >
-                <Edit className="w-4 h-4 mr-2" />
-                Editar Organização
+                <Edit className="w-4 h-4 mr-0 sm:mr-2" />
+                <span className="hidden sm:inline">Editar Organização</span>
               </Button>
             </div>
           </div>
@@ -158,7 +158,7 @@ export default function OrganizationDetailPage() {
 
       {/* Informações da Organização */}
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="bg-[var(--card-color)]">
+        <Card className="bg-[var(--bg-simple)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
               <Building2 className="w-5 h-5" />
@@ -193,7 +193,7 @@ export default function OrganizationDetailPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-[var(--card-color)]">
+        <Card className="bg-[var(--bg-simple)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
               <Users className="w-5 h-5" />
@@ -231,7 +231,7 @@ export default function OrganizationDetailPage() {
 
       {/* Campus da Organização */}
       {campuses.length > 0 && (
-        <Card className="bg-[var(--card-color)]">
+        <Card className="bg-[var(--bg-simple)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
               <MapPin className="w-5 h-5" />
@@ -243,7 +243,7 @@ export default function OrganizationDetailPage() {
               {campuses.map((campus) => (
                 <div
                   key={campus.id}
-                  className="flex items-center justify-between p-4 bg-[var(--bg-simple)] rounded-lg border border-[var(--border-color)] hover:bg-[var(--hover-color)] transition-colors"
+                  className="flex items-center justify-between p-4 bg-[var(--bg-simple)] rounded-lg border border-[var(--border-color)] hover:bg-[var(--hover-3-color)] transition-colors"
                 >
                   <div>
                     <h3 className="font-semibold text-[var(--font-color)]">
@@ -265,7 +265,7 @@ export default function OrganizationDetailPage() {
 
       {/* Membros da Organização */}
       {members.length > 0 && (
-        <Card className="bg-[var(--card-color)]">
+        <Card className="bg-[var(--bg-simple)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
               <Users className="w-5 h-5" />
