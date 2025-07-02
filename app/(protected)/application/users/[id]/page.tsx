@@ -31,8 +31,8 @@ export default function UserDetailsPage() {
     typeof params.id === "string"
       ? params.id
       : Array.isArray(params.id)
-      ? params.id[0]
-      : "";
+        ? params.id[0]
+        : "";
 
   const [userData, setUserData] = useState<UserProfile | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -175,7 +175,7 @@ export default function UserDetailsPage() {
   return (
     <div className="space-y-6">
       {/* Header com ações */}
-      <Card className="bg-[var(--bg-simple)] shadow-lg">
+      <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
@@ -189,17 +189,18 @@ export default function UserDetailsPage() {
             <div className="flex gap-2">
               <Button
                 onClick={() => setIsEditModalOpen(true)}
-                className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)]"
+                className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] px-4 py-2 text-base sm:px-2 sm:py-1 sm:text-sm"
               >
-                <Pencil className="w-4 h-4 mr-2" />
-                Editar
+                <Pencil className="w-4 h-4 mr-0 sm:mr-2" />
+                <span className="hidden sm:inline">Editar</span>
               </Button>
               <Button
                 variant="destructive"
                 onClick={() => setIsDeleteDialogOpen(true)}
+                className="px-4 py-2 text-base sm:px-2 sm:py-1 sm:text-sm"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Excluir
+                <Trash2 className="w-4 h-4 mr-0 sm:mr-2" />
+                <span className="hidden sm:inline">Excluir</span>
               </Button>
             </div>
           </div>
@@ -220,7 +221,7 @@ export default function UserDetailsPage() {
             },
           }}
         />
-        <Card className="bg-[var(--card-color)]">
+        <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)]">
               Detalhes do Usuário
@@ -260,8 +261,7 @@ export default function UserDetailsPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Modais */}
+      
       <EditUserModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
