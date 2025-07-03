@@ -94,8 +94,7 @@ export default function CommissionMemberDetailPage() {
     if (!member) return;
 
     const confirmRemoval = confirm(
-      `Tem certeza que deseja remover "${
-        member.name || member.email
+      `Tem certeza que deseja remover "${member.name || member.email
       }" da comissão? Esta ação não pode ser desfeita.`
     );
 
@@ -111,8 +110,7 @@ export default function CommissionMemberDetailPage() {
 
       if (response.ok) {
         alert(
-          `"${
-            member.name || member.email
+          `"${member.name || member.email
           }" foi removido da comissão com sucesso.`
         );
         router.push(`/application/commissions/${commissionId}/members`);
@@ -159,19 +157,10 @@ export default function CommissionMemberDetailPage() {
   return (
     <div className="space-y-6">
       {/* Header com navegação */}
-      <Card className="bg-[var(--bg-simple)] shadow-lg">
+      <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <Button
-                onClick={handleGoBack}
-                variant="outline"
-                size="sm"
-                className="border-[var(--border-input)]"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Voltar
-              </Button>
               <div>
                 <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
                   {member.name || member.email}
@@ -196,14 +185,14 @@ export default function CommissionMemberDetailPage() {
 
       {/* Informações do Membro */}
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="bg-[var(--card-color)]">
+        <Card className="w-full bg-[var(--bg-simple)] border border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
               <User className="w-5 h-5" />
               Informações Pessoais
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-4 sm:px-6 md:px-8">
             <div>
               <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
                 Nome Completo
@@ -216,7 +205,7 @@ export default function CommissionMemberDetailPage() {
               <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
                 E-mail
               </label>
-              <p className="text-[var(--font-color)] flex items-center gap-2">
+              <p className="text-[var(--font-color)] flex items-center gap-2 break-all">
                 <Mail className="w-4 h-4" />
                 {member.email}
               </p>
@@ -232,14 +221,14 @@ export default function CommissionMemberDetailPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-[var(--card-color)]">
+        <Card className="w-full bg-[var(--bg-simple)] border border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
               <Shield className="w-5 h-5" />
               Permissões na Comissão
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-4 sm:px-6 md:px-8">
             <div>
               <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
                 Papel na Comissão
@@ -286,7 +275,7 @@ export default function CommissionMemberDetailPage() {
 
       {/* Informações da Comissão */}
       {commission && (
-        <Card className="bg-[var(--card-color)]">
+        <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
               <Calendar className="w-5 h-5" />

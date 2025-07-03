@@ -13,15 +13,12 @@ import {
 import { Building2, Home, Info, Landmark, Settings, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   cargo?: "admin" | "operador" | "presidente";
 }
 
 export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
-  const params = useParams();
-
   return (
     <Sidebar {...props}>
       <SidebarHeader className="bg-[var(--secondary-color)]">

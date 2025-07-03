@@ -91,7 +91,7 @@ export function ProfileEditForm({
 
   return (
     <>
-      <Card className="bg-[var(--card-color)] border-[var(--border-color)]">
+      <Card className="bg-[var(--bg-simple)] border-[var(--border-color)]">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-[var(--font-color)]">

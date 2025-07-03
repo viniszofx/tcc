@@ -442,16 +442,16 @@ export default function CommissionUploadPage() {
                 case "valor":
                   item.VALOR_AQUISICAO = value
                     ? parseFloat(
-                        value.replace(/[^\d.,]/g, "").replace(",", ".")
-                      )
+                      value.replace(/[^\d.,]/g, "").replace(",", ".")
+                    )
                     : null;
                   break;
                 case "valor depreciado":
                 case "valor_depreciado":
                   item.VALOR_DEPRECIADO = value
                     ? parseFloat(
-                        value.replace(/[^\d.,]/g, "").replace(",", ".")
-                      )
+                      value.replace(/[^\d.,]/g, "").replace(",", ".")
+                    )
                     : null;
                   break;
                 case "numero nota fiscal":
@@ -655,7 +655,7 @@ export default function CommissionUploadPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="bg-[var(--bg-simple)] shadow-lg">
+      <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -690,7 +690,7 @@ export default function CommissionUploadPage() {
       </Card>
 
       {/* Formulário de Upload */}
-      <Card className="bg-[var(--card-color)]">
+      <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
         <CardHeader>
           <CardTitle className="text-[var(--font-color)]">
             Novo Upload
@@ -713,7 +713,7 @@ export default function CommissionUploadPage() {
               />
               <Label
                 htmlFor="files"
-                className="cursor-pointer text-[var(--font-color)] hover:text-[var(--button-color)]"
+                className="cursor-pointer text-[var(--font-color)] hover:text-[var(--button-color)] text-center w-full flex flex-col items-center"
               >
                 <span className="font-medium">Clique para selecionar</span> ou
                 arraste um arquivo aqui
@@ -816,15 +816,15 @@ export default function CommissionUploadPage() {
               {isUploading
                 ? "Enviando..."
                 : isProcessing
-                ? "Processando..."
-                : "Fazer Upload"}
+                  ? "Processando..."
+                  : "Fazer Upload"}
             </Button>
             <Button
               variant="outline"
               onClick={() =>
                 router.push(`/application/commissions/${commissionId}`)
               }
-              className="border-[var(--border-color)] text-[var(--font-color)] hover:bg-[var(--hover-color)]"
+              className="border-[var(--border-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)]"
             >
               Voltar
             </Button>
@@ -833,7 +833,7 @@ export default function CommissionUploadPage() {
       </Card>
 
       {/* Informações Adicionais */}
-      <Card className="bg-[var(--card-color)]">
+      <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
         <CardHeader>
           <CardTitle className="text-[var(--font-color)]">
             Tipos de Arquivo Aceitos

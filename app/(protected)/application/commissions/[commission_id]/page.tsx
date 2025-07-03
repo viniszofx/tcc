@@ -124,7 +124,7 @@ export default function CommissionDetailPage() {
   return (
     <div className="space-y-6">
       {/* Header da Comissão */}
-      <Card className="bg-[var(--bg-simple)] shadow-lg">
+      <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="space-y-2">
@@ -137,21 +137,21 @@ export default function CommissionDetailPage() {
               <div className="flex gap-2 flex-wrap">
                 <Badge
                   variant="secondary"
-                  className="bg-[var(--card-color)] text-[var(--font-color)]"
+                  className="bg-[var(--bg-simple)] text-[var(--font-color)]"
                 >
                   <Building2 className="w-3 h-3 mr-1" />
                   {commission.campus?.name || "Campus não definido"}
                 </Badge>
                 <Badge
                   variant="secondary"
-                  className="bg-[var(--card-color)] text-[var(--font-color)]"
+                  className="bg-[var(--bg-simple)] text-[var(--font-color)]"
                 >
                   <CalendarDays className="w-3 h-3 mr-1" />
                   {commission.year}
                 </Badge>
                 <Badge
                   variant="secondary"
-                  className="bg-[var(--card-color)] text-[var(--font-color)]"
+                  className="bg-[var(--bg-simple)] text-[var(--font-color)]"
                 >
                   <FileText className="w-3 h-3 mr-1" />
                   {commission.type}
@@ -168,7 +168,7 @@ export default function CommissionDetailPage() {
           .filter((item) => item.show)
           .map((item, index) => (
             <Link key={index} href={item.href}>
-              <Card className="h-full bg-[var(--card-color)] border-[var(--border-color)] hover:bg-[var(--hover-color)] transition-all duration-300 cursor-pointer group">
+              <Card className="h-full bg-[var(--bg-simple)] border-[var(--border-color)] hover:bg-[var(--hover-color)] transition-all duration-300 cursor-pointer group">
                 <CardContent className="p-6">
                   <div className="flex items-center space-x-4">
                     <div
@@ -193,7 +193,7 @@ export default function CommissionDetailPage() {
 
       {/* Informações Adicionais */}
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="bg-[var(--card-color)]">
+        <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)]">
               Informações da Comissão
@@ -229,7 +229,7 @@ export default function CommissionDetailPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-[var(--card-color)]">
+        <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)]">
               Estatísticas

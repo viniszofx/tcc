@@ -132,22 +132,6 @@ export function SecuritySettings() {
 
           <div className="grid gap-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label
-                  htmlFor="current-password"
-                  className="text-[var(--font-color)]"
-                >
-                  Senha Atual (opcional para validação extra)
-                </Label>
-                <Input
-                  id="current-password"
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--header-color)]"
-                  placeholder="Digite sua senha atual (opcional)"
-                />
-              </div>
               <div className="flex items-end">
                 <p className="text-xs text-[var(--font-color)] opacity-70">
                   Última alteração: {passwordLastChanged}
@@ -201,7 +185,7 @@ export function SecuritySettings() {
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 mt-6">
+      <div className="flex flex-col gap-2 mt-6 sm:flex-row sm:justify-end">
         <Button
           variant="outline"
           onClick={() => {

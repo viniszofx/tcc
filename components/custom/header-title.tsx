@@ -116,7 +116,7 @@ const HeaderTitle = () => {
           useRouterBack={!getCustomBackRoute()}
         />
       )}
-      <h1 className="text-xl font-bold text-[var(--font-color)]">{title}</h1>
+      <h1 className="text-xl font-bold text-[var(--font-color)] hidden sm:block">{title}</h1>
     </div>
   );
 };

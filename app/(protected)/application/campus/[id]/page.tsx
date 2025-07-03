@@ -131,7 +131,7 @@ export default function CampusDetailPage() {
   return (
     <div className="space-y-6">
       {/* Header com ações */}
-      <Card className="bg-[var(--bg-simple)] shadow-lg">
+      <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
@@ -145,10 +145,10 @@ export default function CampusDetailPage() {
             <div className="flex gap-2">
               <Button
                 onClick={() => setIsModalOpen(true)}
-                className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)]"
+                className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] px-4 py-2 text-base sm:px-2 sm:py-1 sm:text-sm"
               >
-                <Edit className="w-4 h-4 mr-2" />
-                Editar Campus
+                <Edit className="w-4 h-4 mr-0 sm:mr-2" />
+                <span className="hidden sm:inline">Editar Campus</span>
               </Button>
             </div>
           </div>
@@ -157,7 +157,7 @@ export default function CampusDetailPage() {
 
       {/* Informações do Campus */}
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="bg-[var(--card-color)]">
+        <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
               <Building2 className="w-5 h-5" />
@@ -184,7 +184,7 @@ export default function CampusDetailPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-[var(--card-color)]">
+        <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
               <Users className="w-5 h-5" />
@@ -222,7 +222,7 @@ export default function CampusDetailPage() {
 
       {/* Organização Associada */}
       {organization && (
-        <Card className="bg-[var(--card-color)]">
+        <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
               <Building2 className="w-5 h-5" />
@@ -249,7 +249,7 @@ export default function CampusDetailPage() {
 
       {/* Membros do Campus */}
       {members.length > 0 && (
-        <Card className="bg-[var(--card-color)]">
+        <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
               <Users className="w-5 h-5" />
@@ -292,7 +292,6 @@ export default function CampusDetailPage() {
         </Card>
       )}
 
-      {/* Modal de Edição */}
       <CampusModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

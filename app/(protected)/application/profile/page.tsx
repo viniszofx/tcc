@@ -86,7 +86,7 @@ export default function MyProfilePage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header */}
-      <Card className="bg-[var(--bg-simple)] shadow-lg">
+      <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
@@ -115,7 +115,7 @@ export default function MyProfilePage() {
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Avatar e Upload */}
-        <Card className="bg-[var(--card-color)] border-[var(--border-color)]">
+        <Card className="bg-[var(--bg-simple)] border-[var(--border-color)]">
           <CardHeader className="text-center">
             <CardTitle className="text-[var(--font-color)]">Avatar</CardTitle>
             <CardDescription className="text-[var(--font-color)] opacity-70">
@@ -144,7 +144,7 @@ export default function MyProfilePage() {
       {/* Informações Adicionais */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Associações */}
-        <Card className="bg-[var(--card-color)] border-[var(--border-color)]">
+        <Card className="bg-[var(--bg-simple)] border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)]">
               Suas Associações
@@ -223,7 +223,7 @@ export default function MyProfilePage() {
         </Card>
 
         {/* Segurança */}
-        <Card className="bg-[var(--card-color)] border-[var(--border-color)]">
+        <Card className="bg-[var(--bg-simple)] border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)]">
               Segurança

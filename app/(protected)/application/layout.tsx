@@ -69,7 +69,7 @@ function ApplicationContent({ children }: ApplicationLayoutProps) {
             </div>
           </header>
 
-          <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
+          <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 bg-[var(--card-color)]">
             <div className="w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto">
               {children}
             </div>

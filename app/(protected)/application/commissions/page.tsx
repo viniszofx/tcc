@@ -152,7 +152,7 @@ export default function CommissionsPage() {
             {commissions.map((commission) => (
               <Card
                 key={commission.id}
-                className="bg-[var(--card-color)] border-[var(--border-color)] hover:bg-[var(--hover-color)] transition-all duration-300 cursor-pointer"
+                className="bg-[var(--bg-simple)] border-[var(--border-color)]"
               >
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg font-bold text-[var(--font-color)]">

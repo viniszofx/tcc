@@ -165,11 +165,10 @@ export function NotificationSettings() {
         </TabsContent>
       </Tabs>
 
-      <div className="flex justify-end gap-2 mt-6">
+      <div className="flex flex-col gap-2 mt-6 sm:flex-row sm:justify-end">
         <Button
           variant="outline"
           onClick={() => {
-            // Resetar para valores padrão
             setEmailNotifications(true);
             setPushNotifications(false);
             setInventoryUpdates(true);

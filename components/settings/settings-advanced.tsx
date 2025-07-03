@@ -39,7 +39,7 @@ export function AdvancedSettings() {
             <Monitor className="h-4 w-4" /> Desempenho
           </h4>
 
-          <div className="flex items-center justify-between">
+           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="hardware-acceleration" className="text-[var(--font-color)]">
                 Sempre habilitar aceleração de hardware
@@ -52,7 +52,7 @@ export function AdvancedSettings() {
               id="hardware-acceleration"
               checked={hardwareAcceleration}
               onCheckedChange={setHardwareAcceleration}
-              className="data-[state=checked]:bg-[var(--button-color)]"
+              className="data-[state=checked]:bg-[var(--button-color)] self-end sm:self-auto"
             />
           </div>
         </div>
@@ -63,12 +63,12 @@ export function AdvancedSettings() {
           <h4 className="flex items-center gap-2 text-sm font-medium text-[var(--font-color)]">Idioma e Região</h4>
 
           <div className="grid gap-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <Label htmlFor="language" className="text-[var(--font-color)]">
                 Idioma do Sistema
               </Label>
               <Select value={language} disabled>
-                <SelectTrigger className="w-40 bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--header-color)]">
+                <SelectTrigger className="w-full max-w-xs sm:w-40 bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--header-color)]">
                   <SelectValue placeholder="Português (Brasil)" />
                 </SelectTrigger>
                 <SelectContent>
@@ -79,15 +79,15 @@ export function AdvancedSettings() {
           </div>
         </div>
 
-      <div className="flex justify-end gap-2 mt-6">
-        <Button variant="outline" className="bg-[var(--button-color)] hover:bg-[var(--hover-2-color)] text-[var(--font-color2)] cursor-pointer">
-          Cancelar
-        </Button>
-        <Button className="bg-[var(--button-color)] hover:bg-[var(--hover-2-color)] text-[var(--font-color2)] cursor-pointer">
-          Salvar Alterações
-        </Button>
+        <div className="flex flex-col gap-2 mt-6 sm:flex-row sm:justify-end">
+          <Button variant="outline" className="bg-[var(--button-color)] hover:bg-[var(--hover-2-color)] text-[var(--font-color2)] cursor-pointer">
+            Cancelar
+          </Button>
+          <Button className="bg-[var(--button-color)] hover:bg-[var(--hover-2-color)] text-[var(--font-color2)] cursor-pointer">
+            Salvar Alterações
+          </Button>
+        </div>
       </div>
-    </div>
     </div>
   )
 }
