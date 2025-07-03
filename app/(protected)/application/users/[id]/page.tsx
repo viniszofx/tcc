@@ -184,10 +184,12 @@ export default function UserDetailsPage() {
             },
           }}
         />
+
+        {/* Informações Básicas */}
         <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
           <CardHeader>
             <CardTitle className="text-[var(--font-color)]">
-              Detalhes do Usuário
+              Informações Básicas
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -221,6 +223,139 @@ export default function UserDetailsPage() {
                 {userData.active ? "Ativo" : "Inativo"}
               </p>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Funções e Associações do Usuário */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Associações */}
+        <Card className="bg-[var(--bg-simple)] border-[var(--border-color)]">
+          <CardHeader>
+            <CardTitle className="text-[var(--font-color)]">
+              Associações
+            </CardTitle>
+            <CardDescription className="text-[var(--font-color)] opacity-70">
+              Campus e organizações que o usuário faz parte
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Campus */}
+            {userData?.campusMembers && userData.campusMembers.length > 0 ? (
+              <div>
+                <h4 className="font-medium text-[var(--font-color)] mb-2">
+                  Campus
+                </h4>
+                {userData.campusMembers.map((member: any, index: number) => (
+                  <div
+                    key={index}
+                    className="text-sm text-[var(--font-color)] opacity-80"
+                  >
+                    {member.campus?.name}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div>
+                <h4 className="font-medium text-[var(--font-color)] mb-2">
+                  Campus
+                </h4>
+                <p className="text-sm text-[var(--font-color)] opacity-60">
+                  Nenhum campus associado
+                </p>
+              </div>
+            )}
+
+            {/* Organizações */}
+            {userData?.organizationMembers &&
+            userData.organizationMembers.length > 0 ? (
+              <div>
+                <h4 className="font-medium text-[var(--font-color)] mb-2">
+                  Organizações
+                </h4>
+                {userData.organizationMembers.map(
+                  (member: any, index: number) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center text-sm"
+                    >
+                      <span className="text-[var(--font-color)] opacity-80">
+                        {member.organization?.name}
+                      </span>
+                      <span
+                        className={`px-2 py-1 rounded text-xs ${
+                          member.role === "admin"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {member.role === "admin" ? "Admin" : "Membro"}
+                      </span>
+                    </div>
+                  )
+                )}
+              </div>
+            ) : (
+              <div>
+                <h4 className="font-medium text-[var(--font-color)] mb-2">
+                  Organizações
+                </h4>
+                <p className="text-sm text-[var(--font-color)] opacity-60">
+                  Nenhuma organização associada
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Comissões e Funções */}
+        <Card className="bg-[var(--bg-simple)] border-[var(--border-color)]">
+          <CardHeader>
+            <CardTitle className="text-[var(--font-color)]">
+              Funções em Comissões
+            </CardTitle>
+            <CardDescription className="text-[var(--font-color)] opacity-70">
+              Comissões e roles do usuário
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {userData?.commissionMembers &&
+            userData.commissionMembers.length > 0 ? (
+              <div>
+                {userData.commissionMembers.map(
+                  (member: any, index: number) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-start text-sm border-b border-[var(--border-color)] pb-2 mb-2 last:border-b-0 last:pb-0 last:mb-0"
+                    >
+                      <div className="flex-1">
+                        <div className="text-[var(--font-color)] font-medium">
+                          {member.commission?.name}
+                        </div>
+                        <div className="text-[var(--font-color)] opacity-60 text-xs">
+                          Campus: {member.commission?.campus?.name}
+                        </div>
+                      </div>
+                      <span
+                        className={`px-2 py-1 rounded text-xs ml-2 ${
+                          member.roleInCommission === "Presidente"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-blue-100 text-blue-800"
+                        }`}
+                      >
+                        {member.roleInCommission}
+                      </span>
+                    </div>
+                  )
+                )}
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm text-[var(--font-color)] opacity-60">
+                  Nenhuma comissão associada
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

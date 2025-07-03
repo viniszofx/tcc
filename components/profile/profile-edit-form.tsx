@@ -55,21 +55,28 @@ export function ProfileEditForm({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`/api/user/${user.id}`, {
+      console.log("Enviando atualização de perfil:", formData);
+
+      const response = await fetch(`/api/user`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          id: user.id,
+          ...formData,
+        }),
       });
 
       if (response.ok) {
         const updatedUser = await response.json();
+        console.log("Perfil atualizado com sucesso:", updatedUser);
         onUpdate(updatedUser);
         setIsEditModalOpen(false);
         alert("Perfil atualizado com sucesso!");
       } else {
         const errorData = await response.json();
+        console.error("Erro na API:", errorData);
         alert(errorData.error || "Erro ao atualizar perfil");
       }
     } catch (error) {

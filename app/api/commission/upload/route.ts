@@ -1,9 +1,46 @@
 import { prisma } from "@/lib/prisma";
 import { createSupabaseAdmin } from "@/lib/supabase";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+
+// Função de autenticação reutilizável
+async function authenticateUser() {
+  const supabase = await createServerSupabaseClient();
+
+  // Obter o usuário atual autenticado via Supabase
+  const {
+    data: { user: realUser },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !realUser) {
+    throw new Error("Não autorizado");
+  }
+
+  // Verificar se o usuário existe no banco de dados UserProfile
+  const userProfile = await prisma.userProfile.findUnique({
+    where: { id: realUser.id },
+  });
+
+  // Se não existir no UserProfile, não permitir a operação
+  if (!userProfile) {
+    console.error(
+      "❌ Usuário autenticado não encontrado no UserProfile:",
+      realUser.id
+    );
+    throw new Error(
+      "Usuário autenticado não encontrado no sistema. Por favor, verifique se seu usuário foi configurado corretamente."
+    );
+  }
+
+  return realUser;
+}
 
 export async function POST(request: NextRequest) {
   try {
+    // Autenticar usuário primeiro
+    const user = await authenticateUser();
+
     const contentType = request.headers.get("content-type") || "";
 
     if (contentType.includes("application/json")) {
@@ -35,7 +72,14 @@ export async function POST(request: NextRequest) {
       // Verificar se a comissão existe
       const commission = await prisma.commission.findUnique({
         where: { id: commissionId },
-        include: { campus: true },
+        include: {
+          campus: true,
+          members: {
+            include: {
+              user: true,
+            },
+          },
+        },
       });
 
       if (!commission) {
@@ -45,6 +89,56 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Verificar permissões: Presidente da comissão OU Admin da organização
+      
+      // 1. Verificar se é presidente da comissão
+      const isCommissionPresident = commission.members.some(
+        (member) => member.userId === user.id && member.roleInCommission === "Presidente"
+      );
+
+      // 2. Verificar se é administrador da organização
+      const isOrgAdmin = await prisma.organizationMember.findFirst({
+        where: {
+          userId: user.id,
+          organization: {
+            campuses: {
+              some: {
+                id: commission.campusId,
+              },
+            },
+          },
+          role: "admin",
+        },
+        include: {
+          organization: true,
+        },
+      });
+
+      const hasPermission = isCommissionPresident || !!isOrgAdmin;
+
+      if (!hasPermission) {
+        console.log(
+          `❌ Usuário ${user.id} não tem permissão para upload na comissão ${commissionId}`
+        );
+        console.log(`   - É presidente da comissão: ${isCommissionPresident}`);
+        console.log(`   - É admin da organização: ${!!isOrgAdmin}`);
+        
+        return NextResponse.json(
+          { 
+            error: "Você não tem permissão para fazer upload nesta comissão. Apenas presidentes da comissão ou administradores da organização podem fazer upload." 
+          },
+          { status: 403 }
+        );
+      }
+
+      console.log(
+        `📊 Processando dados para comissão: ${commission.name} (ID: ${commissionId})`
+      );
+      console.log(
+        `🏢 Campus: ${commission.campus.name} (ID: ${commission.campusId})`
+      );
+      console.log(`👤 Usuário autorizado: ${user.email}`);
+
       // Usar transação para salvar todos os dados de uma vez
       const result = await prisma.$transaction(async (tx) => {
         // 1. Limpar dados existentes da comissão (se houver)
@@ -52,15 +146,17 @@ export async function POST(request: NextRequest) {
           where: { commissionId },
         });
 
-        console.log(`🗑️ Removidos ${deletedCount.count} itens existentes`);
+        console.log(
+          `🗑️ Removidos ${deletedCount.count} itens existentes da comissão ${commissionId}`
+        );
 
-        // 2. Criar novos itens de inventário
+        // 2. Criar novos itens de inventário - TODOS DEVEM TER O MESMO commissionId
         const inventoryItems = await Promise.all(
           processedData.map(async (item: any, index: number) => {
             return await tx.inventoryItem.create({
               data: {
-                commissionId,
-                campusId: commission.campusId,
+                commissionId, // GARANTIR que é sempre da comissão correta
+                campusId: commission.campusId, // GARANTIR que é do campus da comissão
                 number: item.NUMERO || `ITEM-${index + 1}`,
                 description: item.DESCRICAO || `Item ${index + 1}`,
                 brandModel: item.MARCA_MODELO || null,
@@ -79,13 +175,17 @@ export async function POST(request: NextRequest) {
           })
         );
 
-        console.log(`✅ Criados ${inventoryItems.length} novos itens`);
+        console.log(
+          `✅ Criados ${inventoryItems.length} novos itens para comissão ${commissionId}`
+        );
 
-        // 3. Atualizar metadados da comissão
+        // 3. Atualizar metadados da comissão com informações da planilha
         const updatedCommission = await tx.commission.update({
           where: { id: commissionId },
           data: {
             description: description || commission.description,
+            spreadsheetUrl:
+              metadata?.originalFileName || commission.spreadsheetUrl,
             updatedAt: new Date(),
           },
         });
@@ -132,13 +232,62 @@ export async function POST(request: NextRequest) {
       // Verificar se a comissão existe
       const commission = await prisma.commission.findUnique({
         where: { id: commissionId },
-        include: { campus: true },
+        include: {
+          campus: true,
+          members: {
+            include: {
+              user: true,
+            },
+          },
+        },
       });
 
       if (!commission) {
         return NextResponse.json(
           { error: "Comissão não encontrada" },
           { status: 404 }
+        );
+      }
+
+      // Verificar permissões: Presidente da comissão OU Admin da organização
+      
+      // 1. Verificar se é presidente da comissão
+      const isCommissionPresident = commission.members.some(
+        (member) => member.userId === user.id && member.roleInCommission === "Presidente"
+      );
+
+      // 2. Verificar se é administrador da organização
+      const isOrgAdmin = await prisma.organizationMember.findFirst({
+        where: {
+          userId: user.id,
+          organization: {
+            campuses: {
+              some: {
+                id: commission.campusId,
+              },
+            },
+          },
+          role: "admin",
+        },
+        include: {
+          organization: true,
+        },
+      });
+
+      const hasPermission = isCommissionPresident || !!isOrgAdmin;
+
+      if (!hasPermission) {
+        console.log(
+          `❌ Usuário ${user.id} não tem permissão para upload na comissão ${commissionId} (backup)`
+        );
+        console.log(`   - É presidente da comissão: ${isCommissionPresident}`);
+        console.log(`   - É admin da organização: ${!!isOrgAdmin}`);
+        
+        return NextResponse.json(
+          { 
+            error: "Você não tem permissão para fazer upload nesta comissão. Apenas presidentes da comissão ou administradores da organização podem fazer upload." 
+          },
+          { status: 403 }
         );
       }
 

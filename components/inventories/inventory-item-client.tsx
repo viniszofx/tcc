@@ -11,12 +11,12 @@ import {
   useDeleteInventoryItem,
   useUpdateInventoryItem,
 } from "@/hooks/mutations/use-mutations";
-import { useInventoryItemDetailData } from "@/hooks/queries/use-page-data";
+import { useHybridInventoryItem } from "@/hooks/use-hybrid-inventory-item";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
 import { useSmartNavigation } from "@/hooks/use-smart-navigation";
 import type { InventoryItemWithRelations } from "@/interface";
 import { formatDate } from "@/utils/data-utils";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Wifi, WifiOff } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -38,12 +38,20 @@ export default function InventoryItemClient({
   const params = useParams();
   const commissionId = propCommissionId || params?.commission_id;
 
+  // Usar hook híbrido que funciona online e offline
   const {
     item,
     isLoading: itemLoading,
     error: itemError,
+    isOfflineMode,
+    hasLocalData,
     refetch: refetchItem,
-  } = useInventoryItemDetailData(id);
+  } = useHybridInventoryItem({
+    itemId: id,
+    commissionId: commissionId as string,
+    campusId: "unknown", // Será inferido do contexto da comissão
+    allowOfflineAccess: true,
+  });
 
   // Mutations para operações no inventário
   const updateItemMutation = useUpdateInventoryItem();
@@ -176,12 +184,36 @@ export default function InventoryItemClient({
     <>
       <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-md lg:max-w-5xl xl:max-w-6xl mx-auto">
         <CardHeader className="pb-2 px-4 sm:px-6">
+          {/* Indicador de Status Online/Offline */}
+          {isOfflineMode && (
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-center gap-2 text-amber-800">
+                <WifiOff className="h-4 w-4" />
+                <span className="text-sm font-medium">Modo Offline</span>
+              </div>
+              <p className="text-xs text-amber-700 mt-1">
+                Visualizando dados salvos localmente. Algumas funcionalidades podem estar limitadas.
+                {hasLocalData && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="p-0 h-auto ml-2 text-amber-700 underline"
+                    onClick={refetchItem}
+                  >
+                    Tentar reconectar
+                  </Button>
+                )}
+              </p>
+            </div>
+          )}
+          
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2 justify-end sm:justify-normal">
               <Button
                 variant="outline"
                 className="flex items-center gap-2 border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-color)] hover:text-white cursor-pointer p-2 h-8 sm:h-10"
                 onClick={() => setEditModalOpen(true)}
+                disabled={isOfflineMode} // Desabilitar edição em modo offline
               >
                 <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span className="text-xs sm:text-sm">Editar</span>
@@ -190,6 +222,7 @@ export default function InventoryItemClient({
                 variant="outline"
                 className="flex items-center gap-2 border-[var(--border-input)] bg-[var(--card-color)] text-red-500 hover:bg-red-500 hover:text-white cursor-pointer p-2 h-8 sm:h-10"
                 onClick={() => setDeleteModalOpen(true)}
+                disabled={isOfflineMode} // Desabilitar exclusão em modo offline}
               >
                 <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span className="text-xs sm:text-sm">Excluir</span>
@@ -197,12 +230,27 @@ export default function InventoryItemClient({
             </div>
           </div>
           <CardTitle className="mt-4 text-lg font-bold text-[var(--font-color)] sm:text-xl md:text-2xl lg:text-3xl">
-            {item.description}
-            <Badge
-              className={`ml-2 sm:ml-4 bg-green-500 text-white text-xs sm:text-sm`}
-            >
-              ATIVO
-            </Badge>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span>{item.description}</span>
+              
+              {/* Status do item */}
+              <Badge className="bg-green-500 text-white text-xs sm:text-sm">
+                ATIVO
+              </Badge>
+              
+              {/* Indicador de status de conexão */}
+              {isOfflineMode ? (
+                <Badge variant="outline" className="border-amber-500 text-amber-700 text-xs">
+                  <WifiOff className="h-3 w-3 mr-1" />
+                  Offline
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="border-green-500 text-green-700 text-xs">
+                  <Wifi className="h-3 w-3 mr-1" />
+                  Online
+                </Badge>
+              )}
+            </div>
           </CardTitle>
         </CardHeader>
 

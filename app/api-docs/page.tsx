@@ -33,7 +33,7 @@ export default function ApiDocs() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/docs")
+    fetch("/api/docs/swagger.json")
       .then((response) => {
         if (!response.ok) {
           throw new Error("Falha ao carregar a especificação da API");
@@ -45,6 +45,7 @@ export default function ApiDocs() {
         setLoading(false);
       })
       .catch((err) => {
+        console.error("Erro ao carregar spec:", err);
         setError(err.message);
         setLoading(false);
       });
@@ -157,19 +158,43 @@ export default function ApiDocs() {
           <SwaggerUI
             spec={spec}
             docExpansion="list"
-            defaultModelsExpandDepth={2}
-            defaultModelExpandDepth={3}
+            defaultModelsExpandDepth={1}
+            defaultModelExpandDepth={2}
             tryItOutEnabled={true}
             filter={true}
+            displayRequestDuration={true}
+            supportedSubmitMethods={["get", "post", "put", "delete", "patch"]}
+            persistAuthorization={true}
+            presets={
+              [
+                // Use built-in presets for better performance
+              ]
+            }
+            plugins={
+              [
+                // Minimal plugins for faster loading
+              ]
+            }
+            layout="BaseLayout"
+            deepLinking={true}
             requestInterceptor={(request) => {
-              // Interceptor para adicionar headers ou modificar requests se necessário
-              console.log("Request:", request);
+              // Add auth headers if available
+              const token = localStorage.getItem("supabase.auth.token");
+              if (token) {
+                request.headers.Authorization = `Bearer ${token}`;
+              }
               return request;
             }}
             responseInterceptor={(response) => {
-              // Interceptor para processar responses se necessário
-              console.log("Response:", response);
+              // Log responses in development
+              if (process.env.NODE_ENV === "development") {
+                console.log("API Response:", response);
+              }
               return response;
+            }}
+            onComplete={(system) => {
+              // SwaggerUI loaded successfully
+              console.log("SwaggerUI loaded successfully");
             }}
           />
         )}

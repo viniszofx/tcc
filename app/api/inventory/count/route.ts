@@ -4,27 +4,16 @@ import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {
-    // Verificar autenticação - desenvolvimento vs produção
+    // Verificar autenticação real
     const supabase = await createServerSupabaseClient();
-    let user;
 
-    if (process.env.NODE_ENV === "development") {
-      // Em desenvolvimento, usar um usuário fake com UUID válido
-      user = {
-        id: "88ae80f0-4c14-44ea-b98a-235cf37bf170",
-        email: "dev@example.com",
-      };
-    } else {
-      // Em produção, autenticação real
-      const {
-        data: { user: realUser },
-        error: authError,
-      } = await supabase.auth.getUser();
+    const {
+      data: { user: realUser },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-      if (authError || !realUser) {
-        return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-      }
-      user = realUser;
+    if (authError || !realUser) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -37,12 +26,31 @@ export async function GET(request: Request) {
       );
     }
 
-    // Contar itens no servidor
+    // Verificar se o usuário tem acesso à comissão
+    const hasCommissionAccess = await prisma.commissionMember.findFirst({
+      where: {
+        userId: realUser.id,
+        commissionId: commissionId,
+      },
+    });
+
+    if (!hasCommissionAccess) {
+      return NextResponse.json(
+        { error: "Você não tem permissão para acessar esta comissão" },
+        { status: 403 }
+      );
+    }
+
+    // Contar itens da comissão específica
     const count = await prisma.inventoryItem.count({
       where: {
         commissionId,
       },
     });
+
+    console.log(
+      `📊 Contagem de itens - Comissão: ${commissionId}, Itens: ${count}`
+    );
 
     // Pegar timestamp da última atualização
     const lastUpdated = await prisma.inventoryItem.findFirst({

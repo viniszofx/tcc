@@ -75,6 +75,23 @@ export async function GET(request: Request) {
           { status: 404 }
         );
       }
+
+      // Verificar se o usuário tem permissão para ver este item
+      // O item deve estar em uma comissão à qual o usuário tem acesso
+      const hasAccess = await prisma.commissionMember.findFirst({
+        where: {
+          userId: user.id,
+          commissionId: item.commissionId,
+        },
+      });
+
+      if (!hasAccess) {
+        return NextResponse.json(
+          { error: "Você não tem permissão para acessar este item" },
+          { status: 403 }
+        );
+      }
+
       return NextResponse.json(item);
     }
 
@@ -83,6 +100,35 @@ export async function GET(request: Request) {
 
     if (commissionId) {
       where.commissionId = commissionId;
+
+      // Verificar se o usuário tem acesso à comissão especificada
+      const hasCommissionAccess = await prisma.commissionMember.findFirst({
+        where: {
+          userId: user.id,
+          commissionId: commissionId,
+        },
+      });
+
+      if (!hasCommissionAccess) {
+        return NextResponse.json(
+          { error: "Você não tem permissão para acessar esta comissão" },
+          { status: 403 }
+        );
+      }
+    } else {
+      // Se não especificou comissão, mostrar apenas itens das comissões do usuário
+      const userCommissions = await prisma.commissionMember.findMany({
+        where: { userId: user.id },
+        select: { commissionId: true },
+      });
+
+      if (userCommissions.length === 0) {
+        return NextResponse.json([]);
+      }
+
+      where.commissionId = {
+        in: userCommissions.map((cm) => cm.commissionId),
+      };
     }
 
     if (campusId) {
@@ -140,6 +186,18 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Comissão não encontrada" },
         { status: 404 }
+      );
+    }
+
+    // Verificar se o usuário é membro da comissão
+    const isCommissionMember = commission.members.some(
+      (member) => member.userId === user.id
+    );
+
+    if (!isCommissionMember) {
+      return NextResponse.json(
+        { error: "Você não tem permissão para criar itens nesta comissão" },
+        { status: 403 }
       );
     }
 

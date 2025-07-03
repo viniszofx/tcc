@@ -49,6 +49,7 @@ export async function GET(request: Request) {
     }
 
     // Filtrar por commissionId através do relacionamento com inventoryItem
+    // IMPORTANTE: Garantir que só mostra histórico da comissão especificada
     if (commissionId) {
       where.inventoryItem = {
         commissionId: commissionId,
@@ -70,6 +71,13 @@ export async function GET(request: Request) {
         timestamp: "desc",
       },
     });
+
+    // Log para auditoria: quantos registros de histórico foram retornados para qual comissão
+    if (commissionId) {
+      console.log(
+        `📊 Histórico consultado - Comissão: ${commissionId}, Registros: ${histories.length}`
+      );
+    }
 
     return NextResponse.json(histories);
   } catch (error) {
