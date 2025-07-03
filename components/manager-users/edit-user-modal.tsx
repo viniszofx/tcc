@@ -371,7 +371,9 @@ export function EditUserModal({
               </Label>
               <Select
                 value={formData.organizationRole || ""}
-                onValueChange={(value) => handleSelectChange("organizationRole", value)}
+                onValueChange={(value) =>
+                  handleSelectChange("organizationRole", value)
+                }
                 disabled={!formData.organizationId}
               >
                 <SelectTrigger className="border-[var(--border-input)]">
