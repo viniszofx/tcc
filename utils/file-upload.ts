@@ -14,6 +14,16 @@ export async function uploadFileToSupabase(
   folder?: string
 ): Promise<string> {
   try {
+    // Verificar se as variáveis de ambiente estão configuradas
+    if (
+      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    ) {
+      throw new Error(
+        "Variáveis de ambiente do Supabase não configuradas. Verifique NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY."
+      );
+    }
+
     // Garantir que o bucket existe
     await ensureBucketExists(bucket);
 

@@ -221,6 +221,20 @@ export default function CommissionUploadPage() {
             console.log("✅ Arquivo salvo no Supabase:", fileUrl);
           } catch (uploadError) {
             console.warn("⚠️ Falha no upload para Supabase:", uploadError);
+
+            // Verificar se é erro de configuração
+            if (
+              uploadError instanceof Error &&
+              uploadError.message.includes("Variáveis de ambiente")
+            ) {
+              console.warn(
+                "🔧 Configuração do Supabase necessária para backup de arquivos"
+              );
+              console.warn(
+                "💡 Os dados serão processados normalmente sem backup do arquivo"
+              );
+            }
+
             // Continuar sem o backup do arquivo - os dados processados ainda serão salvos
           }
 
@@ -442,16 +456,16 @@ export default function CommissionUploadPage() {
                 case "valor":
                   item.VALOR_AQUISICAO = value
                     ? parseFloat(
-                      value.replace(/[^\d.,]/g, "").replace(",", ".")
-                    )
+                        value.replace(/[^\d.,]/g, "").replace(",", ".")
+                      )
                     : null;
                   break;
                 case "valor depreciado":
                 case "valor_depreciado":
                   item.VALOR_DEPRECIADO = value
                     ? parseFloat(
-                      value.replace(/[^\d.,]/g, "").replace(",", ".")
-                    )
+                        value.replace(/[^\d.,]/g, "").replace(",", ".")
+                      )
                     : null;
                   break;
                 case "numero nota fiscal":
@@ -816,8 +830,8 @@ export default function CommissionUploadPage() {
               {isUploading
                 ? "Enviando..."
                 : isProcessing
-                  ? "Processando..."
-                  : "Fazer Upload"}
+                ? "Processando..."
+                : "Fazer Upload"}
             </Button>
             <Button
               variant="outline"
