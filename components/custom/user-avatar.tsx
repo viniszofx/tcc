@@ -11,40 +11,73 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
-import type { UserProfile } from "@/interface";
+import { useQuery } from "@tanstack/react-query";
 import { LogOut, User } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function UserAvatar() {
   const { signOut } = useAuth();
   const { user, loading: permissionsLoading } = useUserPermissions();
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [forceRefresh, setForceRefresh] = useState<number>(0);
 
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!user?.id || permissionsLoading) return;
-
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/user?id=${user.id}`);
-        if (response.ok) {
-          const profileData = await response.json();
-          setUserProfile(profileData);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar perfil do usuário:", error);
-      } finally {
-        setLoading(false);
+  // Usar React Query diretamente para buscar dados do usuário no navbar
+  const {
+    data: userProfile,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["navbar-user-profile", user?.id, forceRefresh],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const response = await fetch(`/api/user?id=${user.id}&t=${Date.now()}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch user profile");
       }
+      return response.json();
+    },
+    enabled: !!user?.id,
+    staleTime: 10 * 1000, // 10 segundos apenas
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+  });
+
+  // Escutar mudanças de avatar via eventos personalizados
+  useEffect(() => {
+    const handleAvatarUpdate = () => {
+      setForceRefresh(Date.now());
+      setTimeout(() => {
+        refetch();
+      }, 100);
     };
 
-    if (user?.id && !permissionsLoading) {
-      fetchUserProfile();
-    }
-  }, [user?.id, permissionsLoading]);
+    // Escutar evento personalizado de atualização de avatar
+    window.addEventListener("avatar-updated", handleAvatarUpdate);
 
-  if (loading || permissionsLoading || !user || !userProfile) {
+    return () => {
+      window.removeEventListener("avatar-updated", handleAvatarUpdate);
+    };
+  }, [refetch]);
+
+  // Gerenciar URL do avatar com cache busting
+  useEffect(() => {
+    if (userProfile?.avatar) {
+      // Se a URL não tem timestamp, adicionar um para forçar reload
+      const hasTimestamp =
+        userProfile.avatar.includes("?t=") ||
+        userProfile.avatar.includes("?nocache=");
+      if (!hasTimestamp) {
+        setAvatarUrl(`${userProfile.avatar}?t=${Date.now()}`);
+      } else {
+        setAvatarUrl(userProfile.avatar);
+      }
+    } else {
+      setAvatarUrl("");
+    }
+  }, [userProfile?.avatar]);
+
+  if (isLoading || permissionsLoading || !user || !userProfile) {
     return (
       <Avatar className="w-10 h-10 border">
         <AvatarFallback>?</AvatarFallback>
@@ -65,7 +98,20 @@ export function UserAvatar() {
     <DropdownMenu>
       <DropdownMenuTrigger className="focus:outline-none">
         <Avatar className="w-10 h-10 cursor-pointer border">
-          <AvatarImage src={userProfile.avatar || ""} alt="Foto do usuário" />
+          <AvatarImage
+            key={avatarUrl} // Force re-render when avatar changes
+            src={avatarUrl}
+            alt="Foto do usuário"
+            onError={(e) => {
+              // Se a imagem falhar ao carregar, tenta novamente sem cache
+              const img = e.target as HTMLImageElement;
+              if (img.src && !img.src.includes("?nocache=")) {
+                const newUrl = `${userProfile.avatar}?nocache=${Date.now()}`;
+                img.src = newUrl;
+                setAvatarUrl(newUrl);
+              }
+            }}
+          />
           <AvatarFallback className="bg-[var(--button-color)] text-[var(--font-color2)]">
             {getUserInitials(userProfile.name)}
           </AvatarFallback>

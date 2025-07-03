@@ -2,30 +2,56 @@ import { prisma } from "@/lib/prisma";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
+// Função de autenticação reutilizável
+async function authenticateUser() {
+  const supabase = await createServerSupabaseClient();
+
+  // Obter o usuário atual autenticado via Supabase
+  const {
+    data: { user: realUser },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !realUser) {
+    throw new Error("Não autorizado");
+  }
+
+  // Verificar se o usuário existe no banco de dados UserProfile
+  const userProfile = await prisma.userProfile.findUnique({
+    where: { id: realUser.id },
+  });
+
+  // Se não existir no UserProfile, não permitir a operação
+  if (!userProfile) {
+    console.error(
+      "❌ Usuário autenticado não encontrado no UserProfile:",
+      realUser.id
+    );
+    throw new Error(
+      "Usuário autenticado não encontrado no sistema. Por favor, verifique se seu usuário foi configurado corretamente."
+    );
+  }
+
+  return realUser;
+}
+
+// Função utilitária para normalizar o estado de conservação
+const normalizeConservationState = (state?: string) => {
+  if (!state) return "bom";
+  const normalized = state?.toLowerCase()?.trim() || "bom";
+  if (normalized.includes("bom") || normalized.includes("novo")) return "bom";
+  if (normalized.includes("regular") || normalized.includes("médio"))
+    return "regular";
+  if (normalized.includes("ruim") || normalized.includes("péssimo"))
+    return "ruim";
+  if (normalized.includes("inservível") || normalized.includes("irreversível"))
+    return "inservível";
+  return "bom"; // estado padrão
+};
+
 export async function GET(request: Request) {
   try {
-    // Verificar autenticação - desenvolvimento vs produção
-    const supabase = await createServerSupabaseClient();
-    let user;
-
-    if (process.env.NODE_ENV === "development") {
-      // Em desenvolvimento, usar um usuário fake com UUID válido
-      user = {
-        id: "88ae80f0-4c14-44ea-b98a-235cf37bf170",
-        email: "dev@example.com",
-      };
-    } else {
-      // Em produção, autenticação real
-      const {
-        data: { user: realUser },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError || !realUser) {
-        return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-      }
-      user = realUser;
-    }
+    const user = await authenticateUser();
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
@@ -94,45 +120,20 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    // Verificar autenticação - desenvolvimento vs produção
-    const supabase = await createServerSupabaseClient();
-    let user;
+    const user = await authenticateUser();
+    const data = await request.json();
+    const { commissionId, item, items } = data;
 
-    if (process.env.NODE_ENV === "development") {
-      // Em desenvolvimento, usar um usuário fake com UUID válido
-      user = {
-        id: "88ae80f0-4c14-44ea-b98a-235cf37bf170",
-        email: "dev@example.com",
-      };
-    } else {
-      // Em produção, autenticação real
-      const {
-        data: { user: realUser },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError || !realUser) {
-        return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-      }
-      user = realUser;
-    }
-
-    const body = await request.json();
-    const { commissionId, items, metadata } = body;
-
-    if (!commissionId || !items || !Array.isArray(items)) {
+    if (!commissionId) {
       return NextResponse.json(
-        { error: "Dados inválidos: commissionId e items são obrigatórios" },
+        { error: "Dados inválidos: commissionId é obrigatório" },
         { status: 400 }
       );
     }
 
-    console.log(`📝 Recebendo ${items.length} itens para processamento`);
-
-    // Verificar se a comissão existe
     const commission = await prisma.commission.findUnique({
       where: { id: commissionId },
-      include: { campus: true },
+      include: { members: true },
     });
 
     if (!commission) {
@@ -142,108 +143,186 @@ export async function POST(request: Request) {
       );
     }
 
-    // Processar itens em lotes para melhor performance
-    const batchSize = 100;
-    const results = [];
-    let processedCount = 0;
-    let errorCount = 0;
+    // Criação de item individual
+    if (item) {
+      console.log(
+        "📦 Dados recebidos para criação de item:",
+        JSON.stringify(item, null, 2)
+      );
 
-    for (let i = 0; i < items.length; i += batchSize) {
-      const batch = items.slice(i, i + batchSize);
+      // Verificar se todos os campos obrigatórios estão presentes
+      if (!item.number) {
+        return NextResponse.json(
+          { error: "O número do item é obrigatório" },
+          { status: 400 }
+        );
+      }
+
+      if (!item.description) {
+        return NextResponse.json(
+          { error: "A descrição do item é obrigatória" },
+          { status: 400 }
+        );
+      }
+
+      if (!item.campusId) {
+        return NextResponse.json(
+          { error: "O ID do campus é obrigatório" },
+          { status: 400 }
+        );
+      }
+
+      // Verificação de número único
+      const existingItem = await prisma.inventoryItem.findFirst({
+        where: { number: item.number },
+      });
+
+      if (existingItem) {
+        console.log(`❌ Erro: Item com número '${item.number}' já existe`);
+        return NextResponse.json(
+          { error: `Já existe um item com o número '${item.number}'` },
+          { status: 400 }
+        );
+      }
 
       try {
-        // Preparar dados para inserção em lote - mapear do formato BemCopia para InventoryItem
-        const itemsToCreate = batch.map((item: any) => ({
-          commissionId: commissionId,
-          campusId: commission.campusId,
-          number:
-            item.NUMERO ||
-            item.numeroPatrimonio ||
-            `ITEM-${Date.now()}-${Math.random().toString(36).substring(2)}`,
-          description:
-            item.DESCRICAO ||
-            item.item ||
-            item.especificacao ||
-            "Item importado",
-          brandModel:
-            item.MARCA_MODELO ||
-            item.DESCRICAO_PRINCIPAL ||
-            item.especificacao ||
-            null,
-          currentResponsibility: item.RESPONSABILIDADE_ATUAL || null,
-          conservationState:
-            item.ESTADO_DE_CONSERVACAO?.toLowerCase() || item.estado || "bom",
-          location: item.SALA || item.subsecao || null,
-          tags: item.ROTULOS
-            ? item.ROTULOS.split(",")
-                .map((tag: string) => tag.trim())
-                .filter(Boolean)
-            : [],
-          ed: item.ED || null,
-          sector: item.SETOR_DO_RESPONSAVEL || item.setor || null,
-        }));
-
-        // Inserir lote no banco
-        await prisma.inventoryItem.createMany({
-          data: itemsToCreate,
-          skipDuplicates: true, // Evitar duplicatas
+        const newItem = await prisma.inventoryItem.create({
+          data: {
+            ...item,
+            commissionId,
+            conservationState: normalizeConservationState(
+              item.conservationState
+            ),
+          },
         });
 
-        processedCount += batch.length;
-        console.log(
-          `✅ Lote ${Math.floor(i / batchSize) + 1} processado: ${
-            batch.length
-          } itens`
+        // Registrar no histórico com tratamento de erro específico
+        try {
+          // Usar o usuário autenticado para criar o histórico
+          await prisma.inventoryHistory.create({
+            data: {
+              inventoryItemId: newItem.id,
+              userId: user.id, // Usando o usuário autenticado
+              action: "create",
+              changes: JSON.stringify({
+                before: null,
+                after: newItem,
+              }),
+              observation: "Novo item criado manualmente",
+              imageUrl: [],
+            },
+          });
+          console.log(
+            "✅ Histórico criado com sucesso para o item:",
+            newItem.id
+          );
+        } catch (historyError) {
+          console.error(
+            "⚠️ Erro ao criar histórico, mas o item foi criado:",
+            historyError
+          );
+          // Não falhar a operação se apenas o histórico não puder ser criado
+        }
+
+        return NextResponse.json(newItem);
+      } catch (error) {
+        console.error("❌ Erro ao criar item de inventário:", error);
+        return NextResponse.json(
+          { error: `Erro ao criar item: ${(error as Error).message}` },
+          { status: 500 }
         );
-      } catch (batchError) {
-        console.error(
-          `❌ Erro no lote ${Math.floor(i / batchSize) + 1}:`,
-          batchError
-        );
-        errorCount += batch.length;
       }
     }
 
-    // Criar registro de histórico de upload como observação nos itens criados
-    if (metadata && processedCount > 0) {
-      try {
-        // Como não temos um modelo específico para histórico de upload,
-        // vamos log apenas no console por enquanto
-        console.log("📋 Histórico de upload:", {
-          fileName: metadata.fileName,
-          fileSize: metadata.fileSize,
-          fileUrl: metadata.fileUrl,
-          recordCount: metadata.recordCount,
-          uploadedBy: metadata.uploadedBy,
-          timestamp: metadata.timestamp,
-          processedCount,
-          errorCount,
-          commissionId,
-        });
-      } catch (historyError) {
-        console.error("⚠️ Erro ao registrar histórico:", historyError);
-        // Não falhar o upload por causa do histórico
-      }
+    // Criação em lote
+    if (!items || !Array.isArray(items)) {
+      return NextResponse.json(
+        {
+          error:
+            "Dados inválidos: é necessário fornecer um item individual ou uma lista de itens",
+        },
+        { status: 400 }
+      );
     }
 
-    console.log(
-      `🎉 Upload concluído: ${processedCount} processados, ${errorCount} erros`
-    );
+    // Verificar números duplicados na lista
+    const numbers = items.map((item) => item.number);
+    const uniqueNumbers = new Set(numbers);
+    if (numbers.length !== uniqueNumbers.size) {
+      return NextResponse.json(
+        { error: "Existem números duplicados na lista de itens" },
+        { status: 400 }
+      );
+    }
 
-    return NextResponse.json({
-      message: "Dados processados com sucesso",
-      summary: {
-        totalItems: items.length,
-        processedCount,
-        errorCount,
+    // Verificar se algum número já existe no banco
+    const existingItems = await prisma.inventoryItem.findMany({
+      where: { number: { in: numbers } },
+      select: { number: true },
+    });
+
+    if (existingItems.length > 0) {
+      const existingNumbers = existingItems
+        .map((item) => item.number)
+        .join(", ");
+      return NextResponse.json(
+        { error: `Já existem itens com os números: ${existingNumbers}` },
+        { status: 400 }
+      );
+    }
+
+    // Cria todos os itens
+    const createdItems = await prisma.inventoryItem.createMany({
+      data: items.map((item) => ({
+        ...item,
         commissionId,
-        timestamp: new Date().toISOString(),
+        conservationState: normalizeConservationState(item.conservationState),
+      })),
+    });
+
+    // Buscar os itens criados para adicionar ao histórico
+    const createdItemList = await prisma.inventoryItem.findMany({
+      where: {
+        number: { in: numbers },
+        commissionId: commissionId,
       },
     });
-  } catch (error) {
-    console.error("❌ Erro ao processar dados de inventário:", error);
+
+    // Registrar cada item no histórico
+    for (const createdItem of createdItemList) {
+      try {
+        await prisma.inventoryHistory.create({
+          data: {
+            inventoryItemId: createdItem.id,
+            userId: user.id, // Usar o usuário autenticado
+            action: "create",
+            changes: JSON.stringify({
+              before: null,
+              after: createdItem,
+            }),
+            observation: "Item criado em importação em lote",
+            imageUrl: [],
+          },
+        });
+      } catch (historyError) {
+        console.error(
+          `⚠️ Erro ao criar histórico para o item ${createdItem.id}:`,
+          historyError
+        );
+        // Continuar mesmo com erro no histórico
+      }
+    }
+
+    // Registrar no log
+    console.log(
+      `✅ Importação concluída: ${items.length} itens processados, ${createdItemList.length} históricos criados`
+    );
+
+    return NextResponse.json(createdItems);
+  } catch (error: any) {
+    console.error("Erro ao criar item(s) de inventário:", error);
     return NextResponse.json(
-      { error: "Erro interno do servidor" },
+      { error: "Erro ao criar item(s) de inventário" },
       { status: 500 }
     );
   }
@@ -251,26 +330,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    // Verificar autenticação - desenvolvimento vs produção
-    const supabase = await createServerSupabaseClient();
-    let user;
-
-    if (process.env.NODE_ENV === "development") {
-      user = {
-        id: "88ae80f0-4c14-44ea-b98a-235cf37bf170",
-        email: "dev@example.com",
-      };
-    } else {
-      const {
-        data: { user: realUser },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError || !realUser) {
-        return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-      }
-      user = realUser;
-    }
+    const user = await authenticateUser();
 
     const body = await request.json();
     const {
@@ -352,26 +412,7 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    // Verificar autenticação - desenvolvimento vs produção
-    const supabase = await createServerSupabaseClient();
-    let user;
-
-    if (process.env.NODE_ENV === "development") {
-      user = {
-        id: "88ae80f0-4c14-44ea-b98a-235cf37bf170",
-        email: "dev@example.com",
-      };
-    } else {
-      const {
-        data: { user: realUser },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError || !realUser) {
-        return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-      }
-      user = realUser;
-    }
+    const user = await authenticateUser();
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
@@ -396,6 +437,26 @@ export async function DELETE(request: Request) {
     await prisma.inventoryItem.delete({
       where: { id },
     });
+
+    // Criar registro no histórico antes de deletar
+    try {
+      await prisma.inventoryHistory.create({
+        data: {
+          inventoryItemId: id,
+          userId: user.id,
+          action: "delete",
+          changes: JSON.stringify({
+            before: itemToDelete,
+            after: null,
+          }),
+          observation: "Item removido do inventário",
+          imageUrl: [],
+        },
+      });
+    } catch (historyError) {
+      console.error("Erro ao criar histórico de exclusão:", historyError);
+      // Continuar mesmo com erro no histórico
+    }
 
     return NextResponse.json({ message: "Item removido com sucesso" });
   } catch (error) {

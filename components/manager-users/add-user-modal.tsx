@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useReferenceData } from "@/hooks/queries/use-page-data";
 import type { Campus, UserProfile } from "@/interface";
 import { Crown, User } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -52,6 +53,12 @@ export function AddUserModal({
   onClose,
   onAddUser,
 }: AddUserModalProps) {
+  // Usar hook de dados de referência (cache otimizado)
+  const {
+    organizations,
+    isLoading: isLoadingReference,
+    error: referenceError,
+  } = useReferenceData();
   const [formData, setFormData] = useState<AddUserFormData>({
     name: "",
     email: "",
@@ -64,27 +71,20 @@ export function AddUserModal({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [availableCampuses, setAvailableCampuses] = useState<Campus[]>([]);
-
-  // Buscar organizações quando o modal abrir
-  useEffect(() => {
-    if (isOpen) {
-      fetchOrganizations();
-    }
-  }, [isOpen]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Atualizar campus disponíveis quando a organização for selecionada
   useEffect(() => {
     if (formData.organizationId) {
       const selectedOrg = organizations.find(
-        (org) => org.id === formData.organizationId
+        (org: any) => org.id === formData.organizationId
       );
       setAvailableCampuses(selectedOrg?.campuses || []);
       // Limpar campus selecionado se não for da organização atual
       if (
         formData.campusId &&
-        !selectedOrg?.campuses.find((c) => c.id === formData.campusId)
+        !selectedOrg?.campuses.find((c: any) => c.id === formData.campusId)
       ) {
         setFormData((prev) => ({ ...prev, campusId: "" }));
       }
@@ -93,18 +93,6 @@ export function AddUserModal({
       setFormData((prev) => ({ ...prev, campusId: "" }));
     }
   }, [formData.organizationId, organizations]);
-
-  const fetchOrganizations = async () => {
-    try {
-      const response = await fetch("/api/organization");
-      if (response.ok) {
-        const data = await response.json();
-        setOrganizations(data);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar organizações:", error);
-    }
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -241,7 +229,7 @@ export function AddUserModal({
                   <SelectValue placeholder="Selecione a organização" />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)]">
-                  {organizations.map((org) => (
+                  {organizations.map((org: any) => (
                     <SelectItem key={org.id} value={org.id}>
                       {org.name}
                     </SelectItem>

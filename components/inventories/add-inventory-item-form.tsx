@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useCampus } from "@/hooks/queries/use-campus-query";
 import { useInventoryWithSync } from "@/hooks/use-inventory-query";
 import { Loader2, Plus, Wifi, WifiOff } from "lucide-react";
 import { useState } from "react";
@@ -31,6 +32,9 @@ export function AddInventoryItemForm({
 }: AddInventoryItemFormProps) {
   const { addItem, isCreating, isOnline, pendingItemsCount } =
     useInventoryWithSync(commissionId);
+
+  // Buscar informações do campus para exibir o nome em vez do ID
+  const { data: campus } = useCampus(campusId);
 
   const [formData, setFormData] = useState({
     number: "",
@@ -140,6 +144,13 @@ export function AddInventoryItemForm({
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Informação do Campus */}
+          <div className="mb-4">
+            <Badge variant="outline" className="text-sm">
+              Campus: {campus?.name || "Carregando..."}
+            </Badge>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Número */}
             <div className="space-y-2">

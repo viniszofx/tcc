@@ -10,15 +10,40 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  useRemoveCommissionMember,
+  useUpdateCommissionMember,
+} from "@/hooks/mutations/use-mutations";
+import { useCommissionMemberDetailData } from "@/hooks/queries/use-page-data";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
-import type { UserRole } from "@/hooks/use-user-permissions";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
-import { ArrowLeft, Calendar, Mail, Shield, User } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  Edit,
+  Mail,
+  Save,
+  Shield,
+  User,
+  X,
+} from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function CommissionMemberDetailPage() {
-  const { user, loading: userLoading } = useUserPermissions();
+  const {
+    user,
+    loading: userLoading,
+    canManageOrganizations,
+    canManageCommissionMembers,
+  } = useUserPermissions();
   const params = useParams();
   const router = useRouter();
   const memberId = params.id as string;
@@ -26,11 +51,27 @@ export default function CommissionMemberDetailPage() {
   const { canManageMembers, loading: permissionsLoading } =
     useCommissionPermissions(commissionId);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [member, setMember] = useState<
-    (UserRole & { roleInCommission?: "Presidente" | "Membro" }) | null
-  >(null);
-  const [commission, setCommission] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [newRole, setNewRole] = useState<string>("");
+
+  const {
+    member: memberData,
+    commission,
+    isLoading,
+    error,
+    refetch,
+  } = useCommissionMemberDetailData(commissionId, memberId);
+
+  // Mutations
+  const updateMemberMutation = useUpdateCommissionMember();
+  const removeMemberMutation = useRemoveCommissionMember();
+
+  const member = memberData
+    ? {
+        ...memberData.user,
+        roleInCommission: memberData.roleInCommission,
+      }
+    : null;
 
   useEffect(() => {
     if (!permissionsLoading && !canManageMembers) {
@@ -39,90 +80,73 @@ export default function CommissionMemberDetailPage() {
   }, [permissionsLoading, canManageMembers, router]);
 
   useEffect(() => {
-    const fetchMemberData = async () => {
-      console.log("Buscando dados do membro:", { memberId, commissionId });
-      try {
-        // Buscar dados do membro na comissão
-        const memberResponse = await fetch(
-          `/api/commission-member?commissionId=${commissionId}&userId=${memberId}`
-        );
-        if (memberResponse.ok) {
-          const memberData = await memberResponse.json();
-          // A API retorna um único objeto quando busca por userId e commissionId específicos
-          if (memberData) {
-            setMember({
-              ...memberData.user,
-              roleInCommission: memberData.roleInCommission,
-            });
-          }
-        } else {
-          console.error("Erro ao buscar membro:", await memberResponse.text());
-        }
-
-        // Buscar dados da comissão
-        const commissionResponse = await fetch(
-          `/api/commission/${commissionId}`
-        );
-        if (commissionResponse.ok) {
-          const commissionData = await commissionResponse.json();
-          setCommission(commissionData);
-        } else {
-          console.error(
-            "Erro ao buscar comissão:",
-            await commissionResponse.text()
-          );
-        }
-      } catch (error) {
-        console.error("Erro ao buscar dados do membro:", error);
-        setMember(null);
-        setCommission(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (memberId && commissionId && !permissionsLoading) {
-      fetchMemberData();
+    if (member && !isEditing) {
+      setNewRole(member.roleInCommission);
     }
-  }, [memberId, commissionId, permissionsLoading]);
+  }, [member, isEditing]);
 
   const handleGoBack = () => {
     router.push(`/application/commissions/${commissionId}/members`);
+  };
+
+  const handleStartEdit = () => {
+    setIsEditing(true);
+    setNewRole(member?.roleInCommission || "Membro");
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setNewRole(member?.roleInCommission || "Membro");
+  };
+
+  const handleSaveRole = async () => {
+    if (!member || !newRole) return;
+
+    try {
+      await updateMemberMutation.mutateAsync({
+        userId: memberId,
+        commissionId,
+        roleInCommission: newRole,
+      });
+
+      setIsEditing(false);
+      // O refetch acontece automaticamente via invalidateQueries na mutation
+    } catch (error) {
+      console.error("Erro ao atualizar papel do membro:", error);
+      alert("Erro ao atualizar papel do membro. Tente novamente.");
+    }
   };
 
   const handleRemoveMember = async () => {
     if (!member) return;
 
     const confirmRemoval = confirm(
-      `Tem certeza que deseja remover "${member.name || member.email
+      `Tem certeza que deseja remover "${
+        member.name || member.email
       }" da comissão? Esta ação não pode ser desfeita.`
     );
 
     if (!confirmRemoval) return;
 
     try {
-      const response = await fetch(
-        `/api/commission-member?userId=${memberId}&commissionId=${commissionId}`,
-        {
-          method: "DELETE",
-        }
-      );
+      await removeMemberMutation.mutateAsync({
+        userId: memberId,
+        commissionId,
+      });
 
-      if (response.ok) {
-        alert(
-          `"${member.name || member.email
-          }" foi removido da comissão com sucesso.`
-        );
-        router.push(`/application/commissions/${commissionId}/members`);
-      } else {
-        const errorData = await response.json();
-        alert(`Erro ao remover membro: ${errorData.error}`);
-      }
+      alert(
+        `"${member.name || member.email}" foi removido da comissão com sucesso.`
+      );
+      router.push(`/application/commissions/${commissionId}/members`);
     } catch (error) {
       console.error("Erro ao remover membro:", error);
       alert("Erro inesperado ao remover membro");
     }
   };
+
+  // Verificar se o usuário pode gerenciar membros (admin, org admin, ou presidente da comissão)
+  const canEditMemberRole =
+    canManageOrganizations || canManageCommissionMembers;
 
   if (userLoading || permissionsLoading || isLoading) {
     return <LoadingScreen />;
@@ -170,15 +194,60 @@ export default function CommissionMemberDetailPage() {
                 </CardDescription>
               </div>
             </div>
-            {canManageMembers && (
-              <Button
-                variant="destructive"
-                onClick={handleRemoveMember}
-                className="bg-red-600 text-white hover:bg-red-700"
-              >
-                Remover da Comissão
-              </Button>
-            )}
+            <div className="flex flex-wrap gap-2">
+              {canEditMemberRole && (
+                <>
+                  {!isEditing ? (
+                    <Button
+                      variant="outline"
+                      onClick={handleStartEdit}
+                      className="bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--border-color)] hover:bg-[var(--hover-color)]"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Editar Papel
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={handleSaveRole}
+                        disabled={
+                          updateMemberMutation.isPending ||
+                          newRole === member.roleInCommission
+                        }
+                        className="bg-green-600 text-white hover:bg-green-700 border-green-600"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        {updateMemberMutation.isPending
+                          ? "Salvando..."
+                          : "Salvar"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={handleCancelEdit}
+                        disabled={updateMemberMutation.isPending}
+                        className="bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--border-color)] hover:bg-[var(--hover-color)]"
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Cancelar
+                      </Button>
+                    </>
+                  )}
+                </>
+              )}
+              {canManageMembers && (
+                <Button
+                  variant="destructive"
+                  onClick={handleRemoveMember}
+                  disabled={removeMemberMutation.isPending}
+                  className="bg-red-600 text-white hover:bg-red-700"
+                >
+                  {removeMemberMutation.isPending
+                    ? "Removendo..."
+                    : "Remover da Comissão"}
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
       </Card>
@@ -234,17 +303,33 @@ export default function CommissionMemberDetailPage() {
                 Papel na Comissão
               </label>
               <div className="flex items-center gap-2">
-                <Badge
-                  variant={
-                    member.roleInCommission === "Presidente"
-                      ? "default"
-                      : "secondary"
-                  }
-                >
-                  {member.roleInCommission === "Presidente"
-                    ? "Presidente"
-                    : "Membro"}
-                </Badge>
+                {isEditing && canEditMemberRole ? (
+                  <Select
+                    value={newRole}
+                    onValueChange={setNewRole}
+                    disabled={updateMemberMutation.isPending}
+                  >
+                    <SelectTrigger className="w-48 bg-[var(--bg-simple)] border-[var(--border-color)] text-[var(--font-color)]">
+                      <SelectValue placeholder="Selecione o papel" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Membro">Membro</SelectItem>
+                      <SelectItem value="Presidente">Presidente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Badge
+                    variant={
+                      member.roleInCommission === "Presidente"
+                        ? "default"
+                        : "secondary"
+                    }
+                  >
+                    {member.roleInCommission === "Presidente"
+                      ? "Presidente"
+                      : "Membro"}
+                  </Badge>
+                )}
               </div>
             </div>
             <div>

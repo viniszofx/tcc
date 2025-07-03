@@ -1,22 +1,50 @@
 import { createBrowserClient, createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
-if (!supabaseUrl) {
-  throw new Error("NEXT_PUBLIC_SUPABASE_URL is required");
-}
+const isSupabaseConfigured =
+  !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
+  !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseAnonKey) {
-  throw new Error("NEXT_PUBLIC_SUPABASE_ANON_KEY is required");
-}
+// Criar um cliente mock quando as variáveis de ambiente não estão configuradas
+const createMockClient = () => {
+  console.warn("Supabase não configurado: usando cliente simulado");
+  return {
+    auth: {
+      getUser: async () => ({ data: { user: null }, error: null }),
+      signInWithPassword: async () => ({
+        data: null,
+        error: new Error("Supabase não configurado"),
+      }),
+      signOut: async () => ({ error: null }),
+    },
+    storage: {
+      from: () => ({
+        upload: async () => ({
+          data: null,
+          error: new Error("Bucket not available: Supabase não configurado"),
+        }),
+        getPublicUrl: () => ({ data: { publicUrl: null } }),
+        remove: async () => ({ data: null, error: null }),
+      }),
+    },
+  };
+};
 
 // Cliente para uso no navegador (client-side)
-export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+export const supabase = isSupabaseConfigured
+  ? createBrowserClient(supabaseUrl, supabaseAnonKey)
+  : (createMockClient() as any);
 
 // Cliente para uso server-side (SSR/SSG) - requer cookieStore
 export const createSupabaseServerClient = (cookieStore: any) => {
+  if (!isSupabaseConfigured) {
+    return createMockClient() as any;
+  }
+
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       get(name: string) {

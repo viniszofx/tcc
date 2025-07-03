@@ -11,6 +11,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  useCreateOrganization,
+  useDeleteOrganization,
+  useUpdateOrganization,
+} from "@/hooks/mutations/use-mutations";
+import { useOrganizations } from "@/hooks/queries/use-organizations-query";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
 import { Organization } from "@/interface";
 import { Plus, Save } from "lucide-react";
@@ -18,80 +24,96 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function OrganizationsPage() {
-  const { user, canManageOrganizations, loading, error } = useUserPermissions();
+  const {
+    user,
+    canManageOrganizations,
+    loading: permissionsLoading,
+  } = useUserPermissions();
   const router = useRouter();
-  const [orgs, setOrgs] = useState<Organization[]>([]);
+
+  // Usar React Query para buscar organizações
+  const {
+    data: orgs = [],
+    isLoading: orgsLoading,
+    error: orgsError,
+    refetch: refetchOrgs,
+  } = useOrganizations();
+
+  // Mutations para operações CRUD
+  const createOrganizationMutation = useCreateOrganization();
+  const updateOrganizationMutation = useUpdateOrganization();
+  const deleteOrganizationMutation = useDeleteOrganization();
+
   const [organizationMembers, setOrganizationMembers] = useState<
     Record<string, any[]>
   >({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Verificar permissões
   useEffect(() => {
-    if (!loading && !canManageOrganizations) {
+    if (!permissionsLoading && !canManageOrganizations) {
       router.push("/application");
     }
-  }, [loading, canManageOrganizations, router]);
+  }, [permissionsLoading, canManageOrganizations, router]);
 
+  // Buscar membros das organizações quando necessário
   useEffect(() => {
-    const fetchOrganizations = async () => {
-      try {
-        const response = await fetch("/api/organization");
-        const data = await response.json();
+    if (orgs.length > 0) {
+      const fetchAllMembers = async () => {
+        const membersPromises = orgs.map(async (org: Organization) => {
+          try {
+            const membersResponse = await fetch(
+              `/api/organization-member?organizationId=${org.id}`
+            );
+            const membersData = await membersResponse.json();
+            return { orgId: org.id, members: membersData };
+          } catch (error) {
+            console.error(
+              `Erro ao buscar membros da organização ${org.id}:`,
+              error
+            );
+            return { orgId: org.id, members: [] };
+          }
+        });
 
-        if (response.ok) {
-          setOrgs(data);
+        const membersResults = await Promise.all(membersPromises);
+        const membersMap: Record<string, any[]> = {};
+        membersResults.forEach(({ orgId, members }) => {
+          membersMap[orgId] = members;
+        });
+        setOrganizationMembers(membersMap);
+      };
 
-          // Buscar membros de cada organização
-          const membersPromises = data.map(async (org: Organization) => {
-            try {
-              const membersResponse = await fetch(
-                `/api/organization-member?organizationId=${org.id}`
-              );
-              const membersData = await membersResponse.json();
-              return { orgId: org.id, members: membersData };
-            } catch (error) {
-              console.error(
-                `Erro ao buscar membros da organização ${org.id}:`,
-                error
-              );
-              return { orgId: org.id, members: [] };
-            }
-          });
-
-          const membersResults = await Promise.all(membersPromises);
-          const membersMap: Record<string, any[]> = {};
-          membersResults.forEach(({ orgId, members }) => {
-            membersMap[orgId] = members;
-          });
-          setOrganizationMembers(membersMap);
-        } else {
-          console.error("Erro ao buscar organizações:", data);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar organizações:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (canManageOrganizations) {
-      fetchOrganizations();
+      fetchAllMembers();
     }
-  }, [canManageOrganizations]);
+  }, [orgs]);
 
-  if (loading || !canManageOrganizations) {
+  if (permissionsLoading || orgsLoading) {
     return <LoadingScreen />;
   }
 
-  if (error) {
+  if (!canManageOrganizations) {
     return (
       <Card>
         <CardContent className="p-6">
-          <p className="text-red-500">Erro: {error}</p>
+          <p className="text-red-500">Acesso negado</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (orgsError) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-red-500">
+            Erro ao carregar organizações: {orgsError.message}
+          </p>
+          <Button onClick={() => refetchOrgs()} className="mt-2">
+            Tentar novamente
+          </Button>
         </CardContent>
       </Card>
     );
@@ -116,23 +138,11 @@ export default function OrganizationsPage() {
     orgData: Omit<Organization, "id" | "createdAt" | "updatedAt">
   ) => {
     try {
-      const response = await fetch("/api/organization", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(orgData),
-      });
-
-      if (response.ok) {
-        const newOrg = await response.json();
-        setOrgs([...orgs, newOrg]);
-        setIsModalOpen(false);
-      } else {
-        console.error("Erro ao criar organização");
-      }
+      await createOrganizationMutation.mutateAsync(orgData);
+      setIsModalOpen(false);
     } catch (error) {
       console.error("Erro ao criar organização:", error);
+      alert("Erro ao criar organização");
     }
   };
 
@@ -141,23 +151,11 @@ export default function OrganizationsPage() {
     orgData: Partial<Organization>
   ) => {
     try {
-      const response = await fetch("/api/organization", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ id, ...orgData }),
-      });
-
-      if (response.ok) {
-        const updatedOrg = await response.json();
-        setOrgs(orgs.map((org) => (org.id === id ? updatedOrg : org)));
-        setIsModalOpen(false);
-      } else {
-        console.error("Erro ao editar organização");
-      }
+      await updateOrganizationMutation.mutateAsync({ id, ...orgData });
+      setIsModalOpen(false);
     } catch (error) {
       console.error("Erro ao editar organização:", error);
+      alert("Erro ao editar organização");
     }
   };
 
@@ -184,25 +182,14 @@ export default function OrganizationsPage() {
 
   const handleDeleteOrganization = async (id: string) => {
     try {
-      const response = await fetch("/api/organization", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ id }),
-      });
-
-      if (response.ok) {
-        setOrgs(orgs.filter((org) => org.id !== id));
-      } else {
-        console.error("Erro ao deletar organização");
-      }
+      await deleteOrganizationMutation.mutateAsync(id);
     } catch (error) {
       console.error("Erro ao deletar organização:", error);
+      alert("Erro ao deletar organização");
     }
   };
 
-  if (isLoading) {
+  if (orgsLoading) {
     return <LoadingScreen />;
   }
 

@@ -213,79 +213,81 @@ export function useInventorySync(commissionId: string) {
     []
   );
 
+  const transformToInventoryItem = (
+    bem: BemCopia,
+    commissionId: string,
+    campusId: string
+  ): InventoryItem => {
+    return {
+      id: bem.bem_id || crypto.randomUUID(),
+      commissionId,
+      campusId,
+      number: bem.NUMERO?.toString(),
+      description: bem.DESCRICAO,
+      brandModel: bem.MARCA_MODELO,
+      currentResponsibility: bem.RESPONSABILIDADE_ATUAL,
+      conservationState: bem.ESTADO_DE_CONSERVACAO?.toLowerCase(),
+      location: bem.SALA,
+      tags: [],
+      ed: bem.ED,
+      sector: bem.SETOR_DO_RESPONSAVEL,
+    };
+  };
+
   // Função para salvar item localmente E enviar para servidor (se já sincronizado)
   const addItemWithAutoSync = useCallback(
-    async (item: BemCopia, campusId: string) => {
+    async (newItem: BemCopia) => {
+      if (!commissionId) {
+        console.error("Commission ID não fornecido");
+        return false;
+      }
+
       try {
-        // 1. Sempre salvar localmente primeiro
-        const { data, metadata } = await getProcessedData();
-        const updatedData = [...data, item];
+        setIsSyncing(true);
+        setSyncStatus("syncing");
 
-        const updatedMetadata: InventoryMetadata = {
-          recordCount: updatedData.length,
-          timestamp: new Date().toISOString(),
-          fileName: metadata?.fileName || "manual_entry.json",
-          usedAcceleration: false,
-          syncStatus: metadata?.syncStatus === "synced" ? "synced" : "pending",
-        };
+        // Transformar o item para o formato esperado pelo servidor
+        const transformedItem = transformToInventoryItem(
+          newItem,
+          commissionId,
+          metadata?.campusId || ""
+        );
 
-        await storeProcessedData(updatedData, updatedMetadata);
-        setLocalData(updatedData);
-        setMetadata(updatedMetadata);
-
-        console.log("💾 Item salvo localmente");
-
-        // 2. Se já está sincronizado, enviar para servidor imediatamente
-        if (metadata?.syncStatus === "synced") {
-          console.log("🔄 Enviando para servidor (sistema já sincronizado)...");
-
-          // Mapear dados para formato da API
-          const apiData = {
+        // Enviar para a API
+        const response = await fetch("/api/inventory", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
             commissionId,
-            campusId,
-            number: item.NUMERO,
-            description: item.DESCRICAO,
-            brandModel: item.MARCA_MODELO || null,
-            currentResponsibility: item.RESPONSABILIDADE_ATUAL || null,
-            conservationState: item.ESTADO_DE_CONSERVACAO || null,
-            location: item.SALA || null,
-            tags: item.ROTULOS
-              ? item.ROTULOS.split(",")
-                  .map((tag) => tag.trim())
-                  .filter((tag) => tag.length > 0)
-              : [],
-            ed: item.ED || null,
-            sector: item.SETOR_DO_RESPONSAVEL || null,
-          };
+            item: transformedItem,
+          }),
+        });
 
-          const response = await fetch("/api/inventory", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(apiData),
-          });
-
-          if (response.ok) {
-            console.log("✅ Item enviado para servidor com sucesso");
-          } else {
-            console.warn(
-              "⚠️ Falha ao enviar para servidor, mas salvo localmente"
-            );
-            // Marcar como pending para tentar sincronizar depois
-            await updateSyncStatus("pending");
-          }
-        } else {
-          console.log(
-            "📋 Item salvo localmente (aguardando sincronização inicial)"
-          );
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Erro ao adicionar item");
         }
+
+        // Atualizar dados locais
+        const addedItem = await response.json();
+        setApiData((prev) => [...prev, addedItem]);
+        setLocalData((prev) => [...prev, newItem]);
+
+        setIsSyncing(false);
+        setSyncStatus("synced");
+        setLastSync(new Date());
+        return true;
       } catch (error) {
         console.error("Erro ao adicionar item:", error);
-        throw error;
+        setIsSyncing(false);
+        setSyncStatus("unknown");
+        setError(error instanceof Error ? error.message : "Erro desconhecido");
+        return false;
       }
     },
-    [commissionId, updateSyncStatus]
+    [commissionId, metadata?.campusId]
   );
 
   // Carregar todos os dados (API + local) e sincronizar

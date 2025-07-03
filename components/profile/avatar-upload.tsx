@@ -2,8 +2,10 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { queryKeys } from "@/hooks/queries/query-keys";
+import { useQueryClient } from "@tanstack/react-query";
 import { Camera, Trash2, Upload } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AvatarCropper } from "./avatar-cropper";
 
 interface AvatarUploadProps {
@@ -25,6 +27,24 @@ export function AvatarUpload({
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [displayAvatar, setDisplayAvatar] = useState<string>("");
+  const queryClient = useQueryClient();
+
+  // Gerenciar URL do avatar com cache busting
+  useEffect(() => {
+    if (currentAvatar) {
+      // Se a URL não tem timestamp, adicionar um para forçar reload
+      const hasTimestamp =
+        currentAvatar.includes("?t=") || currentAvatar.includes("?nocache=");
+      if (!hasTimestamp) {
+        setDisplayAvatar(`${currentAvatar}?t=${Date.now()}`);
+      } else {
+        setDisplayAvatar(currentAvatar);
+      }
+    } else {
+      setDisplayAvatar("");
+    }
+  }, [currentAvatar]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -77,7 +97,30 @@ export function AvatarUpload({
 
       if (response.ok) {
         const result = await response.json();
+        // Usar a URL original do servidor, mas adicionar timestamp no componente
         onAvatarUpdate(result.avatarUrl);
+
+        // Disparar evento personalizado para forçar atualização do UserAvatar
+        window.dispatchEvent(new CustomEvent("avatar-updated"));
+
+        // Invalidar imediatamente todos os caches relacionados ao usuário
+        queryClient.invalidateQueries({ queryKey: ["navbar-user-profile"] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+        queryClient.invalidateQueries({ queryKey: ["user-permissions"] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.users.details() });
+
+        // Invalidar cache do React Query para atualizar dados do usuário em todos os componentes
+        // Usar um delay para permitir que o servidor processe completamente
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+          queryClient.invalidateQueries({ queryKey: ["user-permissions"] });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.users.details(),
+          });
+          // Invalidar também o cache específico do navbar
+          queryClient.invalidateQueries({ queryKey: ["navbar-user-profile"] });
+        }, 1000);
+
         alert("Avatar atualizado com sucesso!");
       } else {
         const errorData = await response.json();
@@ -104,6 +147,21 @@ export function AvatarUpload({
 
       if (response.ok) {
         onAvatarDelete();
+
+        // Disparar evento personalizado para forçar atualização do UserAvatar
+        window.dispatchEvent(new CustomEvent("avatar-updated"));
+
+        // Invalidar imediatamente o cache do navbar para atualização instantânea
+        queryClient.invalidateQueries({ queryKey: ["navbar-user-profile"] });
+
+        // Invalidar cache do React Query para atualizar dados do usuário em todos os componentes
+        queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+        queryClient.invalidateQueries({ queryKey: ["user-permissions"] });
+        // Invalidar também o cache específico do usuário para atualizar UserAvatar
+        queryClient.invalidateQueries({ queryKey: queryKeys.users.details() });
+        // Invalidar também o cache específico do navbar
+        queryClient.invalidateQueries({ queryKey: ["navbar-user-profile"] });
+
         alert("Avatar removido com sucesso!");
       } else {
         const errorData = await response.json();
@@ -131,7 +189,20 @@ export function AvatarUpload({
       {/* Avatar */}
       <div className="relative">
         <Avatar className="w-32 h-32 border-4 border-[var(--border-color)]">
-          <AvatarImage src={currentAvatar || ""} alt={userName} />
+          <AvatarImage
+            key={displayAvatar} // Force re-render when avatar changes
+            src={displayAvatar}
+            alt={userName}
+            onError={(e) => {
+              // Se a imagem falhar ao carregar, tenta novamente sem cache
+              const img = e.target as HTMLImageElement;
+              if (img.src && !img.src.includes("?nocache=") && currentAvatar) {
+                const newUrl = `${currentAvatar}?nocache=${Date.now()}`;
+                img.src = newUrl;
+                setDisplayAvatar(newUrl);
+              }
+            }}
+          />
           <AvatarFallback className="text-2xl font-bold bg-[var(--button-color)] text-[var(--font-color2)]">
             {getUserInitials(userName)}
           </AvatarFallback>
@@ -159,7 +230,7 @@ export function AvatarUpload({
           {isUploading ? "Uploading..." : "Alterar"}
         </Button>
 
-        {currentAvatar && (
+        {displayAvatar && (
           <Button
             variant="outline"
             size="sm"

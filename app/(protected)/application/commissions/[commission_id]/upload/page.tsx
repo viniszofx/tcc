@@ -12,11 +12,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useProcessInventoryUpload } from "@/hooks/mutations/use-mutations";
+import { useCommissionDetailData } from "@/hooks/queries/use-page-data";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
 import { useInventorySync } from "@/hooks/use-inventory-sync";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
 import type { CommissionWithRelations } from "@/interface";
-import { uploadFileToSupabase } from "@/utils/file-upload";
+import { uploadFileIntelligent } from "@/utils/file-upload";
 import {
   AlertCircle,
   CheckCircle,
@@ -78,18 +80,23 @@ export default function CommissionUploadPage() {
     syncStatus: currentSyncStatus,
   } = useInventorySync(commissionId);
 
-  // Estados originais mantidos
-  const [commission, setCommission] = useState<CommissionWithRelations | null>(
-    null
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Estados originais mantidos exceto commission
+  const {
+    commission,
+    isLoading: commissionLoading,
+    error: commissionError,
+  } = useCommissionDetailData(commissionId);
+
+  // Mutation para processar upload
+  const processUploadMutation = useProcessInventoryUpload();
+
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [description, setDescription] = useState("");
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const [isOnline, setIsOnline] = useState(
     typeof navigator !== "undefined" ? navigator.onLine : true
@@ -124,31 +131,51 @@ export default function CommissionUploadPage() {
     router,
   ]);
 
-  useEffect(() => {
-    const fetchCommission = async () => {
-      try {
-        const response = await fetch(`/api/commission/${commissionId}`);
-        if (!response.ok) {
-          throw new Error("Comissão não encontrada");
-        }
-        const data = await response.json();
-        setCommission(data);
-      } catch (error) {
-        console.error("Erro ao buscar comissão:", error);
-        setError("Erro ao carregar dados da comissão");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (commissionId && canAccessCommission && canUploadToCommission) {
-      fetchCommission();
-    }
-  }, [commissionId, canAccessCommission, canUploadToCommission]);
-
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     setSelectedFiles(files);
+    setUploadError(null);
+  };
+
+  // Funções para manipular eventos de drag and drop
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    if (droppedFiles.length === 0) return;
+
+    // Filtragem de arquivos inválidos
+    const validFiles = droppedFiles.filter((file) =>
+      file.name.match(/\.(csv|xlsx|xls)$/i)
+    );
+
+    if (validFiles.length === 0) {
+      setUploadError("Apenas arquivos CSV e Excel são permitidos");
+      return;
+    }
+
+    // Usar apenas o primeiro arquivo válido
+    setSelectedFiles([validFiles[0]]);
     setUploadError(null);
   };
 
@@ -205,36 +232,27 @@ export default function CommissionUploadPage() {
       });
 
       console.log("💾 Dados salvos localmente (IndexedDB)");
-
       if (isOnline) {
         try {
           // 3. Tentar fazer backup do arquivo bruto diretamente no Supabase (client-side)
-          console.log("📁 Fazendo backup do arquivo original...");
+          console.log("📁 Tentando fazer backup do arquivo original...");
           let fileUrl = null;
 
           try {
-            fileUrl = await uploadFileToSupabase(
+            fileUrl = await uploadFileIntelligent(
               file,
               "inventory-files",
               `commissions/${commissionId}`
             );
-            console.log("✅ Arquivo salvo no Supabase:", fileUrl);
-          } catch (uploadError) {
-            console.warn("⚠️ Falha no upload para Supabase:", uploadError);
-
-            // Verificar se é erro de configuração
-            if (
-              uploadError instanceof Error &&
-              uploadError.message.includes("Variáveis de ambiente")
-            ) {
+            if (fileUrl) {
+              console.log("✅ Arquivo salvo no Supabase:", fileUrl);
+            } else {
               console.warn(
-                "🔧 Configuração do Supabase necessária para backup de arquivos"
-              );
-              console.warn(
-                "💡 Os dados serão processados normalmente sem backup do arquivo"
+                "⚠️ Backup de arquivo ignorado - Supabase não configurado"
               );
             }
-
+          } catch (uploadError) {
+            console.warn("⚠️ Falha no upload para Supabase:", uploadError);
             // Continuar sem o backup do arquivo - os dados processados ainda serão salvos
           }
 
@@ -267,24 +285,40 @@ export default function CommissionUploadPage() {
           const processResult = await processResponse.json();
           console.log("✅ Dados salvos no banco:", processResult);
 
-          // 5. Atualizar URL da planilha na comissão (se tiver fileUrl)
+          // 5. Atualizar URL da planilha na comissão (apenas se tiver fileUrl)
           if (fileUrl) {
-            const updateCommissionResponse = await fetch(
-              `/api/commission/${commissionId}`,
-              {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  spreadsheetUrl: fileUrl,
-                }),
-              }
-            );
+            try {
+              const updateCommissionResponse = await fetch(
+                `/api/commission/${commissionId}`,
+                {
+                  method: "PUT",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    spreadsheetUrl: fileUrl,
+                  }),
+                }
+              );
 
-            if (updateCommissionResponse.ok) {
-              console.log("📊 URL da planilha atualizada na comissão");
+              if (updateCommissionResponse.ok) {
+                console.log("📊 URL da planilha atualizada na comissão");
+              } else {
+                console.warn(
+                  "⚠️ Não foi possível atualizar a URL da planilha na comissão"
+                );
+              }
+            } catch (updateError) {
+              console.warn(
+                "⚠️ Erro ao atualizar URL da planilha:",
+                updateError
+              );
+              // Continuar mesmo sem atualizar a URL
             }
+          } else {
+            console.log(
+              "ℹ️ Nenhuma URL de planilha para atualizar (Supabase não configurado ou erro no upload)"
+            );
           }
 
           // 6. Atualizar status no IndexedDB para "synced"
@@ -638,7 +672,9 @@ export default function CommissionUploadPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  if (loading || permissionsLoading || isLoading) {
+  // Comentário: Os handlers de drag and drop já estão definidos acima
+
+  if (loading || permissionsLoading || commissionLoading) {
     return <LoadingScreen />;
   }
 
@@ -656,11 +692,13 @@ export default function CommissionUploadPage() {
     );
   }
 
-  if (error || !commission) {
+  if (commissionError || !commission) {
     return (
       <Card>
         <CardContent className="p-6">
-          <p className="text-red-500">{error || "Comissão não encontrada"}</p>
+          <p className="text-red-500">
+            {commissionError?.message || "Comissão não encontrada"}
+          </p>
         </CardContent>
       </Card>
     );
@@ -716,8 +754,24 @@ export default function CommissionUploadPage() {
             <Label htmlFor="files" className="text-[var(--font-color)]">
               Selecionar Arquivo
             </Label>
-            <div className="border-2 border-dashed border-[var(--border-color)] rounded-lg p-8 text-center hover:border-[var(--button-color)] transition-colors">
-              <Upload className="w-12 h-12 text-[var(--font-color)] opacity-50 mx-auto mb-4" />
+            <div
+              className={`border-2 rounded-lg p-8 text-center transition-colors ${
+                isDragging
+                  ? "border-[var(--button-color)] bg-[var(--bg-hover)]"
+                  : "border-dashed border-[var(--border-color)] hover:border-[var(--button-color)]"
+              }`}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
+              <Upload
+                className={`w-12 h-12 mx-auto mb-4 transition-colors ${
+                  isDragging
+                    ? "text-[var(--button-color)]"
+                    : "text-[var(--font-color)] opacity-50"
+                }`}
+              />
               <Input
                 id="files"
                 type="file"
@@ -879,11 +933,13 @@ export default function CommissionUploadPage() {
           </div>
 
           <div className="mt-4 space-y-3">
-            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-              <p className="text-sm text-green-700">
-                <strong>Upload Direto:</strong> Os arquivos são enviados
-                diretamente para o armazenamento em nuvem, contornando
-                limitações de upload da hospedagem.
+            <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+              <p className="text-sm text-yellow-700">
+                <strong>Nota:</strong> O armazenamento de arquivos na nuvem pode
+                estar indisponível se o Supabase não estiver configurado. Os
+                dados dos itens ainda serão processados e armazenados
+                normalmente. Se encontrar erros, verifique se as variáveis de
+                ambiente foram configuradas corretamente no arquivo .env.
               </p>
             </div>
 

@@ -266,7 +266,13 @@ export default function EditItemModal({
               </Label>
               <Select
                 value={formData.campusId || ""}
-                onValueChange={(value) => handleChange("campusId", value)}
+                onValueChange={(value) => {
+                  // Atualizar o campusId
+                  handleChange("campusId", value);
+
+                  // Não é necessário atualizar um campo displayName pois o componente
+                  // buscará o nome do campus através da relação campus quando necessário
+                }}
               >
                 <SelectTrigger className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] w-full">
                   <SelectValue placeholder="Selecione o campus" />

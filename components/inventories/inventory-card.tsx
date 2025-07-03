@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { useCampusName } from "@/hooks/queries/use-campus-name";
 import type { BemCopia } from "@/lib/interface";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
@@ -18,6 +19,16 @@ export default function InventoryCard({
   const pathname = usePathname();
   const params = useParams();
   const commissionId = params?.commission_id as string;
+
+  // Fetch campus name if the campus_id is available
+  const { data: campusName, isLoading: isLoadingCampus } = useCampusName(
+    item.campus_id
+  );
+
+  // Variável para exibição do campus - usa o nome do campus da API ou o valor já existente no item
+  const displayCampusName = isLoadingCampus
+    ? "Carregando..."
+    : campusName || item.CAMPUS_DA_LOTACAO_DO_BEM || "Campus não especificado";
 
   const isAdminRoute = pathname.includes("/application/");
   const basePath = "/application";
@@ -107,13 +118,27 @@ export default function InventoryCard({
             {displayFields.map((field) => {
               if (!item[field as keyof BemCopia]) return null;
 
+              // Special handling for campus field
+              if (field === "CAMPUS_DA_LOTACAO_DO_BEM") {
+                return (
+                  <div key={field} className="flex justify-between gap-1">
+                    <span className="whitespace-nowrap">
+                      {fieldLabels[field]}:
+                    </span>
+                    <span className="font-medium text-[var(--font-color)] truncate max-w-[50%] sm:max-w-[150px]">
+                      {displayCampusName}
+                    </span>
+                  </div>
+                );
+              }
+
               return (
                 <div key={field} className="flex justify-between gap-1">
                   <span className="whitespace-nowrap">
                     {fieldLabels[field]}:
                   </span>
                   <span className="font-medium text-[var(--font-color)] truncate max-w-[50%] sm:max-w-[150px]">
-                    {String(item[field as keyof BemCopia])}
+                    {String(item[field as keyof BemCopia] || "")}
                   </span>
                 </div>
               );

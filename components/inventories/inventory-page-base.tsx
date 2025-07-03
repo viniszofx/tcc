@@ -10,6 +10,7 @@ import NewItemModal from "@/components/inventories/new-item-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useInventorySync } from "@/hooks/use-inventory-sync";
+import { useSmartNavigation } from "@/hooks/use-smart-navigation";
 import type { BemCopia } from "@/lib/interface";
 import { exportToPdfStyled } from "@/utils/pdf-export";
 import { Filter, RefreshCw } from "lucide-react";
@@ -28,6 +29,7 @@ export default function InventoryPageBase({
   commissionId: propCommissionId,
 }: InventoryPageBaseProps) {
   const router = useRouter();
+  const { navigateTo } = useSmartNavigation();
   const params = useParams();
   const commissionId = propCommissionId || (params?.commission_id as string);
 
@@ -200,12 +202,89 @@ export default function InventoryPageBase({
         console.warn("Não foi possível obter dados da comissão");
       }
 
-      // Usar a nova função que salva localmente e envia para servidor (se já sincronizado)
-      console.log("Salvando item com auto-sync...");
-      await addItemWithAutoSync(item, campusId);
-      console.log("✅ Item salvo com sucesso!");
+      // Enviar direto para o servidor
+      console.log("Enviando item para o servidor...");
 
-      // Não precisa mais recarregar dados pois o hook já atualiza o estado local
+      // Converter de BemCopia para o formato esperado pela API
+      const apiItem = {
+        number: item.NUMERO || `ITEM-${Date.now()}`,
+        description: item.DESCRICAO || "Novo item",
+        conservationState: convertEstadoConservacao(item.ESTADO_DE_CONSERVACAO),
+        brandModel: item.MARCA_MODELO || "",
+        currentResponsibility: item.RESPONSABILIDADE_ATUAL || "",
+        location: item.SALA || "",
+        sector: item.SETOR_DO_RESPONSAVEL || "",
+        ed: item.ED || "",
+        tags: item.ROTULOS
+          ? item.ROTULOS.split(",").map((tag) => tag.trim())
+          : [],
+        campusId: item.campus_id || campusId,
+      };
+
+      // Verificar se campos obrigatórios estão presentes
+      if (!apiItem.campusId) {
+        throw new Error("O ID do campus é obrigatório");
+      }
+
+      if (!apiItem.number) {
+        throw new Error("O número do item é obrigatório");
+      }
+
+      if (!apiItem.description) {
+        throw new Error("A descrição do item é obrigatória");
+      }
+
+      // Função auxiliar para converter o estado de conservação para o formato esperado pela API
+      function convertEstadoConservacao(estado?: string) {
+        if (!estado) return "bom";
+
+        switch (estado.toUpperCase()) {
+          case "NOVO":
+            return "bom";
+          case "BOM":
+            return "bom";
+          case "REGULAR":
+            return "regular";
+          case "RUIM":
+            return "ruim";
+          case "INSERVIVEL":
+            return "inservível";
+          default:
+            return "bom";
+        }
+      }
+
+      console.log("Item convertido para formato da API:", apiItem);
+
+      try {
+        const response = await fetch("/api/inventory", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            commissionId,
+            item: apiItem,
+          }),
+        });
+
+        const responseData = await response.json();
+
+        if (!response.ok) {
+          console.error("❌ Erro da API:", responseData);
+          throw new Error(responseData.error || "Erro ao salvar item");
+        }
+
+        console.log("✅ Item salvo com sucesso:", responseData);
+
+        // Fechar o modal
+        setIsNewItemModalOpen(false);
+
+        // Não precisa mais recarregar dados pois o hook já atualiza o estado local
+      } catch (error) {
+        console.error("❌ Erro ao salvar item:", error);
+        throw error; // Propagar o erro para o modal tratar
+      }
     } catch (error) {
       console.error("❌ Erro ao salvar item:", error);
       throw error; // Propagar o erro para o modal tratar
@@ -395,7 +474,7 @@ export default function InventoryPageBase({
               {loadError}
             </p>
             <Button
-              onClick={() => router.push(errorRoute)}
+              onClick={() => navigateTo(errorRoute)}
               className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white"
             >
               Processar Novo Arquivo
@@ -527,7 +606,7 @@ export default function InventoryPageBase({
           <Button
             variant="outline"
             className="w-36 flex items-center gap-2 border-[var(--border-input)] bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] hover:text-white"
-            onClick={() => router.push(backRoute)}
+            onClick={() => navigateTo(backRoute)}
           >
             <span>Voltar</span>
           </Button>
@@ -538,6 +617,7 @@ export default function InventoryPageBase({
           onClose={() => setIsNewItemModalOpen(false)}
           onSave={handleSaveNewItem}
           inventoryData={inventoryData}
+          campusId={metadata?.campusId || ""}
         />
       </CardContent>
     </Card>

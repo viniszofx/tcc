@@ -1,18 +1,17 @@
 "use client";
 
 import LoadingScreen from "@/components/custom/loading";
-import { AddInventoryItemForm } from "@/components/inventories/add-inventory-item-form";
 import InventoryPageBase from "@/components/inventories/inventory-page-base";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+
 import { useCommission } from "@/hooks/queries/use-commissions-query";
 import { useInventoryItems } from "@/hooks/queries/use-inventory-query";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
 import { useInventoryWithSync } from "@/hooks/use-inventory-query";
 import { useInventorySync } from "@/hooks/use-inventory-sync";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
-import { AlertCircle, List, Plus, Upload, Wifi, WifiOff } from "lucide-react";
+import { AlertCircle, Upload, Wifi, WifiOff } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -213,98 +212,49 @@ export default function CommissionInventoriesPage() {
         </Card>
       )}
 
-      {/* Interface principal com tabs */}
-      <Tabs defaultValue="list" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="list" className="flex items-center gap-2">
-            <List className="w-4 h-4" />
-            Inventário ({totalItems})
-          </TabsTrigger>
-          <TabsTrigger value="add" className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Adicionar Item
-          </TabsTrigger>
-          <TabsTrigger value="upload" className="flex items-center gap-2">
-            <Upload className="w-4 h-4" />
-            Upload Planilha
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="list" className="space-y-4">
-          {/* Status de sincronização */}
-          {pendingItemsCount > 0 && (
-            <Card className="border-yellow-200 bg-yellow-50">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5 text-yellow-600" />
-                  <div>
-                    <p className="text-sm font-medium text-yellow-800">
-                      {pendingItemsCount} item{pendingItemsCount > 1 ? "s" : ""}{" "}
-                      aguardando sincronização
-                    </p>
-                    <p className="text-xs text-yellow-700">
-                      {syncIsOnline
-                        ? "Sincronização em andamento..."
-                        : "Conecte-se à internet para sincronizar."}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Componente base com todas as funcionalidades */}
-          <InventoryPageBase
-            backRoute={`/application/commissions/${commissionId}`}
-            errorRoute="/application"
-            commissionId={commissionId}
-          />
-        </TabsContent>
-
-        <TabsContent value="add" className="space-y-4">
-          {commission && (
-            <AddInventoryItemForm
-              commissionId={commissionId}
-              campusId={commission.campusId}
-              onSuccess={() => {
-                // Opcional: voltar para a tab de lista após adicionar
-                // setActiveTab("list");
-              }}
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="upload" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="w-5 h-5" />
-                Upload de Planilha
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">
-                  Faça upload de uma planilha CSV ou Excel com os dados do
-                  inventário.
+      {/* Status de sincronização */}
+      {pendingItemsCount > 0 && (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-yellow-600" />
+              <div>
+                <p className="text-sm font-medium text-yellow-800">
+                  {pendingItemsCount} item{pendingItemsCount > 1 ? "s" : ""}{" "}
+                  aguardando sincronização
                 </p>
-                {canUploadToCommission && (
-                  <Button
-                    onClick={() =>
-                      router.push(
-                        `/application/commissions/${commissionId}/upload`
-                      )
-                    }
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Ir para Upload
-                  </Button>
-                )}
+                <p className="text-xs text-yellow-700">
+                  {syncIsOnline
+                    ? "Sincronização em andamento..."
+                    : "Conecte-se à internet para sincronizar."}
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Barra de ações */}
+      <div className="flex items-center gap-2 justify-end">
+        {canUploadToCommission && (
+          <Button
+            variant="outline"
+            onClick={() =>
+              router.push(`/application/commissions/${commissionId}/upload`)
+            }
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Upload de Planilha
+          </Button>
+        )}
+      </div>
+
+      {/* Componente base com todas as funcionalidades */}
+      <InventoryPageBase
+        backRoute={`/application/commissions/${commissionId}`}
+        errorRoute="/application"
+        commissionId={commissionId}
+      />
     </div>
   );
 }

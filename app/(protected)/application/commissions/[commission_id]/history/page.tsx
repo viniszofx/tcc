@@ -9,11 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useCommissionHistoryData } from "@/hooks/queries/use-page-data";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
-import type {
-  CommissionWithRelations,
-  InventoryHistoryWithRelations,
-} from "@/interface";
 import {
   Calendar,
   Edit,
@@ -25,7 +22,7 @@ import {
   User,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export default function CommissionHistoryPage() {
   const { user, canAccessCommission, loading } = useUserPermissions();
@@ -33,52 +30,14 @@ export default function CommissionHistoryPage() {
   const params = useParams();
   const commissionId = params.commission_id as string;
 
-  const [commission, setCommission] = useState<CommissionWithRelations | null>(
-    null
-  );
-  const [history, setHistory] = useState<InventoryHistoryWithRelations[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { commission, history, isLoading, error } =
+    useCommissionHistoryData(commissionId);
 
   useEffect(() => {
     if (!loading && !canAccessCommission) {
       router.push("/application");
     }
   }, [loading, canAccessCommission, router]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Buscar dados da comissão
-        const commissionResponse = await fetch(
-          `/api/commission/${commissionId}`
-        );
-        if (!commissionResponse.ok) {
-          throw new Error("Comissão não encontrada");
-        }
-        const commissionData = await commissionResponse.json();
-        setCommission(commissionData);
-
-        // Buscar histórico da comissão
-        const historyResponse = await fetch(
-          `/api/inventory-history?commissionId=${commissionId}`
-        );
-        if (historyResponse.ok) {
-          const historyData = await historyResponse.json();
-          setHistory(historyData);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar dados:", error);
-        setError("Erro ao carregar dados");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (commissionId && canAccessCommission) {
-      fetchData();
-    }
-  }, [commissionId, canAccessCommission]);
 
   if (loading || isLoading) {
     return <LoadingScreen />;
@@ -88,7 +47,9 @@ export default function CommissionHistoryPage() {
     return (
       <Card>
         <CardContent className="p-6">
-          <p className="text-red-500">{error || "Comissão não encontrada"}</p>
+          <p className="text-red-500">
+            {error?.message || "Comissão não encontrada"}
+          </p>
         </CardContent>
       </Card>
     );
@@ -161,6 +122,119 @@ export default function CommissionHistoryPage() {
     });
   };
 
+  const parseChanges = (changesString: string) => {
+    try {
+      return JSON.parse(changesString);
+    } catch {
+      return null;
+    }
+  };
+
+  const formatFieldValue = (value: any) => {
+    if (value === null || value === undefined) return "N/A";
+    if (typeof value === "boolean") return value ? "Sim" : "Não";
+    if (typeof value === "object") return JSON.stringify(value);
+    return String(value);
+  };
+
+  const getRelevantFields = () => [
+    { key: "number", label: "Número" },
+    { key: "description", label: "Descrição" },
+    { key: "brandModel", label: "Marca/Modelo" },
+    { key: "currentResponsibility", label: "Responsável Atual" },
+    { key: "conservationState", label: "Estado de Conservação" },
+    { key: "location", label: "Localização" },
+    { key: "sector", label: "Setor" },
+  ];
+
+  const renderBeforeAfter = (changes: any) => {
+    if (!changes || (!changes.before && !changes.after)) return null;
+
+    const { before, after } = changes;
+    const relevantFields = getRelevantFields();
+
+    // Se for criação ou exclusão, mostrar apenas o estado relevante
+    if (!before && after) {
+      return (
+        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
+          <h4 className="text-sm font-medium text-green-800 mb-2">
+            Item Criado:
+          </h4>
+          <div className="space-y-1">
+            {relevantFields.map(({ key, label }) => (
+              <div key={key} className="text-xs">
+                <span className="font-medium text-green-700">{label}:</span>{" "}
+                <span className="text-green-800">
+                  {formatFieldValue(after[key])}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (before && !after) {
+      return (
+        <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded">
+          <h4 className="text-sm font-medium text-red-800 mb-2">
+            Item Removido:
+          </h4>
+          <div className="space-y-1">
+            {relevantFields.map(({ key, label }) => (
+              <div key={key} className="text-xs">
+                <span className="font-medium text-red-700">{label}:</span>{" "}
+                <span className="text-red-800">
+                  {formatFieldValue(before[key])}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Para atualizações, mostrar apenas campos que mudaram
+    if (before && after) {
+      const changedFields = relevantFields.filter(
+        ({ key }) => before[key] !== after[key]
+      );
+
+      if (changedFields.length === 0) return null;
+
+      return (
+        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
+          <h4 className="text-sm font-medium text-blue-800 mb-2">
+            Alterações:
+          </h4>
+          <div className="space-y-2">
+            {changedFields.map(({ key, label }) => (
+              <div key={key} className="text-xs">
+                <span className="font-medium text-blue-700">{label}:</span>
+                <div className="ml-2 grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-red-600 font-medium">Antes:</span>{" "}
+                    <span className="text-red-700">
+                      {formatFieldValue(before[key])}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-green-600 font-medium">Depois:</span>{" "}
+                    <span className="text-green-700">
+                      {formatFieldValue(after[key])}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   const sortedHistory = [...history].sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
@@ -218,7 +292,8 @@ export default function CommissionHistoryPage() {
                         </div>
 
                         <h3 className="font-medium text-[var(--font-color)] mb-1 break-words whitespace-pre-line">
-                          {event.inventoryItem?.description || "Item de inventário"}
+                          {event.inventoryItem?.description ||
+                            "Item de inventário"}
                         </h3>
 
                         {event.observation && (
@@ -227,11 +302,9 @@ export default function CommissionHistoryPage() {
                           </p>
                         )}
 
-                        {event.changes && (
-                          <div className="text-xs text-[var(--font-color)] opacity-70 bg-[var(--bg-simple)] p-2 rounded border border-[var(--border-color)] break-all overflow-x-auto">
-                            <strong>Alterações:</strong> {event.changes}
-                          </div>
-                        )}
+                        {/* Exibir alterações estruturadas */}
+                        {event.changes &&
+                          renderBeforeAfter(parseChanges(event.changes))}
                       </div>
 
                       <div className="text-right">
@@ -251,16 +324,18 @@ export default function CommissionHistoryPage() {
                           Imagens anexadas:
                         </p>
                         <div className="flex gap-2">
-                          {event.image_url.slice(0, 3).map((url, idx) => (
-                            <div
-                              key={idx}
-                              className="w-12 h-12 bg-[var(--secondary-color)] rounded border border-[var(--border-color)] flex items-center justify-center"
-                            >
-                              <span className="text-xs text-[var(--font-color)] opacity-70">
-                                IMG
-                              </span>
-                            </div>
-                          ))}
+                          {event.image_url
+                            .slice(0, 3)
+                            .map((url: string, idx: number) => (
+                              <div
+                                key={idx}
+                                className="w-12 h-12 bg-[var(--secondary-color)] rounded border border-[var(--border-color)] flex items-center justify-center"
+                              >
+                                <span className="text-xs text-[var(--font-color)] opacity-70">
+                                  IMG
+                                </span>
+                              </div>
+                            ))}
                           {event.image_url.length > 3 && (
                             <div className="w-12 h-12 bg-[var(--secondary-color)] rounded border border-[var(--border-color)] flex items-center justify-center">
                               <span className="text-xs text-[var(--font-color)] opacity-70">

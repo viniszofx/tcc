@@ -18,22 +18,48 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useCampus } from "@/hooks/queries/use-campus-query";
+import { useUniqueCampusList } from "@/hooks/queries/use-unique-campus-list";
 import { EstadoConservacao, StatusBem, type BemCopia } from "@/lib/interface";
 import { useEffect, useState } from "react";
+
+// Definindo interface para o objeto de campus
+interface CampusItem {
+  id: string;
+  name: string;
+}
 
 interface NewItemModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (item: BemCopia) => Promise<void>;
   inventoryData?: BemCopia[];
+  campusId?: string; // Campus ID para buscar o nome
 }
 
 export default function NewItemModal({
   isOpen,
   onClose,
   onSave,
-  inventoryData,
+  inventoryData = [],
+  campusId,
 }: NewItemModalProps) {
+  // Log para depuração
+  useEffect(() => {
+    if (isOpen) {
+      console.log("🔍 Modal aberto com campusId:", campusId);
+    }
+  }, [isOpen, campusId]);
+
+  // Buscar informações do campus
+  const { data: campus, isLoading: isLoadingCampus } = useCampus(
+    campusId || ""
+  );
+
+  // Obter lista de campus únicos do inventário
+  const { data: uniqueCampuses = [], isLoading: isLoadingCampusList } =
+    useUniqueCampusList(inventoryData);
+
   const [formData, setFormData] = useState<Partial<BemCopia>>({
     NUMERO: "",
     DESCRICAO: "",
@@ -46,18 +72,87 @@ export default function NewItemModal({
     STATUS: StatusBem.ATIVO,
     ED: "",
     ROTULOS: "",
+    campus_id: campusId || "", // Adicionando campus_id ao formData
   });
+
+  // Efeito para atualizar o campus_id e CAMPUS_DA_LOTACAO_DO_BEM quando o prop campusId mudar
+  useEffect(() => {
+    if (campusId) {
+      // Buscar o nome do campus na lista de campus únicos
+      const selectedCampus = uniqueCampuses.find(
+        (c: CampusItem) => c.id === campusId
+      );
+
+      setFormData((prev) => ({
+        ...prev,
+        campus_id: campusId,
+        // Se o campus for encontrado na lista, usar seu nome, caso contrário manter o valor atual
+        ...(selectedCampus && {
+          CAMPUS_DA_LOTACAO_DO_BEM: selectedCampus.name,
+        }),
+      }));
+
+      console.log(`✅ Campo campus_id atualizado para: ${campusId}`);
+    }
+  }, [campusId, uniqueCampuses]);
 
   const [setores, setSetores] = useState<string[]>([]);
   const [salas, setSalas] = useState<string[]>([]);
-  const [campuses, setCampuses] = useState<string[]>([]);
   const [responsaveis, setResponsaveis] = useState<string[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // useEffect para inicializar dados quando o modal for aberto
   useEffect(() => {
     if (!isOpen) return;
+
+    // Se tivermos um campus via hook useCampus, atualizar o campo CAMPUS_DA_LOTACAO_DO_BEM
+    if (campus) {
+      setFormData((prev) => ({
+        ...prev,
+        CAMPUS_DA_LOTACAO_DO_BEM: campus.name,
+        campus_id: campus.id,
+      }));
+      console.log(
+        `✅ Campo CAMPUS_DA_LOTACAO_DO_BEM atualizado para: ${campus.name}`
+      );
+    } else if (campusId) {
+      // Se temos ID mas não o objeto campus via hook, tentar encontrar na lista de uniqueCampuses
+      const foundCampus = uniqueCampuses.find(
+        (c: CampusItem) => c.id === campusId
+      );
+
+      if (foundCampus) {
+        setFormData((prev) => ({
+          ...prev,
+          CAMPUS_DA_LOTACAO_DO_BEM: foundCampus.name,
+          campus_id: campusId,
+        }));
+        console.log(
+          `✅ Campo CAMPUS_DA_LOTACAO_DO_BEM atualizado via lista de campus para: ${foundCampus.name}`
+        );
+      } else {
+        // Se não encontrou na lista, tentar buscar da API
+        fetch(`/api/campus?id=${campusId}`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data && data.name) {
+              setFormData((prev) => ({
+                ...prev,
+                CAMPUS_DA_LOTACAO_DO_BEM: data.name,
+                campus_id: campusId,
+              }));
+              console.log(
+                `✅ Campo CAMPUS_DA_LOTACAO_DO_BEM atualizado via API para: ${data.name}`
+              );
+            }
+          })
+          .catch((error) => {
+            console.warn("Erro ao buscar campus pela API:", error);
+          });
+      }
+    }
 
     const validData =
       inventoryData?.filter(
@@ -79,7 +174,7 @@ export default function NewItemModal({
 
     setSetores(extractUnique("SETOR_DO_RESPONSAVEL"));
     setSalas(extractUnique("SALA"));
-    setCampuses(extractUnique("CAMPUS_DA_LOTACAO_DO_BEM"));
+    // Não usamos mais o setCampuses aqui, pois agora usamos o hook useUniqueCampusList
     setResponsaveis(extractUnique("RESPONSABILIDADE_ATUAL"));
   }, [isOpen, inventoryData]);
 
@@ -115,6 +210,11 @@ export default function NewItemModal({
     if (!formData.SALA) newErrors.SALA = "Sala é obrigatória";
     if (!formData.ED) newErrors.ED = "ED é obrigatório";
 
+    // Verificar se o campus foi selecionado
+    if (!formData.campus_id && !campusId) {
+      newErrors.campus_id = "Campus é obrigatório";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -125,18 +225,46 @@ export default function NewItemModal({
     setIsSubmitting(true);
 
     try {
+      // Primeiro, determinar o campus_id correto a ser usado
+      const finalCampusId = formData.campus_id || campusId || "campus-1";
+
+      // Em seguida, determinar o nome do campus correto
+      let finalCampusName = formData.CAMPUS_DA_LOTACAO_DO_BEM || "";
+
+      // Se não tiver nome do campus no formData, mas tiver campus_id, buscar o nome
+      if (!finalCampusName && finalCampusId) {
+        // Verificar se o campus está na lista de uniqueCampuses
+        const foundCampus = uniqueCampuses.find(
+          (c: CampusItem) => c.id === finalCampusId
+        );
+        if (foundCampus) {
+          finalCampusName = foundCampus.name;
+        } else if (campus?.name) {
+          // Ou usar o nome do campus do hook useCampus
+          finalCampusName = campus.name;
+        } else {
+          // Fallback se nada for encontrado
+          finalCampusName = "Campus não especificado";
+        }
+      }
+
+      // Garantir que o número do item seja único adicionando um timestamp se necessário
+      const numero = formData.NUMERO?.trim() || "";
+      const uniqueNumero = numero
+        ? `${numero}-${Date.now().toString().slice(-4)}`
+        : `ITEM-${Date.now()}`;
+
       const newItem: BemCopia = {
         bem_id: `bem-${Date.now()}`,
         inventario_id: `inv-${Date.now()}`,
         grupo_id: `grp-${Date.now()}`,
-        campus_id: `campus-1`,
-        NUMERO: formData.NUMERO || "",
+        campus_id: finalCampusId,
+        NUMERO: uniqueNumero, // Usar número único
         DESCRICAO: formData.DESCRICAO || "",
         MARCA_MODELO: formData.MARCA_MODELO || "",
         RESPONSABILIDADE_ATUAL: formData.RESPONSABILIDADE_ATUAL || "",
         SETOR_DO_RESPONSAVEL: formData.SETOR_DO_RESPONSAVEL || "",
-        CAMPUS_DA_LOTACAO_DO_BEM:
-          formData.CAMPUS_DA_LOTACAO_DO_BEM || "Principal",
+        CAMPUS_DA_LOTACAO_DO_BEM: finalCampusName,
         SALA: formData.SALA || "",
         ESTADO_DE_CONSERVACAO:
           formData.ESTADO_DE_CONSERVACAO as EstadoConservacao,
@@ -169,7 +297,30 @@ export default function NewItemModal({
       onClose();
     } catch (error) {
       console.error("Erro ao salvar item:", error);
-      alert("Erro ao salvar item: " + (error as Error).message);
+      if (error instanceof Error) {
+        console.error("Detalhes do erro:", error.message);
+
+        // Tratamento específico para erros comuns
+        const errorMessage = error.message;
+
+        if (errorMessage.includes("Já existe um item com o número")) {
+          alert(
+            `Este número de item já está em uso. Por favor, use um número diferente.`
+          );
+        } else if (errorMessage.includes("Foreign key constraint violated")) {
+          alert(
+            `Erro de referência no banco de dados. Por favor, tente novamente ou contate o suporte.`
+          );
+        } else {
+          // Exibir mensagem de erro para o usuário
+          alert(`Erro ao salvar item: ${errorMessage}`);
+        }
+      } else {
+        // Fallback para outros tipos de erro
+        alert(
+          "Erro desconhecido ao salvar item. Verifique o console para mais detalhes."
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -180,10 +331,14 @@ export default function NewItemModal({
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="top-0 z-10">
           <DialogTitle className="text-[var(--font-color)]">
-            Adicionar Novo Item
+            Adicionar Novo Item de Inventário
           </DialogTitle>
           <DialogDescription className="text-[var(--font-color)]/70">
-            Preencha os detalhes do novo item de inventário.
+            {isLoadingCampus
+              ? "Carregando dados do campus..."
+              : `Preencha os detalhes do novo item para ${
+                  campus?.name || "este campus"
+                }.`}
           </DialogDescription>
         </DialogHeader>
 
@@ -321,22 +476,41 @@ export default function NewItemModal({
                 Campus
               </Label>
               <Select
-                value={formData.CAMPUS_DA_LOTACAO_DO_BEM}
-                onValueChange={(value) =>
-                  handleChange("CAMPUS_DA_LOTACAO_DO_BEM", value)
-                }
+                value={formData.campus_id || campusId || ""}
+                onValueChange={(value) => {
+                  // Ao selecionar um campus, atualizar tanto o ID quanto o nome
+                  const selectedCampus = uniqueCampuses.find(
+                    (c: CampusItem) => c.id === value
+                  );
+                  handleChange("campus_id", value);
+                  if (selectedCampus) {
+                    handleChange(
+                      "CAMPUS_DA_LOTACAO_DO_BEM",
+                      selectedCampus.name
+                    );
+                  }
+                }}
               >
                 <SelectTrigger className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)]">
-                  <SelectValue placeholder="Selecione o campus" />
+                  <SelectValue
+                    placeholder={
+                      isLoadingCampusList
+                        ? "Carregando campus..."
+                        : "Selecione o campus"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  {campuses.map((campus) => (
-                    <SelectItem key={campus} value={campus}>
-                      {campus}
+                  {uniqueCampuses.map((campus: CampusItem) => (
+                    <SelectItem key={campus.id} value={campus.id}>
+                      {campus.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {errors.campus_id && (
+                <p className="text-xs text-red-500">{errors.campus_id}</p>
+              )}
             </div>
 
             <div className="space-y-2">

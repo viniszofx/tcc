@@ -2,6 +2,7 @@
 
 import LoadingScreen from "@/components/custom/loading";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,21 +10,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useDeleteCommission } from "@/hooks/mutations/use-mutations";
+import { useCommissionDetailData } from "@/hooks/queries/use-page-data";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
-import type { CommissionWithRelations } from "@/interface";
 import {
   Building2,
   CalendarDays,
+  Edit,
   FileText,
   History,
   Package,
+  Trash2,
   Upload,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export default function CommissionDetailPage() {
   const { user, loading } = useUserPermissions();
@@ -38,11 +42,16 @@ export default function CommissionDetailPage() {
     loading: permissionsLoading,
   } = useCommissionPermissions(commissionId);
 
-  const [commission, setCommission] = useState<CommissionWithRelations | null>(
-    null
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Usar hook otimizado para buscar dados da comissão
+  const {
+    commission,
+    isLoading: commissionLoading,
+    error: commissionError,
+    refetch,
+  } = useCommissionDetailData(commissionId);
+
+  // Mutation para deletar comissão
+  const deleteCommissionMutation = useDeleteCommission();
 
   useEffect(() => {
     if (!loading && !permissionsLoading && !canAccessCommission) {
@@ -50,37 +59,54 @@ export default function CommissionDetailPage() {
     }
   }, [loading, permissionsLoading, canAccessCommission, router]);
 
-  useEffect(() => {
-    const fetchCommission = async () => {
-      try {
-        const response = await fetch(`/api/commission/${commissionId}`);
-        if (!response.ok) {
-          throw new Error("Comissão não encontrada");
-        }
-        const data = await response.json();
-        setCommission(data);
-      } catch (error) {
-        console.error("Erro ao buscar comissão:", error);
-        setError("Erro ao carregar dados da comissão");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const handleEditCommission = () => {
+    // Redirecionar para página de edição ou abrir modal
+    router.push(`/application/commissions?edit=${commissionId}`);
+  };
 
-    if (commissionId && !permissionsLoading && canAccessCommission) {
-      fetchCommission();
+  const handleDeleteCommission = async () => {
+    if (!commission) return;
+
+    const confirmDelete = confirm(
+      `Tem certeza que deseja excluir a comissão "${commission.name}"?\n\n` +
+        "Esta ação irá:\n" +
+        "- Excluir permanentemente a comissão\n" +
+        "- Remover todos os membros da comissão\n" +
+        "- Manter o histórico de inventário para auditoria\n\n" +
+        "Esta ação NÃO PODE ser desfeita!"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await deleteCommissionMutation.mutateAsync(commissionId);
+      alert("Comissão excluída com sucesso!");
+      router.push("/application/commissions");
+    } catch (error) {
+      console.error("Erro ao excluir comissão:", error);
+      alert("Erro ao excluir comissão. Tente novamente.");
     }
-  }, [commissionId, permissionsLoading, canAccessCommission]);
+  };
 
-  if (loading || permissionsLoading || isLoading) {
+  // Verificar se o usuário pode gerenciar a comissão (admin ou presidente da comissão)
+  const canManageCommission =
+    user?.role === "admin" ||
+    commission?.members?.some(
+      (member: any) =>
+        member.userId === user?.id && member.roleInCommission === "Presidente"
+    );
+
+  if (loading || permissionsLoading || commissionLoading) {
     return <LoadingScreen />;
   }
 
-  if (error || !commission) {
+  if (commissionError || !commission) {
     return (
       <Card>
         <CardContent className="p-6">
-          <p className="text-red-500">{error || "Comissão não encontrada"}</p>
+          <p className="text-red-500">
+            {commissionError?.message || "Comissão não encontrada"}
+          </p>
         </CardContent>
       </Card>
     );
@@ -158,6 +184,32 @@ export default function CommissionDetailPage() {
                 </Badge>
               </div>
             </div>
+            {/* Ações Administrativas */}
+            {canManageCommission && (
+              <div className="flex gap-2 mt-4">
+                <Button
+                  onClick={handleEditCommission}
+                  variant="outline"
+                  size="sm"
+                  className="bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--border-color)] hover:bg-[var(--hover-color)]"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Editar Comissão
+                </Button>
+                <Button
+                  onClick={handleDeleteCommission}
+                  variant="destructive"
+                  size="sm"
+                  disabled={deleteCommissionMutation.isPending}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {deleteCommissionMutation.isPending
+                    ? "Excluindo..."
+                    : "Excluir Comissão"}
+                </Button>
+              </div>
+            )}
           </div>
         </CardHeader>
       </Card>

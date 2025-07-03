@@ -1,19 +1,70 @@
 import { createClient } from "@supabase/supabase-js";
 
 // Configurar cliente Supabase Admin
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Verificar se as variáveis de ambiente estão configuradas
+let supabaseAdmin: any = null;
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error("Variáveis de ambiente do Supabase não configuradas");
-}
+  console.error("❌ ERRO: Variáveis de ambiente do Supabase não configuradas");
+  console.error(
+    "Verifique se NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY estão definidas no .env.local"
+  );
+  // Criar um cliente mock para evitar erros
+  supabaseAdmin = {
+    storage: {
+      from: () => ({
+        upload: async () => ({
+          data: { path: null },
+          error: { message: "Supabase não configurado" },
+        }),
+        getPublicUrl: () => ({ data: { publicUrl: null } }),
+        remove: async () => ({ data: null, error: null }),
+      }),
+      createBucket: async () => ({
+        data: null,
+        error: { message: "Supabase não configurado" },
+      }),
+      getBucket: async () => ({
+        data: { id: "mock-bucket", name: "mock-bucket" },
+        error: null,
+      }),
+      updateBucket: async () => ({
+        data: { id: "mock-bucket", name: "mock-bucket" },
+        error: null,
+      }),
+      listBuckets: async () => ({ data: [], error: null }),
+      deleteBucket: async () => ({ data: null, error: null }),
+    },
+  };
+} else {
+  // Inicializar o cliente real quando as variáveis estão disponíveis
+  supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
+  // Tentar inicializar buckets importantes automaticamente
+  if (typeof window === "undefined") {
+    // Apenas no servidor
+    // Executar em background para não bloquear a inicialização
+    setTimeout(async () => {
+      try {
+        await ensureBucketExists("inventory-files");
+        console.log("✅ Bucket inventory-files verificado na inicialização");
+      } catch (error) {
+        console.error("❌ Falha ao verificar bucket na inicialização:", error);
+        console.error(
+          "Execute manualmente a API /api/system/setup-bucket para criar o bucket"
+        );
+      }
+    }, 100);
+  }
+}
 
 export interface BucketConfig {
   name: string;
@@ -68,7 +119,10 @@ export async function bucketExists(bucketName: string): Promise<boolean> {
       return false;
     }
 
-    return buckets?.some((bucket) => bucket.name === bucketName) || false;
+    return (
+      buckets?.some((bucket: { name: string }) => bucket.name === bucketName) ||
+      false
+    );
   } catch (error) {
     console.error("❌ Erro ao verificar bucket:", error);
     return false;
@@ -82,6 +136,17 @@ export async function ensureBucketExists(
   bucketName: string,
   customConfig?: Partial<BucketConfig>
 ): Promise<boolean> {
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error(
+      `❌ ERRO ao verificar bucket: Supabase não configurado corretamente`
+    );
+    console.error(
+      "Verifique se NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY estão definidas no .env.local"
+    );
+    console.error("Use /api/system/setup-bucket para inicializar os buckets");
+    return false; // Não prosseguir sem configuração adequada
+  }
+
   try {
     console.log(`🔍 Verificando bucket '${bucketName}'...`);
 
@@ -121,6 +186,7 @@ export async function ensureBucketExists(
 
     if (error) {
       console.error(`❌ Erro ao criar bucket '${bucketName}':`, error);
+      console.error("Detalhes completos:", JSON.stringify(error, null, 2));
 
       // Se o erro for sobre bucket já existente, considerar como sucesso
       if (
@@ -131,6 +197,13 @@ export async function ensureBucketExists(
         return true;
       }
 
+      // Sugestão de solução
+      console.error(
+        "Sugestão: Verifique se sua chave de serviço (SUPABASE_SERVICE_ROLE_KEY) tem permissões suficientes"
+      );
+      console.error(
+        "Use /api/system/setup-bucket para inicializar os buckets corretamente"
+      );
       return false;
     }
 
@@ -138,6 +211,9 @@ export async function ensureBucketExists(
     return true;
   } catch (error) {
     console.error(`❌ Erro ao criar bucket '${bucketName}':`, error);
+    console.error(
+      "Use /api/system/setup-bucket para inicializar os buckets corretamente"
+    );
     return false;
   }
 }
@@ -169,7 +245,7 @@ export async function listBuckets(): Promise<string[]> {
       return [];
     }
 
-    return buckets?.map((bucket) => bucket.name) || [];
+    return buckets?.map((bucket: { name: string }) => bucket.name) || [];
   } catch (error) {
     console.error("❌ Erro ao listar buckets:", error);
     return [];
@@ -180,6 +256,11 @@ export async function listBuckets(): Promise<string[]> {
  * Remove um bucket (use com cuidado!)
  */
 export async function deleteBucket(bucketName: string): Promise<boolean> {
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.warn(`ℹ️ Pulando remoção de bucket: Supabase não configurado`);
+    return true; // Simular sucesso
+  }
+
   try {
     console.log(`🗑️ Removendo bucket '${bucketName}'...`);
 

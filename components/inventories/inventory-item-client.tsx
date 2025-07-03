@@ -7,7 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  useDeleteInventoryItem,
+  useUpdateInventoryItem,
+} from "@/hooks/mutations/use-mutations";
+import { useInventoryItemDetailData } from "@/hooks/queries/use-page-data";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
+import { useSmartNavigation } from "@/hooks/use-smart-navigation";
 import type { InventoryItemWithRelations } from "@/interface";
 import { formatDate } from "@/utils/data-utils";
 import { Edit, Trash2 } from "lucide-react";
@@ -28,12 +34,23 @@ export default function InventoryItemClient({
   backButtonText = "Voltar para Inventário",
 }: InventoryItemClientProps) {
   const router = useRouter();
+  const { navigateTo } = useSmartNavigation();
   const params = useParams();
-  const [item, setItem] = useState<InventoryItemWithRelations | null>(null);
-  const [loading, setLoading] = useState(true);
+  const commissionId = propCommissionId || params?.commission_id;
+
+  const {
+    item,
+    isLoading: itemLoading,
+    error: itemError,
+    refetch: refetchItem,
+  } = useInventoryItemDetailData(id);
+
+  // Mutations para operações no inventário
+  const updateItemMutation = useUpdateInventoryItem();
+  const deleteItemMutation = useDeleteInventoryItem();
+
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const commissionId = propCommissionId || params?.commission_id;
   const [isMounted, setIsMounted] = useState(false);
 
   // Permission checking for commission access
@@ -56,56 +73,13 @@ export default function InventoryItemClient({
 
   useEffect(() => {
     if (!permissionsLoading && !canAccessCommission && commissionId) {
-      router.push("/application");
+      navigateTo("/application");
     }
-  }, [permissionsLoading, canAccessCommission, commissionId, router]);
-
-  useEffect(() => {
-    async function loadItem() {
-      setLoading(true);
-      try {
-        // Buscar o item diretamente da API
-        const response = await fetch(`/api/inventory?id=${id}`);
-        if (!response.ok) {
-          throw new Error("Item não encontrado");
-        }
-
-        const foundItem = await response.json();
-        console.log("Item carregado da API:", foundItem); // Debug
-        console.log("Campus do item:", foundItem.campus); // Debug específico do campus
-        setItem(foundItem);
-      } catch (error) {
-        console.error("Error loading item:", error);
-        router.push(getBackUrl());
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadItem();
-  }, [id, router, commissionId, basePath]);
+  }, [permissionsLoading, canAccessCommission, commissionId, navigateTo]);
 
   const handleSaveItem = async (updatedItem: InventoryItemWithRelations) => {
     try {
-      console.log("Dados sendo enviados para a API:", updatedItem); // Debug
-
-      const response = await fetch(`/api/inventory`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedItem),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Erro da API:", errorData);
-        throw new Error("Erro ao atualizar item");
-      }
-
-      const updatedItemFromApi = await response.json();
-      console.log("Item atualizado retornado da API:", updatedItemFromApi); // Debug
-      setItem(updatedItemFromApi);
+      await updateItemMutation.mutateAsync(updatedItem);
       setEditModalOpen(false);
     } catch (error) {
       console.error("Error saving item:", error);
@@ -117,18 +91,12 @@ export default function InventoryItemClient({
     if (!item) return;
 
     try {
-      const response = await fetch(`/api/inventory?id=${item.id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Erro ao excluir item");
-      }
-
+      await deleteItemMutation.mutateAsync(item.id);
       setDeleteModalOpen(false);
-      router.push(getBackUrl());
+      navigateTo(getBackUrl());
     } catch (error) {
       console.error("Error deleting item:", error);
+      alert("Erro ao excluir item");
     }
   };
 
@@ -158,7 +126,7 @@ export default function InventoryItemClient({
     }
   };
 
-  if (loading || permissionsLoading) {
+  if (itemLoading || permissionsLoading) {
     return <LoadingScreen />;
   }
 
@@ -174,7 +142,7 @@ export default function InventoryItemClient({
           </p>
           <Button
             className="mt-4 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white text-sm sm:text-base"
-            onClick={() => router.push("/application")}
+            onClick={() => navigateTo("/application")}
           >
             Voltar ao Dashboard
           </Button>
@@ -195,7 +163,7 @@ export default function InventoryItemClient({
           </p>
           <Button
             className="mt-4 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white text-sm sm:text-base"
-            onClick={() => router.push(getBackUrl())}
+            onClick={() => navigateTo(getBackUrl())}
           >
             {backButtonText}
           </Button>

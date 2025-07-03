@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useSmartNavigation } from "@/hooks/use-smart-navigation";
 import { ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 interface BackButtonProps {
   /** URL personalizada para onde voltar */
@@ -11,8 +11,10 @@ interface BackButtonProps {
   text?: string;
   /** Classe CSS adicional */
   className?: string;
-  /** Se deve usar router.back() quando não há customHref */
-  useRouterBack?: boolean;
+  /** Se deve usar navegação inteligente (padrão: true) */
+  useSmartNavigation?: boolean;
+  /** Se deve forçar router.back() mesmo se não for seguro */
+  forceRouterBack?: boolean;
   /** Variante do botão */
   variant?:
     | "default"
@@ -27,16 +29,25 @@ export default function BackButton({
   customHref,
   text = "Voltar",
   className = "",
-  useRouterBack = true,
+  useSmartNavigation: useSmartNav = true,
+  forceRouterBack = false,
   variant = "outline",
 }: BackButtonProps) {
-  const router = useRouter();
+  const { navigateTo, smartGoBack } = useSmartNavigation();
 
   const handleClick = () => {
     if (customHref) {
-      router.push(customHref);
-    } else if (useRouterBack) {
-      router.back();
+      navigateTo(customHref);
+    } else if (forceRouterBack) {
+      // Forçar router.back() mesmo se não for seguro (uso em casos específicos)
+      if (typeof window !== "undefined") {
+        window.history.back();
+      }
+    } else if (useSmartNav) {
+      smartGoBack();
+    } else {
+      // Fallback para comportamento antigo
+      navigateTo();
     }
   };
 

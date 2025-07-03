@@ -83,6 +83,7 @@ export default function InventoryActions({
           <Button
             onClick={onNewItem}
             className="flex items-center gap-2 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white"
+            id="main-new-item-button" // Adicionar ID para facilitar a identificação
           >
             <FilePlus className="h-4 w-4" />
             <span>Novo Item</span>

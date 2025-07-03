@@ -11,8 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useProfilePageData } from "@/hooks/queries/use-page-data";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
-import type { UserProfile, UserProfileWithRelations } from "@/interface";
+import type { UserProfile } from "@/interface";
 import { Key, Settings } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -21,10 +22,43 @@ import { useEffect, useState } from "react";
 export default function MyProfilePage() {
   const { user, loading: permissionsLoading } = useUserPermissions();
   const router = useRouter();
-  const [userData, setUserData] = useState<UserProfileWithRelations | null>(
-    null
-  );
-  const [loading, setLoading] = useState(true);
+
+  // Usar hook otimizado para dados do perfil
+  const {
+    data: userData,
+    isLoading: profileLoading,
+    error: profileError,
+    refetch: refetchProfile,
+  } = useProfilePageData(user?.id);
+
+  // Local state apenas para controle de UI
+  const [localUserData, setLocalUserData] =
+    useState<typeof userData>(undefined);
+
+  // Estado para controlar avatar que foi recém atualizado
+  const [pendingAvatar, setPendingAvatar] = useState<string | null>(null);
+  const [avatarUpdateTime, setAvatarUpdateTime] = useState<number | null>(null);
+
+  // Sincronizar dados locais com dados do cache
+  useEffect(() => {
+    if (userData) {
+      // Se temos um avatar pendente e foi atualizado há menos de 10 segundos, manter o avatar local
+      const now = Date.now();
+      const shouldKeepPendingAvatar =
+        pendingAvatar && avatarUpdateTime && now - avatarUpdateTime < 10000; // 10 segundos
+
+      if (shouldKeepPendingAvatar) {
+        setLocalUserData({ ...userData, avatar: pendingAvatar });
+      } else {
+        setLocalUserData(userData);
+        // Limpar avatar pendente após sincronização
+        if (pendingAvatar) {
+          setPendingAvatar(null);
+          setAvatarUpdateTime(null);
+        }
+      }
+    }
+  }, [userData, pendingAvatar, avatarUpdateTime]);
 
   useEffect(() => {
     if (!permissionsLoading && !user) {
@@ -32,52 +66,78 @@ export default function MyProfilePage() {
     }
   }, [permissionsLoading, user, router]);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user?.id) return;
-
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/user?id=${user.id}`);
-        if (response.ok) {
-          const data = await response.json();
-          setUserData(data);
-        } else {
-          console.error("Erro ao buscar dados do usuário");
-        }
-      } catch (error) {
-        console.error("Erro ao buscar dados do usuário:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (user?.id) {
-      fetchUserData();
-    }
-  }, [user?.id]);
-
   const handleAvatarUpdate = (avatarUrl: string) => {
-    setUserData((prev) => (prev ? { ...prev, avatar: avatarUrl } : null));
+    // Adicionar timestamp para cache busting
+    const avatarWithTimestamp = `${avatarUrl}?t=${Date.now()}`;
+
+    // Marcar como avatar pendente
+    setPendingAvatar(avatarWithTimestamp);
+    setAvatarUpdateTime(Date.now());
+
+    // Atualizar estado local imediatamente
+    setLocalUserData((prev) =>
+      prev ? { ...prev, avatar: avatarWithTimestamp } : prev
+    );
+
+    // Refetch após um delay para permitir sincronização do servidor
+    setTimeout(() => {
+      refetchProfile();
+    }, 2000);
   };
 
   const handleAvatarDelete = () => {
-    setUserData((prev) => (prev ? { ...prev, avatar: null } : null));
+    // Marcar como avatar removido
+    setPendingAvatar(null);
+    setAvatarUpdateTime(Date.now());
+
+    // Atualizar estado local imediatamente
+    setLocalUserData((prev) => (prev ? { ...prev, avatar: null } : prev));
+
+    // Refetch após um delay
+    setTimeout(() => {
+      refetchProfile();
+    }, 2000);
   };
 
   const handleProfileUpdate = (updatedData: Partial<UserProfile>) => {
-    setUserData((prev) => (prev ? { ...prev, ...updatedData } : null));
+    setLocalUserData((prev) => (prev ? { ...prev, ...updatedData } : prev));
+    refetchProfile();
   };
 
-  if (permissionsLoading || loading) {
+  if (permissionsLoading || profileLoading) {
     return <LoadingScreen />;
   }
 
-  if (!user || !userData) {
+  if (!user) {
     return (
       <Card>
         <CardContent className="p-6">
-          <p className="text-red-500">Erro ao carregar dados do perfil</p>
+          <p className="text-red-500">Usuário não autenticado</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (profileError) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-red-500">
+            Erro ao carregar dados do perfil: {profileError.message}
+          </p>
+          <Button onClick={() => refetchProfile()} className="mt-2">
+            Tentar novamente
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!localUserData) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-red-500">Dados do perfil não encontrados</p>
         </CardContent>
       </Card>
     );
@@ -124,20 +184,20 @@ export default function MyProfilePage() {
           </CardHeader>
           <CardContent className="flex justify-center">
             <AvatarUpload
-              currentAvatar={userData.avatar}
-              userName={userData.name}
+              currentAvatar={localUserData?.avatar}
+              userName={localUserData?.name || user.email}
               onAvatarUpdate={handleAvatarUpdate}
               onAvatarDelete={handleAvatarDelete}
-              isLoading={loading}
+              isLoading={profileLoading}
             />
           </CardContent>
         </Card>
 
         {/* Informações do Perfil */}
         <ProfileEditForm
-          user={userData}
+          user={localUserData!}
           onUpdate={handleProfileUpdate}
-          isLoading={loading}
+          isLoading={profileLoading}
         />
       </div>
 
@@ -155,19 +215,22 @@ export default function MyProfilePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Campus */}
-            {userData.campusMembers && userData.campusMembers.length > 0 ? (
+            {localUserData?.campusMembers &&
+            localUserData.campusMembers.length > 0 ? (
               <div>
                 <h4 className="font-medium text-[var(--font-color)] mb-2">
                   Campus
                 </h4>
-                {userData.campusMembers.map((member: any, index: number) => (
-                  <div
-                    key={index}
-                    className="text-sm text-[var(--font-color)] opacity-80"
-                  >
-                    {member.campus?.name}
-                  </div>
-                ))}
+                {localUserData.campusMembers.map(
+                  (member: any, index: number) => (
+                    <div
+                      key={index}
+                      className="text-sm text-[var(--font-color)] opacity-80"
+                    >
+                      {member.campus?.name}
+                    </div>
+                  )
+                )}
               </div>
             ) : (
               <div>
@@ -181,13 +244,13 @@ export default function MyProfilePage() {
             )}
 
             {/* Comissões */}
-            {userData.commissionMembers &&
-            userData.commissionMembers.length > 0 ? (
+            {localUserData?.commissionMembers &&
+            localUserData.commissionMembers.length > 0 ? (
               <div>
                 <h4 className="font-medium text-[var(--font-color)] mb-2">
                   Comissões
                 </h4>
-                {userData.commissionMembers.map(
+                {localUserData.commissionMembers.map(
                   (member: any, index: number) => (
                     <div
                       key={index}

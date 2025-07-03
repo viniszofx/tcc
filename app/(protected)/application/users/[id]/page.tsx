@@ -12,8 +12,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useUserDetailData } from "@/hooks/queries/use-page-data";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
-import type { Campus, UserProfile } from "@/interface";
+import type { UserProfile } from "@/interface";
 import { Pencil, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -34,80 +35,26 @@ export default function UserDetailsPage() {
       ? params.id[0]
       : "";
 
-  const [userData, setUserData] = useState<UserProfile | null>(null);
+  // Usar hook otimizado para buscar dados do usuário
+  const {
+    user: userData,
+    campuses,
+    userCampuses,
+    organizations,
+    userOrganizations,
+    isLoading,
+    error,
+    refetch,
+  } = useUserDetailData(id);
+
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [campuses, setCampuses] = useState<Campus[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!permissionsLoading && !canManageUsers) {
       router.push("/application");
     }
   }, [permissionsLoading, canManageUsers, router]);
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      setLoading(true);
-      try {
-        // Buscar usuário específico
-        const userResponse = await fetch(`/api/user?id=${id}`);
-        const userData = await userResponse.json();
-
-        // Buscar campus
-        const campusesResponse = await fetch("/api/campus");
-        const campusesData = await campusesResponse.json();
-
-        // Buscar membros de campus
-        const campusMembersResponse = await fetch("/api/campus-member");
-        const campusMembersData = await campusMembersResponse.json();
-
-        // Buscar organizações
-        const organizationsResponse = await fetch("/api/organization");
-        const organizationsData = await organizationsResponse.json();
-
-        // Buscar membros de organizações
-        const organizationMembersResponse = await fetch(
-          "/api/organization-member"
-        );
-        const organizationMembersData =
-          await organizationMembersResponse.json();
-
-        // Mapear campus associados ao usuário
-        const userCampuses = campusMembersData
-          .filter((member: any) => member.userId === id)
-          .map((member: any) =>
-            campusesData.find((campus: Campus) => campus.id === member.campusId)
-          )
-          .filter(Boolean);
-
-        // Mapear organizações associadas ao usuário
-        const userOrganizations = organizationMembersData
-          .filter((member: any) => member.userId === id)
-          .map((member: any) =>
-            organizationsData.find(
-              (org: any) => org.id === member.organizationId
-            )
-          )
-          .filter(Boolean);
-
-        setUserData({
-          ...userData,
-          campuses: userCampuses,
-          organizations: userOrganizations,
-        });
-        setCampuses(campusesData);
-      } catch (error) {
-        console.error("Erro ao buscar dados do usuário:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id && canManageUsers) {
-      fetchUserData();
-    }
-  }, [id, canManageUsers]);
 
   const handleEditUser = (updatedUser: Partial<UserProfile>) => {
     if (!updatedUser.id) return;
@@ -121,7 +68,8 @@ export default function UserDetailsPage() {
     })
       .then((response) => {
         if (response.ok) {
-          setUserData((prev) => (prev ? { ...prev, ...updatedUser } : null));
+          // Invalidar cache para atualizar dados
+          refetch();
           setIsEditModalOpen(false);
         } else {
           console.error("Erro ao atualizar usuário");
@@ -148,7 +96,7 @@ export default function UserDetailsPage() {
     }
   };
 
-  if (permissionsLoading || loading) {
+  if (permissionsLoading || isLoading) {
     return <LoadingScreen />;
   }
 
@@ -157,6 +105,21 @@ export default function UserDetailsPage() {
       <Card>
         <CardContent className="p-6">
           <p className="text-red-500">Acesso negado</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-red-500">
+            Erro ao carregar dados: {error.message}
+          </p>
+          <Button onClick={() => refetch()} className="mt-2">
+            Tentar novamente
+          </Button>
         </CardContent>
       </Card>
     );

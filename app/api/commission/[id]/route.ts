@@ -137,6 +137,14 @@ export async function DELETE(
     // Verificar se a comissão existe
     const existingCommission = await prisma.commission.findUnique({
       where: { id },
+      include: {
+        inventoryItems: {
+          select: { id: true },
+        },
+        members: {
+          select: { userId: true },
+        },
+      },
     });
 
     if (!existingCommission) {
@@ -146,13 +154,42 @@ export async function DELETE(
       );
     }
 
-    // Deletar a comissão
+    console.log(
+      `🗑️ Iniciando exclusão da comissão: ${
+        existingCommission.name || "Sem nome"
+      }`
+    );
+    console.log(
+      `📊 Itens de inventário a serem deletados: ${existingCommission.inventoryItems.length}`
+    );
+    console.log(
+      `👥 Membros da comissão a serem removidos: ${existingCommission.members.length}`
+    );
+
+    // Deletar a comissão (CASCADE irá deletar automaticamente):
+    // - Todos os InventoryItem relacionados
+    // - Todo o InventoryHistory dos itens
+    // - Todos os CommissionMember
+    // Os UserProfile permanecem intactos
     await prisma.commission.delete({
       where: { id },
     });
 
+    console.log(
+      `✅ Comissão deletada com sucesso. ${existingCommission.inventoryItems.length} itens de inventário e ${existingCommission.members.length} relações de membro foram removidos. Usuários preservados.`
+    );
+
     return NextResponse.json(
-      { message: "Comissão deletada com sucesso" },
+      {
+        message: "Comissão deletada com sucesso",
+        deletedItems: {
+          inventoryItems: existingCommission.inventoryItems.length,
+          commissionMembers: existingCommission.members.length,
+        },
+        preserved: {
+          users: "Todos os usuários foram preservados nas organizações/campus",
+        },
+      },
       { status: 200 }
     );
   } catch (error) {

@@ -11,8 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useOrganizationDetailData } from "@/hooks/queries/use-page-data";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
-import type { Campus, Organization } from "@/interface";
+import type { Organization } from "@/interface";
 import { Building2, Edit, MapPin, Users } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -27,62 +28,25 @@ export default function OrganizationDetailPage() {
   const router = useRouter();
   const organizationId = params.id as string;
 
+  // Usar hook otimizado para buscar dados da organização
+  const {
+    organization,
+    campuses,
+    members,
+    isLoading,
+    isLoadingCampuses,
+    isLoadingMembers,
+    error,
+    refetch,
+  } = useOrganizationDetailData(organizationId);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [organization, setOrganization] = useState<Organization | null>(null);
-  const [campuses, setCampuses] = useState<Campus[]>([]);
-  const [members, setMembers] = useState<any[]>([]);
 
   useEffect(() => {
     if (!permissionsLoading && !canManageOrganizations) {
       router.push("/application");
     }
   }, [permissionsLoading, canManageOrganizations, router]);
-
-  useEffect(() => {
-    const fetchOrganizationData = async () => {
-      try {
-        // Buscar dados da organização
-        const orgResponse = await fetch(
-          `/api/organization?id=${organizationId}`
-        );
-        const orgData = await orgResponse.json();
-
-        if (orgResponse.ok && orgData) {
-          setOrganization(orgData);
-
-          // Buscar campus da organização
-          const campusesResponse = await fetch(
-            `/api/campus?organizationId=${organizationId}`
-          );
-          if (campusesResponse.ok) {
-            const campusesData = await campusesResponse.json();
-            setCampuses(campusesData);
-          }
-
-          // Buscar membros da organização
-          const membersResponse = await fetch(
-            `/api/organization-member?organizationId=${organizationId}`
-          );
-          if (membersResponse.ok) {
-            const membersData = await membersResponse.json();
-            setMembers(membersData);
-          }
-        } else {
-          setOrganization(null);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar dados da organização:", error);
-        setOrganization(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (organizationId && canManageOrganizations) {
-      fetchOrganizationData();
-    }
-  }, [organizationId, canManageOrganizations]);
 
   const handleEditOrganization = async (editedOrganization: Organization) => {
     try {
@@ -95,7 +59,8 @@ export default function OrganizationDetailPage() {
       });
 
       if (response.ok) {
-        setOrganization(editedOrganization);
+        // Invalidar cache para recarregar dados
+        refetch();
         setIsModalOpen(false);
       } else {
         console.error("Erro ao atualizar organização");
@@ -114,6 +79,21 @@ export default function OrganizationDetailPage() {
       <Card>
         <CardContent className="p-6">
           <p className="text-red-500">Acesso negado</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-red-500">
+            Erro ao carregar dados: {error.message}
+          </p>
+          <Button onClick={() => refetch()} className="mt-2">
+            Tentar novamente
+          </Button>
         </CardContent>
       </Card>
     );
@@ -274,7 +254,7 @@ export default function OrganizationDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {members.slice(0, 6).map((member, index) => (
+              {members.slice(0, 6).map((member: any, index: number) => (
                 <div
                   key={index}
                   className="flex items-center space-x-3 p-3 bg-[var(--bg-simple)] rounded-lg border border-[var(--border-color)]"

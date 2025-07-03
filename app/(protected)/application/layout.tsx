@@ -11,7 +11,9 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { queryKeys } from "@/hooks/queries/query-keys";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -22,6 +24,12 @@ interface ApplicationLayoutProps {
 function ApplicationContent({ children }: ApplicationLayoutProps) {
   const { user, loading, error } = useUserPermissions();
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  // Tentar buscar dados do usuário do cache primeiro
+  const cachedUserData = queryClient.getQueryData(
+    queryKeys.users.detail(user?.id || "")
+  );
 
   useEffect(() => {
     if (!loading && error) {

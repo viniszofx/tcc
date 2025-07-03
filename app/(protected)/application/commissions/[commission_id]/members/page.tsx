@@ -11,9 +11,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  useAddCommissionMember,
+  useRemoveCommissionMember,
+} from "@/hooks/mutations/use-mutations";
+import { useCommissionMembersData } from "@/hooks/queries/use-page-data";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
-import type { CommissionWithRelations, UserProfile } from "@/interface";
+import type { UserProfile } from "@/interface";
 import { Crown, Plus, User, Users } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -36,12 +41,14 @@ export default function CommissionMembersPage() {
     loading: permissionsLoading,
   } = useCommissionPermissions(commissionId);
 
-  const [commission, setCommission] = useState<CommissionWithRelations | null>(
-    null
-  );
-  const [members, setMembers] = useState<CommissionMemberWithUser[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Usar hook otimizado para buscar dados da comissão e membros
+  const { commission, members, isLoading, error, refetchMembers } =
+    useCommissionMembersData(commissionId);
+
+  // Mutations para gerenciar membros
+  const addMemberMutation = useAddCommissionMember();
+  const removeMemberMutation = useRemoveCommissionMember();
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
@@ -60,76 +67,21 @@ export default function CommissionMembersPage() {
     router,
   ]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Buscar dados da comissão
-        const commissionResponse = await fetch(
-          `/api/commission/${commissionId}`
-        );
-        if (!commissionResponse.ok) {
-          throw new Error("Comissão não encontrada");
-        }
-        const commissionData = await commissionResponse.json();
-        setCommission(commissionData);
-
-        // Buscar membros da comissão
-        const membersResponse = await fetch(
-          `/api/commission-member?commissionId=${commissionId}`
-        );
-        if (membersResponse.ok) {
-          const membersData = await membersResponse.json();
-          setMembers(membersData);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar dados:", error);
-        setError("Erro ao carregar dados");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (commissionId && canAccessCommission) {
-      fetchData();
-    }
-  }, [commissionId, canAccessCommission]);
-
   const handleAddMember = async (userId: string, role: string) => {
     try {
-      const response = await fetch("/api/commission-member", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId,
-          commissionId,
-          roleInCommission: role,
-        }),
+      await addMemberMutation.mutateAsync({
+        userId,
+        commissionId,
+        roleInCommission: role,
       });
-
-      if (response.ok) {
-        // Recarregar dados dos membros
-        const membersResponse = await fetch(
-          `/api/commission-member?commissionId=${commissionId}`
-        );
-        if (membersResponse.ok) {
-          const membersData = await membersResponse.json();
-          setMembers(membersData);
-        }
-        setIsAddModalOpen(false);
-      } else {
-        const errorData = await response.json();
-        alert(`Erro ao adicionar membro: ${errorData.error}`);
-      }
+      setIsAddModalOpen(false);
     } catch (error) {
       console.error("Erro ao adicionar membro:", error);
-      alert("Erro inesperado ao adicionar membro");
+      alert("Erro ao adicionar membro");
     }
   };
 
   const handleRemoveMember = async (userId: string, userName: string) => {
-    // Confirmar remoção
     const confirmRemoval = confirm(
       `Tem certeza que deseja remover "${userName}" desta comissão?\n\nEsta ação irá:\n- Remover o usuário da comissão "${commission?.name}"\n- Remover suas permissões nesta comissão\n- Manter o usuário no sistema (não exclui o usuário)\n\nEsta ação não pode ser desfeita.`
     );
@@ -137,30 +89,14 @@ export default function CommissionMembersPage() {
     if (!confirmRemoval) return;
 
     try {
-      const response = await fetch(
-        `/api/commission-member?userId=${userId}&commissionId=${commissionId}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (response.ok) {
-        // Recarregar dados dos membros
-        const membersResponse = await fetch(
-          `/api/commission-member?commissionId=${commissionId}`
-        );
-        if (membersResponse.ok) {
-          const membersData = await membersResponse.json();
-          setMembers(membersData);
-        }
-        alert(`"${userName}" foi removido da comissão com sucesso.`);
-      } else {
-        const errorData = await response.json();
-        alert(`Erro ao remover membro: ${errorData.error}`);
-      }
+      await removeMemberMutation.mutateAsync({
+        userId,
+        commissionId,
+      });
+      alert(`"${userName}" foi removido da comissão com sucesso.`);
     } catch (error) {
       console.error("Erro ao remover membro:", error);
-      alert("Erro inesperado ao remover membro");
+      alert("Erro ao remover membro");
     }
   };
 
@@ -186,7 +122,9 @@ export default function CommissionMembersPage() {
     return (
       <Card>
         <CardContent className="p-6">
-          <p className="text-red-500">{error || "Comissão não encontrada"}</p>
+          <p className="text-red-500">
+            {error?.message || "Comissão não encontrada"}
+          </p>
         </CardContent>
       </Card>
     );
@@ -210,10 +148,12 @@ export default function CommissionMembersPage() {
     }
   };
 
-  const sortedMembers = [...members].sort((a, b) => {
-    const roleOrder = { Presidente: 0, Membro: 1 };
-    return roleOrder[a.roleInCommission] - roleOrder[b.roleInCommission];
-  });
+  const sortedMembers = [...(members as CommissionMemberWithUser[])].sort(
+    (a, b) => {
+      const roleOrder = { Presidente: 0, Membro: 1 };
+      return roleOrder[a.roleInCommission] - roleOrder[b.roleInCommission];
+    }
+  );
 
   return (
     <div className="space-y-6">
@@ -254,7 +194,7 @@ export default function CommissionMembersPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {members.map((member) => {
+              {sortedMembers.map((member: CommissionMemberWithUser) => {
                 const RoleIcon = getRoleIcon(member.roleInCommission);
                 return (
                   <Card
@@ -314,7 +254,9 @@ export default function CommissionMembersPage() {
                                     e.stopPropagation();
                                     handleRemoveMember(
                                       member.userId,
-                                      member.user?.name || member.user?.email || "Usuário"
+                                      member.user?.name ||
+                                        member.user?.email ||
+                                        "Usuário"
                                     );
                                   }}
                                 >
@@ -376,8 +318,9 @@ export default function CommissionMembersPage() {
                 <div>
                   <p className="text-2xl font-bold text-[var(--font-color)]">
                     {
-                      members.filter((m) => m.roleInCommission === "Presidente")
-                        .length
+                      (members as CommissionMemberWithUser[]).filter(
+                        (m) => m.roleInCommission === "Presidente"
+                      ).length
                     }
                   </p>
                   <p className="text-sm text-[var(--font-color)] opacity-70">
@@ -397,8 +340,9 @@ export default function CommissionMembersPage() {
                 <div>
                   <p className="text-2xl font-bold text-[var(--font-color)]">
                     {
-                      members.filter((m) => m.roleInCommission === "Membro")
-                        .length
+                      (members as CommissionMemberWithUser[]).filter(
+                        (m) => m.roleInCommission === "Membro"
+                      ).length
                     }
                   </p>
                   <p className="text-sm text-[var(--font-color)] opacity-70">
@@ -416,7 +360,9 @@ export default function CommissionMembersPage() {
         onClose={() => setIsAddModalOpen(false)}
         onSave={handleAddMember}
         commissionId={commissionId}
-        currentMembers={members.map((m) => m.userId)}
+        currentMembers={(members as CommissionMemberWithUser[]).map(
+          (m) => m.userId
+        )}
         campusId={commission?.campus?.id}
       />
     </div>

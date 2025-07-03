@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useCampuses } from "@/hooks/queries/use-campus-query";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
 import type { Campus } from "@/interface";
 import { Plus, Save } from "lucide-react";
@@ -18,47 +19,35 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function CampusPage() {
-  const { canManageCampuses, loading, error } = useUserPermissions();
+  const {
+    canManageCampuses,
+    loading: permissionsLoading,
+    error,
+  } = useUserPermissions();
   const router = useRouter();
-  const [campuses, setCampuses] = useState<Campus[]>([]);
+
+  // Usar React Query para buscar campus
+  const {
+    data: campuses = [],
+    isLoading: campusesLoading,
+    error: campusesError,
+    refetch: refetchCampuses,
+  } = useCampuses();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentCampus, setCurrentCampus] = useState<Campus | null>(null);
   const [modalMode, setModalMode] = useState<"create" | "edit" | "delete">(
     "create"
   );
-  const [isLoading, setIsLoading] = useState(true);
 
   // Verificar permissões
   useEffect(() => {
-    if (!loading && !canManageCampuses) {
+    if (!permissionsLoading && !canManageCampuses) {
       router.push("/application");
     }
-  }, [loading, canManageCampuses, router]);
+  }, [permissionsLoading, canManageCampuses, router]);
 
-  useEffect(() => {
-    const fetchCampuses = async () => {
-      try {
-        const response = await fetch("/api/campus");
-        const data = await response.json();
-
-        if (response.ok) {
-          setCampuses(data);
-        } else {
-          console.error("Erro ao buscar campus:", data);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar campus:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (canManageCampuses) {
-      fetchCampuses();
-    }
-  }, [canManageCampuses]);
-
-  if (loading || !canManageCampuses) {
+  if (permissionsLoading || !canManageCampuses) {
     return <LoadingScreen />;
   }
 
@@ -67,6 +56,21 @@ export default function CampusPage() {
       <Card>
         <CardContent className="p-6">
           <p className="text-red-500">Erro: {error}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (campusesError) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-red-500">
+            Erro ao carregar campus: {campusesError.message}
+          </p>
+          <Button onClick={() => refetchCampuses()} className="mt-2">
+            Tentar novamente
+          </Button>
         </CardContent>
       </Card>
     );
@@ -120,10 +124,8 @@ export default function CampusPage() {
       }
 
       if (response?.ok) {
-        // Recarregar dados
-        const campusesResponse = await fetch("/api/campus");
-        const campusesData = await campusesResponse.json();
-        setCampuses(campusesData);
+        // Invalidar cache do React Query para recarregar dados
+        refetchCampuses();
         setIsModalOpen(false);
         setCurrentCampus(null);
       } else {
@@ -134,7 +136,7 @@ export default function CampusPage() {
     }
   };
 
-  if (isLoading) {
+  if (campusesLoading) {
     return <LoadingScreen />;
   }
 

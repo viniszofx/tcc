@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useProfilePageData } from "@/hooks/queries/use-page-data";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
 import { Building2, Database, Settings, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -19,18 +20,29 @@ export default function ApplicationDashboard() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
+  // Usar hook otimizado para dados de perfil (com cache)
+  const {
+    data: profileData,
+    isLoading: profileLoading,
+    error: profileError,
+  } = useProfilePageData(user?.id);
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!mounted || loading) {
+  if (!mounted || loading || profileLoading) {
     return <LoadingScreen />;
   }
 
-  if (error || !user) {
+  if (error || profileError || !user) {
     router.push("/login");
     return <LoadingScreen />;
   }
+
+  // Usar dados do perfil quando disponíveis para informações detalhadas,
+  // mas manter user das permissões para role e lógica de acesso
+  const profileInfo = profileData || user;
 
   const getWelcomeMessage = () => {
     switch (user.role) {
@@ -69,7 +81,7 @@ export default function ApplicationDashboard() {
             </div>
             <div>
               <CardTitle className="text-2xl text-blue-900 dark:text-blue-100">
-                Bem-vindo, {user.name}!
+                Bem-vindo, {profileInfo.name}!
               </CardTitle>
               <CardDescription className="text-blue-700 dark:text-blue-300 text-lg">
                 {welcome.description}
@@ -202,13 +214,13 @@ export default function ApplicationDashboard() {
               <label className="text-sm font-medium text-muted-foreground">
                 Nome
               </label>
-              <p className="text-lg">{user.name}</p>
+              <p className="text-lg">{profileInfo.name}</p>
             </div>
             <div>
               <label className="text-sm font-medium text-muted-foreground">
                 Email
               </label>
-              <p className="text-lg">{user.email}</p>
+              <p className="text-lg">{profileInfo.email}</p>
             </div>
             <div>
               <label className="text-sm font-medium text-muted-foreground">
