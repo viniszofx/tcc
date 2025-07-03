@@ -45,7 +45,6 @@ interface EditUserModalProps {
   onClose: () => void;
   onEditUser: (userData: Partial<UserProfile>) => void;
   user: UserProfile | null;
-  campusList: Campus[];
 }
 
 export function EditUserModal({
@@ -53,7 +52,6 @@ export function EditUserModal({
   onClose,
   onEditUser,
   user,
-  campusList,
 }: EditUserModalProps) {
   const [formData, setFormData] = useState<EditUserFormData>({
     name: "",

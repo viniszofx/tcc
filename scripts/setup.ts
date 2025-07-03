@@ -1,20 +1,71 @@
 import { setupAvatarsBucket } from "@/lib/supabase-avatars";
+import { setupSpreadsheetsBucket } from "@/lib/supabase-spreadsheets";
 import { config } from "dotenv";
 import { cleanDatabase } from "./clean-database";
 
 // Carregar variáveis de ambiente apenas em desenvolvimento
-if (!process.env.CI && process.env.NODE_ENV !== 'production') {
+if (!process.env.CI && process.env.NODE_ENV !== "production") {
   config({ path: ".env" });
 }
 
-// Função para setup de avatars
+// Função para setup de avatars e spreadsheets (executado durante o build)
 async function setupAvatars() {
   try {
-    console.log("📁 === CONFIGURAÇÃO DO BUCKET DE AVATARES ===");
-    
+    console.log("📁 === CONFIGURAÇÃO DOS BUCKETS DE STORAGE ===");
+
     // Verificar se estamos em ambiente de build/CI
-    const isBuildEnvironment = process.env.CI === 'true' || process.env.NODE_ENV === 'production';
-    
+    const isBuildEnvironment =
+      process.env.CI === "true" || process.env.NODE_ENV === "production";
+
+    if (isBuildEnvironment) {
+      console.log("🏗️ Detectado ambiente de build/CI");
+      console.log("⏭️ Pulando configuração do Supabase durante o build");
+      console.log("💡 Configure os buckets manualmente após o deploy");
+      return true; // Retornar sucesso para não interromper o build
+    }
+
+    console.log("🔧 Executando configuração dos buckets...");
+
+    // Configurar bucket de avatares
+    console.log("\n📸 Configurando bucket de avatares...");
+    const avatarsSuccess = await setupAvatarsBucket();
+
+    // Configurar bucket de spreadsheets
+    console.log("\n📊 Configurando bucket de planilhas...");
+    const spreadsheetsSuccess = await setupSpreadsheetsBucket();
+
+    if (avatarsSuccess && spreadsheetsSuccess) {
+      console.log("\n✅ Todos os buckets configurados com sucesso!");
+      return true;
+    } else {
+      console.warn("\n⚠️ Falha ao configurar alguns buckets");
+      console.log("💡 Os buckets podem ser configurados posteriormente com:");
+      console.log("   npm run setup avatars     # Para configurar ambos");
+      console.log("   npm run setup spreadsheets  # Apenas spreadsheets");
+      return false;
+    }
+  } catch (error) {
+    console.error("❌ Erro ao configurar buckets:", error);
+
+    // Em ambiente de build ou CI, não falhar
+    if (process.env.NODE_ENV === "production" || process.env.CI === "true") {
+      console.log("🏗️ Erro ignorado durante o build");
+      return true;
+    }
+
+    throw error;
+  }
+}
+
+// Função para setup de spreadsheets
+async function setupSpreadsheets() {
+  try {
+    console.log("📊 === CONFIGURAÇÃO DO BUCKET DE PLANILHAS ===");
+
+    // Verificar se estamos em ambiente de build/CI
+    const isBuildEnvironment =
+      process.env.CI === "true" || process.env.NODE_ENV === "production";
+
     if (isBuildEnvironment) {
       console.log("🏗️ Detectado ambiente de build/CI");
       console.log("⏭️ Pulando configuração do Supabase durante o build");
@@ -24,22 +75,22 @@ async function setupAvatars() {
 
     console.log("🔧 Executando configuração do bucket...");
 
-    const success = await setupAvatarsBucket();
+    const success = await setupSpreadsheetsBucket();
 
     if (success) {
-      console.log("✅ Bucket de avatares configurado com sucesso!");
+      console.log("✅ Bucket de spreadsheets configurado com sucesso!");
       return true;
     } else {
-      console.warn("⚠️ Falha ao configurar bucket de avatares");
+      console.warn("⚠️ Falha ao configurar bucket de spreadsheets");
       console.log("💡 O bucket pode ser configurado posteriormente com:");
-      console.log("   npm run setup avatars");
+      console.log("   npm run setup spreadsheets");
       return false;
     }
   } catch (error) {
-    console.error("❌ Erro ao configurar bucket de avatares:", error);
+    console.error("❌ Erro ao configurar bucket de spreadsheets:", error);
 
     // Em ambiente de build ou CI, não falhar
-    if (process.env.NODE_ENV === "production" || process.env.CI === 'true') {
+    if (process.env.NODE_ENV === "production" || process.env.CI === "true") {
       console.log("🏗️ Erro ignorado durante o build");
       return true;
     }
@@ -56,6 +107,9 @@ async function setupSystem() {
     // Configurar bucket de avatares
     console.log("\n📁 === CONFIGURAÇÃO DE BUCKETS ===");
     await setupAvatars();
+
+    // Configurar bucket de spreadsheets
+    await setupSpreadsheets();
 
     console.log("\n🎉 SETUP COMPLETO CONCLUÍDO!");
     console.log("✅ Sistema pronto para uso!");
@@ -124,6 +178,10 @@ async function main() {
       await setupAvatars();
       break;
 
+    case "spreadsheets":
+      await setupSpreadsheets();
+      break;
+
     case "setup":
       await setupSystem();
       break;
@@ -148,7 +206,12 @@ async function main() {
       console.log(
         "  setup clean [--force]     Limpar todo o sistema (DB + Supabase)"
       );
-      console.log("  setup avatars            Configurar bucket de avatares");
+      console.log(
+        "  setup avatars            Configurar buckets (avatars + spreadsheets)"
+      );
+      console.log(
+        "  setup spreadsheets        Configurar apenas bucket de spreadsheets"
+      );
       console.log(
         "  setup setup              Setup completo (configurar buckets)"
       );
@@ -156,7 +219,10 @@ async function main() {
       console.log("  setup help               Mostrar esta ajuda");
       console.log("");
       console.log("Exemplos:");
-      console.log("  npm run setup avatars    # Configurar bucket de avatares");
+      console.log("  npm run setup avatars    # Configurar ambos os buckets");
+      console.log(
+        "  npm run setup spreadsheets  # Configurar bucket de spreadsheets"
+      );
       console.log("  npm run setup setup      # Setup completo");
       console.log("  npm run setup clean --force  # Limpar sistema");
       console.log("  npm run setup reset --force  # Reset completo");
@@ -174,4 +240,4 @@ if (require.main === module) {
   });
 }
 
-export { resetSystem, setupAvatars, setupSystem };
+export { resetSystem, setupAvatars, setupSpreadsheets, setupSystem };

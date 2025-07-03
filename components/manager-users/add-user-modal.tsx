@@ -45,14 +45,12 @@ interface AddUserModalProps {
       organizationRole?: string;
     }
   ) => void;
-  campusList: Campus[];
 }
 
 export function AddUserModal({
   isOpen,
   onClose,
   onAddUser,
-  campusList,
 }: AddUserModalProps) {
   const [formData, setFormData] = useState<AddUserFormData>({
     name: "",

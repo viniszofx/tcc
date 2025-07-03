@@ -270,7 +270,6 @@ export default function UsersPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAddUser={handleAddUser}
-        campusList={campuses}
       />
 
       <EditUserModal
@@ -281,7 +280,6 @@ export default function UsersPage() {
         }}
         user={selectedUser}
         onEditUser={handleEditUser}
-        campusList={campuses}
       />
 
       {createdUserData && (

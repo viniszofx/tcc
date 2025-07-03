@@ -31,8 +31,8 @@ export default function UserDetailsPage() {
     typeof params.id === "string"
       ? params.id
       : Array.isArray(params.id)
-        ? params.id[0]
-        : "";
+      ? params.id[0]
+      : "";
 
   const [userData, setUserData] = useState<UserProfile | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -261,12 +261,11 @@ export default function UserDetailsPage() {
           </CardContent>
         </Card>
       </div>
-      
+
       <EditUserModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         user={userData}
-        campusList={campuses}
         onEditUser={handleEditUser}
       />
 
