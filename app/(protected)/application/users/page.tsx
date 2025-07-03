@@ -142,6 +142,7 @@ export default function UsersPage() {
 
   const handleAddUser = async (
     userData: Partial<UserProfile> & {
+      organizationId?: string;
       campusId?: string;
       organizationRole?: string;
     }
@@ -176,7 +177,7 @@ export default function UsersPage() {
     try {
       await updateUserMutation.mutateAsync({
         id: selectedUser.id,
-        data: userData,
+        ...userData,
       });
 
       setIsEditModalOpen(false);

@@ -11,7 +11,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
 import type { Campus, CampusMember, UserProfile } from "@/interface";
-import { Eye, MoreVertical, Pencil, Trash2, UserMinus } from "lucide-react";
+import {
+  Crown,
+  Eye,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  User,
+  UserMinus,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -106,11 +114,12 @@ export function UserListCard({
               Foto
             </div>
             <div className="col-span-6 md:col-span-3 lg:col-span-2">Nome</div>
-            <div className="hidden md:block md:col-span-4 lg:col-span-3">
+            <div className="hidden md:block md:col-span-4 lg:col-span-2">
               Email
             </div>
             <div className="hidden lg:block lg:col-span-2">Campus</div>
-            <div className="hidden lg:block lg:col-span-2">Status</div>
+            <div className="hidden lg:block lg:col-span-2">Papel</div>
+            <div className="hidden lg:block lg:col-span-1">Status</div>
             <div className="col-span-6 md:col-span-4 lg:col-span-2 text-right">
               Ações
             </div>
@@ -137,7 +146,7 @@ export function UserListCard({
                     {usuario.name}
                   </div>
 
-                  <div className="hidden md:block md:col-span-4 lg:col-span-3 truncate">
+                  <div className="hidden md:block md:col-span-4 lg:col-span-2 truncate">
                     {usuario.email}
                   </div>
 
@@ -145,7 +154,20 @@ export function UserListCard({
                     {(usuario as any).campusName || "Sem campus"}
                   </div>
 
-                  <div className="hidden lg:block lg:col-span-2">
+                  <div className="hidden lg:block lg:col-span-2 truncate">
+                    {(usuario as any).organizationMembers?.length > 0 &&
+                    (usuario as any).organizationMembers[0].role === "admin" ? (
+                      <span className="flex items-center gap-1">
+                        <Crown className="w-4 h-4 text-yellow-600" /> Admin
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1">
+                        <User className="w-4 h-4 text-blue-600" /> Membro
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="hidden lg:block lg:col-span-1">
                     <span
                       className={`inline-flex rounded px-2 py-1 text-xs font-medium text-white ${
                         usuario.active ? "bg-green-500" : "bg-red-500"

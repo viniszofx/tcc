@@ -224,6 +224,11 @@ export async function GET(request: Request) {
               },
             },
           },
+          organizationMembers: {
+            include: {
+              organization: true,
+            },
+          },
         },
       });
 
@@ -252,6 +257,11 @@ export async function GET(request: Request) {
             },
           },
         },
+        organizationMembers: {
+          include: {
+            organization: true,
+          },
+        },
       },
       orderBy: {
         name: "asc",
@@ -275,6 +285,7 @@ export async function POST(request: Request) {
       email,
       description,
       avatar,
+      organizationId,
       campusId,
       organizationRole = "member",
     } = body;
@@ -354,34 +365,28 @@ export async function POST(request: Request) {
         },
       });
 
-      // 3. Se campusId foi fornecido, buscar informações do campus e organização
-      if (campusId) {
-        const campus = await tx.campus.findUnique({
-          where: { id: campusId },
-          include: { organization: true },
+      // 3. Adicionar usuário à organização (obrigatório)
+      if (organizationId) {
+        await tx.organizationMember.create({
+          data: {
+            userId: newUser.id,
+            organizationId,
+            role: organizationRole, // "admin" ou "member"
+          },
         });
-
-        if (campus) {
-          // 4. Criar membro da organização
-          await tx.organizationMember.create({
-            data: {
-              userId: newUser.id,
-              organizationId: campus.organizationId,
-              role: organizationRole, // "admin" ou "member"
-            },
-          });
-
-          // 5. Criar membro do campus
-          await tx.campusMember.create({
-            data: {
-              userId: newUser.id,
-              campusId: campus.id,
-            },
-          });
-        }
       }
 
-      // 6. Buscar usuário criado com todas as relações
+      // 4. Se campusId foi fornecido, adicionar ao campus (opcional)
+      if (campusId) {
+        await tx.campusMember.create({
+          data: {
+            userId: newUser.id,
+            campusId,
+          },
+        });
+      }
+
+      // 5. Buscar usuário criado com todas as relações
       const userWithRelations = await tx.userProfile.findUnique({
         where: { id: newUser.id },
         include: {
@@ -442,7 +447,17 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, name, email, description, avatar, active } = body;
+    const {
+      id,
+      name,
+      email,
+      description,
+      avatar,
+      active,
+      organizationId,
+      campusId,
+      organizationRole = "member",
+    } = body;
 
     if (!id) {
       return NextResponse.json({ error: "ID é obrigatório" }, { status: 400 });
@@ -474,6 +489,7 @@ export async function PUT(request: Request) {
       }
     }
 
+    // Atualizar dados básicos do usuário
     const updatedUser = await prisma.userProfile.update({
       where: { id },
       data: {
@@ -484,6 +500,49 @@ export async function PUT(request: Request) {
         ...(active !== undefined && { active }),
         updatedAt: new Date(),
       },
+    });
+
+    // Atualizar relações de organização se fornecidas
+    if (organizationId) {
+      // Remover relações antigas de organização
+      await prisma.organizationMember.deleteMany({
+        where: { userId: id },
+      });
+
+      // Criar nova relação de organização
+      await prisma.organizationMember.create({
+        data: {
+          userId: id,
+          organizationId,
+          role: organizationRole,
+        },
+      });
+    }
+
+    // Atualizar relações de campus se fornecidas
+    if (campusId) {
+      // Remover relações antigas de campus
+      await prisma.campusMember.deleteMany({
+        where: { userId: id },
+      });
+
+      // Criar nova relação de campus
+      await prisma.campusMember.create({
+        data: {
+          userId: id,
+          campusId,
+        },
+      });
+    } else if (organizationId) {
+      // Se apenas organização foi fornecida (sem campus), remover relações de campus
+      await prisma.campusMember.deleteMany({
+        where: { userId: id },
+      });
+    }
+
+    // Buscar o usuário atualizado com todas as relações
+    const userWithRelations = await prisma.userProfile.findUnique({
+      where: { id },
       include: {
         organizationMembers: {
           include: {
@@ -503,8 +562,9 @@ export async function PUT(request: Request) {
       },
     });
 
-    return NextResponse.json(updatedUser);
+    return NextResponse.json(userWithRelations);
   } catch (error) {
+    console.error("Erro ao atualizar usuário:", error);
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 }

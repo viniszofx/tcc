@@ -18,57 +18,117 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Campus, CampusMember, UserProfile } from "@/interface";
+import { Separator } from "@/components/ui/separator";
+import type { Campus, Organization, UserProfile } from "@/interface";
+import {
+  AlertCircle,
+  CheckCircle,
+  Crown,
+  Key,
+  User,
+  XCircle,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
+interface OrganizationWithCampuses extends Organization {
+  campuses?: Campus[];
+}
+
 interface EditUserFormData extends Partial<UserProfile> {
+  organizationId?: string;
   campusId?: string;
-  papel?: string;
+  organizationRole?: string;
 }
 
 interface EditUserModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onEditUser: (userData: Partial<UserProfile>) => void;
   user: UserProfile | null;
-  userMembers?: CampusMember[];
-  onEditUser: (user: Partial<UserProfile>) => void;
   campusList: Campus[];
 }
 
 export function EditUserModal({
   isOpen,
   onClose,
-  user,
   onEditUser,
+  user,
   campusList,
 }: EditUserModalProps) {
   const [formData, setFormData] = useState<EditUserFormData>({
-    id: "",
     name: "",
     email: "",
     description: "",
-    avatar: "/logo.svg",
-    active: false,
+    avatar: "",
+    active: true,
+    organizationId: "",
     campusId: "",
-    papel: "usuario",
+    organizationRole: "member",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [organizations, setOrganizations] = useState<
+    OrganizationWithCampuses[]
+  >([]);
+  const [availableCampuses, setAvailableCampuses] = useState<Campus[]>([]);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
+  // Carregar dados do usuário quando o modal abrir
   useEffect(() => {
-    if (user) {
+    if (isOpen && user) {
+      fetchOrganizations();
+
+      // Pegar dados do usuário atual
+      const userWithRelations = user as any;
+      const currentOrganization = userWithRelations.organizationMembers?.[0];
+      const currentCampus = userWithRelations.campusMembers?.[0];
+
       setFormData({
-        id: user.id,
         name: user.name,
         email: user.email,
-        description: user.description,
-        avatar: user.avatar,
+        description: user.description || "",
+        avatar: user.avatar || "",
         active: user.active,
-        campusId: "",
-        papel: "usuario",
+        organizationId: currentOrganization?.organizationId || "",
+        campusId: currentCampus?.campusId || "",
+        organizationRole: currentOrganization?.role || "member",
       });
     }
-  }, [user]);
+  }, [isOpen, user]);
+
+  // Atualizar campus disponíveis quando a organização for selecionada
+  useEffect(() => {
+    if (formData.organizationId) {
+      const selectedOrg = organizations.find(
+        (org) => org.id === formData.organizationId
+      );
+      const campuses = selectedOrg?.campuses || [];
+      setAvailableCampuses(campuses);
+
+      // Se o campus atual não pertence à nova organização, limpar
+      if (
+        formData.campusId &&
+        !campuses.find((c) => c.id === formData.campusId)
+      ) {
+        setFormData((prev) => ({ ...prev, campusId: "" }));
+      }
+    } else {
+      setAvailableCampuses([]);
+      setFormData((prev) => ({ ...prev, campusId: "" }));
+    }
+  }, [formData.organizationId, organizations]);
+
+  const fetchOrganizations = async () => {
+    try {
+      const response = await fetch("/api/organization");
+      if (response.ok) {
+        const data = await response.json();
+        setOrganizations(data);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar organizações:", error);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -77,7 +137,11 @@ export function EditUserModal({
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "active") {
+      setFormData((prev) => ({ ...prev, [name]: value === "true" }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
@@ -87,7 +151,10 @@ export function EditUserModal({
     if (!formData.email?.trim()) newErrors.email = "Email é obrigatório";
     else if (!/\S+@\S+\.\S+/.test(formData.email))
       newErrors.email = "Email inválido";
-    if (!formData.campusId) newErrors.campusId = "Campus é obrigatório";
+    if (!formData.organizationRole)
+      newErrors.organizationRole = "Papel na organização é obrigatório";
+    if (!formData.organizationId)
+      newErrors.organizationId = "Organização é obrigatória";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -96,37 +163,82 @@ export function EditUserModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      // Enviar apenas os dados do UserProfile (sem campusId e papel)
-      const userProfileData: Partial<UserProfile> = {
-        id: formData.id,
+      const updateData = {
         name: formData.name,
         email: formData.email,
         description: formData.description,
         avatar: formData.avatar,
         active: formData.active,
+        organizationId: formData.organizationId,
+        campusId: formData.campusId,
+        organizationRole: formData.organizationRole,
       };
 
-      onEditUser(userProfileData);
+      onEditUser(updateData);
       onClose();
     }
   };
 
+  const handleChangePassword = async () => {
+    if (!user?.id) return;
+
+    setIsChangingPassword(true);
+    try {
+      const response = await fetch(`/api/user/${user.id}/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(
+          `Nova senha temporária gerada: ${result.tempPassword}\n\nEnvie esta senha para o usuário.`
+        );
+      } else {
+        const error = await response.json();
+        alert(`Erro ao trocar senha: ${error.error}`);
+      }
+    } catch (error) {
+      console.error("Erro ao trocar senha:", error);
+      alert("Erro inesperado ao trocar senha");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleClose = () => {
+    setFormData({
+      name: "",
+      email: "",
+      description: "",
+      avatar: "",
+      active: true,
+      organizationId: "",
+      campusId: "",
+      organizationRole: "member",
+    });
+    setErrors({});
+    onClose();
+  };
+
+  if (!user) return null;
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] bg-[var(--bg-simple)]">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[500px] bg-[var(--bg-simple)] max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="text-[var(--font-color)]">
               Editar Usuário
             </DialogTitle>
             <DialogDescription className="text-[var(--font-color)]">
-              Atualize os dados do usuário
+              Altere os dados do usuário e suas permissões
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="nome" className="text-[var(--font-color)]">
+              <Label htmlFor="name" className="text-[var(--font-color)]">
                 Nome
               </Label>
               <Input
@@ -159,45 +271,162 @@ export function EditUserModal({
             </div>
 
             <div className="grid gap-2">
-              <Label className="text-[var(--font-color)]">Campus</Label>
+              <Label htmlFor="description" className="text-[var(--font-color)]">
+                Descrição/Cargo
+              </Label>
+              <Input
+                id="description"
+                name="description"
+                value={formData.description || ""}
+                onChange={handleChange}
+                className="border-[var(--border-input)]"
+                placeholder="Ex: Coordenador de TI"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label className="text-[var(--font-color)]">Organização</Label>
               <Select
-                value={formData.campusId || ""}
-                onValueChange={(value) => handleSelectChange("campusId", value)}
+                value={formData.organizationId || ""}
+                onValueChange={(value) =>
+                  handleSelectChange("organizationId", value)
+                }
               >
                 <SelectTrigger className="border-[var(--border-input)]">
-                  <SelectValue placeholder="Selecione um campus" />
+                  <SelectValue placeholder="Selecione uma organização" />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)]">
-                  {campusList.map((campus) => (
+                  {organizations.map((org) => (
+                    <SelectItem key={org.id} value={org.id}>
+                      {org.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.organizationId && (
+                <p className="text-xs text-red-500">{errors.organizationId}</p>
+              )}
+            </div>
+
+            <div className="grid gap-2">
+              <Label className="text-[var(--font-color)]">
+                Campus/Unidade (Opcional)
+              </Label>
+              <Select
+                value={formData.campusId || "no-campus"}
+                onValueChange={(value) =>
+                  handleSelectChange(
+                    "campusId",
+                    value === "no-campus" ? "" : value
+                  )
+                }
+                disabled={
+                  !formData.organizationId || availableCampuses.length === 0
+                }
+              >
+                <SelectTrigger className="border-[var(--border-input)]">
+                  <SelectValue placeholder="Selecione um campus (opcional)" />
+                </SelectTrigger>
+                <SelectContent className="bg-[var(--bg-simple)]">
+                  <SelectItem value="no-campus">
+                    Nenhum campus específico
+                  </SelectItem>
+                  {availableCampuses.map((campus) => (
                     <SelectItem key={campus.id} value={campus.id}>
                       {campus.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.campusId && (
-                <p className="text-xs text-red-500">{errors.campusId}</p>
+            </div>
+
+            <div className="grid gap-2">
+              <Label className="text-[var(--font-color)]">
+                Papel na Organização
+              </Label>
+              <Select
+                value={formData.organizationRole || ""}
+                onValueChange={(value) =>
+                  handleSelectChange("organizationRole", value)
+                }
+              >
+                <SelectTrigger className="border-[var(--border-input)]">
+                  <SelectValue placeholder="Selecione o papel na organização" />
+                </SelectTrigger>
+                <SelectContent className="bg-[var(--bg-simple)]">
+                  <SelectItem value="admin">
+                    <span className="flex items-center gap-2">
+                      <Crown className="w-4 h-4 text-yellow-600" />
+                      Administrador da Organização
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="member">
+                    <span className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-blue-600" />
+                      Membro
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.organizationRole && (
+                <p className="text-xs text-red-500">
+                  {errors.organizationRole}
+                </p>
               )}
             </div>
 
             <div className="grid gap-2">
-              <Label className="text-[var(--font-color)]">Papel</Label>
+              <Label className="text-[var(--font-color)]">Status</Label>
               <Select
-                value={formData.papel || ""}
-                onValueChange={(value) => handleSelectChange("papel", value)}
+                value={formData.active ? "true" : "false"}
+                onValueChange={(value) => handleSelectChange("active", value)}
               >
                 <SelectTrigger className="border-[var(--border-input)]">
-                  <SelectValue placeholder="Selecione um papel" />
+                  <SelectValue placeholder="Selecione o status" />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)]">
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="presidente">Presidente</SelectItem>
-                  <SelectItem value="operador">Operador</SelectItem>
+                  <SelectItem value="true">
+                    <span className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      Ativo
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="false">
+                    <span className="flex items-center gap-2">
+                      <XCircle className="w-4 h-4 text-red-600" />
+                      Inativo
+                    </span>
+                  </SelectItem>
                 </SelectContent>
               </Select>
-              {errors.papel && (
-                <p className="text-xs text-red-500">{errors.papel}</p>
-              )}
+            </div>
+
+            <Separator className="my-2" />
+
+            <div className="grid gap-2">
+              <Label className="text-[var(--font-color)] font-medium">
+                Gerenciar Senha
+              </Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleChangePassword}
+                  disabled={isChangingPassword}
+                  className="flex-1 border-[var(--border-color)]"
+                >
+                  {isChangingPassword ? (
+                    <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mr-2" />
+                  ) : (
+                    <Key className="w-4 h-4 mr-2" />
+                  )}
+                  {isChangingPassword ? "Gerando..." : "Gerar Nova Senha"}
+                </Button>
+              </div>
+              <p className="text-xs text-[var(--font-color)] opacity-60 flex items-start gap-1">
+                <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                Gera uma nova senha temporária que deve ser enviada ao usuário
+              </p>
             </div>
           </div>
 
@@ -205,7 +434,7 @@ export function EditUserModal({
             <Button
               type="button"
               variant="outline"
-              onClick={onClose}
+              onClick={handleClose}
               className="border-[var(--border-color)]"
             >
               Cancelar
@@ -214,7 +443,7 @@ export function EditUserModal({
               type="submit"
               className="bg-[var(--button-color)] text-[var(--font-color2)]"
             >
-              Salvar
+              Salvar Alterações
             </Button>
           </DialogFooter>
         </form>

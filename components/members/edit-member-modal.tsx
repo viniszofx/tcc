@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { UserProfile } from "@/interface";
+import { Crown, FileText, User } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface EditMemberModalProps {
@@ -106,19 +107,28 @@ export default function EditMemberModal({
                     value="Presidente"
                     className="hover:bg-[var(--hover-color)]"
                   >
-                    👑 Presidente
+                    <span className="flex items-center gap-2">
+                      <Crown className="w-4 h-4 text-yellow-600" />
+                      Presidente
+                    </span>
                   </SelectItem>
                   <SelectItem
                     value="Secretario"
                     className="hover:bg-[var(--hover-color)]"
                   >
-                    📝 Secretário
+                    <span className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-green-600" />
+                      Secretário
+                    </span>
                   </SelectItem>
                   <SelectItem
                     value="Membro"
                     className="hover:bg-[var(--hover-color)]"
                   >
-                    👤 Membro
+                    <span className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-blue-600" />
+                      Membro
+                    </span>
                   </SelectItem>
                 </SelectContent>
               </Select>

@@ -19,9 +19,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Campus, UserProfile } from "@/interface";
-import { useState } from "react";
+import { Crown, User } from "lucide-react";
+import { useEffect, useState } from "react";
+
+interface Organization {
+  id: string;
+  name: string;
+  shortName: string;
+  campuses: Campus[];
+}
 
 interface AddUserFormData extends Partial<UserProfile> {
+  organizationId?: string;
   campusId?: string;
   organizationRole?: string; // "admin" ou "member"
 }
@@ -31,6 +40,7 @@ interface AddUserModalProps {
   onClose: () => void;
   onAddUser: (
     user: Partial<UserProfile> & {
+      organizationId?: string;
       campusId?: string;
       organizationRole?: string;
     }
@@ -50,11 +60,53 @@ export function AddUserModal({
     description: "",
     avatar: "/logo.svg",
     active: true,
+    organizationId: "",
     campusId: "",
     organizationRole: "member",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [availableCampuses, setAvailableCampuses] = useState<Campus[]>([]);
+
+  // Buscar organizações quando o modal abrir
+  useEffect(() => {
+    if (isOpen) {
+      fetchOrganizations();
+    }
+  }, [isOpen]);
+
+  // Atualizar campus disponíveis quando a organização for selecionada
+  useEffect(() => {
+    if (formData.organizationId) {
+      const selectedOrg = organizations.find(
+        (org) => org.id === formData.organizationId
+      );
+      setAvailableCampuses(selectedOrg?.campuses || []);
+      // Limpar campus selecionado se não for da organização atual
+      if (
+        formData.campusId &&
+        !selectedOrg?.campuses.find((c) => c.id === formData.campusId)
+      ) {
+        setFormData((prev) => ({ ...prev, campusId: "" }));
+      }
+    } else {
+      setAvailableCampuses([]);
+      setFormData((prev) => ({ ...prev, campusId: "" }));
+    }
+  }, [formData.organizationId, organizations]);
+
+  const fetchOrganizations = async () => {
+    try {
+      const response = await fetch("/api/organization");
+      if (response.ok) {
+        const data = await response.json();
+        setOrganizations(data);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar organizações:", error);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -81,7 +133,9 @@ export function AddUserModal({
     // else if (formData.password.length < 6) newErrors.password = "Senha deve ter pelo menos 6 caracteres"
     if (!formData.organizationRole)
       newErrors.organizationRole = "Papel na organização é obrigatório";
-    if (!formData.campusId) newErrors.campusId = "Campus é obrigatório";
+    if (!formData.organizationId)
+      newErrors.organizationId = "Organização é obrigatória";
+    // Campus é opcional - usuário pode ser apenas da organização
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -97,7 +151,8 @@ export function AddUserModal({
         description: formData.description,
         avatar: formData.avatar,
         active: formData.active,
-        campusId: formData.campusId,
+        organizationId: formData.organizationId,
+        campusId: formData.campusId, // Pode ser vazio
         organizationRole: formData.organizationRole,
       };
 
@@ -108,6 +163,7 @@ export function AddUserModal({
         description: "",
         avatar: "/logo.svg",
         active: true,
+        organizationId: "",
         campusId: "",
         organizationRole: "member",
       });
@@ -176,16 +232,49 @@ export function AddUserModal({
             </div> */}
 
             <div className="grid gap-2">
-              <Label className="text-[var(--font-color)]">Campus</Label>
+              <Label className="text-[var(--font-color)]">Organização *</Label>
+              <Select
+                value={formData.organizationId || ""}
+                onValueChange={(value) =>
+                  handleSelectChange("organizationId", value)
+                }
+              >
+                <SelectTrigger className="border-[var(--border-input)]">
+                  <SelectValue placeholder="Selecione a organização" />
+                </SelectTrigger>
+                <SelectContent className="bg-[var(--bg-simple)]">
+                  {organizations.map((org) => (
+                    <SelectItem key={org.id} value={org.id}>
+                      {org.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.organizationId && (
+                <p className="text-xs text-red-500">{errors.organizationId}</p>
+              )}
+            </div>
+
+            <div className="grid gap-2">
+              <Label className="text-[var(--font-color)]">
+                Campus/Unidade (Opcional)
+              </Label>
               <Select
                 value={formData.campusId || ""}
                 onValueChange={(value) => handleSelectChange("campusId", value)}
+                disabled={!formData.organizationId}
               >
                 <SelectTrigger className="border-[var(--border-input)]">
-                  <SelectValue placeholder="Selecione um campus" />
+                  <SelectValue
+                    placeholder={
+                      formData.organizationId
+                        ? "Selecione o campus (opcional)"
+                        : "Primeiro selecione uma organização"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)]">
-                  {campusList.map((campus) => (
+                  {availableCampuses.map((campus) => (
                     <SelectItem key={campus.id} value={campus.id}>
                       {campus.name}
                     </SelectItem>
@@ -195,6 +284,10 @@ export function AddUserModal({
               {errors.campusId && (
                 <p className="text-xs text-red-500">{errors.campusId}</p>
               )}
+              <p className="text-xs text-[var(--font-color)] opacity-60">
+                O campus é opcional. Se não selecionado, o usuário será apenas
+                membro da organização.
+              </p>
             </div>
 
             <div className="grid gap-2">
@@ -233,9 +326,17 @@ export function AddUserModal({
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)]">
                   <SelectItem value="admin">
-                    Administrador da Organização
+                    <span className="flex items-center gap-2">
+                      <Crown className="w-4 h-4 text-yellow-600" />
+                      Administrador da Organização
+                    </span>
                   </SelectItem>
-                  <SelectItem value="member">Membro</SelectItem>
+                  <SelectItem value="member">
+                    <span className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-blue-600" />
+                      Membro
+                    </span>
+                  </SelectItem>
                 </SelectContent>
               </Select>
               {errors.organizationRole && (

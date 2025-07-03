@@ -134,13 +134,45 @@ export async function uploadAvatar(
     const fileExt = file.name.split(".").pop();
     const fileName = `${userId}/avatar.${fileExt}`;
 
-    // Fazer upload do arquivo
-    const { data, error } = await supabaseAdmin.storage
+    // Tentar fazer upload do arquivo
+    let { data, error } = await supabaseAdmin.storage
       .from("avatars")
       .upload(fileName, file, {
         cacheControl: "3600",
         upsert: true, // Sobrescrever se já existir
       });
+
+    // Se erro indica que bucket não existe, criar automaticamente
+    if (
+      error &&
+      (error.message.includes("Bucket not found") ||
+        error.message.includes("The resource was not found"))
+    ) {
+      console.log(
+        "🔧 Bucket 'avatars' não encontrado, criando automaticamente..."
+      );
+
+      // Criar o bucket
+      const bucketCreated = await setupAvatarsBucket();
+
+      if (bucketCreated) {
+        console.log("✅ Bucket criado, tentando upload novamente...");
+
+        // Tentar upload novamente após criar o bucket
+        const uploadResult = await supabaseAdmin.storage
+          .from("avatars")
+          .upload(fileName, file, {
+            cacheControl: "3600",
+            upsert: true,
+          });
+
+        data = uploadResult.data;
+        error = uploadResult.error;
+      } else {
+        console.error("❌ Falha ao criar bucket 'avatars'");
+        return null;
+      }
+    }
 
     if (error) {
       console.error("Erro ao fazer upload do avatar:", error);
@@ -166,6 +198,18 @@ export async function deleteAvatar(userId: string): Promise<boolean> {
       .from("avatars")
       .list(userId);
 
+    // Se erro indica que bucket não existe, considerar como sucesso
+    if (
+      listError &&
+      (listError.message.includes("Bucket not found") ||
+        listError.message.includes("The resource was not found"))
+    ) {
+      console.log(
+        "ℹ️ Bucket 'avatars' não encontrado - considerando deleção como bem-sucedida"
+      );
+      return true;
+    }
+
     if (listError || !files || files.length === 0) {
       return true; // Se não há arquivos, considerar como sucesso
     }
@@ -181,6 +225,7 @@ export async function deleteAvatar(userId: string): Promise<boolean> {
       return false;
     }
 
+    console.log(`✅ Avatar(s) do usuário ${userId} deletado(s) com sucesso`);
     return true;
   } catch (error) {
     console.error("Erro ao deletar avatar:", error);

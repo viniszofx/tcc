@@ -1,15 +1,18 @@
 "use client";
 
 import LoadingScreen from "@/components/custom/loading";
+import { AddInventoryItemForm } from "@/components/inventories/add-inventory-item-form";
 import InventoryPageBase from "@/components/inventories/inventory-page-base";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCommission } from "@/hooks/queries/use-commissions-query";
 import { useInventoryItems } from "@/hooks/queries/use-inventory-query";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
+import { useInventoryWithSync } from "@/hooks/use-inventory-query";
 import { useInventorySync } from "@/hooks/use-inventory-sync";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
-import { AlertCircle, Wifi, WifiOff } from "lucide-react";
+import { AlertCircle, List, Plus, Upload, Wifi, WifiOff } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -63,29 +66,27 @@ export default function CommissionInventoriesPage() {
     syncStatus,
   } = useInventorySync(commissionId);
 
-  // Combinar dados da API e locais, priorizando dados mais recentes
-  const combinedInventoryItems = (() => {
-    // Se estiver online e tiver dados da API, usar dados da API
-    if (isOnline && apiInventoryItems.length > 0) {
-      return apiInventoryItems;
-    }
+  // Novo hook com sincronização inteligente
+  const {
+    data: syncedInventoryItems,
+    isLoading: syncedLoading,
+    isOnline: syncIsOnline,
+    pendingItemsCount,
+    localData: syncLocalData,
+    serverData: syncServerData,
+    metadata: syncMetadata,
+  } = useInventoryWithSync(commissionId);
 
-    // Se tiver dados locais, usar dados locais
-    if (localInventoryItems.length > 0) {
-      return localInventoryItems;
-    }
-
-    // Fallback para dados da API mesmo que offline
-    return apiInventoryItems;
-  })();
-
+  // Combinar dados usando o hook de sincronização inteligente
+  const combinedInventoryItems = syncedInventoryItems || [];
   const totalItems = combinedInventoryItems.length;
-  const dataSource =
-    isOnline && apiInventoryItems.length > 0
-      ? "api"
-      : localInventoryItems.length > 0
-      ? "local"
-      : "none";
+
+  // Determinar fonte de dados para display
+  const dataSource = (() => {
+    if (syncIsOnline && syncServerData?.length > 0) return "api";
+    if (syncLocalData?.length > 0) return "local";
+    return "none";
+  })();
 
   useEffect(() => {
     if (!loading && !permissionsLoading && !canAccessCommission) {
@@ -203,35 +204,107 @@ export default function CommissionInventoriesPage() {
                   Nenhum item de inventário encontrado
                 </p>
                 <p className="text-xs text-blue-700">
-                  Faça upload de uma planilha para começar a gerenciar o
-                  inventário.
+                  Adicione itens individuais ou faça upload de uma planilha para
+                  começar.
                 </p>
-                {canUploadToCommission && (
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={() =>
-                      router.push(
-                        `/application/commissions/${commissionId}/upload`
-                      )
-                    }
-                    className="p-0 h-auto text-blue-700 font-medium"
-                  >
-                    Fazer Upload →
-                  </Button>
-                )}
               </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Componente base com todas as funcionalidades */}
-      <InventoryPageBase
-        backRoute={`/application/commissions/${commissionId}`}
-        errorRoute="/application"
-        commissionId={commissionId}
-      />
+      {/* Interface principal com tabs */}
+      <Tabs defaultValue="list" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="list" className="flex items-center gap-2">
+            <List className="w-4 h-4" />
+            Inventário ({totalItems})
+          </TabsTrigger>
+          <TabsTrigger value="add" className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Adicionar Item
+          </TabsTrigger>
+          <TabsTrigger value="upload" className="flex items-center gap-2">
+            <Upload className="w-4 h-4" />
+            Upload Planilha
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="list" className="space-y-4">
+          {/* Status de sincronização */}
+          {pendingItemsCount > 0 && (
+            <Card className="border-yellow-200 bg-yellow-50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-yellow-600" />
+                  <div>
+                    <p className="text-sm font-medium text-yellow-800">
+                      {pendingItemsCount} item{pendingItemsCount > 1 ? "s" : ""}{" "}
+                      aguardando sincronização
+                    </p>
+                    <p className="text-xs text-yellow-700">
+                      {syncIsOnline
+                        ? "Sincronização em andamento..."
+                        : "Conecte-se à internet para sincronizar."}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Componente base com todas as funcionalidades */}
+          <InventoryPageBase
+            backRoute={`/application/commissions/${commissionId}`}
+            errorRoute="/application"
+            commissionId={commissionId}
+          />
+        </TabsContent>
+
+        <TabsContent value="add" className="space-y-4">
+          {commission && (
+            <AddInventoryItemForm
+              commissionId={commissionId}
+              campusId={commission.campusId}
+              onSuccess={() => {
+                // Opcional: voltar para a tab de lista após adicionar
+                // setActiveTab("list");
+              }}
+            />
+          )}
+        </TabsContent>
+
+        <TabsContent value="upload" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="w-5 h-5" />
+                Upload de Planilha
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">
+                  Faça upload de uma planilha CSV ou Excel com os dados do
+                  inventário.
+                </p>
+                {canUploadToCommission && (
+                  <Button
+                    onClick={() =>
+                      router.push(
+                        `/application/commissions/${commissionId}/upload`
+                      )
+                    }
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Ir para Upload
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
