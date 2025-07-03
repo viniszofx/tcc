@@ -9,7 +9,7 @@ import { useInventoryItems } from "@/hooks/queries/use-inventory-query";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
 import { useInventorySync } from "@/hooks/use-inventory-sync";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
-import { AlertCircle, ArrowLeft, Wifi, WifiOff } from "lucide-react";
+import { AlertCircle, Wifi, WifiOff } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -131,17 +131,6 @@ export default function CommissionInventoriesPage() {
       {/* Status de conectividade e sincronização */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            onClick={() =>
-              router.push(`/application/commissions/${commissionId}`)
-            }
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar para Comissão
-          </Button>
-
           {commission && (
             <div>
               <h1 className="text-2xl font-bold">{commission.name}</h1>
