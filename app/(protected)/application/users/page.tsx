@@ -24,7 +24,7 @@ import {
   useUpdateUser,
   useUsers,
 } from "@/hooks/queries/use-users-query";
-import { useUserPermissions } from "@/hooks/use-user-permissions";
+import { useUserPermissions } from "@/hooks/use-user-permissions-rq";
 import type { UserProfile } from "@/interface";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";

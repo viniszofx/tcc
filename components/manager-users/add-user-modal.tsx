@@ -21,7 +21,7 @@ import {
 import { useReferenceData } from "@/hooks/queries/use-page-data";
 import type { Campus, UserProfile } from "@/interface";
 import { Crown, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 interface Organization {
   id: string;
@@ -73,37 +73,34 @@ export function AddUserModal({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [availableCampuses, setAvailableCampuses] = useState<Campus[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Atualizar campus disponíveis quando a organização for selecionada
-  useEffect(() => {
-    if (formData.organizationId) {
-      const selectedOrg = organizations.find(
-        (org: any) => org.id === formData.organizationId
-      );
-      const newCampuses = selectedOrg?.campuses || [];
-      setAvailableCampuses(newCampuses);
-      
-      // Limpar campus selecionado se não for da organização atual
-      if (
-        formData.campusId &&
-        !newCampuses.find((c: any) => c.id === formData.campusId)
-      ) {
-        setFormData((prev) => ({ ...prev, campusId: "" }));
-      }
-    } else {
-      setAvailableCampuses([]);
-      if (formData.campusId) {
-        setFormData((prev) => ({ ...prev, campusId: "" }));
-      }
-    }
+  // Calcular campus disponíveis usando useMemo em vez de useEffect
+  const availableCampuses = useMemo(() => {
+    if (!formData.organizationId) return [];
+    
+    const selectedOrg = organizations.find(
+      (org: any) => org.id === formData.organizationId
+    );
+    return selectedOrg?.campuses || [];
   }, [formData.organizationId, organizations]);
+
+  // Limpar campus selecionado quando a organização muda
+  useEffect(() => {
+    if (formData.campusId && !availableCampuses.find((c: any) => c.id === formData.campusId)) {
+      setFormData((prev) => ({ ...prev, campusId: "" }));
+    }
+  }, [formData.campusId, availableCampuses]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+    // Limpar erro específico do campo
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[name];
+      return newErrors;
+    });
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -112,7 +109,12 @@ export function AddUserModal({
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+    // Limpar erro específico do campo
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[name];
+      return newErrors;
+    });
   };
 
   const validateForm = () => {
@@ -266,7 +268,7 @@ export function AddUserModal({
                   />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)]">
-                  {availableCampuses.map((campus) => (
+                  {availableCampuses.map((campus: Campus) => (
                     <SelectItem key={campus.id} value={campus.id}>
                       {campus.name}
                     </SelectItem>
