@@ -144,6 +144,12 @@ export interface BemCopia {
   data_ultima_atualizacao: Date;
   observacoes?: string | null;
 
+  // Novos campos para sincronização inteligente
+  id?: string; // ID único para controle local
+  isPending?: boolean; // Indica se o item ainda não foi sincronizado
+  createdAt?: string; // Data de criação local
+  updatedAt?: string; // Data de última atualização
+
   // Relations
   campus?: Campus;
   inventario?: Inventario;
@@ -252,4 +258,21 @@ export interface InventoryMetadata {
   syncStatus?: "synced" | "pending" | "unknown" | "syncing";
   lastSyncUpdate?: string;
   commissionId?: string;
+
+  // Novos campos para sincronização inteligente
+  totalItems?: number;
+  pendingCount?: number;
+  lastSyncInfo?: {
+    serverCount: number;
+    localCount: number;
+    lastServerUpdate?: Date;
+    lastLocalUpdate?: Date;
+    needsSync: boolean;
+    syncReason?:
+      | "count_mismatch"
+      | "newer_server_data"
+      | "no_local_data"
+      | "forced";
+  };
+  campusId?: string;
 }

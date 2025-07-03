@@ -37,8 +37,6 @@ export function UserListCard({
   onEditUser,
   onDeleteUser,
   onRemoveFromCommission,
-  campus,
-  campusMembers,
 }: UserListCardProps) {
   const { canDeleteUsers, canRemoveFromCommissions, presidedCommissions } =
     useUserPermissions();
@@ -88,16 +86,6 @@ export function UserListCard({
     return userWithRelations.commissionMembers.filter((member: any) =>
       presidedCommissions.includes(member.commissionId)
     );
-  };
-  const getRoleBadgeColor = (active: string) => {
-    switch (active) {
-      case "ativo":
-        return "bg-green-500 hover:bg-green-600";
-      case "inativo":
-        return "bg-red-500 hover:bg-red-600";
-      default:
-        return "bg-gray-500 hover:bg-gray-600";
-    }
   };
 
   return (
