@@ -194,7 +194,7 @@ export default function CommissionHistoryPage() {
                   <div className="absolute left-6 top-12 w-0.5 h-16 bg-[var(--border-color)]" />
                 )}
 
-                <Card className="bg-[var(--bg-simple)] border-[var(--border-color)] ml-12 relative">
+                <Card className="bg-[var(--bg-simple)] border-[var(--border-color)] pl-12 relative w-full">
                   {/* Ícone da ação */}
                   <div className="absolute -left-12 top-4 w-8 h-8 bg-[var(--bg-simple)] border-2 border-[var(--border-color)] rounded-full flex items-center justify-center">
                     <ActionIcon className="w-4 h-4 text-[var(--font-color)]" />
@@ -217,9 +217,8 @@ export default function CommissionHistoryPage() {
                           </span>
                         </div>
 
-                        <h3 className="font-medium text-[var(--font-color)] mb-1">
-                          {event.inventoryItem?.description ||
-                            "Item de inventário"}
+                        <h3 className="font-medium text-[var(--font-color)] mb-1 break-words whitespace-pre-line">
+                          {event.inventoryItem?.description || "Item de inventário"}
                         </h3>
 
                         {event.observation && (
@@ -229,7 +228,7 @@ export default function CommissionHistoryPage() {
                         )}
 
                         {event.changes && (
-                          <div className="text-xs text-[var(--font-color)] opacity-70 bg-[var(--bg-simple)] p-2 rounded border border-[var(--border-color)]">
+                          <div className="text-xs text-[var(--font-color)] opacity-70 bg-[var(--bg-simple)] p-2 rounded border border-[var(--border-color)] break-all overflow-x-auto">
                             <strong>Alterações:</strong> {event.changes}
                           </div>
                         )}
