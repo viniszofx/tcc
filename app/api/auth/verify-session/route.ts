@@ -75,18 +75,29 @@ export async function GET(request: NextRequest) {
       userProfile.organizationMembers &&
       userProfile.organizationMembers.length > 0
     ) {
-      const adminMembership = userProfile.organizationMembers.find(
-        (member) => member.role === "admin"
+      // Verificar se é admin global primeiro
+      const globalAdminMembership = userProfile.organizationMembers.find(
+        (member) => member.role === "admin global"
       );
-
-      if (adminMembership) {
+      
+      if (globalAdminMembership) {
         role = "admin";
         redirectPath = "/application";
-        organization = adminMembership.organization;
+        organization = globalAdminMembership.organization;
       } else {
-        const memberMembership = userProfile.organizationMembers[0];
-        role = memberMembership.role;
-        organization = memberMembership.organization;
+        const adminMembership = userProfile.organizationMembers.find(
+          (member) => member.role === "admin"
+        );
+
+        if (adminMembership) {
+          role = "admin";
+          redirectPath = "/application";
+          organization = adminMembership.organization;
+        } else {
+          const memberMembership = userProfile.organizationMembers[0];
+          role = memberMembership.role;
+          organization = memberMembership.organization;
+        }
       }
     }
 

@@ -48,58 +48,65 @@ export function useCommissionPermissions(commissionId: string) {
         const commission = await response.json();
 
         // Verificar permissões baseadas no role e na comissão
-        const isAdmin = user.role === "admin";
-
+        const isGlobalAdmin = user.organizationMembers?.some(
+          (member: any) => member.role === "admin global"
+        ) || false;
+        
         // Converter IDs para string para comparação consistente
         const commissionIdStr = String(commissionId);
 
+        // Verificar se é presidente da comissão
         const isPresidentOfThisCommission =
           user.commissions?.some(
             (c) =>
               String(c.id) === commissionIdStr &&
               c.roleInCommission === "Presidente"
           ) || false;
+          
+        // Verificar se é membro da comissão
         const isMemberOfThisCommission =
           user.commissions?.some((c) => String(c.id) === commissionIdStr) ||
           false;
 
-        // Admin da organização tem acesso às comissões dos campus da sua organização
-        const isAdminOfOrganization = isAdmin && !!user.organization;
-        const commissionBelongsToUserOrganization =
-          commission.campus?.organizationId === user.organization?.id;
+        // Verificar se é admin da organização que contém a comissão
+        const isAdminOfOrganization = user.organizationMembers?.some(
+          (member: any) => 
+            member.role === "admin" && 
+            member.organizationId === commission.campus?.organizationId
+        ) || false;
 
         console.log("DEBUG - Verificação de permissões:", {
           commissionId: commissionIdStr,
           userCommissions: user.commissions,
-          isAdmin,
+          userOrganizationMembers: user.organizationMembers,
+          isGlobalAdmin,
           isPresidentOfThisCommission,
           isMemberOfThisCommission,
           isAdminOfOrganization,
-          commissionBelongsToUserOrganization,
-          userOrganizationId: user.organization?.id,
           commissionOrganizationId: commission.campus?.organizationId,
         });
 
+        // Regras de acesso:
+        // 1. Administrador global pode tudo
+        // 2. Administrador da organização pode acessar comissões dos campus da sua organização
+        // 3. Presidente da comissão pode gerenciar a comissão
+        // 4. Membro da comissão pode acessar mas não gerenciar
         const canAccess =
-          isAdmin ||
+          isGlobalAdmin ||
+          isAdminOfOrganization ||
           isPresidentOfThisCommission ||
-          isMemberOfThisCommission ||
-          (isAdminOfOrganization && !!commissionBelongsToUserOrganization);
+          isMemberOfThisCommission;
+
+        const canManage =
+          isGlobalAdmin ||
+          isAdminOfOrganization ||
+          isPresidentOfThisCommission;
 
         setPermissions({
           canAccessCommission: canAccess,
-          canManageCommission:
-            isAdmin ||
-            isPresidentOfThisCommission ||
-            (isAdminOfOrganization && !!commissionBelongsToUserOrganization),
-          canUploadToCommission:
-            isAdmin ||
-            isPresidentOfThisCommission ||
-            (isAdminOfOrganization && !!commissionBelongsToUserOrganization),
-          canManageMembers:
-            isAdmin ||
-            isPresidentOfThisCommission ||
-            (isAdminOfOrganization && !!commissionBelongsToUserOrganization),
+          canManageCommission: canManage,
+          canUploadToCommission: canManage, // Apenas quem pode gerenciar pode fazer upload
+          canManageMembers: canManage, // Apenas quem pode gerenciar pode gerenciar membros
           loading: false,
           error: null,
         });

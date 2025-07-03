@@ -116,12 +116,12 @@ export async function POST(request: Request) {
         },
       });
 
-      // 4. Vincular o administrador à organização como admin
+      // 4. Vincular o administrador à organização como admin global
       await tx.organizationMember.create({
         data: {
           userId: newAdmin.id,
           organizationId: newOrganization.id,
-          role: "admin", // Role de administrador da organização
+          role: "admin global", // Role de administrador global do sistema
         },
       });
 

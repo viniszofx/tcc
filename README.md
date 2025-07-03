@@ -111,6 +111,35 @@ npm install
 npm run dev
 ```
 
+## 🔧 Configuração do Ambiente
+
+### Variáveis de Ambiente
+
+O sistema utiliza um arquivo `.env` para configuração. Copie o arquivo `.env.example` para `.env` e configure as seguintes variáveis:
+
+```env
+# Variáveis de ambiente do Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-chave-anonima-aqui
+SUPABASE_SERVICE_ROLE_KEY=sua-chave-service-role-aqui
+
+# Variáveis do banco de dados
+DATABASE_URL="postgresql://postgres:senha@localhost:5432/seu_banco"
+DIRECT_URL="postgresql://postgres:senha@localhost:5432/seu_banco"
+```
+
+#### Configuração do Supabase
+
+Para usar o upload de arquivos e armazenamento, você precisa configurar o Supabase:
+
+1. Crie uma conta em [supabase.com](https://supabase.com)
+2. Crie um novo projeto
+3. Navegue para Project Settings > API
+4. Copie a URL e a anon key para as variáveis de ambiente
+5. Copie a service role key para a variável SUPABASE_SERVICE_ROLE_KEY
+
+> **Nota**: Se você não configurar o Supabase, o sistema ainda funcionará, mas o upload de arquivos será desabilitado.
+
 ## 👥 Equipe
 
 ### Desenvolvedores

@@ -102,6 +102,15 @@ export function useInventoryWithSync(commissionId: string) {
     queryKey: ["inventory-local", commissionId],
     queryFn: async () => {
       const { data, metadata } = await getProcessedData();
+
+      // Verificar se os dados pertencem à comissão correta
+      if (metadata?.commissionId && metadata.commissionId !== commissionId) {
+        console.log(
+          `⚠️ Dados locais pertencem à comissão ${metadata.commissionId}, mas foi solicitada comissão ${commissionId}. Retornando dados vazios.`
+        );
+        return { data: [], metadata: null };
+      }
+
       return { data: data || [], metadata };
     },
     staleTime: 0, // Sempre verificar dados locais

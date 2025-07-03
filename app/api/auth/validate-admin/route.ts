@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     }
 
     const isAdmin = userProfile.organizationMembers.some(
-      (member) => member.role === "admin"
+      (member) => member.role === "admin" || member.role === "admin global"
     );
 
     if (!isAdmin) {

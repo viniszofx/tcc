@@ -45,6 +45,8 @@ interface EditUserModalProps {
   onClose: () => void;
   onEditUser: (userData: Partial<UserProfile>) => void;
   user: UserProfile | null;
+  canEditGlobalAdminRole?: boolean; // Novo prop para controlar se pode editar admin global
+  currentUserIsGlobalAdmin?: boolean; // Novo prop para verificar se o usuário atual é admin global
 }
 
 export function EditUserModal({
@@ -52,6 +54,8 @@ export function EditUserModal({
   onClose,
   onEditUser,
   user,
+  canEditGlobalAdminRole = false,
+  currentUserIsGlobalAdmin = false,
 }: EditUserModalProps) {
   const [formData, setFormData] = useState<EditUserFormData>({
     name: "",
@@ -74,6 +78,13 @@ export function EditUserModal({
   // Carregar dados do usuário quando o modal abrir
   useEffect(() => {
     if (isOpen && user) {
+      console.log("🔧 DEBUG EditUserModal:", {
+        canEditGlobalAdminRole,
+        currentUserIsGlobalAdmin,
+        user: user,
+        userOrganizationMembers: (user as any).organizationMembers,
+      });
+      
       fetchOrganizations();
 
       // Pegar dados do usuário atual
@@ -92,7 +103,7 @@ export function EditUserModal({
         organizationRole: currentOrganization?.role || "member",
       });
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, canEditGlobalAdminRole, currentUserIsGlobalAdmin]);
 
   // Atualizar campus disponíveis quando a organização for selecionada
   useEffect(() => {
@@ -352,6 +363,14 @@ export function EditUserModal({
                   <SelectValue placeholder="Selecione o papel na organização" />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)]">
+                  {canEditGlobalAdminRole && (
+                    <SelectItem value="admin global">
+                      <span className="flex items-center gap-2">
+                        <Key className="w-4 h-4 text-purple-600" />
+                        Administrador Global
+                      </span>
+                    </SelectItem>
+                  )}
                   <SelectItem value="admin">
                     <span className="flex items-center gap-2">
                       <Crown className="w-4 h-4 text-yellow-600" />
@@ -370,6 +389,19 @@ export function EditUserModal({
                 <p className="text-xs text-red-500">
                   {errors.organizationRole}
                 </p>
+              )}
+              {formData.organizationRole === "admin global" && (
+                <div className="flex items-start gap-2 p-3 rounded-md bg-purple-50 border border-purple-200">
+                  <AlertCircle className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-purple-800">
+                    <p className="font-medium">Administrador Global</p>
+                    <p>
+                      Este usuário terá acesso total ao sistema, incluindo a
+                      capacidade de gerenciar todos os usuários, organizações e
+                      comissões.
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
 

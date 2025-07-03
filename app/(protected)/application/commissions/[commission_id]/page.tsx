@@ -55,7 +55,8 @@ export default function CommissionDetailPage() {
 
   useEffect(() => {
     if (!loading && !permissionsLoading && !canAccessCommission) {
-      router.push("/application");
+      // Redirecionar para a listagem de comissões com uma mensagem
+      router.push("/application/commissions?error=access_denied");
     }
   }, [loading, permissionsLoading, canAccessCommission, router]);
 
@@ -88,13 +89,27 @@ export default function CommissionDetailPage() {
     }
   };
 
-  // Verificar se o usuário pode gerenciar a comissão (admin ou presidente da comissão)
+  // Verificar se o usuário pode gerenciar a comissão
+  // - Administrador global ("admin global" em qualquer organização)
+  // - Administrador da organização que contém a comissão
+  // - Presidente da comissão
+  const isGlobalAdmin = user?.organizationMembers?.some(
+    (member: any) => member.role === "admin global"
+  ) || false;
+  
+  const isAdminOfOrganization = user?.organizationMembers?.some(
+    (member: any) => 
+      member.role === "admin" && 
+      member.organizationId === commission?.campus?.organizationId
+  ) || false;
+  
   const canManageCommission =
-    user?.role === "admin" ||
+    isGlobalAdmin || // Administrador global
+    isAdminOfOrganization || // Admin da organização
     commission?.members?.some(
       (member: any) =>
         member.userId === user?.id && member.roleInCommission === "Presidente"
-    );
+    ); // Presidente da comissão
 
   if (loading || permissionsLoading || commissionLoading) {
     return <LoadingScreen />;

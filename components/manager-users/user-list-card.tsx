@@ -143,11 +143,20 @@ export function UserListCard({
                   </div>
 
                   <div className="hidden lg:block lg:col-span-2 truncate">
-                    {(usuario as any).organizationMembers?.length > 0 &&
-                    (usuario as any).organizationMembers[0].role === "admin" ? (
-                      <span className="flex items-center gap-1">
-                        <Crown className="w-4 h-4 text-yellow-600" /> Admin
-                      </span>
+                    {(usuario as any).organizationMembers?.length > 0 ? (
+                      (usuario as any).organizationMembers[0].role === "admin global" ? (
+                        <span className="flex items-center gap-1">
+                          <Crown className="w-4 h-4 text-purple-600" /> Admin Global
+                        </span>
+                      ) : (usuario as any).organizationMembers[0].role === "admin" ? (
+                        <span className="flex items-center gap-1">
+                          <Crown className="w-4 h-4 text-yellow-600" /> Admin
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1">
+                          <User className="w-4 h-4 text-blue-600" /> Membro
+                        </span>
+                      )
                     ) : (
                       <span className="flex items-center gap-1">
                         <User className="w-4 h-4 text-blue-600" /> Membro

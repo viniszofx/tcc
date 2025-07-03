@@ -11,7 +11,7 @@ import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
 import { useInventoryWithSync } from "@/hooks/use-inventory-query";
 import { useInventorySync } from "@/hooks/use-inventory-sync";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
-import { AlertCircle, Upload, Wifi, WifiOff } from "lucide-react";
+import { AlertCircle, Download, Wifi, WifiOff } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -20,11 +20,8 @@ export default function CommissionInventoriesPage() {
   const router = useRouter();
   const params = useParams();
   const commissionId = params.commission_id as string;
-  const {
-    canAccessCommission,
-    canUploadToCommission,
-    loading: permissionsLoading,
-  } = useCommissionPermissions(commissionId);
+  const { canAccessCommission, loading: permissionsLoading } =
+    useCommissionPermissions(commissionId);
 
   // Estado de conectividade
   const [isOnline, setIsOnline] = useState(
@@ -76,6 +73,10 @@ export default function CommissionInventoriesPage() {
     metadata: syncMetadata,
   } = useInventoryWithSync(commissionId);
 
+  // Validar se dados locais pertencem à comissão atual
+  const localDataValid =
+    !syncMetadata?.commissionId || syncMetadata.commissionId === commissionId;
+
   // Combinar dados usando o hook de sincronização inteligente
   const combinedInventoryItems = syncedInventoryItems || [];
   const totalItems = combinedInventoryItems.length;
@@ -83,7 +84,7 @@ export default function CommissionInventoriesPage() {
   // Determinar fonte de dados para display
   const dataSource = (() => {
     if (syncIsOnline && syncServerData?.length > 0) return "api";
-    if (syncLocalData?.length > 0) return "local";
+    if (syncLocalData?.length > 0 && localDataValid) return "local";
     return "none";
   })();
 
@@ -170,8 +171,29 @@ export default function CommissionInventoriesPage() {
         </div>
       </div>
 
+      {/* Alerta se dados locais não pertencem à comissão atual */}
+      {syncLocalData?.length > 0 && !localDataValid && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+              <div>
+                <p className="text-sm font-medium text-red-800">
+                  Dados locais de comissão diferente detectados
+                </p>
+                <p className="text-xs text-red-700">
+                  Os dados armazenados localmente pertencem a outra comissão (
+                  {syncMetadata?.commissionId}). Para evitar conflitos, eles
+                  foram ocultados.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Alerta se usando dados locais */}
-      {dataSource === "local" && (
+      {dataSource === "local" && localDataValid && (
         <Card className="border-orange-200 bg-orange-50">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
@@ -236,15 +258,16 @@ export default function CommissionInventoriesPage() {
 
       {/* Barra de ações */}
       <div className="flex items-center gap-2 justify-end">
-        {canUploadToCommission && (
+        {commission?.spreadsheet_url && (
           <Button
             variant="outline"
-            onClick={() =>
-              router.push(`/application/commissions/${commissionId}/upload`)
-            }
+            onClick={() => {
+              // Abrir o link da planilha em uma nova aba
+              window.open(commission.spreadsheet_url, "_blank");
+            }}
           >
-            <Upload className="w-4 h-4 mr-2" />
-            Upload de Planilha
+            <Download className="w-4 h-4 mr-2" />
+            Download da Planilha
           </Button>
         )}
       </div>

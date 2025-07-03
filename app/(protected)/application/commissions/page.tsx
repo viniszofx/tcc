@@ -19,7 +19,7 @@ import { useUserPermissions } from "@/hooks/use-user-permissions";
 import type { CommissionWithRelations } from "@/interface";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 export default function CommissionsPage() {
@@ -31,6 +31,10 @@ export default function CommissionsPage() {
     error: permissionsError,
   } = useUserPermissions();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Verificar se há erro de acesso negado
+  const hasAccessError = searchParams?.get("error") === "access_denied";
 
   // React Query hooks
   const {
@@ -49,14 +53,34 @@ export default function CommissionsPage() {
 
   // Filtrar comissões baseado no papel do usuário
   const commissions = useMemo(() => {
-    if (!user || user.role === "admin") {
+    if (!user) return [];
+
+    // Verificar se é administrador global
+    const isGlobalAdmin = user.organizationMembers?.some(
+      (member: any) => member.role === "admin global"
+    ) || false;
+
+    if (isGlobalAdmin) {
+      // Administradores globais veem todas as comissões
       return allCommissions;
     }
 
-    // Para não-admins, filtrar apenas comissões onde o usuário é membro
-    return allCommissions.filter((commission) =>
-      commission.members?.some((member) => member.userId === user.id)
-    );
+    // Para outros usuários, filtrar comissões baseado nas permissões
+    return allCommissions.filter((commission) => {
+      // Verificar se é membro da comissão
+      const isMemberOfCommission = commission.members?.some(
+        (member) => member.userId === user.id
+      );
+
+      // Verificar se é admin da organização que contém a comissão OU admin global
+      const isAdminOfOrganization = user.organizationMembers?.some(
+        (member: any) => 
+          (member.role === "admin" && member.organizationId === commission.campus?.organizationId) ||
+          member.role === "admin global"
+      );
+
+      return isMemberOfCommission || isAdminOfOrganization;
+    });
   }, [allCommissions, user]);
 
   // Verificar permissões
@@ -106,8 +130,12 @@ export default function CommissionsPage() {
     return commission.campus?.name || "Campus não encontrado";
   };
 
+  const isGlobalAdmin = user?.organizationMembers?.some(
+    (member: any) => member.role === "admin global"
+  ) || false;
+
   const pageTitle =
-    user?.role === "admin"
+    user?.role === "admin" || isGlobalAdmin
       ? "Todas as Comissões"
       : canManageCommissions
       ? "Minhas Comissões (Presidente)"
@@ -115,6 +143,20 @@ export default function CommissionsPage() {
 
   return (
     <Card className="w-full bg-[var(--bg-simple)] shadow-lg transition-all duration-300">
+      {hasAccessError && (
+        <div className="mx-6 mt-6 p-4 rounded-md bg-red-50 border border-red-200">
+          <div className="flex items-center gap-2">
+            <div className="text-red-800">
+              <p className="font-medium">Acesso Negado</p>
+              <p className="text-sm">
+                Você não tem permissão para acessar a comissão solicitada. 
+                Abaixo estão listadas apenas as comissões que você tem acesso.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6">
         <div>
           <CardTitle className="text-2xl font-bold text-[var(--font-color)] md:text-3xl">
@@ -123,7 +165,7 @@ export default function CommissionsPage() {
           <CardDescription className="text-[var(--font-color)] opacity-70">
             {commissions.length > 0
               ? `Lista de comissões ${
-                  user?.role === "admin"
+                  user?.role === "admin" || isGlobalAdmin
                     ? "do sistema"
                     : `do ${getCampusName(commissions[0])}`
                 }`
@@ -197,7 +239,7 @@ export default function CommissionsPage() {
         ) : (
           <div className="text-center py-12">
             <p className="text-[var(--font-color)] opacity-70 text-lg">
-              {user?.role === "admin"
+              {user?.role === "admin" || isGlobalAdmin
                 ? "Nenhuma comissão cadastrada no sistema ainda."
                 : "Você não faz parte de nenhuma comissão ainda."}
             </p>

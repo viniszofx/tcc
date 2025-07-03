@@ -7,10 +7,11 @@ import { getProcessedData } from "@/utils/storage";
  */
 export async function findItemInIndexedDB(
   searchValue: string,
-  searchField: "number" | "id" = "number"
+  searchField: "number" | "id" = "number",
+  commissionId?: string
 ): Promise<BemCopia | null> {
   try {
-    const { data: localData } = await getProcessedData();
+    const { data: localData, metadata } = await getProcessedData();
 
     if (!localData || localData.length === 0) {
       console.log("Nenhum dado local encontrado no IndexedDB");
@@ -22,9 +23,20 @@ export async function findItemInIndexedDB(
     );
     console.log(`📊 Total de itens no IndexedDB: ${localData.length}`);
 
+    // Filtrar por comissão se especificada
+    let filteredData = localData;
+    if (commissionId && metadata?.commissionId) {
+      if (metadata.commissionId !== commissionId) {
+        console.log(
+          `⚠️ Dados locais pertencem à comissão ${metadata.commissionId}, mas foi solicitada comissão ${commissionId}`
+        );
+        return null;
+      }
+    }
+
     // Buscar por número (mais comum)
     if (searchField === "number") {
-      const item = localData.find(
+      const item = filteredData.find(
         (item) => item.NUMERO === searchValue || item.bem_id === searchValue
       );
 
@@ -36,7 +48,7 @@ export async function findItemInIndexedDB(
 
     // Buscar por ID
     if (searchField === "id") {
-      const item = localData.find(
+      const item = filteredData.find(
         (item) => item.bem_id === searchValue || item.id === searchValue
       );
 
@@ -108,17 +120,30 @@ export function convertIndexedDBItemToInventoryItem(
 /**
  * Busca múltiplos itens no IndexedDB com filtros
  */
-export async function findItemsInIndexedDB(filters: {
-  sector?: string;
-  ed?: string;
-  location?: string;
-  responsability?: string;
-}): Promise<BemCopia[]> {
+export async function findItemsInIndexedDB(
+  filters: {
+    sector?: string;
+    ed?: string;
+    location?: string;
+    responsability?: string;
+  },
+  commissionId?: string
+): Promise<BemCopia[]> {
   try {
-    const { data: localData } = await getProcessedData();
+    const { data: localData, metadata } = await getProcessedData();
 
     if (!localData || localData.length === 0) {
       return [];
+    }
+
+    // Verificar se os dados locais pertencem à comissão correta
+    if (commissionId && metadata?.commissionId) {
+      if (metadata.commissionId !== commissionId) {
+        console.log(
+          `⚠️ Dados locais pertencem à comissão ${metadata.commissionId}, mas foi solicitada comissão ${commissionId}. Retornando lista vazia.`
+        );
+        return [];
+      }
     }
 
     let filteredItems = localData;
@@ -163,18 +188,34 @@ export async function findItemsInIndexedDB(filters: {
 /**
  * Verifica se há dados disponíveis no IndexedDB
  */
-export async function hasIndexedDBData(): Promise<{
+export async function hasIndexedDBData(commissionId?: string): Promise<{
   hasData: boolean;
   itemCount: number;
   lastUpdate: Date | null;
+  isCorrectCommission: boolean;
 }> {
   try {
     const { data: localData, metadata } = await getProcessedData();
 
+    let isCorrectCommission = true;
+    let actualItemCount = localData?.length || 0;
+
+    // Verificar se os dados pertencem à comissão correta
+    if (commissionId && metadata?.commissionId) {
+      isCorrectCommission = metadata.commissionId === commissionId;
+      if (!isCorrectCommission) {
+        console.log(
+          `⚠️ Dados locais pertencem à comissão ${metadata.commissionId}, mas foi solicitada comissão ${commissionId}`
+        );
+        actualItemCount = 0; // Não conta itens se não for da comissão correta
+      }
+    }
+
     return {
-      hasData: !!(localData && localData.length > 0),
-      itemCount: localData?.length || 0,
+      hasData: !!(localData && localData.length > 0 && isCorrectCommission),
+      itemCount: actualItemCount,
       lastUpdate: metadata?.timestamp ? new Date(metadata.timestamp) : null,
+      isCorrectCommission,
     };
   } catch (error) {
     console.error("Erro ao verificar dados do IndexedDB:", error);
@@ -182,6 +223,35 @@ export async function hasIndexedDBData(): Promise<{
       hasData: false,
       itemCount: 0,
       lastUpdate: null,
+      isCorrectCommission: false,
     };
+  }
+}
+
+/**
+ * Limpa dados locais se eles não pertencem à comissão especificada
+ */
+export async function clearDataIfWrongCommission(
+  commissionId: string
+): Promise<boolean> {
+  try {
+    const { metadata } = await getProcessedData();
+
+    if (metadata?.commissionId && metadata.commissionId !== commissionId) {
+      console.log(
+        `🧹 Limpando dados locais da comissão ${metadata.commissionId} (solicitada: ${commissionId})`
+      );
+
+      // Importar função de limpeza
+      const { clearProcessedData } = await import("@/utils/storage");
+      await clearProcessedData();
+
+      return true; // Dados foram limpos
+    }
+
+    return false; // Dados não foram limpos
+  } catch (error) {
+    console.error("Erro ao verificar/limpar dados locais:", error);
+    return false;
   }
 }

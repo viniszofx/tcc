@@ -46,12 +46,14 @@ interface AddUserModalProps {
       organizationRole?: string;
     }
   ) => void;
+  canCreateGlobalAdmin?: boolean; // Permite criar admin global
 }
 
 export function AddUserModal({
   isOpen,
   onClose,
   onAddUser,
+  canCreateGlobalAdmin = false,
 }: AddUserModalProps) {
   // Usar hook de dados de referência (cache otimizado)
   const {
@@ -80,17 +82,21 @@ export function AddUserModal({
       const selectedOrg = organizations.find(
         (org: any) => org.id === formData.organizationId
       );
-      setAvailableCampuses(selectedOrg?.campuses || []);
+      const newCampuses = selectedOrg?.campuses || [];
+      setAvailableCampuses(newCampuses);
+      
       // Limpar campus selecionado se não for da organização atual
       if (
         formData.campusId &&
-        !selectedOrg?.campuses.find((c: any) => c.id === formData.campusId)
+        !newCampuses.find((c: any) => c.id === formData.campusId)
       ) {
         setFormData((prev) => ({ ...prev, campusId: "" }));
       }
     } else {
       setAvailableCampuses([]);
-      setFormData((prev) => ({ ...prev, campusId: "" }));
+      if (formData.campusId) {
+        setFormData((prev) => ({ ...prev, campusId: "" }));
+      }
     }
   }, [formData.organizationId, organizations]);
 
@@ -311,6 +317,14 @@ export function AddUserModal({
                   <SelectValue placeholder="Selecione o papel na organização" />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)]">
+                  {canCreateGlobalAdmin && (
+                    <SelectItem value="admin global">
+                      <span className="flex items-center gap-2">
+                        <Crown className="w-4 h-4 text-red-600" />
+                        Administrador Global
+                      </span>
+                    </SelectItem>
+                  )}
                   <SelectItem value="admin">
                     <span className="flex items-center gap-2">
                       <Crown className="w-4 h-4 text-yellow-600" />

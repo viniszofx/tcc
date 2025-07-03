@@ -28,7 +28,7 @@ import { useUserPermissions } from "@/hooks/use-user-permissions";
 import type { UserProfile } from "@/interface";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type UserWithCampus = UserProfile & {
   campusName?: string;
@@ -39,6 +39,7 @@ export default function UsersPage() {
     canManageUsers,
     loading: permissionsLoading,
     error: permissionsError,
+    user,
   } = useUserPermissions();
   const router = useRouter();
 
@@ -113,34 +114,14 @@ export default function UsersPage() {
     });
   }, [usersWithCampus, searchTerm]);
 
-  // Loading states
-  const isLoading =
-    permissionsLoading ||
-    usersLoading ||
-    campusesLoading ||
-    campusMembersLoading;
+  // Verificar se o usuário atual é administrador global
+  const isCurrentUserGlobalAdmin = useMemo(() => {
+    return user?.organizationMembers?.some(
+      (member: any) => member.role === "admin global"
+    ) || false;
+  }, [user?.organizationMembers]);
 
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-
-  if (!canManageUsers) {
-    return <LoadingScreen />;
-  }
-
-  if (permissionsError || usersError) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-red-500">
-            Erro: {permissionsError || (usersError as Error)?.message}
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const handleAddUser = async (
+  const handleAddUser = useCallback(async (
     userData: Partial<UserProfile> & {
       organizationId?: string;
       campusId?: string;
@@ -164,14 +145,14 @@ export default function UsersPage() {
       console.error("Erro ao adicionar usuário:", error);
       alert("Erro inesperado ao criar usuário");
     }
-  };
+  }, [createUserMutation]);
 
-  const handleEditClick = (user: UserProfile) => {
+  const handleEditClick = useCallback((user: UserProfile) => {
     setSelectedUser(user);
     setIsEditModalOpen(true);
-  };
+  }, []);
 
-  const handleEditUser = async (userData: Partial<UserProfile>) => {
+  const handleEditUser = useCallback(async (userData: Partial<UserProfile>) => {
     if (!selectedUser?.id) return;
 
     try {
@@ -186,9 +167,9 @@ export default function UsersPage() {
       console.error("Erro ao editar usuário:", error);
       alert("Erro ao editar usuário");
     }
-  };
+  }, [selectedUser?.id, updateUserMutation]);
 
-  const handleDeleteUser = async (user: UserProfile) => {
+  const handleDeleteUser = useCallback(async (user: UserProfile) => {
     try {
       await deleteUserMutation.mutateAsync(user.id);
 
@@ -200,9 +181,9 @@ export default function UsersPage() {
       console.error("Erro ao excluir usuário:", error);
       alert("Erro ao excluir usuário. Tente novamente.");
     }
-  };
+  }, [deleteUserMutation]);
 
-  const handleRemoveFromCommission = async (
+  const handleRemoveFromCommission = useCallback(async (
     user: UserProfile,
     commissionId: string
   ) => {
@@ -227,10 +208,34 @@ export default function UsersPage() {
       console.error("Erro ao remover usuário da comissão:", error);
       alert("Erro inesperado ao remover usuário da comissão");
     }
-  };
+  }, []);
 
+  // Loading states
+  const isLoading =
+    permissionsLoading ||
+    usersLoading ||
+    campusesLoading ||
+    campusMembersLoading;
+
+  // Renderizações condicionais APÓS todos os hooks
   if (isLoading) {
     return <LoadingScreen />;
+  }
+
+  if (!canManageUsers) {
+    return <LoadingScreen />;
+  }
+
+  if (permissionsError || usersError) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-red-500">
+            Erro: {permissionsError || (usersError as Error)?.message}
+          </p>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -270,6 +275,7 @@ export default function UsersPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAddUser={handleAddUser}
+        canCreateGlobalAdmin={isCurrentUserGlobalAdmin}
       />
 
       <EditUserModal
@@ -280,6 +286,8 @@ export default function UsersPage() {
         }}
         user={selectedUser}
         onEditUser={handleEditUser}
+        canEditGlobalAdminRole={isCurrentUserGlobalAdmin}
+        currentUserIsGlobalAdmin={isCurrentUserGlobalAdmin}
       />
 
       {createdUserData && (

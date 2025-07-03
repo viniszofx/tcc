@@ -1,8 +1,22 @@
-import type { BemCopia } from "@/lib/interface"
-import { getProcessedData } from "@/utils/data-storage"
+import type { BemCopia } from "@/lib/interface";
+import { getProcessedData } from "@/utils/data-storage";
 
-export async function getItemById(id: string) {
-  const { data } = await getProcessedData()
+export async function getItemById(id: string, commissionId?: string) {
+  const { data, metadata } = await getProcessedData();
 
-  return data.find((item: BemCopia) => item.bem_id === id || item.NUMERO === id)
+  // Verificar se os dados pertencem à comissão correta
+  if (
+    commissionId &&
+    metadata?.commissionId &&
+    metadata.commissionId !== commissionId
+  ) {
+    console.log(
+      `⚠️ Dados locais pertencem à comissão ${metadata.commissionId}, mas foi solicitada comissão ${commissionId}`
+    );
+    return undefined;
+  }
+
+  return data.find(
+    (item: BemCopia) => item.bem_id === id || item.NUMERO === id
+  );
 }

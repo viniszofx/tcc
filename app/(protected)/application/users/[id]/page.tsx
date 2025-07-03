@@ -57,14 +57,18 @@ export default function UserDetailsPage() {
   }, [permissionsLoading, canManageUsers, router]);
 
   const handleEditUser = (updatedUser: Partial<UserProfile>) => {
-    if (!updatedUser.id) return;
+    // Include the user ID in the request body
+    const userDataWithId = {
+      ...updatedUser,
+      id: id, // Use the id from the URL params
+    };
 
-    fetch(`/api/user/${id}`, {
+    fetch(`/api/user`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(updatedUser),
+      body: JSON.stringify(userDataWithId),
     })
       .then((response) => {
         if (response.ok) {
@@ -109,6 +113,34 @@ export default function UserDetailsPage() {
       </Card>
     );
   }
+
+  // Verificar se o usuário atual é administrador global
+  const isCurrentUserGlobalAdmin = user?.organizationMembers?.some(
+    (member: any) => member.role === "admin global"
+  ) || false;
+
+  // Verificar se o usuário sendo visualizado é administrador global
+  const isTargetUserGlobalAdmin = userData?.organizationMembers?.some(
+    (member: any) => member.role === "admin global"
+  ) || false;
+
+  // Regras de permissão:
+  // 1. Apenas administradores globais podem atribuir o papel de "admin global"
+  // 2. Usuários não podem se auto-promover a "admin global"
+  // 3. Membros normais não podem se tornar admins sem um admin fazer isso
+  const canEditGlobalAdminRole = isCurrentUserGlobalAdmin && userData?.id !== user?.id;
+  const canEditUserRoles = isCurrentUserGlobalAdmin || canManageUsers;
+
+  console.log("🔧 DEBUG UserDetailsPage:", {
+    userId: userData?.id,
+    currentUserId: user?.id,
+    isCurrentUserGlobalAdmin,
+    isTargetUserGlobalAdmin,
+    canEditGlobalAdminRole,
+    canEditUserRoles,
+    currentUserOrgMembers: user?.organizationMembers,
+    targetUserOrgMembers: userData?.organizationMembers,
+  });
 
   if (error) {
     return (
@@ -365,6 +397,8 @@ export default function UserDetailsPage() {
         onClose={() => setIsEditModalOpen(false)}
         user={userData}
         onEditUser={handleEditUser}
+        canEditGlobalAdminRole={canEditGlobalAdminRole}
+        currentUserIsGlobalAdmin={isCurrentUserGlobalAdmin}
       />
 
       <DeleteUserDialog

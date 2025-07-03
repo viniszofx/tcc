@@ -12,6 +12,15 @@ export interface UserRole {
     name: string;
     shortName: string;
   };
+  organizationMembers?: {
+    organizationId: string;
+    role: "admin global" | "admin" | "member";
+    organization: {
+      id: string;
+      name: string;
+      shortName: string;
+    };
+  }[];
   commissions?: {
     id: string;
     name: string;
@@ -97,9 +106,22 @@ export function useUserPermissions() {
         console.log("DEBUG - Dados do usuário carregados:", {
           user,
           commissions: user.commissions,
+          organizationMembers: user.organizationMembers,
           isFirstAccess,
         });
-        const isAdmin = user.role === "admin";
+        
+        // Verificar se é administrador global
+        const isGlobalAdmin = user.organizationMembers?.some(
+          (member) => member.role === "admin global"
+        ) || false;
+        
+        // Verificar se é administrador de alguma organização
+        const isOrgAdmin = user.organizationMembers?.some(
+          (member) => member.role === "admin"
+        ) || false;
+        
+        // Backward compatibility - verificar role antigo
+        const isAdmin = user.role === "admin" || isGlobalAdmin || isOrgAdmin;
         const isPresident = user.role === "presidente";
         const isMember = user.role === "member";
 

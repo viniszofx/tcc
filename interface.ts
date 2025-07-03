@@ -26,7 +26,7 @@ export interface UserProfile {
 export interface OrganizationMember {
   userId: string;
   organizationId: string;
-  role: "admin" | "member";
+  role: "admin global" | "admin" | "member";
 }
 
 export interface Campus {

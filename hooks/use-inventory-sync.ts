@@ -68,6 +68,21 @@ export function useInventorySync(commissionId: string) {
     try {
       setError(null);
       const { data, metadata: localMetadata } = await getProcessedData();
+
+      // Verificar se os dados pertencem à comissão correta
+      if (
+        localMetadata?.commissionId &&
+        localMetadata.commissionId !== commissionId
+      ) {
+        console.log(
+          `⚠️ Dados locais pertencem à comissão ${localMetadata.commissionId}, mas foi solicitada comissão ${commissionId}. Limpando dados locais.`
+        );
+        setLocalData([]);
+        setMetadata(null);
+        setSyncStatus("unknown");
+        return [];
+      }
+
       setLocalData(data || []);
       setMetadata(localMetadata);
 
@@ -97,6 +112,8 @@ export function useInventorySync(commissionId: string) {
       console.log("📱 Dados carregados localmente:", {
         items: data?.length || 0,
         syncStatus: (localMetadata as any)?.syncStatus || "unknown",
+        commissionId: localMetadata?.commissionId,
+        requestedCommissionId: commissionId,
       });
 
       return data || [];

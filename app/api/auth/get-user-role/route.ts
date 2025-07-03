@@ -116,18 +116,30 @@ export async function GET(request: NextRequest) {
       userProfile.organizationMembers &&
       userProfile.organizationMembers.length > 0
     ) {
-      const adminMembership = userProfile.organizationMembers.find(
-        (member) => member.role === "admin"
+      // Verificar se é admin global primeiro
+      const globalAdminMembership = userProfile.organizationMembers.find(
+        (member) => member.role === "admin global"
       );
-
-      if (adminMembership) {
+      
+      if (globalAdminMembership) {
         role = "admin";
         redirectPath = "/application";
-        organization = adminMembership.organization;
+        organization = globalAdminMembership.organization;
       } else {
-        const memberMembership = userProfile.organizationMembers[0];
-        role = memberMembership.role;
-        organization = memberMembership.organization;
+        // Verificar se é admin de organização
+        const adminMembership = userProfile.organizationMembers.find(
+          (member) => member.role === "admin"
+        );
+
+        if (adminMembership) {
+          role = "admin";
+          redirectPath = "/application";
+          organization = adminMembership.organization;
+        } else {
+          const memberMembership = userProfile.organizationMembers[0];
+          role = memberMembership.role;
+          organization = memberMembership.organization;
+        }
       }
     }
 
@@ -280,20 +292,31 @@ export async function POST(request: NextRequest) {
       userProfile.organizationMembers &&
       userProfile.organizationMembers.length > 0
     ) {
-      // Se o usuário tem múltiplas organizações, pegar a primeira onde ele é admin
-      const adminMembership = userProfile.organizationMembers.find(
-        (member) => member.role === "admin"
+      // Verificar se é admin global primeiro
+      const globalAdminMembership = userProfile.organizationMembers.find(
+        (member) => member.role === "admin global"
       );
-
-      if (adminMembership) {
+      
+      if (globalAdminMembership) {
         role = "admin";
         redirectPath = "/application";
-        organization = adminMembership.organization;
+        organization = globalAdminMembership.organization;
       } else {
-        // Se não é admin, pegar a primeira organização onde é member
-        const memberMembership = userProfile.organizationMembers[0];
-        role = memberMembership.role;
-        organization = memberMembership.organization;
+        // Se o usuário tem múltiplas organizações, pegar a primeira onde ele é admin
+        const adminMembership = userProfile.organizationMembers.find(
+          (member) => member.role === "admin"
+        );
+
+        if (adminMembership) {
+          role = "admin";
+          redirectPath = "/application";
+          organization = adminMembership.organization;
+        } else {
+          // Se não é admin, pegar a primeira organização onde é member
+          const memberMembership = userProfile.organizationMembers[0];
+          role = memberMembership.role;
+          organization = memberMembership.organization;
+        }
       }
     }
 

@@ -55,11 +55,13 @@ export function useHybridInventoryItem({
       if (!allowOfflineAccess) return;
 
       try {
-        const localDataInfo = await hasIndexedDBData();
-        setHasLocalData(localDataInfo.hasData);
+        const localDataInfo = await hasIndexedDBData(commissionId);
+        setHasLocalData(
+          localDataInfo.hasData && localDataInfo.isCorrectCommission
+        );
 
         console.log(
-          `📊 Dados locais disponíveis: ${localDataInfo.hasData}, ${localDataInfo.itemCount} itens`
+          `📊 Dados locais disponíveis: ${localDataInfo.hasData}, ${localDataInfo.itemCount} itens, comissão correta: ${localDataInfo.isCorrectCommission}`
         );
       } catch (error) {
         console.error("Erro ao verificar dados locais:", error);
@@ -68,7 +70,7 @@ export function useHybridInventoryItem({
     };
 
     checkLocalData();
-  }, [allowOfflineAccess]);
+  }, [allowOfflineAccess, commissionId]);
 
   // Buscar dados offline quando necessário
   useEffect(() => {
@@ -93,11 +95,15 @@ export function useHybridInventoryItem({
 
         try {
           // Primeiro, tentar buscar por ID
-          let localItem = await findItemInIndexedDB(itemId, "id");
+          let localItem = await findItemInIndexedDB(itemId, "id", commissionId);
 
           // Se não encontrar por ID, tentar por número
           if (!localItem) {
-            localItem = await findItemInIndexedDB(itemId, "number");
+            localItem = await findItemInIndexedDB(
+              itemId,
+              "number",
+              commissionId
+            );
           }
 
           if (localItem && commissionId && campusId) {
