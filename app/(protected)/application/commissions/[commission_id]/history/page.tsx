@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useCommissionHistoryData } from "@/hooks/queries/use-page-data";
-import { useUserPermissions } from "@/hooks/use-user-permissions";
+import { useUserPermissions } from "@/hooks/use-user-permissions-rq";
 import {
   Calendar,
   Edit,

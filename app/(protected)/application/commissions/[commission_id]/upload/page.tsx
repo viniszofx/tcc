@@ -16,7 +16,7 @@ import { useProcessInventoryUpload } from "@/hooks/mutations/use-mutations";
 import { useCommissionDetailData } from "@/hooks/queries/use-page-data";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
 import { useInventorySync } from "@/hooks/use-inventory-sync";
-import { useUserPermissions } from "@/hooks/use-user-permissions";
+import { useUserPermissions } from "@/hooks/use-user-permissions-rq";
 import type { CommissionWithRelations } from "@/interface";
 import { uploadFileIntelligent } from "@/utils/file-upload";
 import {

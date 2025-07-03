@@ -17,7 +17,7 @@ import {
 } from "@/hooks/mutations/use-mutations";
 import { useCommissionMembersData } from "@/hooks/queries/use-page-data";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
-import { useUserPermissions } from "@/hooks/use-user-permissions";
+import { useUserPermissions } from "@/hooks/use-user-permissions-rq";
 import type { UserProfile } from "@/interface";
 import { Crown, Plus, User, Users } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";

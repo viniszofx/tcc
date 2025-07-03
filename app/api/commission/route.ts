@@ -3,12 +3,17 @@ import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {
+    console.log("🔍 GET /api/commission - Buscando comissões");
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     const campusId = searchParams.get("campusId");
     const year = searchParams.get("year");
 
+    console.log("📋 Parâmetros de busca:", { id, campusId, year });
+
     if (id) {
+      console.log("🔍 Buscando comissão específica:", id);
       const commission = await prisma.commission.findUnique({
         where: { id },
         include: {
@@ -22,11 +27,14 @@ export async function GET(request: Request) {
       });
 
       if (!commission) {
+        console.log("❌ Comissão não encontrada:", id);
         return NextResponse.json(
           { error: "Comissão não encontrada" },
           { status: 404 }
         );
       }
+
+      console.log("✅ Comissão encontrada:", commission.name);
       return NextResponse.json(commission);
     }
 
@@ -35,16 +43,24 @@ export async function GET(request: Request) {
 
     if (campusId) {
       where.campusId = campusId;
+      console.log("🏫 Filtrando por campus:", campusId);
     }
 
     if (year) {
       where.year = parseInt(year);
+      console.log("📅 Filtrando por ano:", year);
     }
+
+    console.log("🔍 Buscando todas as comissões com filtros:", where);
 
     const commissions = await prisma.commission.findMany({
       where,
       include: {
-        campus: true,
+        campus: {
+          include: {
+            organization: true,
+          },
+        },
         members: {
           include: {
             user: true,
@@ -56,8 +72,22 @@ export async function GET(request: Request) {
       },
     });
 
+    console.log("✅ Comissões encontradas:", commissions.length);
+    console.log(
+      "📋 Lista de comissões:",
+      commissions.map((c) => ({
+        id: c.id,
+        name: c.name,
+        campusId: c.campusId,
+        campusName: c.campus?.name,
+        organizationId: c.campus?.organizationId,
+        organizationName: c.campus?.organization?.name,
+      }))
+    );
+
     return NextResponse.json(commissions);
   } catch (error) {
+    console.error("❌ Erro ao buscar comissões:", error);
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 }
@@ -112,8 +142,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json(newCommission, { status: 201 });
   } catch (error) {
+    console.error("Erro ao criar comissão:", error);
     return NextResponse.json(
-      { error: "Erro interno do servidor" },
+      {
+        error: "Erro interno do servidor",
+        details: error instanceof Error ? error.message : "Erro desconhecido",
+      },
       { status: 500 }
     );
   }

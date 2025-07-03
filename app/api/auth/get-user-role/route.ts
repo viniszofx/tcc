@@ -86,6 +86,11 @@ export async function GET(request: NextRequest) {
             organization: true,
           },
         },
+        campusMembers: {
+          include: {
+            campus: true,
+          },
+        },
         commissionMembers: {
           include: {
             commission: {
@@ -120,7 +125,7 @@ export async function GET(request: NextRequest) {
       const globalAdminMembership = userProfile.organizationMembers.find(
         (member) => member.role === "admin global"
       );
-      
+
       if (globalAdminMembership) {
         role = "admin";
         redirectPath = "/application";
@@ -169,15 +174,22 @@ export async function GET(request: NextRequest) {
       isPresident,
       organization,
       redirectPath,
-      organizationMembers: userProfile.organizationMembers?.map((om) => ({
-        organizationId: om.organizationId,
-        role: om.role,
-        organization: {
-          id: om.organization.id,
-          name: om.organization.name,
-          shortName: om.organization.shortName,
-        },
-      })) || [],
+      organizationMembers:
+        userProfile.organizationMembers?.map((om) => ({
+          organizationId: om.organizationId,
+          role: om.role,
+          organization: {
+            id: om.organization.id,
+            name: om.organization.name,
+            shortName: om.organization.shortName,
+          },
+        })) || [],
+      campuses:
+        userProfile.campusMembers?.map((cm) => ({
+          id: cm.campus.id,
+          name: cm.campus.name,
+          code: cm.campus.code,
+        })) || [],
       commissions:
         userProfile.commissionMembers?.map((cm) => ({
           id: cm.commission.id,
@@ -305,7 +317,7 @@ export async function POST(request: NextRequest) {
       const globalAdminMembership = userProfile.organizationMembers.find(
         (member) => member.role === "admin global"
       );
-      
+
       if (globalAdminMembership) {
         role = "admin";
         redirectPath = "/application";
@@ -337,15 +349,16 @@ export async function POST(request: NextRequest) {
       role,
       organization,
       redirectPath,
-      organizationMembers: userProfile.organizationMembers?.map((om) => ({
-        organizationId: om.organizationId,
-        role: om.role,
-        organization: {
-          id: om.organization.id,
-          name: om.organization.name,
-          shortName: om.organization.shortName,
-        },
-      })) || [],
+      organizationMembers:
+        userProfile.organizationMembers?.map((om) => ({
+          organizationId: om.organizationId,
+          role: om.role,
+          organization: {
+            id: om.organization.id,
+            name: om.organization.name,
+            shortName: om.organization.shortName,
+          },
+        })) || [],
       commissions:
         userProfile.commissionMembers?.map((cm) => ({
           id: cm.commission.id,

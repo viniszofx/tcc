@@ -13,7 +13,7 @@ import {
 import { useDeleteCommission } from "@/hooks/mutations/use-mutations";
 import { useCommissionDetailData } from "@/hooks/queries/use-page-data";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
-import { useUserPermissions } from "@/hooks/use-user-permissions";
+import { useUserPermissions } from "@/hooks/use-user-permissions-rq";
 import {
   Building2,
   CalendarDays,
@@ -92,24 +92,27 @@ export default function CommissionDetailPage() {
   // Verificar se o usuário pode gerenciar a comissão
   // - Administrador global ("admin global" em qualquer organização)
   // - Administrador da organização que contém a comissão
+  // - Administrador direto (role "admin")
   // - Presidente da comissão
   const isGlobalAdmin = user?.organizationMembers?.some(
     (member: any) => member.role === "admin global"
   ) || false;
   
-  const isAdminOfOrganization = user?.organizationMembers?.some(
-    (member: any) => 
-      member.role === "admin" && 
-      member.organizationId === commission?.campus?.organizationId
+  const isOrgAdmin = user?.organizationMembers?.some(
+    (member: any) => member.role === "admin"
+  ) || false;
+  
+  // Backward compatibility - verificar role antigo diretamente
+  const isAdmin = user?.role === "admin" || isGlobalAdmin || isOrgAdmin;
+  
+  const isPresidentOfCommission = commission?.members?.some(
+    (member: any) =>
+      member.userId === user?.id && member.roleInCommission === "Presidente"
   ) || false;
   
   const canManageCommission =
-    isGlobalAdmin || // Administrador global
-    isAdminOfOrganization || // Admin da organização
-    commission?.members?.some(
-      (member: any) =>
-        member.userId === user?.id && member.roleInCommission === "Presidente"
-    ); // Presidente da comissão
+    isAdmin || // Qualquer tipo de admin
+    isPresidentOfCommission; // Presidente da comissão
 
   if (loading || permissionsLoading || commissionLoading) {
     return <LoadingScreen />;

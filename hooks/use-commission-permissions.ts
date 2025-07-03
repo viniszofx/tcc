@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useUserPermissions } from "./use-user-permissions";
+import { useUserPermissions } from "./use-user-permissions-rq";
 
 interface CommissionAccessPermissions {
   canAccessCommission: boolean;
@@ -52,6 +52,9 @@ export function useCommissionPermissions(commissionId: string) {
           (member: any) => member.role === "admin global"
         ) || false;
         
+        // Verificar se é admin direto (user.role === "admin")
+        const isDirectAdmin = user.role === "admin";
+        
         // Converter IDs para string para comparação consistente
         const commissionIdStr = String(commissionId);
 
@@ -77,9 +80,11 @@ export function useCommissionPermissions(commissionId: string) {
 
         console.log("DEBUG - Verificação de permissões:", {
           commissionId: commissionIdStr,
+          userRole: user.role,
           userCommissions: user.commissions,
           userOrganizationMembers: user.organizationMembers,
           isGlobalAdmin,
+          isDirectAdmin,
           isPresidentOfThisCommission,
           isMemberOfThisCommission,
           isAdminOfOrganization,
@@ -87,17 +92,20 @@ export function useCommissionPermissions(commissionId: string) {
         });
 
         // Regras de acesso:
-        // 1. Administrador global pode tudo
-        // 2. Administrador da organização pode acessar comissões dos campus da sua organização
-        // 3. Presidente da comissão pode gerenciar a comissão
-        // 4. Membro da comissão pode acessar mas não gerenciar
+        // 1. Administrador direto (user.role === "admin") pode tudo
+        // 2. Administrador global pode tudo
+        // 3. Administrador da organização pode acessar comissões dos campus da sua organização
+        // 4. Presidente da comissão pode gerenciar a comissão
+        // 5. Membro da comissão pode acessar mas não gerenciar
         const canAccess =
+          isDirectAdmin ||
           isGlobalAdmin ||
           isAdminOfOrganization ||
           isPresidentOfThisCommission ||
           isMemberOfThisCommission;
 
         const canManage =
+          isDirectAdmin ||
           isGlobalAdmin ||
           isAdminOfOrganization ||
           isPresidentOfThisCommission;

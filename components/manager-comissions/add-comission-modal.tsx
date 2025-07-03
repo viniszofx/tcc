@@ -96,6 +96,10 @@ export function AddComissionModal({
       newErrors.ano = "Ano deve estar entre 2000 e 2100";
     }
 
+    if (!formData.tipo) {
+      newErrors.tipo = "Tipo de comissão é obrigatório";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -104,13 +108,15 @@ export function AddComissionModal({
     e.preventDefault();
 
     if (validateForm()) {
-      onAddComission({
+      const submissionData = {
         name: formData.nome,
         description: formData.descricao,
         type: formData.tipo,
         campusId: formData.campusId,
         year: formData.ano,
-      });
+      };
+
+      onAddComission(submissionData);
 
       setFormData({
         nome: "",
@@ -186,22 +192,39 @@ export function AddComissionModal({
                 onValueChange={handleCampusChange}
               >
                 <SelectTrigger className="border-[var(--border-input)]">
-                  <SelectValue placeholder="Selecione o campus" />
+                  <SelectValue
+                    placeholder={
+                      campuses.length === 0
+                        ? "Nenhum campus disponível"
+                        : "Selecione o campus"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)] border-[var(--border-input)]">
-                  {campuses.map((campus) => (
-                    <SelectItem
-                      key={campus.id}
-                      value={campus.id}
-                      className="hover:bg-[var(--hover-color)]"
-                    >
-                      {campus.name} ({campus.code})
+                  {campuses.length === 0 ? (
+                    <SelectItem value="" disabled className="text-gray-500">
+                      Nenhum campus encontrado
                     </SelectItem>
-                  ))}
+                  ) : (
+                    campuses.map((campus) => (
+                      <SelectItem
+                        key={campus.id}
+                        value={campus.id}
+                        className="hover:bg-[var(--hover-color)]"
+                      >
+                        {campus.name} ({campus.code})
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               {errors.campusId && (
                 <p className="text-xs text-red-500">{errors.campusId}</p>
+              )}
+              {campuses.length === 0 && (
+                <p className="text-xs text-yellow-600">
+                  Nenhum campus disponível. Verifique se há campus cadastrados.
+                </p>
               )}
             </div>
 

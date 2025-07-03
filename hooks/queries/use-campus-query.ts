@@ -9,10 +9,13 @@ export function useCampuses() {
     queryKey: ["campuses"],
     queryFn: async (): Promise<Campus[]> => {
       const response = await fetch("/api/campus");
+
       if (!response.ok) {
         throw new Error("Failed to fetch campuses");
       }
-      return response.json();
+
+      const data = await response.json();
+      return data;
     },
   });
 }

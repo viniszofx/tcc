@@ -15,7 +15,7 @@ import {
   useCommissions,
   useCreateCommission,
 } from "@/hooks/queries/use-commissions-query";
-import { useUserPermissions } from "@/hooks/use-user-permissions";
+import { useUserPermissions } from "@/hooks/use-user-permissions-rq";
 import type { CommissionWithRelations } from "@/interface";
 import { Plus } from "lucide-react";
 import Link from "next/link";
@@ -43,7 +43,11 @@ export default function CommissionsPage() {
     error: commissionsError,
   } = useCommissions();
 
-  const { data: campuses = [], isLoading: campusesLoading } = useCampuses();
+  const {
+    data: campuses = [],
+    isLoading: campusesLoading,
+    error: campusesError,
+  } = useCampuses();
 
   // Mutations
   const createCommissionMutation = useCreateCommission();
@@ -53,33 +57,44 @@ export default function CommissionsPage() {
 
   // Filtrar comissões baseado no papel do usuário
   const commissions = useMemo(() => {
-    if (!user) return [];
+    if (!user) {
+      return [];
+    }
 
     // Verificar se é administrador global
-    const isGlobalAdmin = user.organizationMembers?.some(
-      (member: any) => member.role === "admin global"
-    ) || false;
+    const isGlobalAdmin =
+      user.organizationMembers?.some(
+        (member: any) => member.role === "admin global"
+      ) || false;
 
-    if (isGlobalAdmin) {
-      // Administradores globais veem todas as comissões
+    // Verificar se é admin de organização
+    const isOrgAdmin =
+      user.organizationMembers?.some(
+        (member: any) => member.role === "admin"
+      ) || false;
+
+    // Backward compatibility - verificar role antigo diretamente
+    const isAdmin = user.role === "admin" || isGlobalAdmin || isOrgAdmin;
+
+    // Admin global, admin de organização ou admin antigo podem ver todas as comissões
+    if (isAdmin) {
       return allCommissions;
     }
 
-    // Para outros usuários, filtrar comissões baseado nas permissões
+    // Para membros comuns, mostrar apenas comissões onde são membros ou dos campus onde estão associados
     return allCommissions.filter((commission) => {
-      // Verificar se é membro da comissão
-      const isMemberOfCommission = commission.members?.some(
-        (member) => member.userId === user.id
-      );
+      // Verificar se é membro direto da comissão
+      const isMemberOfCommission =
+        commission.members?.some((member) => member.userId === user.id) ||
+        false;
 
-      // Verificar se é admin da organização que contém a comissão OU admin global
-      const isAdminOfOrganization = user.organizationMembers?.some(
-        (member: any) => 
-          (member.role === "admin" && member.organizationId === commission.campus?.organizationId) ||
-          member.role === "admin global"
-      );
+      // Verificar se é membro do campus onde a comissão está localizada
+      const isMemberOfCampus =
+        user.campuses?.some(
+          (campus: any) => campus.id === commission.campusId
+        ) || false;
 
-      return isMemberOfCommission || isAdminOfOrganization;
+      return isMemberOfCommission || isMemberOfCampus;
     });
   }, [allCommissions, user]);
 
@@ -104,13 +119,22 @@ export default function CommissionsPage() {
     return <LoadingScreen />;
   }
 
-  if (permissionsError || commissionsError) {
+  if (permissionsError || commissionsError || campusesError) {
     return (
       <Card>
         <CardContent className="p-6">
           <p className="text-red-500">
-            Erro: {permissionsError || (commissionsError as Error)?.message}
+            Erro:{" "}
+            {permissionsError ||
+              (commissionsError as Error)?.message ||
+              (campusesError as Error)?.message}
           </p>
+          {campusesError && (
+            <p className="text-yellow-600 mt-2">
+              Problema ao carregar campus. Isso pode afetar a criação de
+              comissões.
+            </p>
+          )}
         </CardContent>
       </Card>
     );
@@ -122,7 +146,14 @@ export default function CommissionsPage() {
       setIsAddModalOpen(false);
     } catch (error) {
       console.error("Erro ao criar comissão:", error);
-      alert("Erro ao criar comissão");
+
+      // Exibir erro mais detalhado para o usuário
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Erro desconhecido ao criar comissão";
+
+      alert(`Erro ao criar comissão: ${errorMessage}`);
     }
   };
 
@@ -130,16 +161,22 @@ export default function CommissionsPage() {
     return commission.campus?.name || "Campus não encontrado";
   };
 
-  const isGlobalAdmin = user?.organizationMembers?.some(
-    (member: any) => member.role === "admin global"
-  ) || false;
+  const isGlobalAdmin =
+    user?.organizationMembers?.some(
+      (member: any) => member.role === "admin global"
+    ) || false;
 
-  const pageTitle =
-    user?.role === "admin" || isGlobalAdmin
-      ? "Todas as Comissões"
-      : canManageCommissions
-      ? "Minhas Comissões (Presidente)"
-      : "Minhas Comissões";
+  const isOrgAdmin =
+    user?.organizationMembers?.some((member: any) => member.role === "admin") ||
+    false;
+
+  const isAdmin = user?.role === "admin" || isGlobalAdmin || isOrgAdmin;
+
+  const pageTitle = isAdmin
+    ? "Todas as Comissões"
+    : canManageCommissions
+    ? "Minhas Comissões (Presidente)"
+    : "Minhas Comissões";
 
   return (
     <Card className="w-full bg-[var(--bg-simple)] shadow-lg transition-all duration-300">
@@ -149,14 +186,14 @@ export default function CommissionsPage() {
             <div className="text-red-800">
               <p className="font-medium">Acesso Negado</p>
               <p className="text-sm">
-                Você não tem permissão para acessar a comissão solicitada. 
+                Você não tem permissão para acessar a comissão solicitada.
                 Abaixo estão listadas apenas as comissões que você tem acesso.
               </p>
             </div>
           </div>
         </div>
       )}
-      
+
       <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6">
         <div>
           <CardTitle className="text-2xl font-bold text-[var(--font-color)] md:text-3xl">
@@ -165,9 +202,7 @@ export default function CommissionsPage() {
           <CardDescription className="text-[var(--font-color)] opacity-70">
             {commissions.length > 0
               ? `Lista de comissões ${
-                  user?.role === "admin" || isGlobalAdmin
-                    ? "do sistema"
-                    : `do ${getCampusName(commissions[0])}`
+                  isAdmin ? "do sistema" : `do ${getCampusName(commissions[0])}`
                 }`
               : "Nenhuma comissão encontrada"}
           </CardDescription>
@@ -178,17 +213,65 @@ export default function CommissionsPage() {
               onClick={() => setIsAddModalOpen(true)}
               className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all w-full sm:w-auto"
               disabled={
-                campuses.length === 0 || createCommissionMutation.isPending
+                campuses.length === 0 ||
+                createCommissionMutation.isPending ||
+                campusesLoading
               }
             >
               <Plus className="mr-2 h-4 w-4" />
-              Adicionar Comissão
+              {campusesLoading ? "Carregando..." : "Adicionar Comissão"}
             </Button>
           )}
         </div>
       </CardHeader>
 
       <CardContent className="flex flex-col gap-6">
+        {/* Debug temporário */}
+        {process.env.NODE_ENV === "development" && (
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="p-4 text-sm">
+              <div>
+                <strong>User ID:</strong> {user?.id}
+              </div>
+              <div>
+                <strong>User Email:</strong> {user?.email}
+              </div>
+              <div>
+                <strong>User Role:</strong> {user?.role}
+              </div>
+              <div>
+                <strong>Organization Members:</strong>{" "}
+                {JSON.stringify(user?.organizationMembers)}
+              </div>
+              <div>
+                <strong>Is Global Admin:</strong> {
+                  user?.organizationMembers?.some((member: any) => member.role === "admin global") ? "SIM" : "NÃO"
+                }
+              </div>
+              <div>
+                <strong>Is Org Admin:</strong> {
+                  user?.organizationMembers?.some((member: any) => member.role === "admin") ? "SIM" : "NÃO"
+                }
+              </div>
+              <div>
+                <strong>Is Admin (combined):</strong> {isAdmin ? "SIM" : "NÃO"}
+              </div>
+              <div>
+                <strong>Total Comissões:</strong> {allCommissions.length}
+              </div>
+              <div>
+                <strong>Comissões Filtradas:</strong> {commissions.length}
+              </div>
+              <div>
+                <strong>User Campuses:</strong> {JSON.stringify(user?.campuses)}
+              </div>
+              <div>
+                <strong>User Commissions:</strong> {JSON.stringify(user?.commissions)}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {commissions.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2">
             {commissions.map((commission) => (
@@ -239,7 +322,7 @@ export default function CommissionsPage() {
         ) : (
           <div className="text-center py-12">
             <p className="text-[var(--font-color)] opacity-70 text-lg">
-              {user?.role === "admin" || isGlobalAdmin
+              {isAdmin
                 ? "Nenhuma comissão cadastrada no sistema ainda."
                 : "Você não faz parte de nenhuma comissão ainda."}
             </p>

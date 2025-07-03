@@ -106,12 +106,13 @@ export function useCreateCommission() {
         body: JSON.stringify(commissionData),
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Erro ao criar comissão");
+        throw new Error(responseData.error || "Erro ao criar comissão");
       }
 
-      return response.json();
+      return responseData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: commissionKeys.lists() });

@@ -23,7 +23,7 @@ import {
 } from "@/hooks/mutations/use-mutations";
 import { useCommissionMemberDetailData } from "@/hooks/queries/use-page-data";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
-import { useUserPermissions } from "@/hooks/use-user-permissions";
+import { useUserPermissions } from "@/hooks/use-user-permissions-rq";
 import {
   ArrowLeft,
   Calendar,

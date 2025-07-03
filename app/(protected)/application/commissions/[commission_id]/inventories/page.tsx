@@ -10,7 +10,7 @@ import { useInventoryItems } from "@/hooks/queries/use-inventory-query";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
 import { useInventoryWithSync } from "@/hooks/use-inventory-query";
 import { useInventorySync } from "@/hooks/use-inventory-sync";
-import { useUserPermissions } from "@/hooks/use-user-permissions";
+import { useUserPermissions } from "@/hooks/use-user-permissions-rq";
 import { AlertCircle, Download, Wifi, WifiOff } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
