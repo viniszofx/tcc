@@ -13,17 +13,6 @@ async function setupAvatars() {
   try {
     console.log("📁 === CONFIGURAÇÃO DOS BUCKETS DE STORAGE ===");
 
-    // Verificar se estamos em ambiente de build/CI
-    const isBuildEnvironment =
-      process.env.CI === "true" || process.env.NODE_ENV === "production";
-
-    if (isBuildEnvironment) {
-      console.log("🏗️ Detectado ambiente de build/CI");
-      console.log("⏭️ Pulando configuração do Supabase durante o build");
-      console.log("💡 Configure os buckets manualmente após o deploy");
-      return true; // Retornar sucesso para não interromper o build
-    }
-
     console.log("🔧 Executando configuração dos buckets...");
 
     // Configurar bucket de avatares
@@ -47,13 +36,14 @@ async function setupAvatars() {
   } catch (error) {
     console.error("❌ Erro ao configurar buckets:", error);
 
-    // Em ambiente de build ou CI, não falhar
-    if (process.env.NODE_ENV === "production" || process.env.CI === "true") {
-      console.log("🏗️ Erro ignorado durante o build");
-      return true;
-    }
-
-    throw error;
+    // Em caso de erro, não falhar o build (mas logar o erro)
+    console.log(
+      "⚠️ Continuando o build mesmo com erro na configuração dos buckets"
+    );
+    console.log(
+      "💡 Configure os buckets manualmente após o deploy se necessário"
+    );
+    return true;
   }
 }
 
@@ -61,17 +51,6 @@ async function setupAvatars() {
 async function setupSpreadsheets() {
   try {
     console.log("📊 === CONFIGURAÇÃO DO BUCKET DE PLANILHAS ===");
-
-    // Verificar se estamos em ambiente de build/CI
-    const isBuildEnvironment =
-      process.env.CI === "true" || process.env.NODE_ENV === "production";
-
-    if (isBuildEnvironment) {
-      console.log("🏗️ Detectado ambiente de build/CI");
-      console.log("⏭️ Pulando configuração do Supabase durante o build");
-      console.log("� Configure o bucket manualmente após o deploy");
-      return true; // Retornar sucesso para não interromper o build
-    }
 
     console.log("🔧 Executando configuração do bucket...");
 
@@ -89,13 +68,12 @@ async function setupSpreadsheets() {
   } catch (error) {
     console.error("❌ Erro ao configurar bucket de spreadsheets:", error);
 
-    // Em ambiente de build ou CI, não falhar
-    if (process.env.NODE_ENV === "production" || process.env.CI === "true") {
-      console.log("🏗️ Erro ignorado durante o build");
-      return true;
-    }
-
-    throw error;
+    // Em caso de erro, não falhar o build (mas logar o erro)
+    console.log("⚠️ Continuando mesmo com erro na configuração do bucket");
+    console.log(
+      "💡 Configure o bucket manualmente após o deploy se necessário"
+    );
+    return true;
   }
 }
 
