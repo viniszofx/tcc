@@ -169,6 +169,15 @@ export async function GET(request: NextRequest) {
       isPresident,
       organization,
       redirectPath,
+      organizationMembers: userProfile.organizationMembers?.map((om) => ({
+        organizationId: om.organizationId,
+        role: om.role,
+        organization: {
+          id: om.organization.id,
+          name: om.organization.name,
+          shortName: om.organization.shortName,
+        },
+      })) || [],
       commissions:
         userProfile.commissionMembers?.map((cm) => ({
           id: cm.commission.id,
@@ -328,6 +337,15 @@ export async function POST(request: NextRequest) {
       role,
       organization,
       redirectPath,
+      organizationMembers: userProfile.organizationMembers?.map((om) => ({
+        organizationId: om.organizationId,
+        role: om.role,
+        organization: {
+          id: om.organization.id,
+          name: om.organization.name,
+          shortName: om.organization.shortName,
+        },
+      })) || [],
       commissions:
         userProfile.commissionMembers?.map((cm) => ({
           id: cm.commission.id,

@@ -116,9 +116,11 @@ export default function UsersPage() {
 
   // Verificar se o usuário atual é administrador global
   const isCurrentUserGlobalAdmin = useMemo(() => {
-    return user?.organizationMembers?.some(
+    const isGlobalAdmin = user?.organizationMembers?.some(
       (member: any) => member.role === "admin global"
     ) || false;
+    
+    return isGlobalAdmin;
   }, [user?.organizationMembers]);
 
   const handleAddUser = useCallback(async (
