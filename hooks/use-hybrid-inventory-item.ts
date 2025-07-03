@@ -1,11 +1,11 @@
 "use client";
 
-import type { InventoryItemWithRelations } from "@/interface";
 import { useInventoryItemDetailData } from "@/hooks/queries/use-page-data";
-import { 
-  convertIndexedDBItemToInventoryItem, 
-  findItemInIndexedDB, 
-  hasIndexedDBData 
+import type { InventoryItemWithRelations } from "@/interface";
+import {
+  convertIndexedDBItemToInventoryItem,
+  findItemInIndexedDB,
+  hasIndexedDBData,
 } from "@/utils/indexeddb-helpers";
 import { useEffect, useState } from "react";
 
@@ -35,7 +35,8 @@ export function useHybridInventoryItem({
   campusId,
   allowOfflineAccess = true,
 }: UseHybridInventoryItemOptions): UseHybridInventoryItemReturn {
-  const [offlineItem, setOfflineItem] = useState<InventoryItemWithRelations | null>(null);
+  const [offlineItem, setOfflineItem] =
+    useState<InventoryItemWithRelations | null>(null);
   const [isOfflineMode, setIsOfflineMode] = useState(false);
   const [hasLocalData, setHasLocalData] = useState(false);
   const [isLoadingOffline, setIsLoadingOffline] = useState(false);
@@ -52,12 +53,14 @@ export function useHybridInventoryItem({
   useEffect(() => {
     const checkLocalData = async () => {
       if (!allowOfflineAccess) return;
-      
+
       try {
         const localDataInfo = await hasIndexedDBData();
         setHasLocalData(localDataInfo.hasData);
-        
-        console.log(`📊 Dados locais disponíveis: ${localDataInfo.hasData}, ${localDataInfo.itemCount} itens`);
+
+        console.log(
+          `📊 Dados locais disponíveis: ${localDataInfo.hasData}, ${localDataInfo.itemCount} itens`
+        );
       } catch (error) {
         console.error("Erro ao verificar dados locais:", error);
         setHasLocalData(false);
@@ -70,21 +73,28 @@ export function useHybridInventoryItem({
   // Buscar dados offline quando necessário
   useEffect(() => {
     const loadOfflineData = async () => {
-      if (!allowOfflineAccess || !hasLocalData || serverItem || isLoadingServer) {
+      if (
+        !allowOfflineAccess ||
+        !hasLocalData ||
+        serverItem ||
+        isLoadingServer
+      ) {
         return;
       }
 
       // Se há erro do servidor e temos dados locais, tentar buscar offline
       if (serverError && hasLocalData) {
-        console.log(`🔄 Erro do servidor detectado, tentando buscar item ${itemId} no IndexedDB...`);
-        
+        console.log(
+          `🔄 Erro do servidor detectado, tentando buscar item ${itemId} no IndexedDB...`
+        );
+
         setIsLoadingOffline(true);
         setIsOfflineMode(true);
 
         try {
           // Primeiro, tentar buscar por ID
           let localItem = await findItemInIndexedDB(itemId, "id");
-          
+
           // Se não encontrar por ID, tentar por número
           if (!localItem) {
             localItem = await findItemInIndexedDB(itemId, "number");
@@ -96,9 +106,12 @@ export function useHybridInventoryItem({
               commissionId,
               campusId
             );
-            
+
             setOfflineItem(convertedItem);
-            console.log(`✅ Item encontrado no IndexedDB e convertido:`, convertedItem);
+            console.log(
+              `✅ Item encontrado no IndexedDB e convertido:`,
+              convertedItem
+            );
           } else {
             console.log(`❌ Item ${itemId} não encontrado no IndexedDB`);
             setOfflineItem(null);
@@ -113,7 +126,16 @@ export function useHybridInventoryItem({
     };
 
     loadOfflineData();
-  }, [itemId, commissionId, campusId, serverError, hasLocalData, serverItem, isLoadingServer, allowOfflineAccess]);
+  }, [
+    itemId,
+    commissionId,
+    campusId,
+    serverError,
+    hasLocalData,
+    serverItem,
+    isLoadingServer,
+    allowOfflineAccess,
+  ]);
 
   // Reset offline mode when server data becomes available
   useEffect(() => {
@@ -132,9 +154,12 @@ export function useHybridInventoryItem({
   // Retornar dados do servidor se disponível, senão dados offline
   const finalItem = serverItem || offlineItem;
   const finalIsLoading = isLoadingServer || isLoadingOffline;
-  const finalError = !finalItem && !finalIsLoading ? 
-    (typeof serverError === 'string' ? serverError : 
-     serverError?.message || "Item não encontrado") : null;
+  const finalError =
+    !finalItem && !finalIsLoading
+      ? typeof serverError === "string"
+        ? serverError
+        : serverError?.message || "Item não encontrado"
+      : null;
 
   return {
     item: finalItem,

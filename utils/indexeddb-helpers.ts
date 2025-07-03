@@ -11,35 +11,35 @@ export async function findItemInIndexedDB(
 ): Promise<BemCopia | null> {
   try {
     const { data: localData } = await getProcessedData();
-    
+
     if (!localData || localData.length === 0) {
       console.log("Nenhum dado local encontrado no IndexedDB");
       return null;
     }
 
-    console.log(`🔍 Buscando item com ${searchField}: ${searchValue} no IndexedDB`);
+    console.log(
+      `🔍 Buscando item com ${searchField}: ${searchValue} no IndexedDB`
+    );
     console.log(`📊 Total de itens no IndexedDB: ${localData.length}`);
 
     // Buscar por número (mais comum)
     if (searchField === "number") {
-      const item = localData.find(item => 
-        item.NUMERO === searchValue || 
-        item.bem_id === searchValue
+      const item = localData.find(
+        (item) => item.NUMERO === searchValue || item.bem_id === searchValue
       );
-      
+
       if (item) {
         console.log(`✅ Item encontrado no IndexedDB:`, item);
         return item;
       }
     }
-    
+
     // Buscar por ID
     if (searchField === "id") {
-      const item = localData.find(item => 
-        item.bem_id === searchValue ||
-        item.id === searchValue
+      const item = localData.find(
+        (item) => item.bem_id === searchValue || item.id === searchValue
       );
-      
+
       if (item) {
         console.log(`✅ Item encontrado no IndexedDB:`, item);
         return item;
@@ -72,11 +72,15 @@ export function convertIndexedDBItemToInventoryItem(
     currentResponsibility: item.RESPONSABILIDADE_ATUAL || undefined,
     conservationState: item.ESTADO_DE_CONSERVACAO || "bom",
     location: item.SALA || undefined,
-    tags: item.ROTULOS ? 
-      (typeof item.ROTULOS === 'string' ? 
-        item.ROTULOS.split(';').map((tag: string) => tag.trim()).filter(Boolean) : 
-        Array.isArray(item.ROTULOS) ? item.ROTULOS : []) : 
-      [],
+    tags: item.ROTULOS
+      ? typeof item.ROTULOS === "string"
+        ? item.ROTULOS.split(";")
+            .map((tag: string) => tag.trim())
+            .filter(Boolean)
+        : Array.isArray(item.ROTULOS)
+        ? item.ROTULOS
+        : []
+      : [],
     ed: item.ED || undefined,
     sector: item.SETOR_DO_RESPONSAVEL || undefined,
     updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
@@ -112,7 +116,7 @@ export async function findItemsInIndexedDB(filters: {
 }): Promise<BemCopia[]> {
   try {
     const { data: localData } = await getProcessedData();
-    
+
     if (!localData || localData.length === 0) {
       return [];
     }
@@ -120,26 +124,32 @@ export async function findItemsInIndexedDB(filters: {
     let filteredItems = localData;
 
     if (filters.sector) {
-      filteredItems = filteredItems.filter(item => 
-        (item.SETOR_DO_RESPONSAVEL || "").toLowerCase().includes(filters.sector!.toLowerCase())
+      filteredItems = filteredItems.filter((item) =>
+        (item.SETOR_DO_RESPONSAVEL || "")
+          .toLowerCase()
+          .includes(filters.sector!.toLowerCase())
       );
     }
 
     if (filters.ed) {
-      filteredItems = filteredItems.filter(item => 
+      filteredItems = filteredItems.filter((item) =>
         (item.ED || "").toLowerCase().includes(filters.ed!.toLowerCase())
       );
     }
 
     if (filters.location) {
-      filteredItems = filteredItems.filter(item => 
-        (item.SALA || "").toLowerCase().includes(filters.location!.toLowerCase())
+      filteredItems = filteredItems.filter((item) =>
+        (item.SALA || "")
+          .toLowerCase()
+          .includes(filters.location!.toLowerCase())
       );
     }
 
     if (filters.responsability) {
-      filteredItems = filteredItems.filter(item => 
-        (item.RESPONSABILIDADE_ATUAL || "").toLowerCase().includes(filters.responsability!.toLowerCase())
+      filteredItems = filteredItems.filter((item) =>
+        (item.RESPONSABILIDADE_ATUAL || "")
+          .toLowerCase()
+          .includes(filters.responsability!.toLowerCase())
       );
     }
 
@@ -160,7 +170,7 @@ export async function hasIndexedDBData(): Promise<{
 }> {
   try {
     const { data: localData, metadata } = await getProcessedData();
-    
+
     return {
       hasData: !!(localData && localData.length > 0),
       itemCount: localData?.length || 0,

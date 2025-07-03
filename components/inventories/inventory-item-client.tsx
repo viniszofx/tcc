@@ -11,8 +11,8 @@ import {
   useDeleteInventoryItem,
   useUpdateInventoryItem,
 } from "@/hooks/mutations/use-mutations";
-import { useHybridInventoryItem } from "@/hooks/use-hybrid-inventory-item";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
+import { useHybridInventoryItem } from "@/hooks/use-hybrid-inventory-item";
 import { useSmartNavigation } from "@/hooks/use-smart-navigation";
 import type { InventoryItemWithRelations } from "@/interface";
 import { formatDate } from "@/utils/data-utils";
@@ -192,7 +192,8 @@ export default function InventoryItemClient({
                 <span className="text-sm font-medium">Modo Offline</span>
               </div>
               <p className="text-xs text-amber-700 mt-1">
-                Visualizando dados salvos localmente. Algumas funcionalidades podem estar limitadas.
+                Visualizando dados salvos localmente. Algumas funcionalidades
+                podem estar limitadas.
                 {hasLocalData && (
                   <Button
                     variant="link"
@@ -206,7 +207,7 @@ export default function InventoryItemClient({
               </p>
             </div>
           )}
-          
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2 justify-end sm:justify-normal">
               <Button
@@ -232,20 +233,26 @@ export default function InventoryItemClient({
           <CardTitle className="mt-4 text-lg font-bold text-[var(--font-color)] sm:text-xl md:text-2xl lg:text-3xl">
             <div className="flex items-center gap-2 flex-wrap">
               <span>{item.description}</span>
-              
+
               {/* Status do item */}
               <Badge className="bg-green-500 text-white text-xs sm:text-sm">
                 ATIVO
               </Badge>
-              
+
               {/* Indicador de status de conexão */}
               {isOfflineMode ? (
-                <Badge variant="outline" className="border-amber-500 text-amber-700 text-xs">
+                <Badge
+                  variant="outline"
+                  className="border-amber-500 text-amber-700 text-xs"
+                >
                   <WifiOff className="h-3 w-3 mr-1" />
                   Offline
                 </Badge>
               ) : (
-                <Badge variant="outline" className="border-green-500 text-green-700 text-xs">
+                <Badge
+                  variant="outline"
+                  className="border-green-500 text-green-700 text-xs"
+                >
                   <Wifi className="h-3 w-3 mr-1" />
                   Online
                 </Badge>

@@ -90,10 +90,11 @@ export async function POST(request: NextRequest) {
       }
 
       // Verificar permissões: Presidente da comissão OU Admin da organização
-      
+
       // 1. Verificar se é presidente da comissão
       const isCommissionPresident = commission.members.some(
-        (member) => member.userId === user.id && member.roleInCommission === "Presidente"
+        (member) =>
+          member.userId === user.id && member.roleInCommission === "Presidente"
       );
 
       // 2. Verificar se é administrador da organização
@@ -122,10 +123,11 @@ export async function POST(request: NextRequest) {
         );
         console.log(`   - É presidente da comissão: ${isCommissionPresident}`);
         console.log(`   - É admin da organização: ${!!isOrgAdmin}`);
-        
+
         return NextResponse.json(
-          { 
-            error: "Você não tem permissão para fazer upload nesta comissão. Apenas presidentes da comissão ou administradores da organização podem fazer upload." 
+          {
+            error:
+              "Você não tem permissão para fazer upload nesta comissão. Apenas presidentes da comissão ou administradores da organização podem fazer upload.",
           },
           { status: 403 }
         );
@@ -250,10 +252,11 @@ export async function POST(request: NextRequest) {
       }
 
       // Verificar permissões: Presidente da comissão OU Admin da organização
-      
+
       // 1. Verificar se é presidente da comissão
       const isCommissionPresident = commission.members.some(
-        (member) => member.userId === user.id && member.roleInCommission === "Presidente"
+        (member) =>
+          member.userId === user.id && member.roleInCommission === "Presidente"
       );
 
       // 2. Verificar se é administrador da organização
@@ -282,10 +285,11 @@ export async function POST(request: NextRequest) {
         );
         console.log(`   - É presidente da comissão: ${isCommissionPresident}`);
         console.log(`   - É admin da organização: ${!!isOrgAdmin}`);
-        
+
         return NextResponse.json(
-          { 
-            error: "Você não tem permissão para fazer upload nesta comissão. Apenas presidentes da comissão ou administradores da organização podem fazer upload." 
+          {
+            error:
+              "Você não tem permissão para fazer upload nesta comissão. Apenas presidentes da comissão ou administradores da organização podem fazer upload.",
           },
           { status: 403 }
         );
