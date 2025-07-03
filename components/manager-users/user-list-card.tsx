@@ -38,13 +38,19 @@ export function UserListCard({
   onDeleteUser,
   onRemoveFromCommission,
 }: UserListCardProps) {
-  const { canDeleteUsers, canRemoveFromCommissions, presidedCommissions } =
+  const { canDeleteUsers, canRemoveFromCommissions, presidedCommissions, canDeleteSpecificUser } =
     useUserPermissions();
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
 
   const handleDeleteClick = async (user: UserProfile) => {
     if (!onDeleteUser || !canDeleteUsers) return;
+
+    // Verificar se o usuário pode ser excluído
+    if (!canDeleteSpecificUser(user)) {
+      alert("Usuários admin global não podem ser excluídos.");
+      return;
+    }
 
     const confirmMessage = `Tem certeza que deseja EXCLUIR DEFINITIVAMENTE o usuário "${user.name}"?\n\nEsta ação irá remover:\n- O usuário do sistema\n- Todas suas associações com campus\n- Todas suas associações com comissões\n- Todas suas associações com organizações\n\nEsta ação não pode ser desfeita.`;
 
@@ -228,8 +234,8 @@ export function UserListCard({
                             )
                           )}
 
-                          {/* Excluir usuário (apenas admins) */}
-                          {canDeleteUsers && onDeleteUser && (
+                          {/* Excluir usuário (apenas admins e que não seja admin global) */}
+                          {canDeleteUsers && onDeleteUser && canDeleteSpecificUser(usuario) && (
                             <DropdownMenuItem
                               onClick={() => handleDeleteClick(usuario)}
                               className="text-red-600 hover:text-red-700"

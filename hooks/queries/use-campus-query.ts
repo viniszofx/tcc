@@ -110,7 +110,7 @@ export function useDeleteCampus() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/campus/${id}`, {
+      const response = await fetch(`/api/campus?id=${id}`, {
         method: "DELETE",
       });
 

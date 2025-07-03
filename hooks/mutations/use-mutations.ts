@@ -84,12 +84,11 @@ export function useDeleteOrganization() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch("/api/organization", {
+      const response = await fetch(`/api/organization?id=${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id }),
       });
 
       if (!response.ok) {

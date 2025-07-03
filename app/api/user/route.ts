@@ -598,6 +598,18 @@ export async function DELETE(request: Request) {
       );
     }
 
+    // Verificar se o usuário é admin global - não pode ser excluído
+    const isGlobalAdmin = existingUser.organizationMembers.some(
+      (member) => member.role === "admin global"
+    );
+
+    if (isGlobalAdmin) {
+      return NextResponse.json(
+        { error: "Usuários admin global não podem ser excluídos" },
+        { status: 403 }
+      );
+    }
+
     console.log(`Iniciando exclusão em cascata do usuário ${id}`);
 
     // Usar uma transação para garantir que todas as operações sejam executadas

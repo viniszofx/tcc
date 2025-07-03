@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export interface UserRole {
   id: string;
@@ -52,6 +52,9 @@ export interface UserPermissions {
   canRemoveFromCommissions: boolean; // Presidentes podem remover de suas comissões
   presidedCommissions: string[]; // IDs das comissões que o usuário preside
 
+  // Função para verificar se um usuário específico pode ser excluído
+  canDeleteSpecificUser: (targetUser: UserRole | any) => boolean;
+
   // Estado
   loading: boolean;
   error: string | null;
@@ -79,11 +82,23 @@ export function useUserPermissions() {
     canRemoveFromCommissions: false,
     presidedCommissions: [],
 
+    // Função placeholder - será sobrescrita
+    canDeleteSpecificUser: () => false,
+
     // Estado
     loading: true,
     error: null,
     user: null,
   });
+
+  // Função estável para verificar se um usuário pode ser excluído
+  const canDeleteSpecificUser = useCallback((targetUser: UserRole | any) => {
+    // Admin global não pode ser excluído
+    const isTargetGlobalAdmin = targetUser.organizationMembers?.some(
+      (member: any) => member.role === "admin global"
+    );
+    return !isTargetGlobalAdmin;
+  }, []);
 
   useEffect(() => {
     const checkPermissions = async () => {
@@ -147,6 +162,9 @@ export function useUserPermissions() {
             canRemoveFromCommissions: true,
             presidedCommissions: [],
 
+            // Função para verificar se um usuário específico pode ser excluído
+            canDeleteSpecificUser,
+
             // Estado
             loading: false,
             error: null,
@@ -183,6 +201,9 @@ export function useUserPermissions() {
           canRemoveFromCommissions: isAdmin || isPresident, // Presidentes podem remover de suas comissões
           presidedCommissions,
 
+          // Função para verificar se um usuário específico pode ser excluído
+          canDeleteSpecificUser,
+
           // Estado
           loading: false,
           error: null,
@@ -199,7 +220,7 @@ export function useUserPermissions() {
     };
 
     checkPermissions();
-  }, []);
+  }, []); // Array vazio - executa apenas uma vez
 
   return permissions;
 }

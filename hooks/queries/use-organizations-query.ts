@@ -94,26 +94,3 @@ export function useUpdateOrganization() {
     },
   });
 }
-
-// Hook para deletar organização
-export function useDeleteOrganization() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/organization/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete organization");
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      // Invalidar cache das organizações
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
-    },
-  });
-}
