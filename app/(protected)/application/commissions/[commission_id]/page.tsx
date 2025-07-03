@@ -94,22 +94,24 @@ export default function CommissionDetailPage() {
   // - Administrador da organização que contém a comissão
   // - Administrador direto (role "admin")
   // - Presidente da comissão
-  const isGlobalAdmin = user?.organizationMembers?.some(
-    (member: any) => member.role === "admin global"
-  ) || false;
-  
-  const isOrgAdmin = user?.organizationMembers?.some(
-    (member: any) => member.role === "admin"
-  ) || false;
-  
+  const isGlobalAdmin =
+    user?.organizationMembers?.some(
+      (member: any) => member.role === "admin global"
+    ) || false;
+
+  const isOrgAdmin =
+    user?.organizationMembers?.some((member: any) => member.role === "admin") ||
+    false;
+
   // Backward compatibility - verificar role antigo diretamente
   const isAdmin = user?.role === "admin" || isGlobalAdmin || isOrgAdmin;
-  
-  const isPresidentOfCommission = commission?.members?.some(
-    (member: any) =>
-      member.userId === user?.id && member.roleInCommission === "Presidente"
-  ) || false;
-  
+
+  const isPresidentOfCommission =
+    commission?.members?.some(
+      (member: any) =>
+        member.userId === user?.id && member.roleInCommission === "Presidente"
+    ) || false;
+
   const canManageCommission =
     isAdmin || // Qualquer tipo de admin
     isPresidentOfCommission; // Presidente da comissão

@@ -20,6 +20,7 @@ model UserProfile {
   name        String
   email       String   @unique
   description String?
+  role        String // "admin global", "admin","member"
   avatar      String?
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -66,7 +67,7 @@ model Organization {
 model OrganizationMember {
   userId         String   @map("user_id") @db.Uuid
   organizationId String   @map("organization_id") @db.Uuid
-  role           String // "admin global", "admin", "member"
+  role           String // "admin", "member"
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -154,7 +155,7 @@ model InventoryItem {
   id                    String   @id @default(uuid()) @db.Uuid
   commissionId          String   @db.Uuid
   campusId              String   @db.Uuid
-  number                String   @unique
+  number                String // Removido @unique global
   description           String
   brandModel            String?
   currentResponsibility String?
@@ -171,6 +172,8 @@ model InventoryItem {
   campus     Campus             @relation(fields: [campusId], references: [id], onDelete: Cascade)
   history    InventoryHistory[]
 
+  // Unique constraint: número único apenas dentro da mesma comissão
+  @@unique([number, commissionId])
   @@map("inventory_items")
 }
 

@@ -19,6 +19,7 @@ export interface UserProfile {
   name: string;
   email: string;
   description: string;
+  role: "admin global" | "admin" | "member"; // papel no sistema
   avatar: string | null;
   active: boolean;
 }

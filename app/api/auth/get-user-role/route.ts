@@ -110,43 +110,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Determinar a role principal e o redirecionamento
-    let role = "member";
-    let redirectPath = "/application"; // Nova rota unificada
-    let organization = null;
+    // Determinar a role global do usuário diretamente do campo userProfile.role
+    const role = userProfile.role || "member";
+    const redirectPath = "/application";
+    const organization = null; // Não associar organização principal ao papel global
     let isPresident = false;
-
-    // Verificar se é admin de alguma organização
-    if (
-      userProfile.organizationMembers &&
-      userProfile.organizationMembers.length > 0
-    ) {
-      // Verificar se é admin global primeiro
-      const globalAdminMembership = userProfile.organizationMembers.find(
-        (member) => member.role === "admin global"
-      );
-
-      if (globalAdminMembership) {
-        role = "admin";
-        redirectPath = "/application";
-        organization = globalAdminMembership.organization;
-      } else {
-        // Verificar se é admin de organização
-        const adminMembership = userProfile.organizationMembers.find(
-          (member) => member.role === "admin"
-        );
-
-        if (adminMembership) {
-          role = "admin";
-          redirectPath = "/application";
-          organization = adminMembership.organization;
-        } else {
-          const memberMembership = userProfile.organizationMembers[0];
-          role = memberMembership.role;
-          organization = memberMembership.organization;
-        }
-      }
-    }
 
     // Verificar se é presidente de alguma comissão
     if (
@@ -159,9 +127,6 @@ export async function GET(request: NextRequest) {
 
       if (presidentMembership) {
         isPresident = true;
-        if (role === "member") {
-          role = "presidente";
-        }
       }
     }
 
@@ -319,7 +284,7 @@ export async function POST(request: NextRequest) {
       );
 
       if (globalAdminMembership) {
-        role = "admin";
+        role = "admin global";
         redirectPath = "/application";
         organization = globalAdminMembership.organization;
       } else {

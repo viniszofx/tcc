@@ -11,12 +11,21 @@ import {
 } from "@/components/ui/card";
 import { useProfilePageData } from "@/hooks/queries/use-page-data";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
+import {
+  useCommissionPermissions,
+  useOrganizationPermissions,
+} from "@/lib/permissions/hooks";
 import { Building2, Database, Settings, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function ApplicationDashboard() {
-  const { user, loading, error, ...permissions } = useUserPermissions();
+  const { user, loading, error } = useUserPermissions();
+  const { canManageOrganizations, canManageCampuses, canManageUsers } =
+    useOrganizationPermissions();
+  const { canAccessCommission, canManageCommissions } =
+    useCommissionPermissions();
+
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
@@ -46,16 +55,22 @@ export default function ApplicationDashboard() {
 
   const getWelcomeMessage = () => {
     switch (user.role) {
+      case "admin global":
+        return {
+          title: "Painel Administrativo Global",
+          description: "Gerencie organizações, campus e usuários do sistema",
+          icon: Settings,
+        };
       case "admin":
         return {
           title: "Painel Administrativo",
           description: "Gerencie organizações, campus e usuários do sistema",
           icon: Settings,
         };
-      case "presidente":
+      case "member":
         return {
-          title: "Painel do Presidente",
-          description: "Gerencie suas comissões e inventários",
+          title: "Painel do Usuário",
+          description: "Acesse suas comissões e inventários",
           icon: Users,
         };
       default:
@@ -94,7 +109,7 @@ export default function ApplicationDashboard() {
       {/* Quick Actions */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Admin Actions */}
-        {permissions.canManageOrganizations && (
+        {canManageOrganizations && (
           <Card className="border border-[var(--border-color)] hover:shadow-lg transition-shadow cursor-pointer">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-3">
@@ -126,7 +141,7 @@ export default function ApplicationDashboard() {
           </Card>
         )}
 
-        {permissions.canManageUsers && (
+        {canManageUsers && (
           <Card className="border border-[var(--border-color)] hover:shadow-lg transition-shadow cursor-pointer">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-3">
@@ -150,7 +165,7 @@ export default function ApplicationDashboard() {
         )}
 
         {/* Comissões Actions */}
-        {permissions.canManageCommissions && (
+        {canManageCommissions && (
           <Card className="border border-[var(--border-color)] hover:shadow-lg transition-shadow cursor-pointer">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-3">
@@ -158,7 +173,7 @@ export default function ApplicationDashboard() {
                 <CardTitle className="text-lg">Comissões</CardTitle>
               </div>
               <CardDescription>
-                {user.role === "admin"
+                {canManageOrganizations
                   ? "Gerencie todas as comissões"
                   : "Gerencie suas comissões"}
               </CardDescription>
@@ -169,7 +184,7 @@ export default function ApplicationDashboard() {
                 className="w-full justify-start"
                 onClick={() => router.push("/application/commissions")}
               >
-                {user.role === "admin"
+                {canManageOrganizations
                   ? "Todas as Comissões"
                   : "Minhas Comissões"}
               </Button>
@@ -178,29 +193,28 @@ export default function ApplicationDashboard() {
         )}
 
         {/* Commission Access for Members */}
-        {permissions.canAccessCommission &&
-          !permissions.canManageCommissions && (
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-3">
-                  <Database className="h-6 w-6 text-purple-600" />
-                  <CardTitle className="text-lg">Minhas Comissões</CardTitle>
-                </div>
-                <CardDescription>
-                  Acesse as comissões das quais você faz parte
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => router.push("/application/commissions")}
-                >
-                  Acessar Comissões
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+        {canAccessCommission && !canManageCommissions && (
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <Database className="h-6 w-6 text-purple-600" />
+                <CardTitle className="text-lg">Minhas Comissões</CardTitle>
+              </div>
+              <CardDescription>
+                Acesse as comissões das quais você faz parte
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => router.push("/application/commissions")}
+              >
+                Acessar Comissões
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* User Info */}
@@ -227,10 +241,10 @@ export default function ApplicationDashboard() {
                 Cargo
               </label>
               <p className="text-lg capitalize">
-                {user.role === "admin"
+                {user.role === "admin global"
+                  ? "Administrador Global"
+                  : user.role === "admin"
                   ? "Administrador"
-                  : user.role === "presidente"
-                  ? "Presidente"
                   : "Membro"}
               </p>
             </div>

@@ -130,7 +130,13 @@ export function UserAvatar() {
             {userProfile.email}
           </span>
           <span className="text-xs text-[var(--font-color2)]">
-            {user.role ? user.role.toUpperCase() : ""}
+            {user.role === "admin global"
+              ? "ADMIN GLOBAL"
+              : user.role === "admin"
+              ? "ADMIN"
+              : user.role === "member"
+              ? "MEMBRO"
+              : ""}
           </span>
         </DropdownMenuLabel>
 

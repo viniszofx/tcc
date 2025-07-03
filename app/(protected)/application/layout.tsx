@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 import { queryKeys } from "@/hooks/queries/query-keys";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
+import { AbilityProvider } from "@/lib/permissions/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -48,10 +49,8 @@ function ApplicationContent({ children }: ApplicationLayoutProps) {
 
   // Determinar o cargo para o sidebar baseado no role do usuário
   const cargo =
-    user.role === "admin"
+    user.role === "admin global" || user.role === "admin"
       ? "admin"
-      : user.role === "presidente"
-      ? "presidente"
       : "operador";
 
   return (
@@ -91,5 +90,9 @@ function ApplicationContent({ children }: ApplicationLayoutProps) {
 export default function ApplicationLayout({
   children,
 }: ApplicationLayoutProps) {
-  return <ApplicationContent>{children}</ApplicationContent>;
+  return (
+    <AbilityProvider>
+      <ApplicationContent>{children}</ApplicationContent>
+    </AbilityProvider>
+  );
 }

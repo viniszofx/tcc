@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 interface StorageStatus {
   isConfigured: boolean;
   buckets: string[];
-  hasInventoryBucket: boolean;
+  hasSpreadsheetsBucket: boolean;
   error: string | null;
 }
 
@@ -71,7 +71,7 @@ export function useSystemStatus() {
           storage: {
             isConfigured: false,
             buckets: [],
-            hasInventoryBucket: false,
+            hasSpreadsheetsBucket: false,
             error: "Não foi possível verificar o status do storage",
           },
           stats: {
@@ -100,7 +100,7 @@ export function useSystemStatus() {
         storage: {
           isConfigured: false,
           buckets: [],
-          hasInventoryBucket: false,
+          hasSpreadsheetsBucket: false,
           error: "Não foi possível verificar o status do storage",
         },
         stats: {
@@ -177,7 +177,7 @@ export function useSystemStatus() {
     isConfigured: status?.isConfigured || false,
     needsSetup: status?.needsSetup === true,
     // Status do storage
-    storageOk: status?.storage?.hasInventoryBucket || false,
+    storageOk: status?.storage?.hasSpreadsheetsBucket || false,
     storageError: status?.storage?.error || null,
   };
 }

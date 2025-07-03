@@ -173,6 +173,7 @@ export async function POST(request: NextRequest) {
         data: {
           name: userData.name,
           email: userData.email,
+          role: "member", // Role padrão é member
         },
       });
 

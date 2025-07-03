@@ -3,13 +3,13 @@ import { supabase } from "@/lib/supabase";
 /**
  * Faz upload de um arquivo diretamente para o Supabase Storage
  * @param file - Arquivo a ser enviado
- * @param bucket - Nome do bucket (padrão: 'inventory-files')
+ * @param bucket - Nome do bucket (padrão: 'spreadsheets')
  * @param folder - Pasta dentro do bucket (opcional)
  * @returns URL pública do arquivo
  */
 export async function uploadFileToSupabase(
   file: File,
-  bucket: string = "inventory-files",
+  bucket: string = "spreadsheets",
   folder?: string
 ): Promise<string | null> {
   try {
@@ -130,11 +130,11 @@ export async function uploadFileToSupabase(
 /**
  * Remove um arquivo do Supabase Storage
  * @param fileUrl - URL do arquivo a ser removido
- * @param bucket - Nome do bucket (padrão: 'inventory-files')
+ * @param bucket - Nome do bucket (padrão: 'spreadsheets')
  */
 export async function removeFileFromSupabase(
   fileUrl: string,
-  bucket: string = "inventory-files"
+  bucket: string = "spreadsheets"
 ): Promise<void> {
   try {
     // Extrair o caminho do arquivo da URL
@@ -171,7 +171,7 @@ export async function removeFileFromSupabase(
  * @param limit - Limite de arquivos (padrão: 100)
  */
 export async function listFiles(
-  bucket: string = "inventory-files",
+  bucket: string = "spreadsheets",
   folder?: string,
   limit: number = 100
 ) {
@@ -195,13 +195,13 @@ export async function listFiles(
 /**
  * Upload de arquivo usando API do servidor (fallback quando client-side falha)
  * @param file - Arquivo a ser enviado
- * @param bucket - Nome do bucket (padrão: 'inventory-files')
+ * @param bucket - Nome do bucket (padrão: 'spreadsheets')
  * @param folder - Pasta dentro do bucket (opcional)
  * @returns URL pública do arquivo
  */
 export async function uploadFileViaAPI(
   file: File,
-  bucket: string = "inventory-files",
+  bucket: string = "spreadsheets",
   folder?: string
 ): Promise<string | null> {
   try {
@@ -243,13 +243,13 @@ export async function uploadFileViaAPI(
 /**
  * Upload inteligente: tenta client-side primeiro, depois via API se falhar
  * @param file - Arquivo a ser enviado
- * @param bucket - Nome do bucket (padrão: 'inventory-files')
+ * @param bucket - Nome do bucket (padrão: 'spreadsheets')
  * @param folder - Pasta dentro do bucket (opcional)
  * @returns URL pública do arquivo
  */
 export async function uploadFileIntelligent(
   file: File,
-  bucket: string = "inventory-files",
+  bucket: string = "spreadsheets",
   folder?: string
 ): Promise<string | null> {
   // Primeira tentativa: upload direto (client-side)

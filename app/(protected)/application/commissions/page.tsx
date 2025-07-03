@@ -15,8 +15,9 @@ import {
   useCommissions,
   useCreateCommission,
 } from "@/hooks/queries/use-commissions-query";
-import { useUserPermissions } from "@/hooks/use-user-permissions-rq";
+import { useUserPermissions } from "@/hooks/use-user-permissions";
 import type { CommissionWithRelations } from "@/interface";
+import { useCommissionPermissions } from "@/lib/permissions/hooks";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -25,11 +26,13 @@ import { useEffect, useMemo, useState } from "react";
 export default function CommissionsPage() {
   const {
     user,
-    canManageCommissions,
-    canAccessCommission,
     loading: permissionsLoading,
     error: permissionsError,
   } = useUserPermissions();
+
+  const { canAccessCommission, canManageCommissions } =
+    useCommissionPermissions();
+
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -55,33 +58,18 @@ export default function CommissionsPage() {
   // Local state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Filtrar comissões baseado no papel do usuário
+  // Filtrar comissões baseado nas permissões do usuário
   const commissions = useMemo(() => {
     if (!user) {
       return [];
     }
 
-    // Verificar se é administrador global
-    const isGlobalAdmin =
-      user.organizationMembers?.some(
-        (member: any) => member.role === "admin global"
-      ) || false;
-
-    // Verificar se é admin de organização
-    const isOrgAdmin =
-      user.organizationMembers?.some(
-        (member: any) => member.role === "admin"
-      ) || false;
-
-    // Backward compatibility - verificar role antigo diretamente
-    const isAdmin = user.role === "admin" || isGlobalAdmin || isOrgAdmin;
-
-    // Admin global, admin de organização ou admin antigo podem ver todas as comissões
-    if (isAdmin) {
+    // Se pode gerenciar comissões (admin global ou admin de org), mostrar todas
+    if (canManageCommissions) {
       return allCommissions;
     }
 
-    // Para membros comuns, mostrar apenas comissões onde são membros ou dos campus onde estão associados
+    // Para membros comuns, mostrar apenas comissões onde são membros
     return allCommissions.filter((commission) => {
       // Verificar se é membro direto da comissão
       const isMemberOfCommission =
@@ -96,7 +84,7 @@ export default function CommissionsPage() {
 
       return isMemberOfCommission || isMemberOfCampus;
     });
-  }, [allCommissions, user]);
+  }, [allCommissions, user, canManageCommissions]);
 
   // Verificar permissões
   useEffect(() => {
@@ -161,21 +149,8 @@ export default function CommissionsPage() {
     return commission.campus?.name || "Campus não encontrado";
   };
 
-  const isGlobalAdmin =
-    user?.organizationMembers?.some(
-      (member: any) => member.role === "admin global"
-    ) || false;
-
-  const isOrgAdmin =
-    user?.organizationMembers?.some((member: any) => member.role === "admin") ||
-    false;
-
-  const isAdmin = user?.role === "admin" || isGlobalAdmin || isOrgAdmin;
-
-  const pageTitle = isAdmin
+  const pageTitle = canManageCommissions
     ? "Todas as Comissões"
-    : canManageCommissions
-    ? "Minhas Comissões (Presidente)"
     : "Minhas Comissões";
 
   return (
@@ -202,7 +177,9 @@ export default function CommissionsPage() {
           <CardDescription className="text-[var(--font-color)] opacity-70">
             {commissions.length > 0
               ? `Lista de comissões ${
-                  isAdmin ? "do sistema" : `do ${getCampusName(commissions[0])}`
+                  canManageCommissions
+                    ? "do sistema"
+                    : `do ${getCampusName(commissions[0])}`
                 }`
               : "Nenhuma comissão encontrada"}
           </CardDescription>
@@ -244,17 +221,24 @@ export default function CommissionsPage() {
                 {JSON.stringify(user?.organizationMembers)}
               </div>
               <div>
-                <strong>Is Global Admin:</strong> {
-                  user?.organizationMembers?.some((member: any) => member.role === "admin global") ? "SIM" : "NÃO"
-                }
+                <strong>Is Global Admin:</strong>{" "}
+                {user?.organizationMembers?.some(
+                  (member: any) => member.role === "admin global"
+                )
+                  ? "SIM"
+                  : "NÃO"}
               </div>
               <div>
-                <strong>Is Org Admin:</strong> {
-                  user?.organizationMembers?.some((member: any) => member.role === "admin") ? "SIM" : "NÃO"
-                }
+                <strong>Is Org Admin:</strong>{" "}
+                {user?.organizationMembers?.some(
+                  (member: any) => member.role === "admin"
+                )
+                  ? "SIM"
+                  : "NÃO"}
               </div>
               <div>
-                <strong>Is Admin (combined):</strong> {isAdmin ? "SIM" : "NÃO"}
+                <strong>Pode Gerenciar Comissões:</strong>{" "}
+                {canManageCommissions ? "SIM" : "NÃO"}
               </div>
               <div>
                 <strong>Total Comissões:</strong> {allCommissions.length}
@@ -266,7 +250,8 @@ export default function CommissionsPage() {
                 <strong>User Campuses:</strong> {JSON.stringify(user?.campuses)}
               </div>
               <div>
-                <strong>User Commissions:</strong> {JSON.stringify(user?.commissions)}
+                <strong>User Commissions:</strong>{" "}
+                {JSON.stringify(user?.commissions)}
               </div>
             </CardContent>
           </Card>
@@ -322,7 +307,7 @@ export default function CommissionsPage() {
         ) : (
           <div className="text-center py-12">
             <p className="text-[var(--font-color)] opacity-70 text-lg">
-              {isAdmin
+              {canManageCommissions
                 ? "Nenhuma comissão cadastrada no sistema ainda."
                 : "Você não faz parte de nenhuma comissão ainda."}
             </p>

@@ -9,28 +9,28 @@ export async function POST(request: NextRequest) {
     console.log("🔒 Configurando políticas RLS para buckets...");
 
     const policies = {
-      "inventory-files": {
-        name: "inventory-files",
+      spreadsheets: {
+        name: "spreadsheets",
         policies: [
           {
-            name: "Users can upload inventory files",
+            name: "Users can upload spreadsheet files",
             operation: "INSERT",
-            check: "bucket_id = 'inventory-files' AND auth.uid() IS NOT NULL",
+            check: "bucket_id = 'spreadsheets' AND auth.uid() IS NOT NULL",
           },
           {
-            name: "Anyone can view inventory files",
+            name: "Anyone can view spreadsheet files",
             operation: "SELECT",
-            using: "bucket_id = 'inventory-files'",
+            using: "bucket_id = 'spreadsheets'",
           },
           {
-            name: "Users can update inventory files",
+            name: "Users can update spreadsheet files",
             operation: "UPDATE",
-            using: "bucket_id = 'inventory-files' AND auth.uid() IS NOT NULL",
+            using: "bucket_id = 'spreadsheets' AND auth.uid() IS NOT NULL",
           },
           {
-            name: "Users can delete inventory files",
+            name: "Users can delete spreadsheet files",
             operation: "DELETE",
-            using: "bucket_id = 'inventory-files' AND auth.uid() IS NOT NULL",
+            using: "bucket_id = 'spreadsheets' AND auth.uid() IS NOT NULL",
           },
         ],
       },
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   return NextResponse.json({
     message: "API para configuração de políticas RLS dos buckets de storage",
-    buckets: ["inventory-files", "avatars"],
+    buckets: ["spreadsheets", "avatars"],
     usage: "POST para gerar comandos SQL das políticas RLS",
   });
 }

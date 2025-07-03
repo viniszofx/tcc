@@ -6,7 +6,7 @@ export interface UserRole {
   id: string;
   name: string;
   email: string;
-  role: "admin" | "presidente" | "member";
+  role: "admin global" | "admin" | "member";
   organization?: {
     id: string;
     name: string;
@@ -14,7 +14,7 @@ export interface UserRole {
   };
   organizationMembers?: {
     organizationId: string;
-    role: "admin global" | "admin" | "member";
+    role: "admin" | "member";
     organization: {
       id: string;
       name: string;
@@ -49,8 +49,8 @@ export interface UserPermissions {
 
   // Funções específicas
   canDeleteUsers: boolean; // Apenas admins podem excluir usuários
-  canRemoveFromCommissions: boolean; // Presidentes podem remover de suas comissões
-  presidedCommissions: string[]; // IDs das comissões que o usuário preside
+  canRemoveFromCommissions: boolean; // Apenas admins podem remover de comissões
+  presidedCommissions: string[]; // IDs das comissões que o usuário preside (baseado em roleInCommission)
 
   // Função para verificar se um usuário específico pode ser excluído
   canDeleteSpecificUser: (targetUser: UserRole | any) => boolean;
@@ -92,13 +92,22 @@ export function useUserPermissions() {
   });
 
   // Função estável para verificar se um usuário pode ser excluído
-  const canDeleteSpecificUser = useCallback((targetUser: UserRole | any) => {
-    // Admin global não pode ser excluído
-    const isTargetGlobalAdmin = targetUser.organizationMembers?.some(
-      (member: any) => member.role === "admin global"
-    );
-    return !isTargetGlobalAdmin;
-  }, []);
+  const canDeleteSpecificUser = useCallback(
+    (targetUser: UserRole | any) => {
+      // Admin global não pode ser excluído por ninguém
+      if (targetUser.role === "admin global") return false;
+      // Se o usuário atual não for admin global nem admin, não pode deletar ninguém
+      if (
+        !permissions.user ||
+        (permissions.user.role !== "admin global" &&
+          permissions.user.role !== "admin")
+      )
+        return false;
+      // Admin do sistema pode deletar qualquer um, exceto admin global
+      return true;
+    },
+    [permissions.user]
+  );
 
   useEffect(() => {
     const checkPermissions = async () => {
@@ -124,48 +133,32 @@ export function useUserPermissions() {
           organizationMembers: user.organizationMembers,
           isFirstAccess,
         });
-        
-        // Verificar se é administrador global
-        const isGlobalAdmin = user.organizationMembers?.some(
-          (member) => member.role === "admin global"
-        ) || false;
-        
+
+        // Sistema baseado em UserProfile.role
+        const isGlobalAdmin = user.role === "admin global";
+        const isSystemAdmin = user.role === "admin";
         // Verificar se é administrador de alguma organização
-        const isOrgAdmin = user.organizationMembers?.some(
-          (member) => member.role === "admin"
-        ) || false;
-        
-        // Backward compatibility - verificar role antigo
-        const isAdmin = user.role === "admin" || isGlobalAdmin || isOrgAdmin;
-        const isPresident = user.role === "presidente";
+        const isOrgAdmin =
+          user.organizationMembers?.some((member) => member.role === "admin") ||
+          false;
+        const isAdmin = isGlobalAdmin || isSystemAdmin;
         const isMember = user.role === "member";
 
         // Se é primeiro acesso, dar permissões de admin temporário
         if (isFirstAccess) {
           setPermissions({
-            // Nível Organização - permitir tudo no primeiro acesso
             canManageOrganizations: true,
             canManageCampuses: true,
             canManageUsers: true,
-
-            // Nível Comissão - permitir tudo no primeiro acesso
             canManageCommissions: true,
             canUploadSpreadsheets: true,
             canManageCommissionMembers: true,
-
-            // Nível Acesso - permitir tudo no primeiro acesso
             canAccessCommission: true,
             canViewInventory: true,
-
-            // Funções específicas - permitir tudo no primeiro acesso
             canDeleteUsers: true,
             canRemoveFromCommissions: true,
             presidedCommissions: [],
-
-            // Função para verificar se um usuário específico pode ser excluído
             canDeleteSpecificUser,
-
-            // Estado
             loading: false,
             error: null,
             user,
@@ -181,30 +174,45 @@ export function useUserPermissions() {
             )
             .map((commission) => commission.id) || [];
 
+        // Se for admin global ou admin do sistema, libera tudo
+        if (isGlobalAdmin || isSystemAdmin) {
+          setPermissions({
+            canManageOrganizations: true,
+            canManageCampuses: true,
+            canManageUsers: true,
+            canManageCommissions: true,
+            canUploadSpreadsheets: true,
+            canManageCommissionMembers: true,
+            canAccessCommission: true,
+            canViewInventory: true,
+            canDeleteUsers: true,
+            canRemoveFromCommissions: true,
+            presidedCommissions,
+            canDeleteSpecificUser,
+            loading: false,
+            error: null,
+            user,
+          });
+          return;
+        }
+
+        // Se NÃO for admin global nem admin do sistema, mas for admin de organização, libera apenas nível organização
+        // (Este bloco foi removido para garantir que apenas o papel global define permissões totais)
+
+        // Usuário comum
         setPermissions({
-          // Nível Organização - apenas admins
-          canManageOrganizations: isAdmin,
-          canManageCampuses: isAdmin,
-          canManageUsers: isAdmin,
-
-          // Nível Comissão - admins e presidentes
-          canManageCommissions: isAdmin || isPresident,
-          canUploadSpreadsheets: isAdmin || isPresident,
-          canManageCommissionMembers: isAdmin || isPresident,
-
-          // Nível Acesso - todos os usuários autorizados
-          canAccessCommission: isAdmin || isPresident || isMember,
-          canViewInventory: isAdmin || isPresident || isMember,
-
-          // Funções específicas
-          canDeleteUsers: isAdmin, // Apenas admins podem excluir usuários
-          canRemoveFromCommissions: isAdmin || isPresident, // Presidentes podem remover de suas comissões
+          canManageOrganizations: false,
+          canManageCampuses: false,
+          canManageUsers: false,
+          canManageCommissions: false,
+          canUploadSpreadsheets: false,
+          canManageCommissionMembers: false,
+          canAccessCommission: isMember,
+          canViewInventory: isMember,
+          canDeleteUsers: false,
+          canRemoveFromCommissions: false,
           presidedCommissions,
-
-          // Função para verificar se um usuário específico pode ser excluído
           canDeleteSpecificUser,
-
-          // Estado
           loading: false,
           error: null,
           user,

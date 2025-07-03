@@ -1,9 +1,22 @@
+import { withPermissions } from "@/lib/permissions/middleware";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {
     console.log("🔍 GET /api/commission - Buscando comissões");
+
+    // Verificar permissões usando CASL
+    const authResult = await withPermissions(request as any, [
+      { action: "read", subject: "Commission" },
+    ]);
+
+    if (!authResult.success) {
+      return NextResponse.json(
+        { error: authResult.error },
+        { status: authResult.status }
+      );
+    }
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
@@ -97,6 +110,18 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    // Verificar permissões usando CASL
+    const authResult = await withPermissions(request as any, [
+      { action: "create", subject: "Commission" },
+    ]);
+
+    if (!authResult.success) {
+      return NextResponse.json(
+        { error: authResult.error },
+        { status: authResult.status }
+      );
+    }
+
     const body = await request.json();
     const { campusId, name, type, description, spreadsheet_url, active, year } =
       body;

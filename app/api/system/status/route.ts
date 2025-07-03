@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     let storageStatus = {
       isConfigured: false,
       buckets: [] as string[],
-      hasInventoryBucket: false,
+      hasSpreadsheetsBucket: false,
       error: null as string | null,
     };
 
@@ -44,14 +44,14 @@ export async function GET(request: NextRequest) {
       storageStatus = {
         isConfigured: true,
         buckets: buckets,
-        hasInventoryBucket: buckets.includes("inventory-files"),
+        hasSpreadsheetsBucket: buckets.includes("spreadsheets"),
         error: null,
       };
     } catch (error: any) {
       storageStatus = {
         isConfigured: false,
         buckets: [],
-        hasInventoryBucket: false,
+        hasSpreadsheetsBucket: false,
         error: error?.message || "Erro desconhecido ao verificar buckets",
       };
       console.error("Erro ao verificar buckets:", error);
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
           hasUserProfiles: false,
           storage: {
             isConfigured: false,
-            hasInventoryBucket: false,
+            hasSpreadsheetsBucket: false,
             error: "Não foi possível verificar o status do storage",
           },
         },
@@ -129,16 +129,16 @@ export async function POST(request: NextRequest) {
     };
 
     // Tentar reparar o storage
-    if (!status.storage.hasInventoryBucket) {
+    if (!status.storage.hasSpreadsheetsBucket) {
       try {
-        console.log("🔧 Tentando criar bucket inventory-files...");
-        const bucketCreated = await ensureBucketExists("inventory-files");
+        console.log("🔧 Tentando criar bucket spreadsheets...");
+        const bucketCreated = await ensureBucketExists("spreadsheets");
         repairs.storage = bucketCreated;
 
         if (bucketCreated) {
-          console.log("✅ Bucket inventory-files criado com sucesso");
+          console.log("✅ Bucket spreadsheets criado com sucesso");
         } else {
-          console.error("❌ Falha ao criar bucket inventory-files");
+          console.error("❌ Falha ao criar bucket spreadsheets");
         }
       } catch (error) {
         console.error("❌ Erro ao tentar reparar storage:", error);

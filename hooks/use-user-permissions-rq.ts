@@ -1,13 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 
 export interface UserRole {
   id: string;
   name: string;
   email: string;
-  role: "admin" | "presidente" | "member";
+  role: "admin global" | "admin" | "member";
   organization?: {
     id: string;
     name: string;
@@ -15,7 +15,7 @@ export interface UserRole {
   };
   organizationMembers?: {
     organizationId: string;
-    role: "admin global" | "admin" | "member";
+    role: "admin" | "member";
     organization: {
       id: string;
       name: string;
@@ -63,7 +63,10 @@ export interface UserPermissions {
 }
 
 // Função para calcular permissões baseadas nos dados do usuário
-function calculatePermissions(user: UserRole | null, isFirstAccess: boolean): UserPermissions {
+function calculatePermissions(
+  user: UserRole | null,
+  isFirstAccess: boolean
+): UserPermissions {
   if (!user) {
     return {
       canManageOrganizations: false,
@@ -84,32 +87,28 @@ function calculatePermissions(user: UserRole | null, isFirstAccess: boolean): Us
     };
   }
 
-  // Verificar se é administrador global
-  const isGlobalAdmin = user.organizationMembers?.some(
-    (member) => member.role === "admin global"
-  ) || false;
-  
+  // Sistema baseado em UserProfile.role
+  const isGlobalAdmin = user.role === "admin global";
+
   // Verificar se é administrador de alguma organização
-  const isOrgAdmin = user.organizationMembers?.some(
-    (member) => member.role === "admin"
-  ) || false;
-  
-  // Backward compatibility - verificar role antigo
-  const isAdmin = user.role === "admin" || isGlobalAdmin || isOrgAdmin;
-  const isPresident = user.role === "presidente";
+  const isOrgAdmin =
+    user.organizationMembers?.some((member) => member.role === "admin") ||
+    false;
+
+  // Definir permissões baseadas no role
+  const isAdmin = isGlobalAdmin || isOrgAdmin;
   const isMember = user.role === "member";
 
   // Extrair IDs das comissões que o usuário preside
-  const presidedCommissions = user.commissions
-    ?.filter((commission) => commission.roleInCommission === "Presidente")
-    .map((commission) => commission.id) || [];
+  const presidedCommissions =
+    user.commissions
+      ?.filter((commission) => commission.roleInCommission === "Presidente")
+      .map((commission) => commission.id) || [];
 
   // Função estável para verificar se um usuário pode ser excluído
   const canDeleteSpecificUser = (targetUser: UserRole | any) => {
     // Admin global não pode ser excluído
-    const isTargetGlobalAdmin = targetUser.organizationMembers?.some(
-      (member: any) => member.role === "admin global"
-    );
+    const isTargetGlobalAdmin = targetUser.role === "admin global";
     return !isTargetGlobalAdmin;
   };
 
@@ -140,18 +139,18 @@ function calculatePermissions(user: UserRole | null, isFirstAccess: boolean): Us
     canManageCampuses: isAdmin,
     canManageUsers: isAdmin,
 
-    // Nível Comissão - admins e presidentes
-    canManageCommissions: isAdmin || isPresident,
-    canUploadSpreadsheets: isAdmin || isPresident,
-    canManageCommissionMembers: isAdmin || isPresident,
+    // Nível Comissão - admins podem gerenciar, membros podem acessar
+    canManageCommissions: isAdmin,
+    canUploadSpreadsheets: isAdmin,
+    canManageCommissionMembers: isAdmin,
 
     // Nível Acesso - todos os usuários autorizados
-    canAccessCommission: isAdmin || isPresident || isMember,
-    canViewInventory: isAdmin || isPresident || isMember,
+    canAccessCommission: isAdmin || isMember,
+    canViewInventory: isAdmin || isMember,
 
     // Funções específicas
     canDeleteUsers: isAdmin,
-    canRemoveFromCommissions: isAdmin || isPresident,
+    canRemoveFromCommissions: isAdmin,
     presidedCommissions,
     canDeleteSpecificUser,
 
@@ -164,11 +163,7 @@ function calculatePermissions(user: UserRole | null, isFirstAccess: boolean): Us
 
 // Hook principal usando React Query
 export function useUserPermissions() {
-  const {
-    data,
-    isLoading,
-    error,
-  } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["user-permissions"],
     queryFn: async () => {
       const response = await fetch("/api/auth/get-user-role", {
@@ -230,7 +225,10 @@ export function useUserPermissions() {
       };
     }
 
-    return calculatePermissions(data?.user || null, data?.isFirstAccess || false);
+    return calculatePermissions(
+      data?.user || null,
+      data?.isFirstAccess || false
+    );
   }, [data, isLoading, error]);
 
   return permissions;
@@ -238,7 +236,10 @@ export function useUserPermissions() {
 
 // Hook para verificar permissão específica
 export function useHasPermission(
-  permission: keyof Omit<UserPermissions, "loading" | "error" | "user" | "canDeleteSpecificUser">
+  permission: keyof Omit<
+    UserPermissions,
+    "loading" | "error" | "user" | "canDeleteSpecificUser"
+  >
 ) {
   const permissions = useUserPermissions();
   return {

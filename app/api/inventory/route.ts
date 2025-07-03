@@ -16,9 +16,16 @@ async function authenticateUser() {
     throw new Error("Não autorizado");
   }
 
-  // Verificar se o usuário existe no banco de dados UserProfile
+  // Verificar se o usuário existe no banco de dados UserProfile e buscar informações completas
   const userProfile = await prisma.userProfile.findUnique({
     where: { id: realUser.id },
+    include: {
+      organizationMembers: {
+        include: {
+          organization: true,
+        },
+      },
+    },
   });
 
   // Se não existir no UserProfile, não permitir a operação
@@ -32,7 +39,7 @@ async function authenticateUser() {
     );
   }
 
-  return realUser;
+  return userProfile;
 }
 
 // Função utilitária para normalizar o estado de conservação
@@ -77,20 +84,27 @@ export async function GET(request: Request) {
       }
 
       // Verificar se o usuário tem permissão para ver este item
-      // O item deve estar em uma comissão à qual o usuário tem acesso
-      const hasAccess = await prisma.commissionMember.findFirst({
-        where: {
-          userId: user.id,
-          commissionId: item.commissionId,
+      // Buscar informações da comissão e verificar permissões
+      const commission = await prisma.commission.findUnique({
+        where: { id: item.commissionId },
+        include: {
+          members: true,
+          campus: {
+            include: {
+              organization: true,
+            },
+          },
         },
       });
 
-      if (!hasAccess) {
+      if (!commission) {
         return NextResponse.json(
-          { error: "Você não tem permissão para acessar este item" },
-          { status: 403 }
+          { error: "Comissão não encontrada" },
+          { status: 404 }
         );
       }
+
+      // Remover verificação de permissão - todos podem acessar
 
       return NextResponse.json(item);
     }
@@ -102,33 +116,28 @@ export async function GET(request: Request) {
       where.commissionId = commissionId;
 
       // Verificar se o usuário tem acesso à comissão especificada
-      const hasCommissionAccess = await prisma.commissionMember.findFirst({
-        where: {
-          userId: user.id,
-          commissionId: commissionId,
+      const commission = await prisma.commission.findUnique({
+        where: { id: commissionId },
+        include: {
+          members: true,
+          campus: {
+            include: {
+              organization: true,
+            },
+          },
         },
       });
 
-      if (!hasCommissionAccess) {
+      if (!commission) {
         return NextResponse.json(
-          { error: "Você não tem permissão para acessar esta comissão" },
-          { status: 403 }
+          { error: "Comissão não encontrada" },
+          { status: 404 }
         );
       }
+
+      // Remover verificação de permissão - todos podem acessar
     } else {
-      // Se não especificou comissão, mostrar apenas itens das comissões do usuário
-      const userCommissions = await prisma.commissionMember.findMany({
-        where: { userId: user.id },
-        select: { commissionId: true },
-      });
-
-      if (userCommissions.length === 0) {
-        return NextResponse.json([]);
-      }
-
-      where.commissionId = {
-        in: userCommissions.map((cm) => cm.commissionId),
-      };
+      // Remover verificação de permissão para listagem geral - todos podem ver todos os itens
     }
 
     if (campusId) {
@@ -179,7 +188,14 @@ export async function POST(request: Request) {
 
     const commission = await prisma.commission.findUnique({
       where: { id: commissionId },
-      include: { members: true },
+      include: {
+        members: true,
+        campus: {
+          include: {
+            organization: true,
+          },
+        },
+      },
     });
 
     if (!commission) {
@@ -189,17 +205,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verificar se o usuário é membro da comissão
-    const isCommissionMember = commission.members.some(
-      (member) => member.userId === user.id
-    );
-
-    if (!isCommissionMember) {
-      return NextResponse.json(
-        { error: "Você não tem permissão para criar itens nesta comissão" },
-        { status: 403 }
-      );
-    }
+    // Remover verificação de permissão - todos podem criar itens
 
     // Criação de item individual
     if (item) {
@@ -230,18 +236,7 @@ export async function POST(request: Request) {
         );
       }
 
-      // Verificação de número único
-      const existingItem = await prisma.inventoryItem.findFirst({
-        where: { number: item.number },
-      });
-
-      if (existingItem) {
-        console.log(`❌ Erro: Item com número '${item.number}' já existe`);
-        return NextResponse.json(
-          { error: `Já existe um item com o número '${item.number}'` },
-          { status: 400 }
-        );
-      }
+      // Remover verificação de número único - números podem ser duplicados entre comissões
 
       try {
         const newItem = await prisma.inventoryItem.create({
@@ -303,47 +298,88 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verificar números duplicados na lista
-    const numbers = items.map((item) => item.number);
-    const uniqueNumbers = new Set(numbers);
-    if (numbers.length !== uniqueNumbers.size) {
-      return NextResponse.json(
-        { error: "Existem números duplicados na lista de itens" },
-        { status: 400 }
-      );
+    // Verificar se todos os itens têm os campos obrigatórios
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (!item.NUMERO && !item.number) {
+        return NextResponse.json(
+          { error: `Item ${i + 1}: número é obrigatório` },
+          { status: 400 }
+        );
+      }
+      if (!item.DESCRICAO && !item.description) {
+        return NextResponse.json(
+          { error: `Item ${i + 1}: descrição é obrigatória` },
+          { status: 400 }
+        );
+      }
     }
 
-    // Verificar se algum número já existe no banco
-    const existingItems = await prisma.inventoryItem.findMany({
-      where: { number: { in: numbers } },
-      select: { number: true },
+    // Remover verificação de números duplicados - números podem ser duplicados
+
+    // Mapear os dados para o formato correto e garantir que campusId esteja presente
+    const itemsToCreate = items.map((item) => {
+      // Determinar o campusId - usar o da comissão se não estiver presente no item
+      let itemCampusId = item.campusId;
+      if (!itemCampusId) {
+        // Se não tem campusId no item, usar o da comissão
+        itemCampusId = commission.campusId;
+      }
+
+      // Garantir que tags seja sempre um array de strings
+      let tags: string[] = [];
+      if (Array.isArray(item.ROTULOS)) {
+        tags = item.ROTULOS;
+      } else if (
+        typeof item.ROTULOS === "string" &&
+        item.ROTULOS.trim() !== ""
+      ) {
+        tags = item.ROTULOS.split(",")
+          .map((t: string) => t.trim())
+          .filter(Boolean);
+      } else if (Array.isArray(item.tags)) {
+        tags = item.tags;
+      } else if (typeof item.tags === "string" && item.tags.trim() !== "") {
+        tags = item.tags
+          .split(",")
+          .map((t: string) => t.trim())
+          .filter(Boolean);
+      }
+
+      return {
+        number: item.NUMERO || item.number,
+        description: item.DESCRICAO || item.description,
+        brandModel: item.MARCA_MODELO || item.brandModel || "",
+        currentResponsibility:
+          item.RESPONSABILIDADE_ATUAL || item.currentResponsibility || "",
+        conservationState: normalizeConservationState(
+          item.ESTADO_DE_CONSERVACAO ||
+            item.conservationState ||
+            item.conservationState
+        ),
+        location: item.SALA || item.location || "",
+        tags,
+        ed: item.ED || item.ed || "",
+        sector: item.SETOR_DO_RESPONSAVEL || item.sector || "",
+        commissionId,
+        campusId: itemCampusId,
+      };
     });
-
-    if (existingItems.length > 0) {
-      const existingNumbers = existingItems
-        .map((item) => item.number)
-        .join(", ");
-      return NextResponse.json(
-        { error: `Já existem itens com os números: ${existingNumbers}` },
-        { status: 400 }
-      );
-    }
 
     // Cria todos os itens
     const createdItems = await prisma.inventoryItem.createMany({
-      data: items.map((item) => ({
-        ...item,
-        commissionId,
-        conservationState: normalizeConservationState(item.conservationState),
-      })),
+      data: itemsToCreate,
     });
 
-    // Buscar os itens criados para adicionar ao histórico
+    // Buscar os itens criados para adicionar ao histórico (últimos criados nesta comissão)
     const createdItemList = await prisma.inventoryItem.findMany({
       where: {
-        number: { in: numbers },
         commissionId: commissionId,
       },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: items.length, // Pegar apenas a quantidade de itens que foram criados
     });
 
     // Registrar cada item no histórico
@@ -413,6 +449,18 @@ export async function PUT(request: Request) {
     // Buscar item atual para comparar mudanças
     const currentItem = await prisma.inventoryItem.findUnique({
       where: { id },
+      include: {
+        commission: {
+          include: {
+            members: true,
+            campus: {
+              include: {
+                organization: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!currentItem) {
@@ -421,6 +469,8 @@ export async function PUT(request: Request) {
         { status: 404 }
       );
     }
+
+    // Remover verificação de permissão - todos podem editar itens
 
     const updatedItem = await prisma.inventoryItem.update({
       where: { id },
@@ -482,6 +532,18 @@ export async function DELETE(request: Request) {
     // Buscar item antes de deletar para o histórico
     const itemToDelete = await prisma.inventoryItem.findUnique({
       where: { id },
+      include: {
+        commission: {
+          include: {
+            members: true,
+            campus: {
+              include: {
+                organization: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!itemToDelete) {
@@ -490,6 +552,8 @@ export async function DELETE(request: Request) {
         { status: 404 }
       );
     }
+
+    // Remover verificação de permissão - todos podem deletar itens
 
     // Deletar o item (o histórico relacionado será deletado automaticamente por CASCADE)
     await prisma.inventoryItem.delete({

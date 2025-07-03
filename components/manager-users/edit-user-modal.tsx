@@ -29,6 +29,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface OrganizationWithCampuses extends Organization {
   campuses?: Campus[];
@@ -57,7 +58,13 @@ export function EditUserModal({
   canEditGlobalAdminRole = false,
   currentUserIsGlobalAdmin = false,
 }: EditUserModalProps) {
-  const [formData, setFormData] = useState<EditUserFormData>({
+  // Ocultar o drop de role do sistema caso um admin tente editar um admin global
+  const isEditingAdminGlobal = user?.role === "admin global";
+  const isCurrentUserGlobalAdmin = !!currentUserIsGlobalAdmin;
+
+  const [formData, setFormData] = useState<
+    EditUserFormData & { role?: "admin global" | "admin" | "member" }
+  >({
     name: "",
     email: "",
     description: "",
@@ -66,6 +73,7 @@ export function EditUserModal({
     organizationId: "",
     campusId: "",
     organizationRole: "member",
+    role: "member",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -84,7 +92,7 @@ export function EditUserModal({
         user: user,
         userOrganizationMembers: (user as any).organizationMembers,
       });
-      
+
       fetchOrganizations();
 
       // Pegar dados do usuário atual
@@ -101,6 +109,7 @@ export function EditUserModal({
         organizationId: currentOrganization?.organizationId || "",
         campusId: currentCampus?.campusId || "",
         organizationRole: currentOrganization?.role || "member",
+        role: user.role || "member",
       });
     }
   }, [isOpen, user, canEditGlobalAdminRole, currentUserIsGlobalAdmin]);
@@ -181,9 +190,11 @@ export function EditUserModal({
         organizationId: formData.organizationId,
         campusId: formData.campusId,
         organizationRole: formData.organizationRole,
+        role: formData.role, // papel do sistema
       };
 
       onEditUser(updateData);
+      toast.success("Usuário atualizado com sucesso!");
       onClose();
     }
   };
@@ -234,7 +245,7 @@ export function EditUserModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] bg-[var(--bg-simple)] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] bg-[var(--bg-simple)] max-h-[90vh] overflow-y-auto overflow-x-hidden p-4">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="text-[var(--font-color)]">
@@ -245,7 +256,10 @@ export function EditUserModal({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
+          <div
+            className="grid gap-4 py-4 w-full box-border overflow-x-hidden"
+            style={{ maxWidth: "100vw", minWidth: 0 }}
+          >
             <div className="grid gap-2">
               <Label htmlFor="name" className="text-[var(--font-color)]">
                 Nome
@@ -302,9 +316,10 @@ export function EditUserModal({
                 }
               >
                 <SelectTrigger className="border-[var(--border-input)]">
-                  <SelectValue placeholder="Selecione uma organização" />
+                  <SelectValue placeholder="Selecione uma organização (opcional)" />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)]">
+                  {/* Não use value="" para SelectItem, apenas placeholder controla vazio */}
                   {organizations.map((org) => (
                     <SelectItem key={org.id} value={org.id}>
                       {org.name}
@@ -316,7 +331,7 @@ export function EditUserModal({
                 <p className="text-xs text-red-500">{errors.organizationId}</p>
               )}
             </div>
-
+            {/* Campus/Unidade (Opcional) - agora acima do Papel do Sistema */}
             <div className="grid gap-2">
               <Label className="text-[var(--font-color)]">
                 Campus/Unidade (Opcional)
@@ -349,20 +364,21 @@ export function EditUserModal({
               </Select>
             </div>
 
+            {/* Papel na Organização (único select, inclui admin global se permitido) */}
             <div className="grid gap-2">
               <Label className="text-[var(--font-color)]">
                 Papel na Organização
               </Label>
               <Select
                 value={formData.organizationRole || ""}
-                onValueChange={(value) =>
-                  handleSelectChange("organizationRole", value)
-                }
+                onValueChange={(value) => handleSelectChange("organizationRole", value)}
+                disabled={!formData.organizationId}
               >
                 <SelectTrigger className="border-[var(--border-input)]">
-                  <SelectValue placeholder="Selecione o papel na organização" />
+                  <SelectValue placeholder="Selecione o papel na organização (opcional)" />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)]">
+                  {/* Não use value="" para SelectItem, apenas placeholder controla vazio */}
                   {canEditGlobalAdminRole && (
                     <SelectItem value="admin global">
                       <span className="flex items-center gap-2">
@@ -404,8 +420,54 @@ export function EditUserModal({
                 </div>
               )}
             </div>
+            {/* Papel do sistema */}
+            {!(isEditingAdminGlobal && !isCurrentUserGlobalAdmin) && (
+              <div className="grid gap-2">
+                <Label className="text-[var(--font-color)]">
+                  Papel no Sistema
+                </Label>
+                <Select
+                  value={formData.role || ""}
+                  onValueChange={(value) => handleSelectChange("role", value)}
+                >
+                  <SelectTrigger className="border-[var(--border-input)]">
+                    <SelectValue placeholder="Selecione o papel do sistema" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[var(--bg-simple)]">
+                    {canEditGlobalAdminRole && (
+                      <SelectItem value="admin global">
+                        <span className="flex items-center gap-2">
+                          <Crown className="w-4 h-4 text-red-600" />
+                          Administrador Global
+                        </span>
+                      </SelectItem>
+                    )}
+                    <SelectItem value="admin">
+                      <span className="flex items-center gap-2">
+                        <Crown className="w-4 h-4 text-yellow-600" />
+                        Administrador do Sistema
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="member">
+                      <span className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-blue-600" />
+                        Membro
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.role && (
+                  <p className="text-xs text-red-500">{errors.role}</p>
+                )}
+              </div>
+            )}
 
-            <div className="grid gap-2">
+            {/* Removido campo duplicado de Campus/Unidade */}
+
+            {/* Removido segundo select de Papel na Organização para evitar duplicidade */}
+
+            {/* Status ao final */}
+            <div className="grid gap-2 mt-2">
               <Label className="text-[var(--font-color)]">Status</Label>
               <Select
                 value={formData.active ? "true" : "false"}

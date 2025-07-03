@@ -44,6 +44,7 @@ async function main() {
           id: newId,
           name: user.name,
           email: user.email,
+          role: user.role || "member", // Role padrão é member
           description: user.description || null,
           active: user.active,
         },

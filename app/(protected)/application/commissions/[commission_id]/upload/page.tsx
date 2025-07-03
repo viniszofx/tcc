@@ -241,7 +241,7 @@ export default function CommissionUploadPage() {
           try {
             fileUrl = await uploadFileIntelligent(
               file,
-              "inventory-files",
+              "spreadsheets",
               `commissions/${commissionId}`
             );
             if (fileUrl) {

@@ -2,71 +2,6 @@ import { createSupabaseMiddleware } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 import { publicRoutes } from "./utils/rotes-public";
 
-const isDevelopment = process.env.NODE_ENV === "development";
-
-async function skipAuthCheck(request: NextRequest): Promise<boolean> {
-  // Pular verificação de autenticação em desenvolvimento
-  if (isDevelopment) {
-    console.log("Pular verificação de autenticação em desenvolvimento");
-    NextResponse.next();
-  }
-
-  // Verificar se o usuário está autenticado via cookie
-  const token = request.cookies.get("sb-access-token")?.value;
-
-  if (!token) {
-    return false;
-  }
-
-  try {
-    const supabase = createSupabaseMiddleware(request, null);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error("Erro ao verificar autenticação:", error);
-    return false;
-  }
-}
-
-// Função para verificar role do usuário e determinar redirecionamento
-async function getUserRoleAndRedirect(
-  userEmail: string,
-  request: NextRequest
-): Promise<{ role: string; redirectPath: string } | null> {
-  try {
-    const getUserRoleUrl = new URL("/api/auth/get-user-role", request.url);
-    const response = await fetch(getUserRoleUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email: userEmail }),
-    });
-
-    if (!response.ok) {
-      console.warn("Erro ao buscar role do usuário:", userEmail);
-      return null;
-    }
-
-    const userData = await response.json();
-    return {
-      role: userData.user?.role || userData.role || "member",
-      redirectPath: userData.user?.redirectPath || "/application",
-    };
-  } catch (error) {
-    console.error("Erro ao buscar role do usuário:", error);
-    return null;
-  }
-}
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -85,15 +20,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // REMOVIDO: Pular verificação de autenticação em desenvolvimento
-  // O sistema deve funcionar com autenticação mesmo em desenvolvimento
-  // if (isDevelopment) {
-  //   console.log("Pular verificação de autenticação em desenvolvimento");
-  //   return NextResponse.next();
-  // }
-
   try {
-    // Para a página inicial, verificar se usuário está logado
+    // Para a página inicial, apenas verificar se sistema precisa de setup
     if (pathname === "/") {
       try {
         const systemStatusUrl = new URL(
@@ -114,25 +42,7 @@ export async function middleware(request: NextRequest) {
         console.error("Erro ao verificar status do sistema:", error);
       }
 
-      // Verificar se usuário está logado
-      let response = NextResponse.next({
-        request: {
-          headers: request.headers,
-        },
-      });
-
-      const supabase = createSupabaseMiddleware(request, response);
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-
-      // Se usuário está logado, redirecionar para application
-      if (!error && user) {
-        return NextResponse.redirect(new URL("/application", request.url));
-      }
-
-      // Se não está logado, permitir acesso à página inicial
+      // Permitir acesso à página inicial
       return NextResponse.next();
     }
 

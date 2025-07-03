@@ -48,22 +48,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
     },
   });
 
-  // Tentar inicializar buckets importantes automaticamente
-  if (typeof window === "undefined") {
-    // Apenas no servidor
-    // Executar em background para não bloquear a inicialização
-    setTimeout(async () => {
-      try {
-        await ensureBucketExists("inventory-files");
-        console.log("✅ Bucket inventory-files verificado na inicialização");
-      } catch (error) {
-        console.error("❌ Falha ao verificar bucket na inicialização:", error);
-        console.error(
-          "Execute manualmente a API /api/system/setup-bucket para criar o bucket"
-        );
-      }
-    }, 100);
-  }
+  // Buckets são criados conforme necessário via setupAvatars() e setupSpreadsheets()
 }
 
 export interface BucketConfig {
@@ -81,16 +66,14 @@ export const BUCKET_CONFIGS: Record<string, BucketConfig> = {
     allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
     fileSizeLimit: 5 * 1024 * 1024, // 5MB
   },
-  "inventory-files": {
-    name: "inventory-files",
+  spreadsheets: {
+    name: "spreadsheets",
     public: true,
     allowedMimeTypes: [
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "application/vnd.ms-excel",
       "text/csv",
       "application/octet-stream",
-      "application/pdf",
-      "text/plain",
     ],
     fileSizeLimit: 50 * 1024 * 1024, // 50MB
   },

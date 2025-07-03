@@ -26,15 +26,15 @@ export async function setupSupabaseBucket() {
     }
 
     const bucketExists = buckets?.some(
-      (bucket) => bucket.name === "inventory-files"
+      (bucket) => bucket.name === "spreadsheets"
     );
 
     if (bucketExists) {
-      console.log("✅ Bucket 'inventory-files' já existe");
+      console.log("✅ Bucket 'spreadsheets' já existe");
     } else {
       // Criar o bucket
       const { data: bucketData, error: createError } =
-        await supabaseAdmin.storage.createBucket("inventory-files", {
+        await supabaseAdmin.storage.createBucket("spreadsheets", {
           public: true,
           allowedMimeTypes: [
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
@@ -50,7 +50,7 @@ export async function setupSupabaseBucket() {
         return;
       }
 
-      console.log("✅ Bucket 'inventory-files' criado com sucesso");
+      console.log("✅ Bucket 'spreadsheets' criado com sucesso");
     }
 
     // Verificar/configurar políticas de acesso

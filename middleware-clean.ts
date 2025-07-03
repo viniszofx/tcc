@@ -93,7 +93,7 @@ export async function middleware(request: NextRequest) {
   // }
 
   try {
-    // Para a página inicial, verificar se usuário está logado
+    // Para a página inicial, apenas verificar se sistema precisa de setup
     if (pathname === "/") {
       try {
         const systemStatusUrl = new URL(
@@ -114,25 +114,7 @@ export async function middleware(request: NextRequest) {
         console.error("Erro ao verificar status do sistema:", error);
       }
 
-      // Verificar se usuário está logado
-      let response = NextResponse.next({
-        request: {
-          headers: request.headers,
-        },
-      });
-
-      const supabase = createSupabaseMiddleware(request, response);
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-
-      // Se usuário está logado, redirecionar para application
-      if (!error && user) {
-        return NextResponse.redirect(new URL("/application", request.url));
-      }
-
-      // Se não está logado, permitir acesso à página inicial
+      // Permitir acesso à página inicial
       return NextResponse.next();
     }
 

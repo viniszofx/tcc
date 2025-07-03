@@ -6,7 +6,7 @@ export interface UserWithPermissions {
   id: string;
   name: string;
   email: string;
-  role: "admin" | "presidente" | "member";
+  role: "admin global" | "admin" | "member";
   organization?: {
     id: string;
     name: string;
@@ -92,19 +92,21 @@ export async function withAuth(
       };
     }
 
-    // Determinar role principal
-    let role: "admin" | "presidente" | "member" = "member";
+    // Determinar role principal baseado no UserProfile.role
+    let role: "admin global" | "admin" | "member" = userProfile.role as
+      | "admin global"
+      | "admin"
+      | "member";
     let organization = null;
     let commissions: any[] = [];
 
-    // Verificar se é admin de alguma organização
+    // Verificar se é admin de alguma organização para contexto
     if (userProfile.organizationMembers?.length > 0) {
       const adminMembership = userProfile.organizationMembers.find(
         (member) => member.role === "admin"
       );
 
       if (adminMembership) {
-        role = "admin";
         organization = {
           id: adminMembership.organization.id,
           name: adminMembership.organization.name,
@@ -127,30 +129,21 @@ export async function withAuth(
         name: member.commission.name,
         roleInCommission: member.roleInCommission,
       }));
-
-      const presidentMembership = userProfile.commissionMembers.find(
-        (member) => member.roleInCommission === "Presidente"
-      );
-
-      if (presidentMembership && role === "member") {
-        role = "presidente";
-      }
     }
 
     // Definir permissões baseadas no role
-    const isAdmin = role === "admin";
-    const isPresident = role === "presidente";
+    const isAdmin = role === "admin" || role === "admin global";
     const isMember = role === "member";
 
     const permissions = {
       canManageOrganizations: isAdmin,
       canManageCampuses: isAdmin,
       canManageUsers: isAdmin,
-      canManageCommissions: isAdmin || isPresident,
-      canUploadSpreadsheets: isAdmin || isPresident,
-      canManageCommissionMembers: isAdmin || isPresident,
-      canAccessCommission: isAdmin || isPresident || isMember,
-      canViewInventory: isAdmin || isPresident || isMember,
+      canManageCommissions: isAdmin,
+      canUploadSpreadsheets: isAdmin,
+      canManageCommissionMembers: isAdmin,
+      canAccessCommission: isAdmin || isMember,
+      canViewInventory: isAdmin || isMember,
     };
 
     // Verificar permissões específicas se requeridas

@@ -1,6 +1,7 @@
+import { withPermissions } from "@/lib/permissions/middleware";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseAdmin } from "@/lib/supabase";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
@@ -201,7 +202,21 @@ import { NextResponse } from "next/server";
  *               $ref: '#/components/schemas/Error'
  */
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  // Verificar permissões usando CASL
+  const permissionResult = await withPermissions(request, [
+    { action: "read", subject: "User" },
+  ]);
+
+  if (!permissionResult.success) {
+    return NextResponse.json(
+      { error: permissionResult.error },
+      { status: permissionResult.status }
+    );
+  }
+
+  const { user: currentUser } = permissionResult;
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
@@ -238,9 +253,19 @@ export async function GET(request: Request) {
           { status: 404 }
         );
       }
+
+      // Verificar se pode acessar este usuário específico
+      if (!currentUser.ability.can("read", "User")) {
+        return NextResponse.json(
+          { error: "Sem permissão para acessar este usuário" },
+          { status: 403 }
+        );
+      }
+
       return NextResponse.json(user);
     }
 
+    // Buscar usuários que o usuário atual pode visualizar
     const users = await prisma.userProfile.findMany({
       include: {
         campusMembers: {
@@ -268,8 +293,16 @@ export async function GET(request: Request) {
       },
     });
 
-    return NextResponse.json(users);
+    // Filtrar usuários baseado nas permissões
+    const filteredUsers = users.filter((user) =>
+      currentUser.ability.can("read", "User")
+    );
+
+    console.log(filteredUsers);
+
+    return NextResponse.json(filteredUsers);
   } catch (error) {
+    console.error("Erro ao buscar usuários:", error);
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 }
@@ -277,7 +310,21 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Verificar permissões usando CASL
+  const permissionResult = await withPermissions(request, [
+    { action: "create", subject: "User" },
+  ]);
+
+  if (!permissionResult.success) {
+    return NextResponse.json(
+      { error: permissionResult.error },
+      { status: permissionResult.status }
+    );
+  }
+
+  const { user: currentUser } = permissionResult;
+
   try {
     const body = await request.json();
     const {
@@ -288,6 +335,7 @@ export async function POST(request: Request) {
       organizationId,
       campusId,
       organizationRole = "member",
+      role = "member",
     } = body;
 
     if (!name || !email) {
@@ -342,6 +390,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // Permitir apenas admin global criar admin global, admin criar admin/member, member só member
+    let allowedRoles: ("admin global" | "admin" | "member")[] = ["member"];
+    if (currentUser.role === "admin global") {
+      allowedRoles = ["admin global", "admin", "member"];
+    } else if (currentUser.role === "admin") {
+      allowedRoles = ["admin", "member"];
+    }
+    const finalRole = allowedRoles.includes(role) ? role : "member";
+
     // Usar transação para criar tudo de uma vez
     const result = await prisma.$transaction(async (tx) => {
       // 1. Criar perfil do usuário
@@ -350,6 +407,7 @@ export async function POST(request: Request) {
           id: authData.user.id,
           name,
           email,
+          role: finalRole, // Papel do sistema
           description: description || "",
           avatar: avatar || "",
           active: true,
@@ -420,31 +478,55 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
-    let body: any = undefined;
-    try {
-      // Tentar limpar usuário do Supabase se o email já foi criado
-      if (request) {
-        body = await request.json().catch(() => undefined);
-      }
-      if (body?.email) {
-        const supabaseAdmin = createSupabaseAdmin();
-        const { data: users } = await supabaseAdmin.auth.admin.listUsers();
-        const user = users.users.find((u: any) => u.email === body.email);
-        if (user) {
-          await supabaseAdmin.auth.admin.deleteUser(user.id);
-        }
-      }
-    } catch (cleanupError) {
-      console.error("Erro ao limpar usuário do Supabase:", cleanupError);
+    // Se o erro for de unique constraint (usuário já existe no banco local OU Supabase), retorne erro amigável
+    if (error instanceof Error && error.message.includes("unique constraint")) {
+      return NextResponse.json(
+        {
+          error:
+            "Já existe um usuário com este e-mail no sistema ou no Supabase.",
+        },
+        { status: 409 }
+      );
     }
+    // Se o erro for do Supabase de e-mail já registrado, retorne erro amigável
+    if (
+      error instanceof Error &&
+      error.message.includes(
+        "A user with this email address has already been registered"
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Já existe um usuário com este e-mail no Supabase. Use outro e-mail ou recupere o acesso.",
+        },
+        { status: 409 }
+      );
+    }
+    // Caso contrário, erro genérico
+    console.error("Erro ao criar usuário:", error);
     return NextResponse.json(
-      { error: "Erro interno do servidor" },
+      { error: "Erro interno do servidor ao criar usuário." },
       { status: 500 }
     );
   }
 }
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
+  // Verificar permissões usando CASL
+  const permissionResult = await withPermissions(request, [
+    { action: "update", subject: "User" },
+  ]);
+
+  if (!permissionResult.success) {
+    return NextResponse.json(
+      { error: permissionResult.error },
+      { status: permissionResult.status }
+    );
+  }
+
+  const { user: currentUser } = permissionResult;
+
   try {
     const body = await request.json();
     const {
@@ -466,12 +548,36 @@ export async function PUT(request: Request) {
     // Verificar se o usuário existe
     const existingUser = await prisma.userProfile.findUnique({
       where: { id },
+      include: {
+        organizationMembers: {
+          include: {
+            organization: true,
+          },
+        },
+        commissionMembers: {
+          include: {
+            commission: {
+              include: {
+                campus: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!existingUser) {
       return NextResponse.json(
         { error: "Usuário não encontrado" },
         { status: 404 }
+      );
+    }
+
+    // Verificar se pode atualizar este usuário específico
+    if (!currentUser.ability.can("update", "User")) {
+      return NextResponse.json(
+        { error: "Sem permissão para atualizar este usuário" },
+        { status: 403 }
       );
     }
 
@@ -572,7 +678,21 @@ export async function PUT(request: Request) {
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
+  // Verificar permissões usando CASL
+  const permissionResult = await withPermissions(request, [
+    { action: "delete", subject: "User" },
+  ]);
+
+  if (!permissionResult.success) {
+    return NextResponse.json(
+      { error: permissionResult.error },
+      { status: permissionResult.status }
+    );
+  }
+
+  const { user: currentUser } = permissionResult;
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
@@ -598,10 +718,16 @@ export async function DELETE(request: Request) {
       );
     }
 
+    // Verificar se pode deletar este usuário específico
+    if (!currentUser.ability.can("delete", "User")) {
+      return NextResponse.json(
+        { error: "Sem permissão para deletar este usuário" },
+        { status: 403 }
+      );
+    }
+
     // Verificar se o usuário é admin global - não pode ser excluído
-    const isGlobalAdmin = existingUser.organizationMembers.some(
-      (member) => member.role === "admin global"
-    );
+    const isGlobalAdmin = existingUser.role === "admin global";
 
     if (isGlobalAdmin) {
       return NextResponse.json(
@@ -649,19 +775,47 @@ export async function DELETE(request: Request) {
         where: { id },
       });
       console.log(`Usuário ${id} deletado do banco de dados`);
+
+      // 5. Deletar da tabela AllowedUser (whitelist) pelo e-mail
+      await tx.allowedUser.deleteMany({
+        where: { email: existingUser.email },
+      });
+      console.log(`AllowedUser com email ${existingUser.email} removido.`);
     });
 
     // 5. Deletar o usuário do Supabase Auth (opcional, dependendo do fluxo)
     try {
       const supabaseAdmin = createSupabaseAdmin();
-      await supabaseAdmin.auth.admin.deleteUser(id);
+      const { error: supabaseDeleteError } =
+        await supabaseAdmin.auth.admin.deleteUser(id);
+      if (supabaseDeleteError) {
+        console.error(
+          "Erro ao deletar usuário do Supabase Auth:",
+          supabaseDeleteError
+        );
+        return NextResponse.json(
+          {
+            error: `Erro ao deletar usuário do Supabase Auth: ${supabaseDeleteError.message}`,
+          },
+          { status: 500 }
+        );
+      }
       console.log(`Usuário ${id} deletado do Supabase Auth`);
     } catch (supabaseError) {
-      console.warn(
-        "Erro ao deletar usuário do Supabase Auth (pode não existir):",
+      console.error(
+        "Erro inesperado ao deletar usuário do Supabase Auth:",
         supabaseError
       );
-      // Não falhar a operação se o usuário não existir no Supabase
+      return NextResponse.json(
+        {
+          error: `Erro inesperado ao deletar usuário do Supabase Auth: ${
+            supabaseError instanceof Error
+              ? supabaseError.message
+              : String(supabaseError)
+          }`,
+        },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json(

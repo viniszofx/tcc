@@ -8,6 +8,7 @@ export const data = {
       id: "user-uuid-1", // mesmo que o auth.users
       name: "Vinicius Souza",
       email: "vinicius@example.com",
+      role: "admin global", // Administrador global
       description: "Administrador do sistema",
       avatar: "https://example.com/avatar.jpg",
       active: true,
@@ -16,6 +17,7 @@ export const data = {
       id: "user-uuid-2",
       name: "Maria Silva",
       email: "maria.silva@example.com",
+      role: "member", // Membro
       description: "Técnica em Patrimônio",
       avatar: "https://example.com/avatar2.jpg",
       active: true,
@@ -24,6 +26,7 @@ export const data = {
       id: "user-uuid-3",
       name: "João Santos",
       email: "joao.santos@example.com",
+      role: "member", // Membro
       description: "Assistente Administrativo",
       avatar: "https://example.com/avatar3.jpg",
       active: true,
@@ -32,6 +35,7 @@ export const data = {
       id: "user-uuid-4",
       name: "Ana Costa",
       email: "ana.costa@example.com",
+      role: "admin", // Admin de organização
       description: "Coordenadora de TI",
       avatar: "https://example.com/avatar4.jpg",
       active: true,
@@ -40,6 +44,7 @@ export const data = {
       id: "user-uuid-5",
       name: "Carlos Oliveira",
       email: "carlos.oliveira@example.com",
+      role: "member", // Membro
       description: "Servidor Público",
       avatar: "https://example.com/avatar5.jpg",
       active: true,
@@ -48,6 +53,7 @@ export const data = {
       id: "user-uuid-6",
       name: "Patricia Mendes",
       email: "patricia.mendes@ufms.br",
+      role: "member", // Membro
       description: "Coordenadora de Patrimônio UFMS",
       avatar: "https://example.com/avatar6.jpg",
       active: true,
@@ -56,6 +62,7 @@ export const data = {
       id: "user-uuid-7",
       name: "Roberto Lima",
       email: "roberto.lima@ifsp.edu.br",
+      role: "member", // Membro
       description: "Técnico de Laboratório IFSP",
       avatar: "https://example.com/avatar7.jpg",
       active: true,
@@ -64,6 +71,7 @@ export const data = {
       id: "user-uuid-8",
       name: "Fernanda Torres",
       email: "fernanda.torres@ifsp.edu.br",
+      role: "admin", // Admin de organização
       description: "Diretora Adjunta IFSP",
       avatar: "https://example.com/avatar8.jpg",
       active: true,

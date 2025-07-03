@@ -109,6 +109,7 @@ export async function POST(request: Request) {
           id: authData.user.id, // Usar o mesmo ID do Supabase Auth
           name: admin.name,
           email: admin.email,
+          role: "admin global", // Role de administrador global do sistema
           description:
             "Administrador do sistema - Criado durante setup inicial",
           avatar: "",
@@ -116,12 +117,12 @@ export async function POST(request: Request) {
         },
       });
 
-      // 4. Vincular o administrador à organização como admin global
+      // 4. Vincular o administrador à organização como admin
       await tx.organizationMember.create({
         data: {
           userId: newAdmin.id,
           organizationId: newOrganization.id,
-          role: "admin global", // Role de administrador global do sistema
+          role: "admin", // Role de administrador da organização
         },
       });
 

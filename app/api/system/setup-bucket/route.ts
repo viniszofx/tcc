@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 // Função para configurar o bucket do Supabase
-async function setupInventoryBucket() {
+async function setupSpreadsheetsBucket() {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -37,19 +37,19 @@ async function setupInventoryBucket() {
       return { success: false, error: listError };
     }
 
-    // Verificar se o bucket inventory-files já existe
-    const inventoryBucket = existingBuckets?.find(
-      (bucket) => bucket.name === "inventory-files"
+    // Verificar se o bucket spreadsheets já existe
+    const spreadsheetsBucket = existingBuckets?.find(
+      (bucket) => bucket.name === "spreadsheets"
     );
 
-    if (inventoryBucket) {
-      console.log("✅ Bucket inventory-files já existe");
+    if (spreadsheetsBucket) {
+      console.log("✅ Bucket spreadsheets já existe");
     } else {
-      console.log("🏗️ Criando bucket inventory-files...");
+      console.log("🏗️ Criando bucket spreadsheets...");
 
-      // Criar o bucket inventory-files
+      // Criar o bucket spreadsheets
       const { data, error: createError } = await supabase.storage.createBucket(
-        "inventory-files",
+        "spreadsheets",
         {
           public: true,
           allowedMimeTypes: [
@@ -67,11 +67,11 @@ async function setupInventoryBucket() {
       );
 
       if (createError) {
-        console.error("❌ Erro ao criar bucket inventory-files:", createError);
+        console.error("❌ Erro ao criar bucket spreadsheets:", createError);
         return { success: false, error: createError };
       }
 
-      console.log("✅ Bucket inventory-files criado com sucesso");
+      console.log("✅ Bucket spreadsheets criado com sucesso");
     }
 
     return { success: true };
@@ -84,7 +84,7 @@ async function setupInventoryBucket() {
 // Handler para rota de API no formato App Router
 export async function POST(request: NextRequest) {
   try {
-    const result = await setupInventoryBucket();
+    const result = await setupSpreadsheetsBucket();
 
     if (result.success) {
       return NextResponse.json({ message: "Bucket configurado com sucesso" });
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
 // Handler para responder à requisição GET
 export async function GET(request: NextRequest) {
   return NextResponse.json(
-    { message: "Use POST para configurar o bucket inventory-files" },
+    { message: "Use POST para configurar o bucket spreadsheets" },
     { status: 200 }
   );
 }

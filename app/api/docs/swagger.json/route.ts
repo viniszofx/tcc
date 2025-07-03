@@ -525,7 +525,7 @@ const swaggerSpec = {
                       type: "object",
                       properties: {
                         available: { type: "boolean" },
-                        hasInventoryBucket: { type: "boolean" },
+                        hasSpreadsheetsBucket: { type: "boolean" },
                       },
                     },
                     auth: {
