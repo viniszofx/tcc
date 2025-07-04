@@ -193,36 +193,36 @@ export default function CampusModal({
         </DialogHeader>
         <div className="my-4 sm:my-6 space-y-4">
           <div className="space-y-2">
-            <Label
-              htmlFor="organizationId"
-              className="text-[var(--font-color)]"
-            >
+            <Label htmlFor="organizationId" className="text-[var(--font-color)]">
               Organização <span className="text-red-500">*</span>
             </Label>
-            <Select
-              value={formData.organizationId}
-              onValueChange={(value) =>
-                handleSelectChange("organizationId", value)
-              }
-              disabled={loadingOrganizations}
-            >
-              <SelectTrigger className="border-[var(--border-color)] bg-[var(--input-bg-color)] text-[var(--font-color)]">
-                <SelectValue
-                  placeholder={
-                    loadingOrganizations
-                      ? "Carregando..."
-                      : "Selecione uma organização"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {organizations.map((org) => (
-                  <SelectItem key={org.id} value={org.id}>
-                    {org.name} ({org.shortName})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="w-full">
+              <Select
+                value={formData.organizationId}
+                onValueChange={(value) =>
+                  handleSelectChange("organizationId", value)
+                }
+                disabled={loadingOrganizations}
+              >
+                <SelectTrigger className="border-[var(--border-color)] bg-[var(--input-bg-color)] text-[var(--font-color)] w-full">
+                  <SelectValue
+                    placeholder={loadingOrganizations ? "Carregando..." : "Selecione uma organização"}
+                  />
+                </SelectTrigger>
+                <SelectContent className="w-[var(--radix-select-trigger-width)] max-h-[var(--radix-select-content-available-height)]">
+                  {organizations.map((org) => (
+                    <SelectItem
+                      key={org.id}
+                      value={org.id}
+                      className="truncate"
+                      title={`${org.name} (${org.shortName})`}
+                    >
+                      {org.name.length > 30 ? `${org.name.substring(0, 30)}...` : org.name} ({org.shortName})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="nome" className="text-[var(--font-color)]">
@@ -285,7 +285,7 @@ export default function CampusModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md max-w-[95vw] p-4 sm:p-6">
+      <DialogContent className="sm:max-w-md max-w-[95vw] p-4 sm:p-6 overflow-x-hidden">
         {renderContent()}
       </DialogContent>
     </Dialog>
