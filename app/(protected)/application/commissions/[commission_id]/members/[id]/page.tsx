@@ -1,6 +1,7 @@
 "use client";
 
 import LoadingScreen from "@/components/custom/loading";
+import { PageTitle } from "@/components/custom/page-title";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -69,9 +70,9 @@ export default function CommissionMemberDetailPage() {
 
   const member = memberData
     ? {
-        ...memberData.user,
-        roleInCommission: memberData.roleInCommission,
-      }
+      ...memberData.user,
+      roleInCommission: memberData.roleInCommission,
+    }
     : null;
 
   useEffect(() => {
@@ -122,8 +123,7 @@ export default function CommissionMemberDetailPage() {
     if (!member) return;
 
     const confirmRemoval = confirm(
-      `Tem certeza que deseja remover "${
-        member.name || member.email
+      `Tem certeza que deseja remover "${member.name || member.email
       }" da comissão? Esta ação não pode ser desfeita.`
     );
 
@@ -155,258 +155,267 @@ export default function CommissionMemberDetailPage() {
 
   if (!canManageMembers) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-red-500">Acesso negado</p>
-        </CardContent>
-      </Card>
+      <>
+        <PageTitle title="Acesso negado - KDÊ" />
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-red-500">Acesso negado</p>
+          </CardContent>
+        </Card>
+      </>
     );
   }
 
   if (!member) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center">
-            <p className="text-red-500 mb-4">Membro não encontrado</p>
-            <Button onClick={handleGoBack} variant="outline">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar para Membros
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <>
+        <PageTitle title="Membro não encontrado - KDÊ" />
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <p className="text-red-500 mb-4">Membro não encontrado</p>
+              <Button onClick={handleGoBack} variant="outline">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Voltar para Membros
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header com navegação */}
-      <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div>
-                <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
-                  {member.name || member.email}
-                </CardTitle>
-                <CardDescription className="text-[var(--font-color)] opacity-70">
-                  Membro da Comissão: {commission?.name || "Carregando..."}
-                </CardDescription>
+    <>
+      <PageTitle title="Detalhes dos membros - KDÊ" />
+      <div className="space-y-6">
+        {/* Header com navegação */}
+        <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div>
+                  <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
+                    {member.name || member.email}
+                  </CardTitle>
+                  <CardDescription className="text-[var(--font-color)] opacity-70">
+                    Membro da Comissão: {commission?.name || "Carregando..."}
+                  </CardDescription>
+                </div>
               </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {canEditMemberRole && (
-                <>
-                  {!isEditing ? (
-                    <Button
-                      variant="outline"
-                      onClick={handleStartEdit}
-                      className="bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--border-color)] hover:bg-[var(--hover-color)]"
-                    >
-                      <Edit className="w-4 h-4 mr-2" />
-                      Editar Papel
-                    </Button>
-                  ) : (
-                    <>
+              <div className="flex flex-wrap gap-2">
+                {canEditMemberRole && (
+                  <>
+                    {!isEditing ? (
                       <Button
                         variant="outline"
-                        onClick={handleSaveRole}
-                        disabled={
-                          updateMemberMutation.isPending ||
-                          newRole === member.roleInCommission
-                        }
-                        className="bg-green-600 text-white hover:bg-green-700 border-green-600"
-                      >
-                        <Save className="w-4 h-4 mr-2" />
-                        {updateMemberMutation.isPending
-                          ? "Salvando..."
-                          : "Salvar"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={handleCancelEdit}
-                        disabled={updateMemberMutation.isPending}
+                        onClick={handleStartEdit}
                         className="bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--border-color)] hover:bg-[var(--hover-color)]"
                       >
-                        <X className="w-4 h-4 mr-2" />
-                        Cancelar
+                        <Edit className="w-4 h-4 mr-2" />
+                        Editar Papel
                       </Button>
-                    </>
-                  )}
-                </>
-              )}
-              {canManageMembers && (
-                <Button
-                  variant="destructive"
-                  onClick={handleRemoveMember}
-                  disabled={removeMemberMutation.isPending}
-                  className="bg-red-600 text-white hover:bg-red-700"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  {removeMemberMutation.isPending
-                    ? "Removendo..."
-                    : "Remover da Comissão"}
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
-      {/* Informações do Membro */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="w-full bg-[var(--bg-simple)] border border-[var(--border-color)]">
-          <CardHeader>
-            <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Informações Pessoais
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 px-4 sm:px-6 md:px-8">
-            <div>
-              <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
-                Nome Completo
-              </label>
-              <p className="text-[var(--font-color)]">
-                {member.name || "Não informado"}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
-                E-mail
-              </label>
-              <p className="text-[var(--font-color)] flex items-center gap-2 break-all">
-                <Mail className="w-4 h-4" />
-                {member.email}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
-                ID do Usuário
-              </label>
-              <p className="font-mono text-sm text-[var(--font-color)] opacity-70">
-                {member.id}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="w-full bg-[var(--bg-simple)] border border-[var(--border-color)]">
-          <CardHeader>
-            <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
-              <Shield className="w-5 h-5" />
-              Permissões na Comissão
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 px-4 sm:px-6 md:px-8">
-            <div>
-              <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
-                Papel na Comissão
-              </label>
-              <div className="flex items-center gap-2">
-                {isEditing && canEditMemberRole ? (
-                  <Select
-                    value={newRole}
-                    onValueChange={setNewRole}
-                    disabled={updateMemberMutation.isPending}
+                    ) : (
+                      <>
+                        <Button
+                          variant="outline"
+                          onClick={handleSaveRole}
+                          disabled={
+                            updateMemberMutation.isPending ||
+                            newRole === member.roleInCommission
+                          }
+                          className="bg-green-600 text-white hover:bg-green-700 border-green-600"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          {updateMemberMutation.isPending
+                            ? "Salvando..."
+                            : "Salvar"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={handleCancelEdit}
+                          disabled={updateMemberMutation.isPending}
+                          className="bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--border-color)] hover:bg-[var(--hover-color)]"
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Cancelar
+                        </Button>
+                      </>
+                    )}
+                  </>
+                )}
+                {canManageMembers && (
+                  <Button
+                    variant="destructive"
+                    onClick={handleRemoveMember}
+                    disabled={removeMemberMutation.isPending}
+                    className="bg-red-600 text-white hover:bg-red-700"
                   >
-                    <SelectTrigger className="w-48 bg-[var(--bg-simple)] border-[var(--border-color)] text-[var(--font-color)]">
-                      <SelectValue placeholder="Selecione o papel" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Membro">Membro</SelectItem>
-                      <SelectItem value="Presidente">Presidente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Badge
-                    variant={
-                      member.roleInCommission === "Presidente"
-                        ? "default"
-                        : "secondary"
-                    }
-                  >
-                    {member.roleInCommission === "Presidente"
-                      ? "Presidente"
-                      : "Membro"}
-                  </Badge>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {removeMemberMutation.isPending
+                      ? "Removendo..."
+                      : "Remover da Comissão"}
+                  </Button>
                 )}
               </div>
             </div>
-            <div>
-              <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
-                Papel no Sistema
-              </label>
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant={member.role === "admin" ? "destructive" : "outline"}
-                >
-                  {member.role === "admin"
-                    ? "Admin do Sistema"
-                    : "Usuário Padrão"}
-                </Badge>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
-                ID do Usuário
-              </label>
-              <p className="font-mono text-sm text-[var(--font-color)] opacity-70">
-                {member.id}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Informações da Comissão */}
-      {commission && (
-        <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
-          <CardHeader>
-            <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              Detalhes da Comissão
-            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
+        </Card>
+
+        {/* Informações do Membro */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="w-full bg-[var(--bg-simple)] border border-[var(--border-color)]">
+            <CardHeader>
+              <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Informações Pessoais
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 px-4 sm:px-6 md:px-8">
               <div>
                 <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
-                  Nome da Comissão
-                </label>
-                <p className="text-[var(--font-color)]">{commission.name}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
-                  Descrição
+                  Nome Completo
                 </label>
                 <p className="text-[var(--font-color)]">
-                  {commission.description || "Nenhuma descrição fornecida"}
+                  {member.name || "Não informado"}
                 </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
-                  Status da Comissão
+                  E-mail
+                </label>
+                <p className="text-[var(--font-color)] flex items-center gap-2 break-all">
+                  <Mail className="w-4 h-4" />
+                  {member.email}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
+                  ID do Usuário
+                </label>
+                <p className="font-mono text-sm text-[var(--font-color)] opacity-70">
+                  {member.id}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="w-full bg-[var(--bg-simple)] border border-[var(--border-color)]">
+            <CardHeader>
+              <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Permissões na Comissão
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 px-4 sm:px-6 md:px-8">
+              <div>
+                <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
+                  Papel na Comissão
                 </label>
                 <div className="flex items-center gap-2">
-                  <Badge variant={commission.active ? "default" : "secondary"}>
-                    {commission.active ? "Ativa" : "Inativa"}
+                  {isEditing && canEditMemberRole ? (
+                    <Select
+                      value={newRole}
+                      onValueChange={setNewRole}
+                      disabled={updateMemberMutation.isPending}
+                    >
+                      <SelectTrigger className="w-48 bg-[var(--bg-simple)] border-[var(--border-color)] text-[var(--font-color)]">
+                        <SelectValue placeholder="Selecione o papel" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Membro">Membro</SelectItem>
+                        <SelectItem value="Presidente">Presidente</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Badge
+                      variant={
+                        member.roleInCommission === "Presidente"
+                          ? "default"
+                          : "secondary"
+                      }
+                    >
+                      {member.roleInCommission === "Presidente"
+                        ? "Presidente"
+                        : "Membro"}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
+                  Papel no Sistema
+                </label>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant={member.role === "admin" ? "destructive" : "outline"}
+                  >
+                    {member.role === "admin"
+                      ? "Admin do Sistema"
+                      : "Usuário Padrão"}
                   </Badge>
                 </div>
               </div>
               <div>
                 <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
-                  ID da Comissão
+                  ID do Usuário
                 </label>
                 <p className="font-mono text-sm text-[var(--font-color)] opacity-70">
-                  {commission.id}
+                  {member.id}
                 </p>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Informações da Comissão */}
+        {commission && (
+          <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
+            <CardHeader>
+              <CardTitle className="text-[var(--font-color)] flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Detalhes da Comissão
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
+                    Nome da Comissão
+                  </label>
+                  <p className="text-[var(--font-color)]">{commission.name}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
+                    Descrição
+                  </label>
+                  <p className="text-[var(--font-color)]">
+                    {commission.description || "Nenhuma descrição fornecida"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
+                    Status da Comissão
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={commission.active ? "default" : "secondary"}>
+                      {commission.active ? "Ativa" : "Inativa"}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
+                    ID da Comissão
+                  </label>
+                  <p className="font-mono text-sm text-[var(--font-color)] opacity-70">
+                    {commission.id}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </>
   );
 }

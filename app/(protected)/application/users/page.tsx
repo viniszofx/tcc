@@ -1,6 +1,7 @@
 "use client";
 
 import LoadingScreen from "@/components/custom/loading";
+import { PageTitle } from "@/components/custom/page-title";
 import { AddUserModal } from "@/components/manager-users/add-user-modal";
 import { EditUserModal } from "@/components/manager-users/edit-user-modal";
 import { UserCreatedModal } from "@/components/manager-users/user-created-modal";
@@ -239,80 +240,86 @@ export default function UsersPage() {
 
   if (userError || usersError) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-red-500">
-            Erro: {userError || (usersError as Error)?.message}
-          </p>
-        </CardContent>
-      </Card>
+      <>
+        <PageTitle title="Erro - KDÊ" />
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-red-500">
+              Erro: {userError || (usersError as Error)?.message}
+            </p>
+          </CardContent>
+        </Card>
+      </>
     );
   }
 
   return (
-    <Card className="w-full bg-[var(--bg-simple)] shadow-lg transition-all duration-300">
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6">
-        <div>
-          <CardTitle className="text-2xl font-bold text-[var(--font-color)] md:text-3xl">
-            Gerenciar Usuários
-          </CardTitle>
-          <CardDescription className="text-[var(--font-color)] opacity-70">
-            Gerencie os usuários do sistema e suas permissões
-          </CardDescription>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {canCreateUsers && (
-            <Button
-              onClick={() => setIsAddModalOpen(true)}
-              className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all w-full sm:w-auto"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Adicionar Usuário
-            </Button>
-          )}
-        </div>
-      </CardHeader>
+    <>
+      <PageTitle title="Gerenciar Usuários - KDÊ" />
+      <Card className="w-full bg-[var(--bg-simple)] shadow-lg transition-all duration-300">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6">
+          <div>
+            <CardTitle className="text-2xl font-bold text-[var(--font-color)] md:text-3xl">
+              Gerenciar Usuários
+            </CardTitle>
+            <CardDescription className="text-[var(--font-color)] opacity-70">
+              Gerencie os usuários do sistema e suas permissões
+            </CardDescription>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {canCreateUsers && (
+              <Button
+                onClick={() => setIsAddModalOpen(true)}
+                className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all w-full sm:w-auto"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar Usuário
+              </Button>
+            )}
+          </div>
+        </CardHeader>
 
-      <CardContent className="flex flex-col gap-6">
-        <UserSearchCard searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-        <UserListCard
-          users={filteredUsers}
-          onEditUser={handleEditClick}
-          onDeleteUser={canDeleteUsers ? handleDeleteUser : undefined}
+        <CardContent className="flex flex-col gap-6">
+          <UserSearchCard searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+          <UserListCard
+            users={filteredUsers}
+            onEditUser={handleEditClick}
+            onDeleteUser={canDeleteUsers ? handleDeleteUser : undefined}
+          />
+        </CardContent>
+
+        <AddUserModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onAddUser={handleAddUser}
+          canCreateGlobalAdmin={isCurrentUserGlobalAdmin}
         />
-      </CardContent>
 
-      <AddUserModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onAddUser={handleAddUser}
-        canCreateGlobalAdmin={isCurrentUserGlobalAdmin}
-      />
-
-      <EditUserModal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setSelectedUser(null);
-        }}
-        user={selectedUser}
-        onEditUser={handleEditUser}
-        canEditGlobalAdminRole={isCurrentUserGlobalAdmin}
-        currentUserIsGlobalAdmin={isCurrentUserGlobalAdmin}
-      />
-
-      {createdUserData && (
-        <UserCreatedModal
-          isOpen={isUserCreatedModalOpen}
+        <EditUserModal
+          isOpen={isEditModalOpen}
           onClose={() => {
-            setIsUserCreatedModalOpen(false);
-            setCreatedUserData(null);
+            setIsEditModalOpen(false);
+            setSelectedUser(null);
           }}
-          userEmail={createdUserData.email}
-          tempPassword={createdUserData.tempPassword}
-          userName={createdUserData.name}
+          user={selectedUser}
+          onEditUser={handleEditUser}
+          canEditGlobalAdminRole={isCurrentUserGlobalAdmin}
+          currentUserIsGlobalAdmin={isCurrentUserGlobalAdmin}
         />
-      )}
-    </Card>
+
+        {createdUserData && (
+          <UserCreatedModal
+            isOpen={isUserCreatedModalOpen}
+            onClose={() => {
+              setIsUserCreatedModalOpen(false);
+              setCreatedUserData(null);
+            }}
+            userEmail={createdUserData.email}
+            tempPassword={createdUserData.tempPassword}
+            userName={createdUserData.name}
+          />
+        )}
+      </Card>
+    </>
   );
 }

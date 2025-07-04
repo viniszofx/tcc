@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sobre o Sistema | TCC",
+  title: "Sobre o Sistema - KDÊ",
   description: "Informações sobre o sistema",
 };
 
