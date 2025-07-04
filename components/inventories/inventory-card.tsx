@@ -103,7 +103,14 @@ export default function InventoryCard({
         <CardContent className="p-3 sm:p-4">
           <div className="flex justify-between items-start mb-2 gap-2">
             <h3 className="font-semibold text-[var(--font-color)] line-clamp-2 text-sm sm:text-base">
-              {item.DESCRICAO}
+              {(() => {
+                const descricao = item.DESCRICAO || '';
+                const index = descricao.indexOf('[');
+                if (index > 0) {
+                  return descricao.substring(0, index).trim() + (descricao.length > index ? '...' : '');
+                }
+                return descricao;
+              })()}
             </h3>
             <Badge
               className={`${getStatusColor(item.STATUS)} text-white text-xs`}

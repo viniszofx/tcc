@@ -93,7 +93,7 @@ export default function InventoryMetadata({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5 text-[var(--font-color)]" />
-            <span className="font-medium text-[var(--font-color)]">
+            <span className="font-medium text-[var(--font-color)] truncate">
               {metadata.fileName}
             </span>
           </div>

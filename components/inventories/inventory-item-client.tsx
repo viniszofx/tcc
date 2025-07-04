@@ -180,6 +180,15 @@ export default function InventoryItemClient({
     );
   }
 
+  const truncateAtBracket = (text: string | undefined) => {
+    if (!text) return '';
+    const index = text.indexOf('[');
+    if (index > 0) {
+      return text.substring(0, index).trim() + (text.length > index ? '...' : '');
+    }
+    return text;
+  };
+
   return (
     <>
       <Card className="w-full max-w-3xl bg-[var(--bg-simple)] shadow-md lg:max-w-5xl xl:max-w-6xl mx-auto">
@@ -232,7 +241,7 @@ export default function InventoryItemClient({
           </div>
           <CardTitle className="mt-4 text-lg font-bold text-[var(--font-color)] sm:text-xl md:text-2xl lg:text-3xl">
             <div className="flex items-center gap-2 flex-wrap">
-              <span>{item.description}</span>
+              <span>{truncateAtBracket(item.description)}</span>
 
               {/* Status do item */}
               <Badge className="bg-green-500 text-white text-xs sm:text-sm">
