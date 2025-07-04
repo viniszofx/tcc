@@ -32,44 +32,45 @@ export function UserProfileCard({ usuario }: UserProfileCardProps) {
   };
 
   return (
-    <Card className="border-[var(--border-color)] bg-[var(--bg-simple)]">
-  <CardContent className="p-6">
-    <div className="flex flex-col md:flex-row md:items-center gap-6">
-      <Avatar className="h-24 w-24 border mx-auto md:mx-0">
-        <AvatarImage
-          src={usuario.perfil?.imagem_url || "/placeholder.svg"}
-          alt={usuario.nome}
-        />
-        <AvatarFallback className="text-2xl">
-          {usuario.nome.charAt(0)}
-        </AvatarFallback>
-      </Avatar>
-      <div className="flex flex-col items-center md:items-start gap-2">
-        <h2 className="text-2xl font-bold text-[var(--font-color)]">
-          {usuario.nome}
-        </h2>
-        <Badge
-          className={`${getRoleBadgeColor(
-            usuario.papel || "usuario"
-          )} text-white`}
-        >
-          {(usuario.papel || "USUÁRIO").toUpperCase()}
-        </Badge>
-        <span
-          className={`inline-flex rounded px-2 py-1 text-xs font-medium text-white ${
-            usuario.active ? "bg-green-500" : "bg-red-500"
-          }`}
-        >
-          {usuario.active ? "Ativo" : "Inativo"}
-        </span>
-        {usuario.perfil?.descricao && (
-          <p className="text-sm text-[var(--font-color)] opacity-80 mt-2 text-center md:text-left">
-            {usuario.perfil.descricao}
-          </p>
-        )}
-      </div>
-    </div>
-  </CardContent>
-</Card>
+    <Card className="border-[var(--border-color)] bg-[var(--bg-simple)] overflow-hidden">
+      <CardContent className="p-6 overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center gap-6">
+          <Avatar className="h-24 w-24 border mx-auto md:mx-0 shrink-0">
+            <AvatarImage
+              src={usuario.perfil?.imagem_url || "/placeholder.svg"}
+              alt={usuario.nome}
+            />
+            <AvatarFallback className="text-2xl">
+              {usuario.nome.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+          
+          <div className="flex flex-col items-center md:items-start gap-2 w-full min-w-0">
+            <h2 className="text-2xl font-bold text-[var(--font-color)] break-words text-center md:text-left">
+              {usuario.nome}
+            </h2>
+            <Badge
+              className={`${getRoleBadgeColor(
+                usuario.papel || "usuario"
+              )} text-white`}
+            >
+              {(usuario.papel || "USUÁRIO").toUpperCase()}
+            </Badge>
+            <span
+              className={`inline-flex rounded px-2 py-1 text-xs font-medium text-white ${
+                usuario.active ? "bg-green-500" : "bg-red-500"
+              }`}
+            >
+              {usuario.active ? "Ativo" : "Inativo"}
+            </span>
+            {usuario.perfil?.descricao && (
+              <p className="text-sm text-[var(--font-color)] opacity-80 mt-2 break-words text-center md:text-left">
+                {usuario.perfil.descricao}
+              </p>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

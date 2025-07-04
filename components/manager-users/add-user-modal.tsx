@@ -221,7 +221,7 @@ export function AddUserModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] bg-[var(--bg-simple)] max-h-[90vh] overflow-y-auto overflow-x-hidden p-4">
+      <DialogContent className="sm:max-w-[500px] w-full max-w-[95vw] bg-[var(--bg-simple)] max-h-[90vh] overflow-y-auto overflow-x-hidden p-2 sm:p-4">
         {successMessage || errorMessage || tempPassword ? (
           <div className="space-y-6 py-6 text-center">
             {successMessage && (
@@ -368,13 +368,13 @@ export function AddUserModal({
                     handleSelectChange("organizationId", value)
                   }
                 >
-                  <SelectTrigger className="border-[var(--border-input)]">
-                    <SelectValue placeholder="Selecione uma organização (opcional)" />
+                  <SelectTrigger className="border-[var(--border-input)] max-w-full truncate">
+                    <SelectValue placeholder="Selecione uma organização (opcional)" className="break-words"/>
                   </SelectTrigger>
-                  <SelectContent className="bg-[var(--bg-simple)]">
+                  <SelectContent className="bg-[var(--bg-simple)] max-w-[90vw] w-full">
                     {/* Não use value="" para SelectItem, apenas placeholder controla vazio */}
                     {organizations.map((org: any) => (
-                      <SelectItem key={org.id} value={org.id}>
+                      <SelectItem key={org.id} value={org.id} className="break-words">
                         {org.name}
                       </SelectItem>
                     ))}
@@ -401,7 +401,7 @@ export function AddUserModal({
                   <SelectTrigger className="border-[var(--border-input)]">
                     <SelectValue placeholder="Selecione o papel na organização (opcional)" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[var(--bg-simple)]">
+                  <SelectContent className="bg-[var(--bg-simple)] max-w-[90vw] w-full">
                     {/* Não use value="" para SelectItem, apenas placeholder controla vazio */}
                     <SelectItem value="admin">
                       <span className="flex items-center gap-2">
@@ -434,7 +434,7 @@ export function AddUserModal({
                   <SelectTrigger className="border-[var(--border-input)]">
                     <SelectValue placeholder="Selecione o papel do sistema" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[var(--bg-simple)]">
+                  <SelectContent className="bg-[var(--bg-simple)] max-w-[90vw] w-full">
                     {canCreateGlobalAdmin && (
                       <SelectItem value="admin global">
                         <span className="flex items-center gap-2">
@@ -480,7 +480,7 @@ export function AddUserModal({
                   <SelectTrigger className="border-[var(--border-input)]">
                     <SelectValue placeholder="Selecione um campus (opcional)" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[var(--bg-simple)]">
+                  <SelectContent className="bg-[var(--bg-simple)] max-w-[90vw] w-full">
                     <SelectItem value="no-campus">
                       Nenhum campus específico
                     </SelectItem>
@@ -501,7 +501,7 @@ export function AddUserModal({
                   <SelectTrigger className="border-[var(--border-input)]">
                     <SelectValue placeholder="Selecione o status" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[var(--bg-simple)]">
+                  <SelectContent className="bg-[var(--bg-simple)] max-w-[90vw] w-full">
                     <SelectItem value="true">
                       <span className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-green-600" />

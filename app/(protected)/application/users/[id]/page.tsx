@@ -32,8 +32,8 @@ export default function UserDetailsPage() {
     typeof params.id === "string"
       ? params.id
       : Array.isArray(params.id)
-      ? params.id[0]
-      : "";
+        ? params.id[0]
+        : "";
 
   // Usar hook otimizado para buscar dados do usuário
   const {
@@ -169,19 +169,18 @@ export default function UserDetailsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header com ações */}
       <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
         <CardHeader>
-          <div className="flex justify-between items-start">
+          <div className="flex flex-col-reverse gap-4 lg:flex-row lg:justify-between lg:items-start">
             <div>
-              <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
+              <CardTitle className="text-2xl font-bold text-[var(--font-color)] break-words">
                 {userData.name || userData.email}
               </CardTitle>
               <CardDescription className="text-[var(--font-color)] opacity-70">
                 Detalhes e configurações do usuário
               </CardDescription>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 justify-start lg:justify-end">
               <Button
                 onClick={() => setIsEditModalOpen(true)}
                 className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] px-4 py-2 text-base sm:px-2 sm:py-1 sm:text-sm"
@@ -300,7 +299,7 @@ export default function UserDetailsPage() {
 
             {/* Organizações */}
             {userData?.organizationMembers &&
-            userData.organizationMembers.length > 0 ? (
+              userData.organizationMembers.length > 0 ? (
               <div>
                 <h4 className="font-medium text-[var(--font-color)] mb-2">
                   Organizações
@@ -315,11 +314,10 @@ export default function UserDetailsPage() {
                         {member.organization?.name}
                       </span>
                       <span
-                        className={`px-2 py-1 rounded text-xs ${
-                          member.role === "admin"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
+                        className={`px-2 py-1 rounded text-xs ${member.role === "admin"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-gray-100 text-gray-800"
+                          }`}
                       >
                         {member.role === "admin" ? "Admin" : "Membro"}
                       </span>
@@ -352,7 +350,7 @@ export default function UserDetailsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {userData?.commissionMembers &&
-            userData.commissionMembers.length > 0 ? (
+              userData.commissionMembers.length > 0 ? (
               <div>
                 {userData.commissionMembers.map(
                   (member: any, index: number) => (
@@ -369,11 +367,10 @@ export default function UserDetailsPage() {
                         </div>
                       </div>
                       <span
-                        className={`px-2 py-1 rounded text-xs ml-2 ${
-                          member.roleInCommission === "Presidente"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-blue-100 text-blue-800"
-                        }`}
+                        className={`px-2 py-1 rounded text-xs ml-2 ${member.roleInCommission === "Presidente"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-blue-100 text-blue-800"
+                          }`}
                       >
                         {member.roleInCommission}
                       </span>

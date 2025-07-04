@@ -245,7 +245,7 @@ export function EditUserModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] bg-[var(--bg-simple)] max-h-[90vh] overflow-y-auto overflow-x-hidden p-4">
+      <DialogContent className="sm:max-w-[500px] w-full max-w-[95vw] bg-[var(--bg-simple)] max-h-[90vh] overflow-y-auto overflow-x-hidden p-2 sm:p-4">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="text-[var(--font-color)]">
@@ -315,8 +315,8 @@ export function EditUserModal({
                   handleSelectChange("organizationId", value)
                 }
               >
-                <SelectTrigger className="border-[var(--border-input)]">
-                  <SelectValue placeholder="Selecione uma organização (opcional)" />
+                <SelectTrigger className="border-[var(--border-input)] max-w-full truncate">
+                  <SelectValue placeholder="Selecione uma organização (opcional)" className="break-words"/>
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)]">
                   {/* Não use value="" para SelectItem, apenas placeholder controla vazio */}
