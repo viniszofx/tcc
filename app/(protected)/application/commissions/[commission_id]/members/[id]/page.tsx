@@ -31,6 +31,7 @@ import {
   Mail,
   Save,
   Shield,
+  Trash2,
   User,
   X,
 } from "lucide-react";
@@ -242,6 +243,7 @@ export default function CommissionMemberDetailPage() {
                   disabled={removeMemberMutation.isPending}
                   className="bg-red-600 text-white hover:bg-red-700"
                 >
+                  <Trash2 className="w-4 h-4 mr-2" />
                   {removeMemberMutation.isPending
                     ? "Removendo..."
                     : "Remover da Comissão"}

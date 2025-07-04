@@ -2,7 +2,6 @@
 
 import LoadingScreen from "@/components/custom/loading";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -70,11 +69,11 @@ export default function CommissionDetailPage() {
 
     const confirmDelete = confirm(
       `Tem certeza que deseja excluir a comissão "${commission.name}"?\n\n` +
-        "Esta ação irá:\n" +
-        "- Excluir permanentemente a comissão\n" +
-        "- Remover todos os membros da comissão\n" +
-        "- Manter o histórico de inventário para auditoria\n\n" +
-        "Esta ação NÃO PODE ser desfeita!"
+      "Esta ação irá:\n" +
+      "- Excluir permanentemente a comissão\n" +
+      "- Remover todos os membros da comissão\n" +
+      "- Manter o histórico de inventário para auditoria\n\n" +
+      "Esta ação NÃO PODE ser desfeita!"
     );
 
     if (!confirmDelete) return;
@@ -206,28 +205,28 @@ export default function CommissionDetailPage() {
             </div>
             {/* Ações Administrativas */}
             {canManageCommission && (
-              <div className="flex gap-2 mt-4">
-                <Button
+              <div className="flex gap-2 mt-4 flex-wrap">
+                <button
+                  type="button"
                   onClick={handleEditCommission}
-                  variant="outline"
-                  size="sm"
-                  className="bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--border-color)] hover:bg-[var(--hover-color)]"
+                  className="flex items-center justify-center rounded-md border border-[var(--border-color)] bg-[var(--bg-simple)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] transition-all p-2"
                 >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Editar Comissão
-                </Button>
-                <Button
+                  <Edit className="w-5 h-5" />
+                  <span className="hidden sm:inline ml-2">Editar Comissão</span>
+                </button>
+                <button
+                  type="button"
                   onClick={handleDeleteCommission}
-                  variant="destructive"
-                  size="sm"
                   disabled={deleteCommissionMutation.isPending}
-                  className="bg-red-600 hover:bg-red-700 text-white"
+                  className="flex items-center justify-center rounded-md bg-red-600 hover:bg-red-700 text-white transition-all p-2 disabled:opacity-70"
                 >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  {deleteCommissionMutation.isPending
-                    ? "Excluindo..."
-                    : "Excluir Comissão"}
-                </Button>
+                  <Trash2 className="w-5 h-5" />
+                  <span className="hidden sm:inline ml-2">
+                    {deleteCommissionMutation.isPending
+                      ? "Excluindo..."
+                      : "Excluir Comissão"}
+                  </span>
+                </button>
               </div>
             )}
           </div>
