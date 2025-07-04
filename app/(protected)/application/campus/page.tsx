@@ -119,7 +119,6 @@ export default function CampusPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ id: currentCampus.id }),
         });
       }
 
@@ -133,6 +132,24 @@ export default function CampusPage() {
       }
     } catch (error) {
       console.error("Erro ao salvar campus:", error);
+    }
+  };
+
+  const handleDeleteCampus = async (campusId: string) => {
+    try {
+      const response = await fetch(`/api/campus?id=${campusId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (response.ok) {
+        refetchCampuses();
+        setIsModalOpen(false);
+        setCurrentCampus(null);
+      } else {
+        alert("Erro ao deletar campus");
+      }
+    } catch (error) {
+      alert("Erro ao deletar campus");
     }
   };
 
@@ -204,9 +221,7 @@ export default function CampusPage() {
         campus={currentCampus}
         mode={modalMode}
         onSave={handleSaveCampus}
-        onDelete={(campusId: string) => {
-          handleSaveCampus({ id: campusId });
-        }}
+        onDelete={handleDeleteCampus}
       />
     </Card>
   );
