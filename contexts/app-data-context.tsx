@@ -3,7 +3,7 @@
 import { useCampuses } from "@/hooks/queries/use-campus-query";
 import { useOrganizations } from "@/hooks/queries/use-organizations-query";
 import { useUserRole } from "@/hooks/queries/use-users-query";
-import type { UserRole } from "@/hooks/use-user-permissions";
+import type { UserRole } from "@/hooks/use-consolidated-user";
 import type { Campus, Organization } from '@/types';
 import { createContext, ReactNode, useContext } from "react";
 

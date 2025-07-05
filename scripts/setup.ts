@@ -3,9 +3,10 @@ import { setupSpreadsheetsBucket } from "@/lib/supabase-spreadsheets";
 import { config } from "dotenv";
 import { cleanDatabase } from "./clean-database";
 
-// Carregar variáveis de ambiente apenas em desenvolvimento
-if (!process.env.CI && process.env.NODE_ENV !== "production") {
+// Carregar variáveis de ambiente (exceto em produção)
+if (process.env.NODE_ENV !== "production") {
   config({ path: ".env" });
+  console.log("🔧 Variáveis de ambiente carregadas do arquivo .env");
 }
 
 // Função para setup de avatars e spreadsheets (executado durante o build)

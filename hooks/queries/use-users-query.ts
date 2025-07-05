@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { UserRole } from "../use-user-permissions";
+import type { UserRole } from "../use-consolidated-user";
 
 // Query Keys
 export const userKeys = {
