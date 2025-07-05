@@ -26,8 +26,8 @@ import {
   useUsers,
 } from "@/hooks/queries/use-users-query";
 import { useUserPermissions } from "@/hooks/use-consolidated-user";
-import type { UserProfile } from '@/types';
 import { useCan } from "@/lib/permissions/hooks";
+import type { UserProfile } from '@/types';
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
