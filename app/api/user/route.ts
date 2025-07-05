@@ -478,35 +478,57 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    // Se o erro for de unique constraint (usuário já existe no banco local OU Supabase), retorne erro amigável
-    if (error instanceof Error && error.message.includes("unique constraint")) {
-      return NextResponse.json(
-        {
-          error:
-            "Já existe um usuário com este e-mail no sistema ou no Supabase.",
-        },
-        { status: 409 }
-      );
-    }
-    // Se o erro for do Supabase de e-mail já registrado, retorne erro amigável
-    if (
-      error instanceof Error &&
-      error.message.includes(
-        "A user with this email address has already been registered"
-      )
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Já existe um usuário com este e-mail no Supabase. Use outro e-mail ou recupere o acesso.",
-        },
-        { status: 409 }
-      );
-    }
-    // Caso contrário, erro genérico
     console.error("Erro ao criar usuário:", error);
+    
+    // Tratamento específico para erros do Supabase
+    if (error instanceof Error) {
+      // Erro de e-mail já registrado no Supabase
+      if (error.message.includes("A user with this email address has already been registered")) {
+        return NextResponse.json(
+          {
+            error: "Já existe um usuário com este e-mail no Supabase. Use outro e-mail ou recupere o acesso."
+          },
+          { status: 409 }
+        );
+      }
+      
+      // Erro de unique constraint no banco local
+      if (error.message.includes("unique constraint") || error.message.includes("Unique constraint")) {
+        return NextResponse.json(
+          {
+            error: "Já existe um usuário com este e-mail no sistema."
+          },
+          { status: 409 }
+        );
+      }
+      
+      // Erro de validação de dados
+      if (error.message.includes("validation") || error.message.includes("required")) {
+        return NextResponse.json(
+          {
+            error: "Dados inválidos fornecidos. Verifique os campos obrigatórios."
+          },
+          { status: 400 }
+        );
+      }
+      
+      // Erro de permissão
+      if (error.message.includes("permission") || error.message.includes("unauthorized")) {
+        return NextResponse.json(
+          {
+            error: "Sem permissão para criar usuário."
+          },
+          { status: 403 }
+        );
+      }
+    }
+    
+    // Erro genérico para casos não tratados
     return NextResponse.json(
-      { error: "Erro interno do servidor ao criar usuário." },
+      {
+        error: "Erro interno do servidor ao criar usuário. Tente novamente.",
+        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Erro desconhecido') : undefined
+      },
       { status: 500 }
     );
   }

@@ -172,8 +172,7 @@ model InventoryItem {
   campus     Campus             @relation(fields: [campusId], references: [id], onDelete: Cascade)
   history    InventoryHistory[]
 
-  // Unique constraint: número único apenas dentro da mesma comissão
-  @@unique([number, commissionId])
+  // Número é apenas um identificador de negócio, não precisa ser único
   @@map("inventory_items")
 }
 
@@ -190,7 +189,7 @@ enum InventoryAction {
 // Inventory History
 model InventoryHistory {
   id              String          @id @default(uuid()) @db.Uuid
-  inventoryItemId String          @map("inventory_item_id") @db.Uuid
+  inventoryItemId String?         @map("inventory_item_id") @db.Uuid
   userId          String          @db.Uuid
   action          InventoryAction
   changes         String?
@@ -199,8 +198,8 @@ model InventoryHistory {
   timestamp       DateTime        @default(now())
 
   // Relations
-  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
-  user          UserProfile   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inventoryItem InventoryItem? @relation(fields: [inventoryItemId], references: [id], onDelete: SetNull)
+  user          UserProfile    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("inventory_history")
 }

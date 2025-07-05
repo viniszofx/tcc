@@ -1,9 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { createSupabaseAdmin } from "@/lib/supabase";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authenticateUser } from "@/lib/auth/server";
+import { uploadCommissionSpreadsheet } from "@/lib/supabase-spreadsheets";
 
 export async function POST(request: NextRequest) {
   try {
@@ -155,8 +154,6 @@ export async function POST(request: NextRequest) {
           where: { id: commissionId },
           data: {
             description: description || commission.description,
-            spreadsheetUrl:
-              metadata?.originalFileName || commission.spreadsheetUrl,
             updatedAt: new Date(),
           },
         });
@@ -264,61 +261,43 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Configurar Supabase Admin
-      const supabaseAdmin = createSupabaseAdmin();
-      if (!supabaseAdmin) {
+      // Upload da planilha (remove arquivos antigos automaticamente)
+      console.log(
+        `📁 Iniciando upload da planilha: ${file.name} (${(
+          file.size /
+          1024 /
+          1024
+        ).toFixed(2)}MB)`
+      );
+
+      const uploadResult = await uploadCommissionSpreadsheet(
+        file,
+        commissionId
+      );
+
+      if (!uploadResult.success) {
+        console.error("❌ Erro no upload:", uploadResult.error);
         return NextResponse.json(
-          { error: "Configuração do Supabase não disponível" },
+          { error: `Erro ao fazer upload do arquivo: ${uploadResult.error}` },
           { status: 500 }
         );
       }
 
-      // Gerar nome único para o arquivo
-      const fileExtension = file.name.split(".").pop();
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const fileName = `${commission.name}-${timestamp}.${fileExtension}`;
-      const filePath = `commissions/${commissionId}/${fileName}`;
-
-      // Converter arquivo para ArrayBuffer
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = new Uint8Array(arrayBuffer);
-
-      // Upload para o Supabase Storage
-      console.log(`☁️ Fazendo upload para: ${filePath}`);
-
-      const { data: uploadData, error: uploadError } =
-        await supabaseAdmin.storage
-          .from("spreadsheets")
-          .upload(filePath, buffer, {
-            contentType: file.type,
-            upsert: false,
-          });
-
-      if (uploadError) {
-        console.error("❌ Erro no upload:", uploadError);
-        return NextResponse.json(
-          { error: `Erro ao fazer upload do arquivo: ${uploadError.message}` },
-          { status: 500 }
-        );
-      }
-
-      // Obter URL pública do arquivo
-      const { data: urlData } = supabaseAdmin.storage
-        .from("spreadsheets")
-        .getPublicUrl(filePath);
-
-      if (!urlData.publicUrl) {
+      const fileUrl = uploadResult.url;
+      if (!fileUrl) {
         return NextResponse.json(
           { error: "Erro ao obter URL do arquivo" },
           { status: 500 }
         );
       }
 
+      console.log(`✅ Arquivo salvo com sucesso: ${fileUrl}`);
+
       // Atualizar a comissão com a URL da planilha
       const updatedCommission = await prisma.commission.update({
         where: { id: commissionId },
         data: {
-          spreadsheetUrl: urlData.publicUrl,
+          spreadsheetUrl: fileUrl,
           updatedAt: new Date(),
         },
         include: {
@@ -331,16 +310,15 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      console.log(`✅ Backup concluído: ${urlData.publicUrl}`);
+      console.log(`✅ Backup concluído: ${fileUrl}`);
 
       return NextResponse.json({
         success: true,
-        message: "Backup do arquivo realizado com sucesso",
+        message: "Upload da planilha realizado com sucesso",
         commission: updatedCommission,
-        fileUrl: urlData.publicUrl,
-        filePath: uploadData.path,
+        fileUrl: fileUrl,
         metadata: {
-          backupAt: new Date().toISOString(),
+          uploadedAt: new Date().toISOString(),
           fileName: file.name,
           fileSize: file.size,
         },

@@ -351,14 +351,14 @@ export function useInventoryWithSync(commissionId: string) {
 
     // Remover itens sincronizados
     setPendingItems((prev) => prev.filter((item) => !item.synced));
-  }, [isOnline, pendingItems, createItemMutation]);
+  }, [isOnline, createItemMutation]);
 
   // Auto-sincronizar quando voltar online
   useEffect(() => {
     if (isOnline && pendingItems.length > 0) {
       syncPendingItems();
     }
-  }, [isOnline, syncPendingItems]);
+  }, [isOnline, pendingItems.length]);
 
   // Converter item para formato local (BemCopia)
   function convertItemToLocalFormat(

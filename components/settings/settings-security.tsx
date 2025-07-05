@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useUserPermissions } from "@/hooks/use-consolidated-user";
 import { AlertCircle, Lock } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export function SecuritySettings() {
   const { user } = useUserPermissions();
@@ -18,6 +18,31 @@ export function SecuritySettings() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [isPasswordReset, setIsPasswordReset] = useState(false);
+
+  useEffect(() => {
+    // Verificar se o usuário chegou através de um magic link de reset de senha
+    const checkPasswordReset = async () => {
+      try {
+        const { supabase } = await import("@/lib/supabase");
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Se há uma sessão e o usuário veio de um reset de senha
+        if (session && session.user?.app_metadata?.provider === 'email') {
+          // Verificar se é um reset de senha baseado nos parâmetros da URL ou metadata
+          const urlParams = new URLSearchParams(window.location.search);
+          const isReset = urlParams.get('type') === 'recovery' || 
+                         session.user?.user_metadata?.email_confirmed_at;
+          
+          setIsPasswordReset(isReset);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar reset de senha:', error);
+      }
+    };
+
+    checkPasswordReset();
+  }, []);
 
   const handleChangePassword = async () => {
     setPasswordError("");
@@ -26,6 +51,12 @@ export function SecuritySettings() {
     // Validações
     if (!newPassword || !confirmPassword) {
       setPasswordError("Nova senha e confirmação são obrigatórias");
+      return;
+    }
+
+    // Se não é um reset de senha e não foi fornecida a senha atual
+    if (!isPasswordReset && !currentPassword.trim()) {
+      setPasswordError("Senha atual é obrigatória");
       return;
     }
 
@@ -44,10 +75,11 @@ export function SecuritySettings() {
     try {
       const requestBody: any = {
         newPassword,
+        isPasswordReset, // Informar se é um reset de senha
       };
 
-      // Só incluir currentPassword se foi fornecida
-      if (currentPassword.trim()) {
+      // Só incluir currentPassword se não for um reset e foi fornecida
+      if (!isPasswordReset && currentPassword.trim()) {
         requestBody.currentPassword = currentPassword;
       }
 
@@ -98,11 +130,13 @@ export function SecuritySettings() {
       <Alert className="bg-[var(--card-color)] border-[var(--button-color)]">
         <AlertCircle className="h-4 w-4 text-[var(--button-color)]" />
         <AlertTitle className="text-[var(--font-color)]">
-          Segurança da Conta
+          {isPasswordReset ? "Redefinir Senha" : "Segurança da Conta"}
         </AlertTitle>
         <AlertDescription className="text-[var(--font-color)] opacity-70">
-          Recomendamos alterar sua senha regularmente para manter sua conta
-          segura.
+          {isPasswordReset 
+            ? "Defina uma nova senha para sua conta. Você não precisa informar a senha atual."
+            : "Recomendamos alterar sua senha regularmente para manter sua conta segura."
+          }
         </AlertDescription>
       </Alert>
 
@@ -139,13 +173,32 @@ export function SecuritySettings() {
               </div>
             </div>
 
+            {!isPasswordReset && (
+              <div>
+                <Label
+                  htmlFor="current-password"
+                  className="text-[var(--font-color)]"
+                >
+                  Senha Atual
+                </Label>
+                <Input
+                  id="current-password"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--header-color)]"
+                  placeholder="Digite sua senha atual"
+                />
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label
                   htmlFor="new-password"
                   className="text-[var(--font-color)]"
                 >
-                  Nova Senha
+                  {isPasswordReset ? "Nova Senha" : "Nova Senha"}
                 </Label>
                 <Input
                   id="new-password"
@@ -153,7 +206,7 @@ export function SecuritySettings() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--header-color)]"
-                  placeholder="Digite sua nova senha"
+                  placeholder={isPasswordReset ? "Digite sua nova senha" : "Digite sua nova senha"}
                 />
               </div>
               <div>
@@ -179,7 +232,10 @@ export function SecuritySettings() {
               disabled={isChangingPassword}
               className="w-full sm:w-auto bg-[var(--button-color)] hover:bg-[var(--hover-2-color)] text-[var(--font-color2)] cursor-pointer disabled:opacity-50"
             >
-              {isChangingPassword ? "Alterando..." : "Alterar Senha"}
+              {isChangingPassword 
+                ? (isPasswordReset ? "Definindo..." : "Alterando...") 
+                : (isPasswordReset ? "Definir Nova Senha" : "Alterar Senha")
+              }
             </Button>
           </div>
         </div>

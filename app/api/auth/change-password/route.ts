@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
-    const { currentPassword, newPassword } = await req.json();
+    const { currentPassword, newPassword, isPasswordReset } = await req.json();
 
     if (!newPassword) {
       return NextResponse.json(
@@ -35,9 +35,10 @@ export async function POST(req: NextRequest) {
     }
 
     console.log("Tentando alterar senha para usuário:", user.email);
+    console.log("É reset de senha:", isPasswordReset);
 
-    // Se currentPassword foi fornecida, validar usando uma instância separada
-    if (currentPassword) {
+    // Se não é um reset de senha e currentPassword foi fornecida, validar usando uma instância separada
+    if (!isPasswordReset && currentPassword) {
       try {
         const { createClient } = await import("@supabase/supabase-js");
 
@@ -77,6 +78,12 @@ export async function POST(req: NextRequest) {
           { status: 500 }
         );
       }
+    } else if (!isPasswordReset && !currentPassword) {
+      // Se não é um reset de senha e não foi fornecida a senha atual
+      return NextResponse.json(
+        { error: "Senha atual é obrigatória" },
+        { status: 400 }
+      );
     }
 
     // Atualizar a senha usando a sessão original do usuário
@@ -97,7 +104,7 @@ export async function POST(req: NextRequest) {
     console.log("Senha alterada com sucesso!");
 
     return NextResponse.json({
-      message: "Senha alterada com sucesso",
+      message: isPasswordReset ? "Nova senha definida com sucesso" : "Senha alterada com sucesso",
       user: updateData.user?.email,
     });
   } catch (error) {

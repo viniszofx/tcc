@@ -22,6 +22,7 @@ import { useCampus } from "@/hooks/queries/use-campus-query";
 import { useUniqueCampusList } from "@/hooks/queries/use-unique-campus-list";
 import { EstadoConservacao, StatusBem, type BemCopia } from '@/types/legacy';
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 // Definindo interface para o objeto de campus
 interface CampusItem {
@@ -304,20 +305,20 @@ export default function NewItemModal({
         const errorMessage = error.message;
 
         if (errorMessage.includes("Já existe um item com o número")) {
-          alert(
+          toast.error(
             `Este número de item já está em uso. Por favor, use um número diferente.`
           );
         } else if (errorMessage.includes("Foreign key constraint violated")) {
-          alert(
+          toast.error(
             `Erro de referência no banco de dados. Por favor, tente novamente ou contate o suporte.`
           );
         } else {
           // Exibir mensagem de erro para o usuário
-          alert(`Erro ao salvar item: ${errorMessage}`);
+          toast.error(`Erro ao salvar item: ${errorMessage}`);
         }
       } else {
         // Fallback para outros tipos de erro
-        alert(
+        toast.error(
           "Erro desconhecido ao salvar item. Verifique o console para mais detalhes."
         );
       }

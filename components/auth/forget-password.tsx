@@ -45,12 +45,32 @@ export default function RecoverPasswordPage() {
     setMessage("");
 
     try {
+      // 1. Primeiro, verificar se o usuário está na lista de permitidos
+      const validateResponse = await fetch("/api/auth/validate-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!validateResponse.ok) {
+        const errorData = await validateResponse.json();
+        if (validateResponse.status === 403) {
+          setError("Este e-mail não está autorizado no sistema. Entre em contato com o administrador.");
+        } else {
+          setError("Erro ao validar e-mail. Tente novamente.");
+        }
+        return;
+      }
+
+      // 2. Se o usuário está permitido, enviar o magic link
       const { data, error: resetError } = await resetPassword(email);
       
       if (resetError) {
         setError("Erro ao enviar e-mail de recuperação. Tente novamente.");
       } else {
-        setMessage("E-mail de recuperação enviado! Verifique sua caixa de entrada.");
+        setMessage("E-mail de recuperação enviado! Verifique sua caixa de entrada e acesse o link para redefinir sua senha.");
         setEmail("");
       }
     } catch (err) {

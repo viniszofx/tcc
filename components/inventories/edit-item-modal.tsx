@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Plus } from "lucide-react";
 import type { InventoryItemWithRelations } from '@/types';
 import { useEffect, useState } from "react";
 
@@ -40,8 +41,23 @@ export default function EditItemModal({
   const [campuses, setCampuses] = useState<Array<{ id: string; name: string }>>(
     []
   );
+  const [uniqueValues, setUniqueValues] = useState<{
+    responsibilities: string[];
+    sectors: string[];
+    locations: string[];
+  }>({ responsibilities: [], sectors: [], locations: [] });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [newValueInputs, setNewValueInputs] = useState<{
+    responsibility: string;
+    sector: string;
+    location: string;
+  }>({ responsibility: '', sector: '', location: '' });
+  const [showNewValueInputs, setShowNewValueInputs] = useState<{
+    responsibility: boolean;
+    sector: boolean;
+    location: boolean;
+  }>({ responsibility: false, sector: false, location: false });
 
   useEffect(() => {
     if (item) {
@@ -65,8 +81,30 @@ export default function EditItemModal({
       }
     }
 
+    // Buscar valores únicos
+    async function loadUniqueValues() {
+      try {
+        const params = new URLSearchParams();
+        if (item?.commissionId) {
+          params.append('commissionId', item.commissionId);
+        }
+        if (item?.campusId) {
+          params.append('campusId', item.campusId);
+        }
+        
+        const response = await fetch(`/api/inventory/unique-values?${params}`);
+        if (response.ok) {
+          const data = await response.json();
+          setUniqueValues(data);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar valores únicos:", error);
+      }
+    }
+
     loadCampuses();
-  }, [isOpen]);
+    loadUniqueValues();
+  }, [isOpen, item?.commissionId, item?.campusId]);
 
   const handleChange = (
     field: keyof InventoryItemWithRelations,
@@ -91,8 +129,6 @@ export default function EditItemModal({
 
     if (!formData.number) {
       newErrors.number = "Número é obrigatório";
-    } else if (!/^\d+$/.test(formData.number)) {
-      newErrors.number = "Número deve conter apenas dígitos";
     }
 
     if (!formData.description)
@@ -105,6 +141,46 @@ export default function EditItemModal({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleAddNewValue = async (type: 'responsibility' | 'sector' | 'location') => {
+    const value = newValueInputs[type].trim();
+    if (!value) return;
+
+    try {
+      const response = await fetch('/api/inventory/unique-values', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type,
+          value,
+          commissionId: item?.commissionId,
+        }),
+      });
+
+      if (response.ok) {
+        // Adicionar o novo valor à lista local
+        setUniqueValues(prev => ({
+          ...prev,
+          [type === 'responsibility' ? 'responsibilities' : type === 'sector' ? 'sectors' : 'locations']: [
+            ...prev[type === 'responsibility' ? 'responsibilities' : type === 'sector' ? 'sectors' : 'locations'],
+            value
+          ].sort()
+        }));
+
+        // Definir o novo valor no formulário
+        const fieldName = type === 'responsibility' ? 'currentResponsibility' : type === 'sector' ? 'sector' : 'location';
+        handleChange(fieldName as keyof InventoryItemWithRelations, value);
+
+        // Limpar o input e esconder
+        setNewValueInputs(prev => ({ ...prev, [type]: '' }));
+        setShowNewValueInputs(prev => ({ ...prev, [type]: false }));
+      }
+    } catch (error) {
+      console.error(`Erro ao adicionar novo ${type}:`, error);
+    }
   };
 
   const handleSubmit = async () => {
@@ -158,16 +234,11 @@ export default function EditItemModal({
               <Input
                 id="numero"
                 value={formData.number || ""}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, "");
-                  handleChange("number", value);
-                }}
+                onChange={(e) => handleChange("number", e.target.value)}
                 className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] w-full ${
                   errors.number ? "border-red-500" : ""
                 }`}
                 type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
               />
               {errors.number && (
                 <p className="text-xs text-red-500">{errors.number}</p>
@@ -221,19 +292,58 @@ export default function EditItemModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2 w-full">
-              <Label htmlFor="responsavel" className="text-[var(--font-color)]">
-                Responsável <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="responsavel"
-                value={formData.currentResponsibility || ""}
-                onChange={(e) =>
-                  handleChange("currentResponsibility", e.target.value)
-                }
-                className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] w-full ${
-                  errors.currentResponsibility ? "border-red-500" : ""
-                }`}
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="responsavel" className="text-[var(--font-color)]">
+                  Responsável <span className="text-red-500">*</span>
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowNewValueInputs(prev => ({ ...prev, responsibility: !prev.responsibility }))}
+                  className="h-6 px-2 text-xs"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Novo
+                </Button>
+              </div>
+              
+              {showNewValueInputs.responsibility ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={newValueInputs.responsibility}
+                    onChange={(e) => setNewValueInputs(prev => ({ ...prev, responsibility: e.target.value }))}
+                    placeholder="Digite o novo responsável"
+                    className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] flex-1"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleAddNewValue('responsibility')}
+                    className="px-3"
+                  >
+                    +
+                  </Button>
+                </div>
+              ) : (
+                <Select
+                  value={formData.currentResponsibility || ""}
+                  onValueChange={(value) => handleChange("currentResponsibility", value)}
+                >
+                  <SelectTrigger className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] w-full ${
+                    errors.currentResponsibility ? "border-red-500" : ""
+                  }`}>
+                    <SelectValue placeholder="Selecione o responsável" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {uniqueValues.responsibilities.map((responsibility) => (
+                      <SelectItem key={responsibility} value={responsibility}>
+                        {responsibility}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               {errors.currentResponsibility && (
                 <p className="text-xs text-red-500">
                   {errors.currentResponsibility}
@@ -242,17 +352,58 @@ export default function EditItemModal({
             </div>
 
             <div className="space-y-2 w-full">
-              <Label htmlFor="setor" className="text-[var(--font-color)]">
-                Setor <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="setor"
-                value={formData.sector || ""}
-                onChange={(e) => handleChange("sector", e.target.value)}
-                className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] w-full ${
-                  errors.sector ? "border-red-500" : ""
-                }`}
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="setor" className="text-[var(--font-color)]">
+                  Setor <span className="text-red-500">*</span>
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowNewValueInputs(prev => ({ ...prev, sector: !prev.sector }))}
+                  className="h-6 px-2 text-xs"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Novo
+                </Button>
+              </div>
+              
+              {showNewValueInputs.sector ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={newValueInputs.sector}
+                    onChange={(e) => setNewValueInputs(prev => ({ ...prev, sector: e.target.value }))}
+                    placeholder="Digite o novo setor"
+                    className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] flex-1"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleAddNewValue('sector')}
+                    className="px-3"
+                  >
+                    +
+                  </Button>
+                </div>
+              ) : (
+                <Select
+                  value={formData.sector || ""}
+                  onValueChange={(value) => handleChange("sector", value)}
+                >
+                  <SelectTrigger className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] w-full ${
+                    errors.sector ? "border-red-500" : ""
+                  }`}>
+                    <SelectValue placeholder="Selecione o setor" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {uniqueValues.sectors.map((sector) => (
+                      <SelectItem key={sector} value={sector}>
+                        {sector}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               {errors.sector && (
                 <p className="text-xs text-red-500">{errors.sector}</p>
               )}
@@ -288,17 +439,58 @@ export default function EditItemModal({
             </div>
 
             <div className="space-y-2 w-full">
-              <Label htmlFor="sala" className="text-[var(--font-color)]">
-                Sala <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="sala"
-                value={formData.location || ""}
-                onChange={(e) => handleChange("location", e.target.value)}
-                className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] w-full ${
-                  errors.location ? "border-red-500" : ""
-                }`}
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="sala" className="text-[var(--font-color)]">
+                  Sala <span className="text-red-500">*</span>
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowNewValueInputs(prev => ({ ...prev, location: !prev.location }))}
+                  className="h-6 px-2 text-xs"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Novo
+                </Button>
+              </div>
+              
+              {showNewValueInputs.location ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={newValueInputs.location}
+                    onChange={(e) => setNewValueInputs(prev => ({ ...prev, location: e.target.value }))}
+                    placeholder="Digite a nova sala"
+                    className="bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] flex-1"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleAddNewValue('location')}
+                    className="px-3"
+                  >
+                    +
+                  </Button>
+                </div>
+              ) : (
+                <Select
+                  value={formData.location || ""}
+                  onValueChange={(value) => handleChange("location", value)}
+                >
+                  <SelectTrigger className={`bg-[var(--bg-simple)] border-[var(--border-input)] text-[var(--font-color)] w-full ${
+                     errors.location ? "border-red-500" : ""
+                   }`}>
+                    <SelectValue placeholder="Selecione a sala" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {uniqueValues.locations.map((location) => (
+                      <SelectItem key={location} value={location}>
+                        {location}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               {errors.location && (
                 <p className="text-xs text-red-500">{errors.location}</p>
               )}

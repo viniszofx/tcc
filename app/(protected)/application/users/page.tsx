@@ -31,6 +31,7 @@ import { useCan } from "@/lib/permissions/hooks";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 type UserWithCampus = UserProfile & {
   campusName?: string;
@@ -148,9 +149,10 @@ export default function UsersPage() {
         // Fechar modal de adicionar e abrir modal de sucesso
         setIsAddModalOpen(false);
         setIsUserCreatedModalOpen(true);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Erro ao adicionar usuário:", error);
-        alert("Erro inesperado ao criar usuário");
+        // Não fazer nada aqui - o erro será tratado pelo AddUserModal
+        // que agora recebe o erro através do onAddUser callback
       }
     },
     [createUserMutation]
@@ -175,7 +177,7 @@ export default function UsersPage() {
         setSelectedUser(null);
       } catch (error) {
         console.error("Erro ao editar usuário:", error);
-        alert("Erro ao editar usuário");
+        toast.error("Erro ao editar usuário");
       }
     },
     [selectedUser?.id, updateUserMutation]
@@ -187,12 +189,12 @@ export default function UsersPage() {
         await deleteUserMutation.mutateAsync(user.id);
 
         // Mostrar mensagem de sucesso
-        alert(
+        toast.success(
           `Usuário "${user.name}" e todas suas relações foram excluídos com sucesso.`
         );
       } catch (error) {
         console.error("Erro ao excluir usuário:", error);
-        alert("Erro ao excluir usuário. Tente novamente.");
+        toast.error("Erro ao excluir usuário. Tente novamente.");
       }
     },
     [deleteUserMutation]
@@ -210,16 +212,16 @@ export default function UsersPage() {
 
         if (response.ok) {
           const result = await response.json();
-          alert(result.message);
+          toast.success(result.message);
           // Recarregar dados dos usuários
           // Note: react-query já fará isso automaticamente
         } else {
           const errorData = await response.json();
-          alert(`Erro ao remover usuário da comissão: ${errorData.error}`);
+          toast.error(`Erro ao remover usuário da comissão: ${errorData.error}`);
         }
       } catch (error) {
         console.error("Erro ao remover usuário da comissão:", error);
-        alert("Erro inesperado ao remover usuário da comissão");
+        toast.error("Erro inesperado ao remover usuário da comissão");
       }
     },
     []

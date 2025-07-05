@@ -6,17 +6,17 @@ import InventoryPageBase from "@/components/inventories/inventory-page-base";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
+import { useDeleteCommissionInventory } from "@/hooks/mutations/use-mutations";
 import { useCommission } from "@/hooks/queries/use-commissions-query";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
-import { useInventoryWithSync } from "@/hooks/use-inventory-query";
 import { useUserPermissions } from "@/hooks/use-consolidated-user";
-import { useDeleteCommissionInventory } from "@/hooks/mutations/use-mutations";
+import { useInventoryWithSync } from "@/hooks/use-inventory-query";
+import { clearLocalStorage } from "@/utils/storage/local-storage";
+import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Download, Trash2, Wifi, WifiOff } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { clearLocalStorage } from "@/utils/storage/local-storage";
 
 export default function CommissionInventoriesPage() {
   const router = useRouter();
@@ -26,8 +26,11 @@ export default function CommissionInventoriesPage() {
 
   // Hooks de autenticação e permissões
   const { user, loading } = useUserPermissions();
-  const { canAccessCommission, canManageCommission, loading: permissionsLoading } =
-    useCommissionPermissions(commissionId);
+  const {
+    canAccessCommission,
+    canManageCommission,
+    loading: permissionsLoading,
+  } = useCommissionPermissions(commissionId);
 
   // Hook para apagar inventário
   const deleteInventoryMutation = useDeleteCommissionInventory();
@@ -91,11 +94,11 @@ export default function CommissionInventoriesPage() {
   })();
 
   // Verificar se o usuário pode apagar inventário (admin global, admin do sistema ou presidente da comissão)
-  const canDeleteInventory = user && (
-    user.role === "admin global" ||
-    user.role === "admin" ||
-    canManageCommission
-  );
+  const canDeleteInventory =
+    user &&
+    (user.role === "admin global" ||
+      user.role === "admin" ||
+      canManageCommission);
 
   // Função para apagar todo o inventário
   const handleDeleteInventory = async () => {
@@ -103,11 +106,11 @@ export default function CommissionInventoriesPage() {
 
     const confirmDelete = confirm(
       `Tem certeza que deseja apagar TODO o inventário da comissão "${commission.name}"?\n\n` +
-      "Esta ação irá:\n" +
-      "- Excluir permanentemente todos os itens de inventário\n" +
-      "- Remover a planilha associada\n" +
-      "- Limpar todos os dados de inventário desta comissão\n\n" +
-      "Esta ação NÃO PODE ser desfeita!"
+        "Esta ação irá:\n" +
+        "- Excluir permanentemente todos os itens de inventário\n" +
+        "- Remover a planilha associada\n" +
+        "- Limpar todos os dados de inventário desta comissão\n\n" +
+        "Esta ação NÃO PODE ser desfeita!"
     );
 
     if (!confirmDelete) return;
@@ -115,15 +118,15 @@ export default function CommissionInventoriesPage() {
     setIsDeleting(true);
     try {
       await deleteInventoryMutation.mutateAsync(commissionId);
-      
+
       // Limpar dados locais do cache
       queryClient.invalidateQueries({ queryKey: ["inventory", commissionId] });
       queryClient.removeQueries({ queryKey: ["inventory", commissionId] });
       queryClient.invalidateQueries({ queryKey: ["inventory"] });
-      
+
       // Limpar dados do localStorage
       clearLocalStorage();
-      
+
       toast.success("Inventário apagado com sucesso!");
     } catch (error) {
       console.error("Erro ao apagar inventário:", error);
@@ -202,7 +205,9 @@ export default function CommissionInventoriesPage() {
             {pendingItemsCount > 0 && (
               <div className="flex items-center gap-1 text-orange-600">
                 <AlertCircle className="w-4 h-4" />
-                <span className="text-sm">{pendingItemsCount} pendente{pendingItemsCount > 1 ? 's' : ''}</span>
+                <span className="text-sm">
+                  {pendingItemsCount} pendente{pendingItemsCount > 1 ? "s" : ""}
+                </span>
               </div>
             )}
 
@@ -230,7 +235,9 @@ export default function CommissionInventoriesPage() {
                 <Button
                   variant="default"
                   className="bg-blue-600 hover:bg-blue-700"
-                  onClick={() => window.open(commission.spreadsheet_url, "_blank")}
+                  onClick={() =>
+                    window.open(commission.spreadsheet_url, "_blank")
+                  }
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Download da Planilha
@@ -250,7 +257,8 @@ export default function CommissionInventoriesPage() {
                     Apagar Todo o Inventário
                   </p>
                   <p className="text-xs text-red-700">
-                    Remove permanentemente todos os {totalItems} itens desta comissão
+                    Remove permanentemente todos os {totalItems} itens desta
+                    comissão
                   </p>
                 </div>
                 <Button
@@ -321,8 +329,8 @@ export default function CommissionInventoriesPage() {
                     Nenhum item de inventário encontrado
                   </p>
                   <p className="text-xs text-blue-700">
-                    Adicione itens individuais ou faça upload de uma planilha para
-                    começar.
+                    Adicione itens individuais ou faça upload de uma planilha
+                    para começar.
                   </p>
                 </div>
               </div>
@@ -351,8 +359,6 @@ export default function CommissionInventoriesPage() {
             </CardContent>
           </Card>
         )}
-
-
 
         {/* Componente base com todas as funcionalidades */}
         <InventoryPageBase

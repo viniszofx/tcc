@@ -9,12 +9,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DeleteUserDialog } from "@/components/manager-users/delete-user-dialog";
 import { useUserPermissions } from "@/hooks/use-consolidated-user";
 import type { Campus, CampusMember, UserProfile } from '@/types';
 import { useCan } from "@/lib/permissions/hooks";
 import { Crown, Eye, MoreVertical, Pencil, Trash2, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface UserListCardProps {
   users: UserProfile[];
@@ -35,22 +37,34 @@ export function UserListCard({
   const canUpdateUsers = useCan("update", "User");
   const canDeleteUsers = useCan("delete", "User");
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
   const router = useRouter();
 
-  const handleDeleteClick = async (user: UserProfile) => {
+  const handleDeleteClick = (user: UserProfile) => {
     if (!onDeleteUser || !canDeleteUsers) return;
     if (user.role === "admin global") {
-      alert("Usuários admin global não podem ser excluídos.");
+      toast.error("Usuários admin global não podem ser excluídos.");
       return;
     }
-    const confirmMessage = `Tem certeza que deseja EXCLUIR DEFINITIVAMENTE o usuário "${user.name}"?\n\nEsta ação irá remover:\n- O usuário do sistema\n- Todas suas associações com campus\n- Todas suas associações com comissões\n- Todas suas associações com organizações\n\nEsta ação não pode ser desfeita.`;
-    if (confirm(confirmMessage)) {
-      setDeletingUserId(user.id);
-      try {
-        await onDeleteUser(user);
-      } finally {
-        setDeletingUserId(null);
-      }
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete || !onDeleteUser) return;
+    
+    setDeletingUserId(userToDelete.id);
+    setDeleteDialogOpen(false);
+    
+    try {
+      await onDeleteUser(userToDelete);
+      toast.success(`Usuário ${userToDelete.name} excluído com sucesso!`);
+    } catch (error) {
+      toast.error("Erro ao excluir usuário");
+    } finally {
+      setDeletingUserId(null);
+      setUserToDelete(null);
     }
   };
 
@@ -249,6 +263,17 @@ export function UserListCard({
           </div>
         </div>
       </CardContent>
+      
+      {/* Dialog de confirmação de exclusão */}
+      <DeleteUserDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setUserToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        userName={userToDelete?.name || ""}
+      />
     </Card>
   );
 }

@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCampus } from "@/hooks/queries/use-campus-query";
 import { useInventoryWithSync } from "@/hooks/use-inventory-query";
 import { Loader2, Plus, Wifi, WifiOff } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 interface AddInventoryItemFormProps {
@@ -47,6 +47,24 @@ export function AddInventoryItemForm({
     ed: "",
     sector: "",
   });
+
+  const [uniqueValues, setUniqueValues] = useState<{
+    responsibilities: string[];
+    sectors: string[];
+    locations: string[];
+  }>({ responsibilities: [], sectors: [], locations: [] });
+
+  const [newValueInputs, setNewValueInputs] = useState<{
+    responsibility: string;
+    sector: string;
+    location: string;
+  }>({ responsibility: '', sector: '', location: '' });
+
+  const [showNewValueInputs, setShowNewValueInputs] = useState<{
+    responsibility: boolean;
+    sector: boolean;
+    location: boolean;
+  }>({ responsibility: false, sector: false, location: false });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,8 +128,69 @@ export function AddInventoryItemForm({
     }
   };
 
+  useEffect(() => {
+    // Buscar valores únicos
+    async function loadUniqueValues() {
+      try {
+        const params = new URLSearchParams();
+        params.append('commissionId', commissionId);
+        params.append('campusId', campusId);
+        
+        const response = await fetch(`/api/inventory/unique-values?${params}`);
+        if (response.ok) {
+          const data = await response.json();
+          setUniqueValues(data);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar valores únicos:", error);
+      }
+    }
+
+    loadUniqueValues();
+  }, [commissionId, campusId]);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddNewValue = async (type: 'responsibility' | 'sector' | 'location') => {
+    const value = newValueInputs[type].trim();
+    if (!value) return;
+
+    try {
+      const response = await fetch('/api/inventory/unique-values', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type,
+          value,
+          commissionId,
+        }),
+      });
+
+      if (response.ok) {
+        // Adicionar o novo valor à lista local
+        setUniqueValues(prev => ({
+          ...prev,
+          [type === 'responsibility' ? 'responsibilities' : type === 'sector' ? 'sectors' : 'locations']: [
+            ...prev[type === 'responsibility' ? 'responsibilities' : type === 'sector' ? 'sectors' : 'locations'],
+            value
+          ].sort()
+        }));
+
+        // Definir o novo valor no formulário
+        const fieldName = type === 'responsibility' ? 'currentResponsibility' : type === 'sector' ? 'sector' : 'location';
+        handleInputChange(fieldName, value);
+
+        // Limpar o input e esconder
+        setNewValueInputs(prev => ({ ...prev, [type]: '' }));
+        setShowNewValueInputs(prev => ({ ...prev, [type]: false }));
+      }
+    } catch (error) {
+      console.error(`Erro ao adicionar novo ${type}:`, error);
+    }
   };
 
   return (
@@ -227,40 +306,161 @@ export function AddInventoryItemForm({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Responsabilidade Atual */}
             <div className="space-y-2">
-              <Label htmlFor="currentResponsibility">
-                Responsabilidade Atual
-              </Label>
-              <Input
-                id="currentResponsibility"
-                value={formData.currentResponsibility}
-                onChange={(e) =>
-                  handleInputChange("currentResponsibility", e.target.value)
-                }
-                placeholder="Nome do responsável"
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="currentResponsibility">
+                  Responsabilidade Atual
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowNewValueInputs(prev => ({ ...prev, responsibility: !prev.responsibility }))}
+                  className="h-6 px-2 text-xs"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Novo
+                </Button>
+              </div>
+              
+              {showNewValueInputs.responsibility ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={newValueInputs.responsibility}
+                    onChange={(e) => setNewValueInputs(prev => ({ ...prev, responsibility: e.target.value }))}
+                    placeholder="Digite o novo responsável"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleAddNewValue('responsibility')}
+                    className="px-3"
+                  >
+                    +
+                  </Button>
+                </div>
+              ) : (
+                <Select
+                  value={formData.currentResponsibility}
+                  onValueChange={(value) => handleInputChange("currentResponsibility", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o responsável" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {uniqueValues.responsibilities.map((responsibility) => (
+                      <SelectItem key={responsibility} value={responsibility}>
+                        {responsibility}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             {/* Setor */}
             <div className="space-y-2">
-              <Label htmlFor="sector">Setor</Label>
-              <Input
-                id="sector"
-                value={formData.sector}
-                onChange={(e) => handleInputChange("sector", e.target.value)}
-                placeholder="Ex: TI, Administração"
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="sector">Setor</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowNewValueInputs(prev => ({ ...prev, sector: !prev.sector }))}
+                  className="h-6 px-2 text-xs"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Novo
+                </Button>
+              </div>
+              
+              {showNewValueInputs.sector ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={newValueInputs.sector}
+                    onChange={(e) => setNewValueInputs(prev => ({ ...prev, sector: e.target.value }))}
+                    placeholder="Digite o novo setor"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleAddNewValue('sector')}
+                    className="px-3"
+                  >
+                    +
+                  </Button>
+                </div>
+              ) : (
+                <Select
+                  value={formData.sector}
+                  onValueChange={(value) => handleInputChange("sector", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o setor" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {uniqueValues.sectors.map((sector) => (
+                      <SelectItem key={sector} value={sector}>
+                        {sector}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
 
           {/* Localização */}
           <div className="space-y-2">
-            <Label htmlFor="location">Localização/Sala</Label>
-            <Input
-              id="location"
-              value={formData.location}
-              onChange={(e) => handleInputChange("location", e.target.value)}
-              placeholder="Ex: Sala 101, Laboratório A"
-            />
+            <div className="flex items-center justify-between">
+              <Label htmlFor="location">Localização/Sala</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowNewValueInputs(prev => ({ ...prev, location: !prev.location }))}
+                className="h-6 px-2 text-xs"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Novo
+              </Button>
+            </div>
+            
+            {showNewValueInputs.location ? (
+              <div className="flex gap-2">
+                <Input
+                  value={newValueInputs.location}
+                  onChange={(e) => setNewValueInputs(prev => ({ ...prev, location: e.target.value }))}
+                  placeholder="Digite a nova sala"
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => handleAddNewValue('location')}
+                  className="px-3"
+                >
+                  +
+                </Button>
+              </div>
+            ) : (
+              <Select
+                value={formData.location}
+                onValueChange={(value) => handleInputChange("location", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a sala" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[200px]">
+                  {uniqueValues.locations.map((location) => (
+                    <SelectItem key={location} value={location}>
+                      {location}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {/* Tags/Rótulos */}

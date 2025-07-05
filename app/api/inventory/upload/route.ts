@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import { createSupabaseAdmin } from "@/lib/supabase";
+import { uploadCommissionSpreadsheet } from "@/lib/supabase-spreadsheets";
 
 import { authenticateUser } from "@/lib/auth/server";
 
@@ -73,55 +72,49 @@ export async function POST(request: NextRequest) {
 
     let fileUrl = null;
 
-    // Tentar fazer upload do arquivo usando service role (mais seguro)
+    // PRIORIDADE: Fazer upload da planilha e salvar URL na comissão PRIMEIRO
     try {
-      const supabaseAdmin = createSupabaseAdmin();
+      console.log(`📁 PRIORIDADE: Iniciando upload da planilha: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
       
-      if (supabaseAdmin) {
-        // Gerar nome único para o arquivo
-        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-        const fileExtension = file.name.split(".").pop();
-        const fileName = `${timestamp}-${Math.random()
-          .toString(36)
-          .substring(2)}.${fileExtension}`;
+      const uploadResult = await uploadCommissionSpreadsheet(file, commissionId);
+      
+      if (uploadResult.success && uploadResult.url) {
+        fileUrl = uploadResult.url;
+        console.log(`✅ Planilha enviada com sucesso: ${fileUrl}`);
         
-        const filePath = `commissions/${commissionId}/${fileName}`;
-        
-        // Converter File para ArrayBuffer
-        const arrayBuffer = await file.arrayBuffer();
-        const uint8Array = new Uint8Array(arrayBuffer);
-        
-        // Upload usando service role (bypassa RLS)
-        const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
-          .from('spreadsheets')
-          .upload(filePath, uint8Array, {
-            contentType: file.type,
-            cacheControl: '3600',
-            upsert: false
-          });
-        
-        if (uploadError) {
-          console.warn("⚠️ Erro no upload do arquivo:", uploadError);
-        } else {
-          // Obter URL pública
-          const { data: urlData } = supabaseAdmin.storage
-            .from('spreadsheets')
-            .getPublicUrl(filePath);
-          
-          if (urlData?.publicUrl) {
-            fileUrl = urlData.publicUrl;
-            console.log("✅ Arquivo salvo no Supabase:", fileUrl);
-          }
-        }
+        // Salvar URL da planilha na comissão IMEDIATAMENTE
+        await prisma.commission.update({
+          where: { id: commissionId },
+          data: {
+            spreadsheetUrl: fileUrl,
+            updatedAt: new Date(),
+          },
+        });
+        console.log(`📊 URL da planilha salva na comissão: ${fileUrl}`);
+      } else {
+        console.warn("⚠️ Erro no upload da planilha:", uploadResult.error);
+        // Continuar mesmo se o upload falhar - os dados processados ainda serão salvos
       }
     } catch (uploadError) {
-      console.warn("⚠️ Falha no upload para Supabase:", uploadError);
+      console.warn("⚠️ Falha no upload da planilha para Supabase:", uploadError);
       // Continuar sem o backup do arquivo - os dados processados ainda serão salvos
     }
 
     // Validar e mapear os dados para o formato correto
-    const itemsToCreate = [];
-    const validationErrors = [];
+    const itemsToCreate: Array<{
+      number: string;
+      description: string;
+      brandModel?: string;
+      currentResponsibility?: string;
+      conservationState?: string;
+      location?: string;
+      tags: string[];
+      ed?: string;
+      sector?: string;
+      commissionId: string;
+      campusId: string;
+    }> = [];
+    const validationErrors: string[] = [];
     
     for (let i = 0; i < processedData.length; i++) {
       const item = processedData[i];
@@ -204,73 +197,65 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Criar todos os itens no banco
-    const createdItems = await prisma.inventoryItem.createMany({
-      data: itemsToCreate,
+    // Criar todos os itens no banco usando operação em lote para melhor performance
+    console.log(`📦 Criando ${itemsToCreate.length} itens em lote...`);
+    
+    const createdItemList = await prisma.$transaction(async (tx) => {
+      // Criar todos os itens de uma vez usando createMany
+      await tx.inventoryItem.createMany({
+        data: itemsToCreate,
+        skipDuplicates: false, // Falhar se houver duplicatas
+      });
+      
+      // Buscar os itens criados para obter os IDs
+      const createdItems = await tx.inventoryItem.findMany({
+        where: {
+          commissionId: commissionId,
+          number: {
+            in: itemsToCreate.map(item => item.number)
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        take: itemsToCreate.length
+      });
+      
+      // Criar histórico para todos os itens criados
+      const historyData = createdItems.map(item => ({
+        inventoryItemId: item.id,
+        userId: user.id,
+        action: "create" as const,
+        changes: JSON.stringify({
+          before: null,
+          after: item,
+        }),
+        observation: `Item criado via upload de arquivo: ${file.name}`,
+        imageUrl: [],
+      }));
+      
+      await tx.inventoryHistory.createMany({
+        data: historyData,
+      });
+      
+      console.log(`✅ ${createdItems.length} itens e históricos criados com sucesso`);
+      return createdItems;
+    }, {
+      timeout: 30000, // 30 segundos de timeout
     });
 
-    // Buscar os itens criados para adicionar ao histórico
-    const createdItemList = await prisma.inventoryItem.findMany({
-      where: {
-        commissionId: commissionId,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: processedData.length,
-    });
-
-    // Registrar cada item no histórico
-    for (const createdItem of createdItemList) {
-      try {
-        await prisma.inventoryHistory.create({
-          data: {
-            inventoryItemId: createdItem.id,
-            userId: user.id,
-            action: "create",
-            changes: JSON.stringify({
-              before: null,
-              after: createdItem,
-            }),
-            observation: `Item criado via upload de arquivo: ${file.name}`,
-            imageUrl: [],
-          },
-        });
-      } catch (historyError) {
-        console.error(
-          `⚠️ Erro ao criar histórico para o item ${createdItem.id}:`,
-          historyError
-        );
-      }
-    }
-
-    // Atualizar URL da planilha na comissão (se o upload foi bem-sucedido)
-    if (fileUrl) {
-      try {
-        await prisma.commission.update({
-          where: { id: commissionId },
-          data: {
-            spreadsheetUrl: fileUrl,
-          },
-        });
-        console.log("📊 URL da planilha atualizada na comissão");
-      } catch (updateError) {
-        console.warn(
-          "⚠️ Erro ao atualizar URL da planilha na comissão:",
-          updateError
-        );
-      }
-    }
+    // URL da planilha já foi salva na comissão no início do processo
+    console.log(`📊 Processamento concluído. URL da planilha: ${fileUrl || 'não disponível'}`);
 
     console.log(
-      `✅ Upload processado: ${processedData.length} itens criados, ${createdItemList.length} históricos criados`
+      `✅ Upload processado: ${createdItemList.length} itens criados, ${createdItemList.length} históricos criados`
     );
 
     return NextResponse.json({
       success: true,
-      itemsCreated: createdItems.count,
+      itemsCreated: createdItemList.length,
       fileUrl,
-      message: `${processedData.length} itens foram importados com sucesso.`,
+      message: `${createdItemList.length} itens foram importados com sucesso.`,
     });
   } catch (error: any) {
     console.error("❌ Erro no upload:", error);

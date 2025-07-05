@@ -175,30 +175,11 @@ export function AddUserModal({
         role: formData.role, // Enviar papel do sistema
       };
 
-      // Chamada direta para a API, igual ao onboarding
-      const response = await fetch("/api/user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userProfileData),
-      });
-
-      const result = await response.json();
-      if (!response.ok) {
-        setErrorMessage(result.error || "Erro ao criar usuário");
-        return;
-      }
-
-      setSuccessMessage("Usuário criado com sucesso!");
-      setTempPassword(result.tempPassword || null);
-      setCreatedUser({
-        name: result.user?.name || userProfileData.name,
-        email: result.user?.email || userProfileData.email,
-      });
-      // Atualiza a listagem imediatamente
-      if (result.user) {
-        onAddUser(result.user);
-      }
-      // Limpa o formulário após sucesso
+      // Usar apenas o callback onAddUser que utiliza a mutação do React Query
+      // Isso evita a duplicação de chamadas à API
+      onAddUser(userProfileData);
+      
+      // Limpa o formulário após envio
       setFormData({
         name: "",
         email: "",

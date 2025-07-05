@@ -189,10 +189,55 @@ export async function POST(request: Request) {
     return NextResponse.json(newCommission, { status: 201 });
   } catch (error) {
     console.error("Erro ao criar comissão:", error);
+    
+    // Tratamento específico de erros
+    if (error instanceof Error) {
+      // Erro de unique constraint (nome duplicado)
+      if (error.message.includes("unique constraint") || error.message.includes("Unique constraint")) {
+        return NextResponse.json(
+          {
+            error: "Já existe uma comissão com este nome neste campus."
+          },
+          { status: 409 }
+        );
+      }
+      
+      // Erro de validação de dados
+      if (error.message.includes("validation") || error.message.includes("required")) {
+        return NextResponse.json(
+          {
+            error: "Dados inválidos fornecidos. Verifique os campos obrigatórios."
+          },
+          { status: 400 }
+        );
+      }
+      
+      // Erro de permissão
+      if (error.message.includes("permission") || error.message.includes("unauthorized")) {
+        return NextResponse.json(
+          {
+            error: "Sem permissão para criar comissão."
+          },
+          { status: 403 }
+        );
+      }
+      
+      // Erro de foreign key (campus não existe)
+      if (error.message.includes("foreign key") || error.message.includes("Foreign key")) {
+        return NextResponse.json(
+          {
+            error: "Campus especificado não foi encontrado."
+          },
+          { status: 404 }
+        );
+      }
+    }
+    
+    // Erro genérico para casos não tratados
     return NextResponse.json(
       {
-        error: "Erro interno do servidor",
-        details: error instanceof Error ? error.message : "Erro desconhecido",
+        error: "Erro interno do servidor ao criar comissão. Tente novamente.",
+        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Erro desconhecido') : undefined
       },
       { status: 500 }
     );

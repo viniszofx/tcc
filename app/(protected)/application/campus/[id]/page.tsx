@@ -3,6 +3,8 @@
 import LoadingScreen from "@/components/custom/loading";
 import { PageTitle } from "@/components/custom/page-title";
 import CampusModal from "@/components/manager-campuses/campus-modal";
+import AddCampusMemberModal from "@/components/members/add-campus-member-modal";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,10 +16,11 @@ import {
 } from "@/components/ui/card";
 import { useCampusDetailData } from "@/hooks/queries/use-page-data";
 import { useUserPermissions } from "@/hooks/use-consolidated-user";
-import type { Campus } from '@/types';
-import { Building2, Edit, Users } from "lucide-react";
+import type { Campus } from "@/types";
+import { Building2, Edit, Trash2, UserPlus, Users } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function CampusDetailPage() {
   const {
@@ -30,18 +33,11 @@ export default function CampusDetailPage() {
   const campusId = params.id as string;
 
   // Usar hook otimizado para buscar dados do campus
-  const {
-    campus,
-    organization,
-    members,
-    isLoading,
-    isLoadingOrganization,
-    isLoadingMembers,
-    error,
-    refetch,
-  } = useCampusDetailData(campusId);
+  const { campus, organization, members, isLoading, error, refetch } =
+    useCampusDetailData(campusId);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
 
   useEffect(() => {
     if (!permissionsLoading && !canManageOrganizations) {
@@ -71,6 +67,55 @@ export default function CampusDetailPage() {
     }
   };
 
+  const handleAddMember = async (userId: string, role: string) => {
+    try {
+      const response = await fetch("/api/campus-member", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          campusId,
+          role,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Membro adicionado com sucesso!");
+        refetch();
+        setIsAddMemberModalOpen(false);
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Erro ao adicionar membro");
+      }
+    } catch (error) {
+      console.error("Erro ao adicionar membro:", error);
+      toast.error("Erro ao adicionar membro");
+    }
+  };
+
+  const handleRemoveMember = async (userId: string) => {
+    try {
+      const response = await fetch(
+        `/api/campus-member?userId=${userId}&campusId=${campusId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Erro ao remover membro");
+      }
+
+      toast.success("Membro removido com sucesso!");
+      refetch(); // Atualiza os dados
+    } catch (error) {
+      console.error("Erro ao remover membro:", error);
+      toast.error("Erro ao remover membro");
+    }
+  };
+
   if (permissionsLoading || isLoading) {
     return <LoadingScreen />;
   }
@@ -78,7 +123,7 @@ export default function CampusDetailPage() {
   if (!canManageOrganizations) {
     return (
       <>
-        <PageTitle title="Acesso Negado - KDÊ" />
+        <PageTitle title="Acesso negado - KDÊ" />
         <Card>
           <CardContent className="p-6">
             <p className="text-red-500">Acesso negado</p>
@@ -136,6 +181,22 @@ export default function CampusDetailPage() {
                 </CardDescription>
               </div>
               <div className="flex gap-2">
+                {/* Botão para adicionar membros - apenas para admins */}
+                {(user?.role === "admin global" ||
+                  user?.role === "admin" ||
+                  members.some(
+                    (member: any) =>
+                      member.userId === user?.id && member.role === "admin"
+                  )) && (
+                  <Button
+                    onClick={() => setIsAddMemberModalOpen(true)}
+                    variant="outline"
+                    className="border-[var(--border-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] px-4 py-2 text-base sm:px-2 sm:py-1 sm:text-sm"
+                  >
+                    <UserPlus className="w-4 h-4 mr-0 sm:mr-2" />
+                    <span className="hidden sm:inline">Adicionar Membro</span>
+                  </Button>
+                )}
                 <Button
                   onClick={() => setIsModalOpen(true)}
                   className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] px-4 py-2 text-base sm:px-2 sm:py-1 sm:text-sm"
@@ -256,15 +317,19 @@ export default function CampusDetailPage() {
                     key={index}
                     className="flex items-center space-x-3 p-3 bg-[var(--bg-simple)] rounded-lg border border-[var(--border-color)]"
                   >
-                    <div className="w-8 h-8 bg-[var(--secondary-color)] rounded-full flex items-center justify-center">
-                      <span className="text-sm font-bold text-[var(--font-color)]">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage
+                        src={member.user?.avatar || "/placeholder.svg"}
+                        alt={member.user?.name || "Usuário"}
+                      />
+                      <AvatarFallback>
                         {member.user?.name?.charAt(0) ||
                           member.user?.email?.charAt(0) ||
                           member.name?.charAt(0) ||
                           member.email?.charAt(0) ||
                           "?"}
-                      </span>
-                    </div>
+                      </AvatarFallback>
+                    </Avatar>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-[var(--font-color)] truncate">
                         {member.user?.name ||
@@ -274,9 +339,24 @@ export default function CampusDetailPage() {
                           "Usuário"}
                       </p>
                       <p className="text-xs text-[var(--font-color)] opacity-70 truncate">
-                        {member.role || member.roleInCampus || "Membro"}
+                        {member.role === "admin" ? "Administrador" : "Membro"}
                       </p>
                     </div>
+                    {/* Botão para remover membro - apenas para admins */}
+                    {(user?.role === "admin global" ||
+                      user?.role === "admin" ||
+                      members.some(
+                        (m: any) => m.userId === user?.id && m.role === "admin"
+                      )) && (
+                      <Button
+                        onClick={() => handleRemoveMember(member.userId)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-8 w-8"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 ))}
                 {members.length > 6 && (
@@ -295,9 +375,18 @@ export default function CampusDetailPage() {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onSave={handleEditCampus}
-          onDelete={() => { }}
+          onDelete={() => {}}
           campus={campus}
           mode="edit"
+        />
+
+        {/* Modal de Adicionar Membro */}
+        <AddCampusMemberModal
+          isOpen={isAddMemberModalOpen}
+          onClose={() => setIsAddMemberModalOpen(false)}
+          onSave={handleAddMember}
+          campusId={campusId}
+          currentMembers={members.map((member: any) => member.userId)}
         />
       </div>
     </>

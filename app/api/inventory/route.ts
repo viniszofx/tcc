@@ -201,12 +201,39 @@ export async function POST(request: Request) {
         );
       }
 
-      // Remover verificação de número único - números podem ser duplicados entre comissões
+      // Verificar se já existe um item com o mesmo número na comissão
+      let finalNumber = item.number;
+      const existingItem = await prisma.inventoryItem.findFirst({
+        where: {
+          number: finalNumber,
+          commissionId: commissionId,
+        },
+      });
+
+      // Se já existe, gerar um número único
+      if (existingItem) {
+        let counter = 1;
+        let newNumber = `${finalNumber}-${counter}`;
+        
+        while (await prisma.inventoryItem.findFirst({
+          where: {
+            number: newNumber,
+            commissionId: commissionId,
+          },
+        })) {
+          counter++;
+          newNumber = `${finalNumber}-${counter}`;
+        }
+        
+        finalNumber = newNumber;
+        console.log(`⚠️ Número ${item.number} já existe na comissão. Usando ${finalNumber} em vez disso.`);
+      }
 
       try {
         const newItem = await prisma.inventoryItem.create({
           data: {
             ...item,
+            number: finalNumber,
             commissionId,
             conservationState: normalizeConservationState(
               item.conservationState
@@ -346,6 +373,8 @@ export async function POST(request: Request) {
       },
       take: items.length, // Pegar apenas a quantidade de itens que foram criados
     });
+
+
 
     // Registrar cada item no histórico
     for (const createdItem of createdItemList) {
@@ -520,12 +549,7 @@ export async function DELETE(request: Request) {
 
     // Remover verificação de permissão - todos podem deletar itens
 
-    // Deletar o item (o histórico relacionado será deletado automaticamente por CASCADE)
-    await prisma.inventoryItem.delete({
-      where: { id },
-    });
-
-    // Criar registro no histórico antes de deletar
+    // Criar registro no histórico ANTES de deletar o item
     try {
       await prisma.inventoryHistory.create({
         data: {
@@ -542,8 +566,16 @@ export async function DELETE(request: Request) {
       });
     } catch (historyError) {
       console.error("Erro ao criar histórico de exclusão:", historyError);
-      // Continuar mesmo com erro no histórico
+      return NextResponse.json(
+        { error: "Erro ao criar histórico de exclusão" },
+        { status: 500 }
+      );
     }
+
+    // Deletar o item (o histórico relacionado será deletado automaticamente por CASCADE)
+    await prisma.inventoryItem.delete({
+      where: { id },
+    });
 
     return NextResponse.json({ message: "Item removido com sucesso" });
   } catch (error) {

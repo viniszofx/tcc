@@ -23,6 +23,7 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useCommissionPermissions } from "../../../../lib/permissions/hooks";
 
 export default function CommissionsPage() {
@@ -111,7 +112,7 @@ export default function CommissionsPage() {
           ? error.message
           : "Erro desconhecido ao criar comissão";
 
-      alert(`Erro ao criar comissão: ${errorMessage}`);
+      toast.error(`Erro ao criar comissão: ${errorMessage}`);
     }
   };
 

@@ -18,6 +18,7 @@ import type { Campus } from '@/types';
 import { Plus, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function CampusPage() {
   const {
@@ -147,10 +148,10 @@ export default function CampusPage() {
         setIsModalOpen(false);
         setCurrentCampus(null);
       } else {
-        alert("Erro ao deletar campus");
+        toast.error("Erro ao deletar campus");
       }
     } catch (error) {
-      alert("Erro ao deletar campus");
+      toast.error("Erro ao deletar campus");
     }
   };
 

@@ -80,6 +80,43 @@ export async function DELETE(
       );
     }
 
+    // Buscar todos os itens para criar histórico antes de deletar
+    const itemsToDelete = await prisma.inventoryItem.findMany({
+      where: { commissionId },
+      include: {
+        commission: true,
+        campus: true,
+      },
+    });
+
+    // Criar entradas no histórico para cada item antes de deletar
+    const historyPromises = itemsToDelete.map((item) =>
+      prisma.inventoryHistory.create({
+        data: {
+          inventoryItemId: item.id,
+          userId: user.id,
+          action: "delete",
+          changes: JSON.stringify({
+            before: item,
+            after: null,
+          }),
+          observation: `Item removido durante exclusão em lote do inventário da comissão ${commission.name}`,
+          imageUrl: [],
+        },
+      })
+    );
+
+    try {
+      await Promise.all(historyPromises);
+      console.log(`📝 Criadas ${historyPromises.length} entradas de histórico para exclusão em lote`);
+    } catch (historyError) {
+      console.error("Erro ao criar histórico de exclusão em lote:", historyError);
+      return NextResponse.json(
+        { error: "Erro ao criar histórico de exclusão" },
+        { status: 500 }
+      );
+    }
+
     // Deletar todos os itens de inventário da comissão
     const deleteResult = await prisma.inventoryItem.deleteMany({
       where: { commissionId },

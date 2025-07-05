@@ -16,6 +16,7 @@ import { exportToPdfStyled } from "@/utils/pdf-export";
 import { Filter, RefreshCw } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState, lazy, Suspense } from "react";
+import { toast } from "sonner";
 
 // Carregamento dinâmico do InventoryActions para evitar carregamento desnecessário do CameraModal
 const InventoryActions = lazy(() => import("@/components/inventories/inventory-actions"));
@@ -409,7 +410,7 @@ export default function InventoryPageBase({
       document.body.removeChild(link);
     } catch (error) {
       console.error("Erro ao exportar CSV:", error);
-      alert("Ocorreu um erro ao exportar para CSV");
+      toast.error("Ocorreu um erro ao exportar para CSV");
     }
   };
 
@@ -442,7 +443,7 @@ export default function InventoryPageBase({
       document.body.removeChild(link);
     } catch (error) {
       console.error("Erro ao exportar JSON:", error);
-      alert("Ocorreu um erro ao exportar para JSON");
+      toast.error("Ocorreu um erro ao exportar para JSON");
     }
   };
 

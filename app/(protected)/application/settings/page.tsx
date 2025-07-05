@@ -22,16 +22,51 @@ import {
   Palette,
   Settings as SettingsIcon,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function SettingsPage() {
   const { user, loading } = useUserPermissions();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState("appearance");
+  const [showPasswordResetMessage, setShowPasswordResetMessage] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
+      return;
+    }
+
+    // Verificar se o usuário chegou através de um magic link de reset de senha
+    const checkPasswordReset = async () => {
+      try {
+        const { supabase } = await import("@/lib/supabase");
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Se há uma sessão e o usuário veio de um reset de senha
+        if (session && session.user?.app_metadata?.provider === 'email') {
+          // Verificar se é um reset de senha baseado nos parâmetros da URL ou metadata
+          const urlParams = new URLSearchParams(window.location.search);
+          const isPasswordReset = urlParams.get('type') === 'recovery' || 
+                                 session.user?.user_metadata?.email_confirmed_at;
+          
+          if (isPasswordReset) {
+            setActiveTab("security");
+            setShowPasswordResetMessage(true);
+            
+            // Limpar a URL dos parâmetros de reset
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, '', newUrl);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao verificar reset de senha:', error);
+      }
+    };
+
+    if (user) {
+      checkPasswordReset();
     }
   }, [loading, user, router]);
 
@@ -69,7 +104,7 @@ export default function SettingsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="appearance" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="flex flex-wrap w-full gap-2 bg-[var(--card-color)] lg:grid lg:grid-cols-4 lg:gap-0">
                 <TabsTrigger
                   value="appearance"
@@ -119,6 +154,23 @@ export default function SettingsPage() {
                 </TabsContent>
 
                 <TabsContent value="security" className="space-y-4 sm:space-y-6">
+                  {showPasswordResetMessage && (
+                    <Card className="bg-blue-50 border-blue-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2">
+                          <Lock className="h-5 w-5 text-blue-600" />
+                          <div>
+                            <p className="font-medium text-blue-800">
+                              Link de redefinição de senha acessado
+                            </p>
+                            <p className="text-sm text-blue-600">
+                              Você pode agora definir uma nova senha para sua conta.
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                   <Card className="bg-[var(--card-color)]">
                     <CardContent className="p-4 sm:p-6">
                       <SecuritySettings />

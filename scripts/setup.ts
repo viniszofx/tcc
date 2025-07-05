@@ -1,7 +1,8 @@
 import { setupAvatarsBucket } from "@/lib/supabase-avatars";
 import { setupSpreadsheetsBucket } from "@/lib/supabase-spreadsheets";
 import { config } from "dotenv";
-import { cleanDatabase } from "./clean-database";
+// Importação condicional para evitar problemas no build
+// import { cleanDatabase } from "./clean-database";
 
 // Carregar variáveis de ambiente (exceto em produção)
 if (process.env.NODE_ENV !== "production") {
@@ -105,6 +106,7 @@ async function resetSystem() {
 
     // 1. Limpar sistema
     console.log("\n🧹 === LIMPEZA COMPLETA ===");
+    const { cleanDatabase } = await import("./clean-database");
     await cleanDatabase();
 
     // 2. Setup completo
@@ -144,6 +146,7 @@ async function main() {
         console.log("💡 Para executar, use: npm run setup clean --force");
         process.exit(0);
       }
+      const { cleanDatabase } = await import("./clean-database");
       await cleanDatabase();
       break;
 

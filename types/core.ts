@@ -115,7 +115,7 @@ export interface InventoryItem {
 // Histórico de inventário
 export interface InventoryHistory {
   id: string;
-  inventoryItemId: string;
+  inventoryItemId?: string;
   userId: string;
   action: InventoryAction;
   changes?: string;
