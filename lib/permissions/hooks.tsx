@@ -102,7 +102,7 @@ export function Can({
 }
 
 // Hook específico para permissões de comissão
-export function useCommissionPermissions() {
+function useCommissionPermissions() {
   const ability = useAbility();
 
   return {
@@ -117,7 +117,7 @@ export function useCommissionPermissions() {
 }
 
 // Hook específico para permissões de organização
-export function useOrganizationPermissions() {
+function useOrganizationPermissions() {
   const ability = useAbility();
 
   return {
@@ -131,7 +131,7 @@ export function useOrganizationPermissions() {
 }
 
 // Hook específico para permissões de inventário
-export function useInventoryPermissions() {
+function useInventoryPermissions() {
   const ability = useAbility();
 
   return {
@@ -144,3 +144,9 @@ export function useInventoryPermissions() {
     canCreateInventoryHistory: ability.can("create", "InventoryHistory"),
   };
 }
+
+export {
+  useCommissionPermissions,
+  useInventoryPermissions,
+  useOrganizationPermissions,
+};

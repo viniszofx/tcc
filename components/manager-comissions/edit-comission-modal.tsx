@@ -43,9 +43,9 @@ export function EditComissionModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const tiposComissao = [
-    { value: "inventário", label: "Inventário" },
-    { value: "desfazimento", label: "Desfazimento" },
-    { value: "outra", label: "Outra" },
+    { value: "Permanente", label: "Permanente" },
+    { value: "Temporária", label: "Temporária" },
+    { value: "Especial", label: "Especial" },
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

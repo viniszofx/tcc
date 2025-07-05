@@ -67,6 +67,8 @@ export async function GET(request: Request) {
     const sector = searchParams.get("sector");
     const ed = searchParams.get("ed");
 
+    console.log(commissionId);
+
     if (id) {
       const item = await prisma.inventoryItem.findUnique({
         where: { id },

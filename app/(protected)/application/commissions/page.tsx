@@ -17,11 +17,11 @@ import {
 } from "@/hooks/queries/use-commissions-query";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
 import type { CommissionWithRelations } from "@/interface";
-import { useCommissionPermissions } from "@/lib/permissions/hooks";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useCommissionPermissions } from "../../../../lib/permissions/hooks";
 
 export default function CommissionsPage() {
   const {

@@ -43,7 +43,7 @@ export function AddComissionModal({
   const [formData, setFormData] = useState({
     nome: "",
     descricao: "",
-    tipo: "Permanente",
+    tipo: "",
     campusId: "",
     ano: new Date().getFullYear(),
   });
@@ -118,13 +118,13 @@ export function AddComissionModal({
 
       onAddComission(submissionData);
 
-      setFormData({
-        nome: "",
-        descricao: "",
-        tipo: "Permanente",
-        campusId: "",
-        ano: new Date().getFullYear(),
-      });
+      // setFormData({
+      //   nome: "",
+      //   descricao: "",
+      //   tipo: "Permanente",
+      //   campusId: "",
+      //   ano: new Date().getFullYear(),
+      // });
 
       onClose();
     }

@@ -353,7 +353,6 @@ export default function CommissionDetailPage() {
           </Card>
         </div>
       </div>
-      );
     </>
   );
 }
