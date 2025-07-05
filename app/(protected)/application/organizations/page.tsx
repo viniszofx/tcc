@@ -1,6 +1,7 @@
 "use client";
 
 import LoadingScreen from "@/components/custom/loading";
+import { PageTitle } from "@/components/custom/page-title";
 import OrganizationCard from "@/components/manager-organizations/organization-card";
 import OrganizationModal from "@/components/manager-organizations/organization-modal";
 import { Button } from "@/components/ui/button";
@@ -190,74 +191,77 @@ export default function OrganizationsPage() {
   };
 
   if (orgsLoading) {
-    return <LoadingScreen />;
+    return <LoadingScreen />
   }
 
   return (
-    <Card className="w-full bg-[var(--bg-simple)] shadow-lg transition-all duration-300">
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6">
-        <div>
-          <CardTitle className="text-2xl font-bold text-[var(--font-color)] md:text-3xl">
-            Gerenciar Organizações
-          </CardTitle>
-          <CardDescription className="text-[var(--font-color)] opacity-70">
-            Gerencie as organizações cadastradas no sistema.
-          </CardDescription>
-        </div>
-        <div className="flex gap-2 w-full sm:w-auto justify-end">
-          <Button
-            className="flex items-center gap-2 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white"
-            onClick={handleSaveAll}
-          >
-            <Save size={18} />
-            Salvar
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-6">
-        <div className="flex justify-end">
-          <Button
-            onClick={() => handleOpenModal("create")}
-            className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all w-full sm:w-auto"
-          >
-            <Plus size={18} />
-            Nova Organização
-          </Button>
-        </div>
-
-        {orgs.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {orgs.map((org) => (
-              <OrganizationCard
-                key={org.id}
-                organization={org}
-                onEdit={() => handleOpenModal("edit", org)}
-                onDelete={() => handleDeleteOrganization(org.id)}
-                disableDelete={!canDeleteOrganization(org.id)}
-              />
-            ))}
+    <>
+      <PageTitle title="Gerenciar Organizações - KDÊ" />
+      <Card className="w-full bg-[var(--bg-simple)] shadow-lg transition-all duration-300">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6">
+          <div>
+            <CardTitle className="text-2xl font-bold text-[var(--font-color)] md:text-3xl">
+              Gerenciar Organizações
+            </CardTitle>
+            <CardDescription className="text-[var(--font-color)] opacity-70">
+              Gerencie as organizações cadastradas no sistema.
+            </CardDescription>
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-[var(--font-color)] opacity-70 text-lg">
-              Nenhuma organização cadastrada ainda.
-            </p>
+          <div className="flex gap-2 w-full sm:w-auto justify-end">
+            <Button
+              className="flex items-center gap-2 bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white"
+              onClick={handleSaveAll}
+            >
+              <Save size={18} />
+              Salvar
+            </Button>
           </div>
-        )}
-      </CardContent>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-6">
+          <div className="flex justify-end">
+            <Button
+              onClick={() => handleOpenModal("create")}
+              className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all w-full sm:w-auto"
+            >
+              <Plus size={18} />
+              Nova Organização
+            </Button>
+          </div>
 
-      <OrganizationModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        mode={modalMode}
-        organization={currentOrg}
-        onSave={
-          modalMode === "create"
-            ? handleCreateOrganization
-            : (data) =>
+          {orgs.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {orgs.map((org) => (
+                <OrganizationCard
+                  key={org.id}
+                  organization={org}
+                  onEdit={() => handleOpenModal("edit", org)}
+                  onDelete={() => handleDeleteOrganization(org.id)}
+                  disableDelete={!canDeleteOrganization(org.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-[var(--font-color)] opacity-70 text-lg">
+                Nenhuma organização cadastrada ainda.
+              </p>
+            </div>
+          )}
+        </CardContent>
+
+        <OrganizationModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          mode={modalMode}
+          organization={currentOrg}
+          onSave={
+            modalMode === "create"
+              ? handleCreateOrganization
+              : (data) =>
                 currentOrg && handleEditOrganization(currentOrg.id, data)
-        }
-      />
-    </Card>
+          }
+        />
+      </Card>
+    </>
   );
 }

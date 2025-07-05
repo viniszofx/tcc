@@ -1,6 +1,7 @@
 "use client";
 
 import LoadingScreen from "@/components/custom/loading";
+import { PageTitle } from "@/components/custom/page-title";
 import { EditComissionModal } from "@/components/manager-comissions/edit-comission-modal";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -131,13 +132,16 @@ export default function CommissionDetailPage() {
 
   if (commissionError || !commission) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-red-500">
-            {commissionError?.message || "Comissão não encontrada"}
-          </p>
-        </CardContent>
-      </Card>
+      <>
+        <PageTitle title="Erro - KDÊ" />
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-red-500">
+              {commissionError?.message || "Comissão não encontrada"}
+            </p>
+          </CardContent>
+        </Card>
+      </>
     );
   }
 
@@ -177,7 +181,8 @@ export default function CommissionDetailPage() {
   ];
 
   return (
-  <>
+    <>
+      <PageTitle title="Detalhes da Comissão - KDÊ" />
       {canManageCommission && commission && (
         <EditComissionModal
           isOpen={editModalOpen}

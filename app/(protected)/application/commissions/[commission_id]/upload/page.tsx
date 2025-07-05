@@ -1,6 +1,7 @@
 "use client";
 
 import LoadingScreen from "@/components/custom/loading";
+import { PageTitle } from "@/components/custom/page-title";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -490,16 +491,16 @@ export default function CommissionUploadPage() {
                 case "valor":
                   item.VALOR_AQUISICAO = value
                     ? parseFloat(
-                        value.replace(/[^\d.,]/g, "").replace(",", ".")
-                      )
+                      value.replace(/[^\d.,]/g, "").replace(",", ".")
+                    )
                     : null;
                   break;
                 case "valor depreciado":
                 case "valor_depreciado":
                   item.VALOR_DEPRECIADO = value
                     ? parseFloat(
-                        value.replace(/[^\d.,]/g, "").replace(",", ".")
-                      )
+                      value.replace(/[^\d.,]/g, "").replace(",", ".")
+                    )
                     : null;
                   break;
                 case "numero nota fiscal":
@@ -680,287 +681,294 @@ export default function CommissionUploadPage() {
 
   if (!canAccessCommission || !canUploadToCommission) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-red-500">
-            {!canAccessCommission
-              ? "Acesso negado a esta comissão"
-              : "Você não tem permissão para fazer upload nesta comissão"}
-          </p>
-        </CardContent>
-      </Card>
+      <>
+        <PageTitle title="Acesso Negado - KDÊ" />
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-red-500">
+              {!canAccessCommission
+                ? "Acesso negado a esta comissão"
+                : "Você não tem permissão para fazer upload nesta comissão"}
+            </p>
+          </CardContent>
+        </Card>
+      </>
     );
   }
 
   if (commissionError || !commission) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-red-500">
-            {commissionError?.message || "Comissão não encontrada"}
-          </p>
-        </CardContent>
-      </Card>
+      <>
+        <PageTitle title="Comissão Não Encontrada - KDÊ" />
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-red-500">
+              {commissionError?.message || "Comissão não encontrada"}
+            </p>
+          </CardContent>
+        </Card>
+      </>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
-                Upload de Planilhas - {commission.name}
-              </CardTitle>
-              <CardDescription className="text-[var(--font-color)] opacity-70">
-                Faça upload de planilhas CSV ou Excel com dados de inventário
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              {isOnline ? (
-                <div className="flex items-center gap-1 text-green-600">
-                  <Wifi className="w-4 h-4" />
-                  <span className="text-sm">Online</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1 text-red-600">
-                  <WifiOff className="w-4 h-4" />
-                  <span className="text-sm">Offline</span>
-                </div>
-              )}
-              {currentSyncStatus === "pending" && (
-                <div className="flex items-center gap-1 text-orange-600">
-                  <Upload className="w-4 h-4" />
-                  <span className="text-sm">Sync Pendente</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
-      {/* Formulário de Upload */}
-      <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
-        <CardHeader>
-          <CardTitle className="text-[var(--font-color)]">
-            Novo Upload
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Seleção de Arquivos */}
-          <div className="space-y-2">
-            <Label htmlFor="files" className="text-[var(--font-color)]">
-              Selecionar Arquivo
-            </Label>
-            <div
-              className={`border-2 rounded-lg p-8 text-center transition-colors ${
-                isDragging
-                  ? "border-[var(--button-color)] bg-[var(--bg-hover)]"
-                  : "border-dashed border-[var(--border-color)] hover:border-[var(--button-color)]"
-              }`}
-              onDragEnter={handleDragEnter}
-              onDragLeave={handleDragLeave}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-            >
-              <Upload
-                className={`w-12 h-12 mx-auto mb-4 transition-colors ${
-                  isDragging
-                    ? "text-[var(--button-color)]"
-                    : "text-[var(--font-color)] opacity-50"
-                }`}
-              />
-              <Input
-                id="files"
-                type="file"
-                onChange={handleFileSelect}
-                className="hidden"
-                accept=".csv,.xlsx,.xls"
-              />
-              <Label
-                htmlFor="files"
-                className="cursor-pointer text-[var(--font-color)] hover:text-[var(--button-color)] text-center w-full flex flex-col items-center"
-              >
-                <span className="font-medium">Clique para selecionar</span> ou
-                arraste um arquivo aqui
-              </Label>
-              <p className="text-sm text-[var(--font-color)] opacity-70 mt-2">
-                CSV, Excel (máx. 50MB por arquivo)
-              </p>
-            </div>
-          </div>
-
-          {/* Arquivos Selecionados */}
-          {selectedFiles.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-[var(--font-color)]">
-                Arquivos Selecionados
-              </Label>
-              <div className="space-y-2">
-                {selectedFiles.map((file, index) => {
-                  const IconComponent = getFileIcon(file);
-                  return (
-                    <div
-                      key={index}
-                      className="flex items-center space-x-3 p-3 bg-[var(--bg-simple)] rounded-lg border border-[var(--border-color)]"
-                    >
-                      <IconComponent className="w-5 h-5 text-[var(--font-color)] opacity-70" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[var(--font-color)] truncate">
-                          {file.name}
-                        </p>
-                        <p className="text-xs text-[var(--font-color)] opacity-70">
-                          {formatFileSize(file.size)}
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedFiles((files) =>
-                            files.filter((_, i) => i !== index)
-                          );
-                        }}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                      >
-                        ×
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Descrição */}
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-[var(--font-color)]">
-              Descrição (opcional)
-            </Label>
-            <Textarea
-              id="description"
-              placeholder="Descreva o conteúdo dos arquivos..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="bg-[var(--bg-simple)] border-[var(--border-color)] text-[var(--font-color)]"
-              rows={3}
-            />
-          </div>
-
-          {/* Mensagem de Sucesso */}
-          {uploadSuccess && (
-            <div className="flex items-center space-x-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <CheckCircle className="w-5 h-5 text-green-500" />
+    <>
+      <PageTitle title="Upload - KDÊ" />
+      <div className="space-y-6">
+        {/* Header */}
+        <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
+          <CardHeader>
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-green-700">
-                  Upload realizado com sucesso!
-                </p>
-                <p className="text-xs text-green-600">
-                  Dados processados e salvos. Redirecionando para inventories...
+                <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
+                  Upload de Planilhas - {commission.name}
+                </CardTitle>
+                <CardDescription className="text-[var(--font-color)] opacity-70">
+                  Faça upload de planilhas CSV ou Excel com dados de inventário
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                {isOnline ? (
+                  <div className="flex items-center gap-1 text-green-600">
+                    <Wifi className="w-4 h-4" />
+                    <span className="text-sm">Online</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-red-600">
+                    <WifiOff className="w-4 h-4" />
+                    <span className="text-sm">Offline</span>
+                  </div>
+                )}
+                {currentSyncStatus === "pending" && (
+                  <div className="flex items-center gap-1 text-orange-600">
+                    <Upload className="w-4 h-4" />
+                    <span className="text-sm">Sync Pendente</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Formulário de Upload */}
+        <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
+          <CardHeader>
+            <CardTitle className="text-[var(--font-color)]">
+              Novo Upload
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Seleção de Arquivos */}
+            <div className="space-y-2">
+              <Label htmlFor="files" className="text-[var(--font-color)]">
+                Selecionar Arquivo
+              </Label>
+              <div
+                className={`border-2 rounded-lg p-8 text-center transition-colors ${isDragging
+                    ? "border-[var(--button-color)] bg-[var(--bg-hover)]"
+                    : "border-dashed border-[var(--border-color)] hover:border-[var(--button-color)]"
+                  }`}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+              >
+                <Upload
+                  className={`w-12 h-12 mx-auto mb-4 transition-colors ${isDragging
+                      ? "text-[var(--button-color)]"
+                      : "text-[var(--font-color)] opacity-50"
+                    }`}
+                />
+                <Input
+                  id="files"
+                  type="file"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  accept=".csv,.xlsx,.xls"
+                />
+                <Label
+                  htmlFor="files"
+                  className="cursor-pointer text-[var(--font-color)] hover:text-[var(--button-color)] text-center w-full flex flex-col items-center"
+                >
+                  <span className="font-medium">Clique para selecionar</span> ou
+                  arraste um arquivo aqui
+                </Label>
+                <p className="text-sm text-[var(--font-color)] opacity-70 mt-2">
+                  CSV, Excel (máx. 50MB por arquivo)
                 </p>
               </div>
             </div>
-          )}
 
-          {/* Erro de Upload */}
-          {uploadError && (
-            <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-red-500" />
-              <p className="text-sm text-red-700">{uploadError}</p>
-            </div>
-          )}
+            {/* Arquivos Selecionados */}
+            {selectedFiles.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-[var(--font-color)]">
+                  Arquivos Selecionados
+                </Label>
+                <div className="space-y-2">
+                  {selectedFiles.map((file, index) => {
+                    const IconComponent = getFileIcon(file);
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-center space-x-3 p-3 bg-[var(--bg-simple)] rounded-lg border border-[var(--border-color)]"
+                      >
+                        <IconComponent className="w-5 h-5 text-[var(--font-color)] opacity-70" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-[var(--font-color)] truncate">
+                            {file.name}
+                          </p>
+                          <p className="text-xs text-[var(--font-color)] opacity-70">
+                            {formatFileSize(file.size)}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedFiles((files) =>
+                              files.filter((_, i) => i !== index)
+                            );
+                          }}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
-          {/* Botões */}
-          <div className="flex gap-4">
-            <Button
-              onClick={handleUpload}
-              disabled={
-                selectedFiles.length === 0 || isUploading || isProcessing
-              }
-              className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] disabled:opacity-50"
-            >
-              {isUploading
-                ? "Enviando..."
-                : isProcessing
-                ? "Processando..."
-                : "Fazer Upload"}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() =>
-                router.push(`/application/commissions/${commissionId}`)
-              }
-              className="border-[var(--border-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)]"
-            >
-              Voltar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Informações Adicionais */}
-      <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
-        <CardHeader>
-          <CardTitle className="text-[var(--font-color)]">
-            Tipos de Arquivo Aceitos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-1">
-            <div>
-              <h4 className="font-medium text-[var(--font-color)] mb-2">
-                Planilhas de Inventário
-              </h4>
-              <ul className="text-sm text-[var(--font-color)] opacity-70 space-y-1">
-                <li>• CSV (.csv) - Recomendado</li>
-                <li>• Microsoft Excel (.xls, .xlsx)</li>
-              </ul>
-
-              <h4 className="font-medium text-[var(--font-color)] mb-2 mt-4">
-                Colunas Esperadas (opcionais)
-              </h4>
-              <ul className="text-sm text-[var(--font-color)] opacity-70 space-y-1">
-                <li>
-                  • numero/patrimonio, descricao/item, marca/especificacao
-                </li>
-                <li>• responsavel, estado/conservacao, quantidade, valor</li>
-                <li>• sala/subsecao, ed/edificio, setor/departamento</li>
-                <li>• rotulos/tags, campus, data_aquisicao, observacoes</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-4 space-y-3">
-            <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-              <p className="text-sm text-yellow-700">
-                <strong>Nota:</strong> O armazenamento de arquivos na nuvem pode
-                estar indisponível se o Supabase não estiver configurado. Os
-                dados dos itens ainda serão processados e armazenados
-                normalmente. Se encontrar erros, verifique se as variáveis de
-                ambiente foram configuradas corretamente no arquivo .env.
-              </p>
+            {/* Descrição */}
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-[var(--font-color)]">
+                Descrição (opcional)
+              </Label>
+              <Textarea
+                id="description"
+                placeholder="Descreva o conteúdo dos arquivos..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="bg-[var(--bg-simple)] border-[var(--border-color)] text-[var(--font-color)]"
+                rows={3}
+              />
             </div>
 
-            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm text-blue-700">
-                <strong>Funcionalidade Offline:</strong> Os dados são
-                processados e salvos localmente para funcionamento offline.
-                Quando online, os dados são sincronizados automaticamente.
-              </p>
+            {/* Mensagem de Sucesso */}
+            {uploadSuccess && (
+              <div className="flex items-center space-x-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <div>
+                  <p className="text-sm font-medium text-green-700">
+                    Upload realizado com sucesso!
+                  </p>
+                  <p className="text-xs text-green-600">
+                    Dados processados e salvos. Redirecionando para inventories...
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Erro de Upload */}
+            {uploadError && (
+              <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-red-500" />
+                <p className="text-sm text-red-700">{uploadError}</p>
+              </div>
+            )}
+
+            {/* Botões */}
+            <div className="flex gap-4">
+              <Button
+                onClick={handleUpload}
+                disabled={
+                  selectedFiles.length === 0 || isUploading || isProcessing
+                }
+                className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] disabled:opacity-50"
+              >
+                {isUploading
+                  ? "Enviando..."
+                  : isProcessing
+                    ? "Processando..."
+                    : "Fazer Upload"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  router.push(`/application/commissions/${commissionId}`)
+                }
+                className="border-[var(--border-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)]"
+              >
+                Voltar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Informações Adicionais */}
+        <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
+          <CardHeader>
+            <CardTitle className="text-[var(--font-color)]">
+              Tipos de Arquivo Aceitos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-1">
+              <div>
+                <h4 className="font-medium text-[var(--font-color)] mb-2">
+                  Planilhas de Inventário
+                </h4>
+                <ul className="text-sm text-[var(--font-color)] opacity-70 space-y-1">
+                  <li>• CSV (.csv) - Recomendado</li>
+                  <li>• Microsoft Excel (.xls, .xlsx)</li>
+                </ul>
+
+                <h4 className="font-medium text-[var(--font-color)] mb-2 mt-4">
+                  Colunas Esperadas (opcionais)
+                </h4>
+                <ul className="text-sm text-[var(--font-color)] opacity-70 space-y-1">
+                  <li>
+                    • numero/patrimonio, descricao/item, marca/especificacao
+                  </li>
+                  <li>• responsavel, estado/conservacao, quantidade, valor</li>
+                  <li>• sala/subsecao, ed/edificio, setor/departamento</li>
+                  <li>• rotulos/tags, campus, data_aquisicao, observacoes</li>
+                </ul>
+              </div>
             </div>
 
-            <div className="p-3 bg-[var(--bg-simple)] rounded-lg border border-[var(--border-color)]">
-              <p className="text-sm text-[var(--font-color)] opacity-70">
-                <strong>Limite:</strong> Máximo 50MB por arquivo. Para arquivos
-                maiores, considere dividir em partes menores ou usar CSV para
-                melhor performance.
-              </p>
+            <div className="mt-4 space-y-3">
+              <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                <p className="text-sm text-yellow-700">
+                  <strong>Nota:</strong> O armazenamento de arquivos na nuvem pode
+                  estar indisponível se o Supabase não estiver configurado. Os
+                  dados dos itens ainda serão processados e armazenados
+                  normalmente. Se encontrar erros, verifique se as variáveis de
+                  ambiente foram configuradas corretamente no arquivo .env.
+                </p>
+              </div>
+
+              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-700">
+                  <strong>Funcionalidade Offline:</strong> Os dados são
+                  processados e salvos localmente para funcionamento offline.
+                  Quando online, os dados são sincronizados automaticamente.
+                </p>
+              </div>
+
+              <div className="p-3 bg-[var(--bg-simple)] rounded-lg border border-[var(--border-color)]">
+                <p className="text-sm text-[var(--font-color)] opacity-70">
+                  <strong>Limite:</strong> Máximo 50MB por arquivo. Para arquivos
+                  maiores, considere dividir em partes menores ou usar CSV para
+                  melhor performance.
+                </p>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }

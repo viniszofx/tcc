@@ -1,6 +1,7 @@
 "use client";
 
 import LoadingScreen from "@/components/custom/loading";
+import { PageTitle } from "@/components/custom/page-title";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -240,6 +241,8 @@ export default function CommissionHistoryPage() {
   );
 
   return (
+    <>
+    <PageTitle title="Histórico - KDÊ" />
     <div className="space-y-6">
       {/* Header */}
       <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
@@ -372,5 +375,6 @@ export default function CommissionHistoryPage() {
         </Card>
       )}
     </div>
+    </>
   );
 }

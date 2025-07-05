@@ -1,6 +1,7 @@
 "use client";
 
 import LoadingScreen from "@/components/custom/loading";
+import { PageTitle } from "@/components/custom/page-title";
 import { AddComissionModal } from "@/components/manager-comissions/add-comission-modal";
 import { Button } from "@/components/ui/button";
 import {
@@ -154,175 +155,177 @@ export default function CommissionsPage() {
     : "Minhas Comissões";
 
   return (
-    <Card className="w-full bg-[var(--bg-simple)] shadow-lg transition-all duration-300">
-      {hasAccessError && (
-        <div className="mx-6 mt-6 p-4 rounded-md bg-red-50 border border-red-200">
-          <div className="flex items-center gap-2">
-            <div className="text-red-800">
-              <p className="font-medium">Acesso Negado</p>
-              <p className="text-sm">
-                Você não tem permissão para acessar a comissão solicitada.
-                Abaixo estão listadas apenas as comissões que você tem acesso.
-              </p>
+    <>
+      <PageTitle title="Comissões - KDÊ" />
+      <Card className="w-full bg-[var(--bg-simple)] shadow-lg transition-all duration-300">
+        {hasAccessError && (
+          <div className="mx-6 mt-6 p-4 rounded-md bg-red-50 border border-red-200">
+            <div className="flex items-center gap-2">
+              <div className="text-red-800">
+                <p className="font-medium">Acesso Negado</p>
+                <p className="text-sm">
+                  Você não tem permissão para acessar a comissão solicitada.
+                  Abaixo estão listadas apenas as comissões que você tem acesso.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6">
-        <div>
-          <CardTitle className="text-2xl font-bold text-[var(--font-color)] md:text-3xl">
-            {pageTitle}
-          </CardTitle>
-          <CardDescription className="text-[var(--font-color)] opacity-70">
-            {commissions.length > 0
-              ? `Lista de comissões ${
-                  canManageCommissions
-                    ? "do sistema"
-                    : `do ${getCampusName(commissions[0])}`
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6">
+          <div>
+            <CardTitle className="text-2xl font-bold text-[var(--font-color)] md:text-3xl">
+              {pageTitle}
+            </CardTitle>
+            <CardDescription className="text-[var(--font-color)] opacity-70">
+              {commissions.length > 0
+                ? `Lista de comissões ${canManageCommissions
+                  ? "do sistema"
+                  : `do ${getCampusName(commissions[0])}`
                 }`
-              : "Nenhuma comissão encontrada"}
-          </CardDescription>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {canManageCommissions && (
-            <Button
-              onClick={() => setIsAddModalOpen(true)}
-              className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all w-full sm:w-auto"
-              disabled={
-                campuses.length === 0 ||
-                createCommissionMutation.isPending ||
-                campusesLoading
-              }
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {campusesLoading ? "Carregando..." : "Adicionar Comissão"}
-            </Button>
-          )}
-        </div>
-      </CardHeader>
-
-      <CardContent className="flex flex-col gap-6">
-        {/* Debug temporário */}
-        {process.env.NODE_ENV === "development" && (
-          <Card className="bg-blue-50 border-blue-200">
-            <CardContent className="p-4 text-sm">
-              <div>
-                <strong>User ID:</strong> {user?.id}
-              </div>
-              <div>
-                <strong>User Email:</strong> {user?.email}
-              </div>
-              <div>
-                <strong>User Role:</strong> {user?.role}
-              </div>
-              <div>
-                <strong>Organization Members:</strong>{" "}
-                {JSON.stringify(user?.organizationMembers)}
-              </div>
-              <div>
-                <strong>Is Global Admin:</strong>{" "}
-                {user?.organizationMembers?.some(
-                  (member: any) => member.role === "admin global"
-                )
-                  ? "SIM"
-                  : "NÃO"}
-              </div>
-              <div>
-                <strong>Is Org Admin:</strong>{" "}
-                {user?.organizationMembers?.some(
-                  (member: any) => member.role === "admin"
-                )
-                  ? "SIM"
-                  : "NÃO"}
-              </div>
-              <div>
-                <strong>Pode Gerenciar Comissões:</strong>{" "}
-                {canManageCommissions ? "SIM" : "NÃO"}
-              </div>
-              <div>
-                <strong>Total Comissões:</strong> {allCommissions.length}
-              </div>
-              <div>
-                <strong>Comissões Filtradas:</strong> {commissions.length}
-              </div>
-              <div>
-                <strong>User Campuses:</strong> {JSON.stringify(user?.campuses)}
-              </div>
-              <div>
-                <strong>User Commissions:</strong>{" "}
-                {JSON.stringify(user?.commissions)}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {commissions.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2">
-            {commissions.map((commission) => (
-              <Card
-                key={commission.id}
-                className="bg-[var(--bg-simple)] border-[var(--border-color)]"
+                : "Nenhuma comissão encontrada"}
+            </CardDescription>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {canManageCommissions && (
+              <Button
+                onClick={() => setIsAddModalOpen(true)}
+                className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all w-full sm:w-auto"
+                disabled={
+                  campuses.length === 0 ||
+                  createCommissionMutation.isPending ||
+                  campusesLoading
+                }
               >
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg font-bold text-[var(--font-color)]">
-                    {commission.name}
-                  </CardTitle>
-                  <CardDescription className="text-[var(--font-color)] opacity-70">
-                    Tipo: {commission.type} | Ano: {commission.year}
-                  </CardDescription>
-                  <CardDescription className="text-[var(--font-color)] opacity-70">
-                    Campus: {getCampusName(commission)}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-2">
-                  <p className="text-[var(--font-color)] opacity-80 text-sm mb-4">
-                    {commission.description || "Nenhuma descrição fornecida"}
-                  </p>
-                  <div className="flex flex-wrap gap-2 justify-end">
-                    <Link href={`/application/commissions/${commission.id}`}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-color)] hover:text-white"
-                      >
-                        Ver Detalhes
-                      </Button>
-                    </Link>
-                    <Link
-                      href={`/application/commissions/${commission.id}/inventories`}
-                    >
-                      <Button
-                        size="sm"
-                        className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white"
-                      >
-                        Inventário
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                <Plus className="mr-2 h-4 w-4" />
+                {campusesLoading ? "Carregando..." : "Adicionar Comissão"}
+              </Button>
+            )}
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-[var(--font-color)] opacity-70 text-lg">
-              {canManageCommissions
-                ? "Nenhuma comissão cadastrada no sistema ainda."
-                : "Você não faz parte de nenhuma comissão ainda."}
-            </p>
-          </div>
-        )}
-      </CardContent>
+        </CardHeader>
 
-      {canManageCommissions && (
-        <AddComissionModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onAddComission={handleAddCommission}
-          campuses={campuses}
-        />
-      )}
-    </Card>
+        <CardContent className="flex flex-col gap-6">
+          {/* Debug temporário */}
+          {process.env.NODE_ENV === "development" && (
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-4 text-sm">
+                <div>
+                  <strong>User ID:</strong> {user?.id}
+                </div>
+                <div>
+                  <strong>User Email:</strong> {user?.email}
+                </div>
+                <div>
+                  <strong>User Role:</strong> {user?.role}
+                </div>
+                <div>
+                  <strong>Organization Members:</strong>{" "}
+                  {JSON.stringify(user?.organizationMembers)}
+                </div>
+                <div>
+                  <strong>Is Global Admin:</strong>{" "}
+                  {user?.organizationMembers?.some(
+                    (member: any) => member.role === "admin global"
+                  )
+                    ? "SIM"
+                    : "NÃO"}
+                </div>
+                <div>
+                  <strong>Is Org Admin:</strong>{" "}
+                  {user?.organizationMembers?.some(
+                    (member: any) => member.role === "admin"
+                  )
+                    ? "SIM"
+                    : "NÃO"}
+                </div>
+                <div>
+                  <strong>Pode Gerenciar Comissões:</strong>{" "}
+                  {canManageCommissions ? "SIM" : "NÃO"}
+                </div>
+                <div>
+                  <strong>Total Comissões:</strong> {allCommissions.length}
+                </div>
+                <div>
+                  <strong>Comissões Filtradas:</strong> {commissions.length}
+                </div>
+                <div>
+                  <strong>User Campuses:</strong> {JSON.stringify(user?.campuses)}
+                </div>
+                <div>
+                  <strong>User Commissions:</strong>{" "}
+                  {JSON.stringify(user?.commissions)}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {commissions.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2">
+              {commissions.map((commission) => (
+                <Card
+                  key={commission.id}
+                  className="bg-[var(--bg-simple)] border-[var(--border-color)]"
+                >
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-bold text-[var(--font-color)]">
+                      {commission.name}
+                    </CardTitle>
+                    <CardDescription className="text-[var(--font-color)] opacity-70">
+                      Tipo: {commission.type} | Ano: {commission.year}
+                    </CardDescription>
+                    <CardDescription className="text-[var(--font-color)] opacity-70">
+                      Campus: {getCampusName(commission)}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-2">
+                    <p className="text-[var(--font-color)] opacity-80 text-sm mb-4">
+                      {commission.description || "Nenhuma descrição fornecida"}
+                    </p>
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      <Link href={`/application/commissions/${commission.id}`}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-color)] hover:text-white"
+                        >
+                          Ver Detalhes
+                        </Button>
+                      </Link>
+                      <Link
+                        href={`/application/commissions/${commission.id}/inventories`}
+                      >
+                        <Button
+                          size="sm"
+                          className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white"
+                        >
+                          Inventário
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-[var(--font-color)] opacity-70 text-lg">
+                {canManageCommissions
+                  ? "Nenhuma comissão cadastrada no sistema ainda."
+                  : "Você não faz parte de nenhuma comissão ainda."}
+              </p>
+            </div>
+          )}
+        </CardContent>
+
+        {canManageCommissions && (
+          <AddComissionModal
+            isOpen={isAddModalOpen}
+            onClose={() => setIsAddModalOpen(false)}
+            onAddComission={handleAddCommission}
+            campuses={campuses}
+          />
+        )}
+      </Card>
+    </>
   );
 }

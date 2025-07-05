@@ -1,6 +1,7 @@
 "use client";
 
 import LoadingScreen from "@/components/custom/loading";
+import { PageTitle } from "@/components/custom/page-title";
 import CampusCard from "@/components/manager-campuses/campus-card";
 import CampusModal from "@/components/manager-campuses/campus-modal";
 import { Button } from "@/components/ui/button";
@@ -158,71 +159,74 @@ export default function CampusPage() {
   }
 
   return (
-    <Card className="w-full bg-[var(--bg-simple)] shadow-lg transition-all duration-300">
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6">
-        <div>
-          <CardTitle className="text-2xl font-bold text-[var(--font-color)] md:text-3xl">
-            Gerenciamento de Campus
-          </CardTitle>
-          <CardDescription className="text-[var(--font-color)] opacity-70">
-            Gerencie os campus do sistema
-          </CardDescription>
-        </div>
-        <div className="flex gap-2 w-full sm:w-auto justify-end">
-          <Button
-            size="sm"
-            onClick={handleSaveAll}
-            className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all"
-          >
-            <Save className="mr-2 h-4 w-4" />
-            Salvar
-          </Button>
-        </div>
-      </CardHeader>
-
-      <CardContent className="flex flex-col gap-6">
-        <div className="flex justify-end">
-          <Button
-            onClick={() => handleOpenModal("create")}
-            className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all w-full sm:w-auto"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Adicionar Campus
-          </Button>
-        </div>
-
-        {campuses.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {campuses.map((campus) => (
-              <CampusCard
-                key={campus.id}
-                campus={campus}
-                onEdit={() => handleOpenModal("edit", campus)}
-                onDelete={() => handleOpenModal("delete", campus)}
-                onClick={() => router.push(`/application/campus/${campus.id}`)}
-              />
-            ))}
+    <>
+      <PageTitle title="Gerenciar Campus - KDÊ" />
+      <Card className="w-full bg-[var(--bg-simple)] shadow-lg transition-all duration-300">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6">
+          <div>
+            <CardTitle className="text-2xl font-bold text-[var(--font-color)] md:text-3xl">
+              Gerenciamento de Campus
+            </CardTitle>
+            <CardDescription className="text-[var(--font-color)] opacity-70">
+              Gerencie os campus do sistema
+            </CardDescription>
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-[var(--font-color)] opacity-70 text-lg">
-              Nenhum campus cadastrado ainda.
-            </p>
+          <div className="flex gap-2 w-full sm:w-auto justify-end">
+            <Button
+              size="sm"
+              onClick={handleSaveAll}
+              className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all"
+            >
+              <Save className="mr-2 h-4 w-4" />
+              Salvar
+            </Button>
           </div>
-        )}
-      </CardContent>
+        </CardHeader>
 
-      <CampusModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setCurrentCampus(null);
-        }}
-        campus={currentCampus}
-        mode={modalMode}
-        onSave={handleSaveCampus}
-        onDelete={handleDeleteCampus}
-      />
-    </Card>
+        <CardContent className="flex flex-col gap-6">
+          <div className="flex justify-end">
+            <Button
+              onClick={() => handleOpenModal("create")}
+              className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white transition-all w-full sm:w-auto"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Adicionar Campus
+            </Button>
+          </div>
+
+          {campuses.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {campuses.map((campus) => (
+                <CampusCard
+                  key={campus.id}
+                  campus={campus}
+                  onEdit={() => handleOpenModal("edit", campus)}
+                  onDelete={() => handleOpenModal("delete", campus)}
+                  onClick={() => router.push(`/application/campus/${campus.id}`)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-[var(--font-color)] opacity-70 text-lg">
+                Nenhum campus cadastrado ainda.
+              </p>
+            </div>
+          )}
+        </CardContent>
+
+        <CampusModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setCurrentCampus(null);
+          }}
+          campus={currentCampus}
+          mode={modalMode}
+          onSave={handleSaveCampus}
+          onDelete={handleDeleteCampus}
+        />
+      </Card>
+    </>
   );
 }
