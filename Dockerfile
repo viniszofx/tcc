@@ -17,7 +17,7 @@ COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma
 
 # Instalar dependências com melhor tratamento de erros
-RUN pnpm install --frozen-lockfile --network-timeout 100000
+RUN pnpm install --frozen-lockfile
 
 # Copiar código fonte
 COPY . .
