@@ -13,6 +13,7 @@ import {
 import { Building2, Home, Info, Landmark, Settings, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { NavigationButton } from "@/components/ui/navigation-button";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   cargo?: "admin" | "operador" | "presidente";
@@ -39,18 +40,13 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
           <SidebarGroupContent>
             <SidebarMenu>
               <li className="p-2 gap-2 flex items-center">
-                <Button
-                  className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
-                  asChild
+                <NavigationButton
+                  href={`/application`}
+                  className="bg-[var(--secondary-color)] text-[var(--font-color2)] flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                 >
-                  <Link
-                    href={`/application`}
-                    className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
-                  >
-                    <Home className="text-[var(--font-color2)]" />
-                    Dashboard
-                  </Link>
-                </Button>
+                  <Home className="text-[var(--font-color2)]" />
+                  Dashboard
+                </NavigationButton>
               </li>
               <hr className="my-2 border-[var(--border-color)]" />
 
@@ -58,46 +54,31 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
               {cargo === "admin" && (
                 <>
                   <li className="p-2 gap-2 flex items-center">
-                    <Button
-                      className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
-                      asChild
+                    <NavigationButton
+                      href={`/application/users`}
+                      className="bg-[var(--secondary-color)] text-[var(--font-color2)] flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                     >
-                      <Link
-                        href={`/application/users`}
-                        className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
-                      >
-                        <Users className="text-[var(--font-color2)]" />
-                        Gerenciar Usuários
-                      </Link>
-                    </Button>
+                      <Users className="text-[var(--font-color2)]" />
+                      Gerenciar Usuários
+                    </NavigationButton>
                   </li>
                   <li className="p-2 gap-2 flex items-center">
-                    <Button
-                      className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
-                      asChild
+                    <NavigationButton
+                      href={`/application/organizations`}
+                      className="bg-[var(--secondary-color)] text-[var(--font-color2)] flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                     >
-                      <Link
-                        href={`/application/organizations`}
-                        className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
-                      >
-                        <Building2 className="text-[var(--font-color2)]" />
-                        Gerenciar Organizações
-                      </Link>
-                    </Button>
+                      <Building2 className="text-[var(--font-color2)]" />
+                      Gerenciar Organizações
+                    </NavigationButton>
                   </li>
                   <li className="p-2 gap-2 flex items-center">
-                    <Button
-                      className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
-                      asChild
+                    <NavigationButton
+                      href={`/application/campus`}
+                      className="bg-[var(--secondary-color)] text-[var(--font-color2)] flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                     >
-                      <Link
-                        href={`/application/campus`}
-                        className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
-                      >
-                        <Landmark className="text-[var(--font-color2)]" />
-                        Gerenciar Campus
-                      </Link>
-                    </Button>
+                      <Landmark className="text-[var(--font-color2)]" />
+                      Gerenciar Campus
+                    </NavigationButton>
                   </li>
                   <hr className="my-2 border-[var(--border-color)]" />
                 </>
@@ -105,52 +86,37 @@ export function AppSidebar({ cargo, ...props }: AppSidebarProps) {
 
               {/* Comissões Menu - Todos os usuários */}
               <li className="p-2 gap-2 flex items-center">
-                <Button
-                  className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
-                  asChild
+                <NavigationButton
+                  href={`/application/commissions`}
+                  className="bg-[var(--secondary-color)] text-[var(--font-color2)] flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                 >
-                  <Link
-                    href={`/application/commissions`}
-                    className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
-                  >
-                    <Users className="text-[var(--font-color2)]" />
-                    {cargo === "admin"
-                      ? "Todas as Comissões"
-                      : "Minhas Comissões"}
-                  </Link>
-                </Button>
+                  <Users className="text-[var(--font-color2)]" />
+                  {cargo === "admin"
+                    ? "Todas as Comissões"
+                    : "Minhas Comissões"}
+                </NavigationButton>
               </li>
 
               <hr className="my-2 border-[var(--border-color)]" />
 
               {/* Menu de configurações */}
               <li className="p-2 gap-2 flex items-center">
-                <Button
-                  className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
-                  asChild
+                <NavigationButton
+                  href={`/application/settings`}
+                  className="bg-[var(--secondary-color)] text-[var(--font-color2)] flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                 >
-                  <Link
-                    href={`/application/settings`}
-                    className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
-                  >
-                    <Settings className="text-[var(--font-color2)]" />
-                    Configurações
-                  </Link>
-                </Button>
+                  <Settings className="text-[var(--font-color2)]" />
+                  Configurações
+                </NavigationButton>
               </li>
               <li className="p-2 gap-2 flex items-center">
-                <Button
-                  className="bg-[var(--secondary-color)] text-[var(--font-color2)]"
-                  asChild
+                <NavigationButton
+                  href={`/application/about`}
+                  className="bg-[var(--secondary-color)] text-[var(--font-color2)] flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
                 >
-                  <Link
-                    href={`/application/about`}
-                    className="flex items-center gap-2 hover:!bg-[var(--hover-3-color)] hover:!text-white"
-                  >
-                    <Info className="text-[var(--font-color2)]" />
-                    Sobre o Sistema
-                  </Link>
-                </Button>
+                  <Info className="text-[var(--font-color2)]" />
+                  Sobre o Sistema
+                </NavigationButton>
               </li>
             </SidebarMenu>
           </SidebarGroupContent>

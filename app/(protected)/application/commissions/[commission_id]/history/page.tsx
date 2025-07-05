@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useCommissionHistoryData } from "@/hooks/queries/use-page-data";
-import { useUserPermissions } from "@/hooks/use-user-permissions-rq";
+import { useUserPermissions } from "@/hooks/use-consolidated-user";
 import {
   Calendar,
   Edit,

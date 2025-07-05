@@ -1,6 +1,6 @@
 "use client";
 
-import { useUserPermissions } from "@/hooks/use-user-permissions";
+import { useUserPermissions } from "@/hooks/use-consolidated-user";
 import { createContext, useContext, useMemo } from "react";
 import { createUserContext, defineAbilitiesFor } from "./abilities";
 import { Actions, AppAbility, Subjects } from "./types";

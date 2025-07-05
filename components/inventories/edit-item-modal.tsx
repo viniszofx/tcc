@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { InventoryItemWithRelations } from "@/interface";
+import type { InventoryItemWithRelations } from '@/types';
 import { useEffect, useState } from "react";
 
 interface EditItemModalProps {

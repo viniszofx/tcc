@@ -1,6 +1,6 @@
 "use client";
 
-import type { CommissionMember, UserProfile } from "@/interface";
+import type { CommissionMember, UserProfile } from '@/types';
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 // Tipo para membro com dados do usuário

@@ -3,6 +3,7 @@
 import LoadingScreen from "@/components/custom/loading";
 import { PageTitle } from "@/components/custom/page-title";
 import AddMemberModal from "@/components/members/add-member-modal";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,11 +19,12 @@ import {
 } from "@/hooks/mutations/use-mutations";
 import { useCommissionMembersData } from "@/hooks/queries/use-page-data";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
-import { useUserPermissions } from "@/hooks/use-user-permissions-rq";
-import type { UserProfile } from "@/interface";
+import { useUserPermissions } from "@/hooks/use-consolidated-user";
+import type { UserProfile } from '@/types';
 import { Crown, Plus, User, Users } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface CommissionMemberWithUser {
   userId: string;
@@ -78,7 +80,7 @@ export default function CommissionMembersPage() {
       setIsAddModalOpen(false);
     } catch (error) {
       console.error("Erro ao adicionar membro:", error);
-      alert("Erro ao adicionar membro");
+      toast.error("Erro ao adicionar membro");
     }
   };
 
@@ -94,10 +96,10 @@ export default function CommissionMembersPage() {
         userId,
         commissionId,
       });
-      alert(`"${userName}" foi removido da comissão com sucesso.`);
+      toast.success(`"${userName}" foi removido da comissão com sucesso.`);
     } catch (error) {
       console.error("Erro ao remover membro:", error);
-      alert("Erro ao remover membro");
+      toast.error("Erro ao remover membro");
     }
   };
 
@@ -211,13 +213,17 @@ export default function CommissionMembersPage() {
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start space-x-3">
-                          <div className="w-10 h-10 bg-[var(--secondary-color)] rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-sm font-bold text-[var(--font-color)]">
+                          <Avatar className="w-10 h-10 flex-shrink-0">
+                            <AvatarImage 
+                              src={member.user?.avatar || undefined} 
+                              alt={member.user?.name || member.user?.email || "Usuário"}
+                            />
+                            <AvatarFallback className="bg-[var(--secondary-color)] text-[var(--font-color)] text-sm font-bold">
                               {member.user?.name?.charAt(0) ||
                                 member.user?.email?.charAt(0) ||
                                 "?"}
-                            </span>
-                          </div>
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
                               <h4 className="font-semibold text-[var(--font-color)] truncate">

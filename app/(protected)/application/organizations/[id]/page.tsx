@@ -3,6 +3,7 @@
 import LoadingScreen from "@/components/custom/loading";
 import { PageTitle } from "@/components/custom/page-title";
 import OrganizationModal from "@/components/manager-organizations/organization-modal";
+import AddOrganizationMemberModal from "@/components/members/add-organization-member-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,18 +14,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useOrganizationDetailData } from "@/hooks/queries/use-page-data";
-import { useUserPermissions } from "@/hooks/use-user-permissions";
-import type { Organization } from "@/interface";
-import { Building2, Edit, MapPin, Users } from "lucide-react";
+import { useUserPermissions } from "@/hooks/use-consolidated-user";
+import { useOrganizationPermissions } from "@/lib/permissions/hooks";
+import type { Organization } from '@/types';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Building2, Edit, MapPin, Users, UserPlus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function OrganizationDetailPage() {
   const {
     user,
-    canManageOrganizations,
     loading: permissionsLoading,
   } = useUserPermissions();
+  const { canManageOrganizations } = useOrganizationPermissions();
   const params = useParams();
   const router = useRouter();
   const organizationId = params.id as string;
@@ -42,6 +46,7 @@ export default function OrganizationDetailPage() {
   } = useOrganizationDetailData(organizationId);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
 
   useEffect(() => {
     if (!permissionsLoading && !canManageOrganizations) {
@@ -68,6 +73,34 @@ export default function OrganizationDetailPage() {
       }
     } catch (error) {
       console.error("Erro ao atualizar organização:", error);
+    }
+  };
+
+  const handleAddMember = async (userId: string, role: string) => {
+    try {
+      const response = await fetch("/api/organization-member", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          organizationId,
+          role,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Membro adicionado com sucesso!");
+        refetch();
+        setIsAddMemberModalOpen(false);
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Erro ao adicionar membro");
+      }
+    } catch (error) {
+      console.error("Erro ao adicionar membro:", error);
+      toast.error("Erro ao adicionar membro");
     }
   };
 
@@ -136,6 +169,19 @@ export default function OrganizationDetailPage() {
                 </CardDescription>
               </div>
               <div className="flex gap-2">
+                {/* Botão para adicionar membros - apenas para admins */}
+                {(user?.role === "admin global" || 
+                  user?.role === "admin" || 
+                  members.some((member: any) => member.userId === user?.id && member.role === "admin")) && (
+                  <Button
+                    onClick={() => setIsAddMemberModalOpen(true)}
+                    variant="outline"
+                    className="border-[var(--border-color)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] px-4 py-2 text-base sm:px-2 sm:py-1 sm:text-sm"
+                  >
+                    <UserPlus className="w-4 h-4 mr-0 sm:mr-2" />
+                    <span className="hidden sm:inline">Adicionar Membro</span>
+                  </Button>
+                )}
                 <Button
                   onClick={() => setIsModalOpen(true)}
                   className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] px-4 py-2 text-base sm:px-2 sm:py-1 sm:text-sm"
@@ -271,13 +317,17 @@ export default function OrganizationDetailPage() {
                     key={index}
                     className="flex items-center space-x-3 p-3 bg-[var(--bg-simple)] rounded-lg border border-[var(--border-color)]"
                   >
-                    <div className="w-8 h-8 bg-[var(--secondary-color)] rounded-full flex items-center justify-center">
-                      <span className="text-sm font-bold text-[var(--font-color)]">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage
+                        src={member.user?.avatar || "/placeholder.svg"}
+                        alt={member.user?.name || "Usuário"}
+                      />
+                      <AvatarFallback>
                         {member.user?.name?.charAt(0) ||
                           member.user?.email?.charAt(0) ||
                           "?"}
-                      </span>
-                    </div>
+                      </AvatarFallback>
+                    </Avatar>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-[var(--font-color)] truncate">
                         {member.user?.name || member.user?.email || "Usuário"}
@@ -307,6 +357,15 @@ export default function OrganizationDetailPage() {
           onSave={handleEditOrganization}
           organization={organization}
           mode="edit"
+        />
+
+        {/* Modal de Adicionar Membro */}
+        <AddOrganizationMemberModal
+          isOpen={isAddMemberModalOpen}
+          onClose={() => setIsAddMemberModalOpen(false)}
+          onSave={handleAddMember}
+          organizationId={organizationId}
+          currentMembers={members.map((member: any) => member.userId)}
         />
       </div>
     </>

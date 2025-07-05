@@ -1,4 +1,4 @@
-import type { BemCopia, InventoryMetadata } from "@/lib/interface";
+import type { BemCopia, InventoryMetadata } from '@/types';
 import { compressToUTF16, decompressFromUTF16 } from "lz-string";
 import {
   canStoreInLocalStorage,

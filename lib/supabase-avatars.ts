@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseAdmin } from "@/lib/supabase";
 import { config } from "dotenv";
 
 // Carregar variáveis de ambiente se não estiverem presentes
@@ -15,7 +15,10 @@ if (
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+// Função para obter cliente admin
+const getSupabaseAdmin = () => {
+  return createSupabaseAdmin();
+};
 
 async function setupAvatarsPolicies() {
   try {
@@ -73,6 +76,7 @@ export async function setupAvatarsBucket() {
     }
 
     // Verificar se o bucket já existe
+    const supabaseAdmin = getSupabaseAdmin();
     const { data: buckets, error: listError } =
       await supabaseAdmin.storage.listBuckets();
 
@@ -135,6 +139,7 @@ export async function uploadAvatar(
     const fileName = `${userId}/avatar.${fileExt}`;
 
     // Tentar fazer upload do arquivo
+    const supabaseAdmin = getSupabaseAdmin();
     let { data, error } = await supabaseAdmin.storage
       .from("avatars")
       .upload(fileName, file, {
@@ -194,6 +199,7 @@ export async function uploadAvatar(
 export async function deleteAvatar(userId: string): Promise<boolean> {
   try {
     // Listar todos os arquivos do usuário
+    const supabaseAdmin = getSupabaseAdmin();
     const { data: files, error: listError } = await supabaseAdmin.storage
       .from("avatars")
       .list(userId);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useInventoryItemDetailData } from "@/hooks/queries/use-page-data";
-import type { InventoryItemWithRelations } from "@/interface";
+import type { InventoryItemWithRelations } from '@/types';
 import {
   convertIndexedDBItemToInventoryItem,
   findItemInIndexedDB,

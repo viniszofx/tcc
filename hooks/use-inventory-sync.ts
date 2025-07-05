@@ -1,6 +1,7 @@
 "use client";
 
-import type { BemCopia, InventoryMetadata } from "@/lib/interface";
+import type { BemCopia } from '@/types/legacy';
+import type { InventoryMetadata } from '@/types/core';
 import {
   clearProcessedData,
   getProcessedData,
@@ -102,7 +103,8 @@ export function useInventorySync(commissionId: string) {
             console.log(
               "🔍 Verificando status de sincronização no servidor..."
             );
-            checkServerSyncStatus();
+            // Remover a chamada direta para evitar loop infinito
+            // checkServerSyncStatus();
           }
         }
       } else {
@@ -309,6 +311,8 @@ export function useInventorySync(commissionId: string) {
 
   // Carregar todos os dados (API + local) e sincronizar
   const loadAndSync = useCallback(async () => {
+    if (!commissionId || isInitialized) return;
+    
     setIsLoading(true);
     try {
       // Carregar dados da API e local em paralelo
@@ -324,12 +328,14 @@ export function useInventorySync(commissionId: string) {
         // Se não temos dados da API mas temos locais, usar os locais
         console.log("Usando dados locais (API indisponível)");
       }
+      
+      setIsInitialized(true);
     } catch (error) {
       console.error("Erro ao carregar e sincronizar dados:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [loadFromAPI, loadFromLocal, syncToLocal]);
+  }, [commissionId, isInitialized, loadFromAPI, loadFromLocal, syncToLocal]);
 
   // Enviar dados locais para a API
   const syncLocalToAPI = useCallback(async () => {
@@ -450,8 +456,10 @@ export function useInventorySync(commissionId: string) {
 
   // Carregar dados na inicialização
   useEffect(() => {
-    loadAndSync();
-  }, [loadAndSync]);
+    if (commissionId && !isInitialized) {
+      loadAndSync();
+    }
+  }, [commissionId, isInitialized, loadAndSync]);
 
   return {
     localData,

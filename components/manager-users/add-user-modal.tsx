@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useReferenceData } from "@/hooks/queries/use-page-data";
-import type { Campus, UserProfile } from "@/interface";
+import type { Campus, UserProfile } from '@/types';
 import { CheckCircle, Copy, Crown, User, XCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -194,24 +194,22 @@ export function AddUserModal({
         name: result.user?.name || userProfileData.name,
         email: result.user?.email || userProfileData.email,
       });
-      // Atualiza a listagem imediatamente, mas só se não houver erro
-      if (result.user && !result.error) {
+      // Atualiza a listagem imediatamente
+      if (result.user) {
         onAddUser(result.user);
       }
-      // Só limpa o formulário se não houver erro
-      if (!result.error) {
-        setFormData({
-          name: "",
-          email: "",
-          description: "",
-          avatar: "/logo.svg",
-          active: true,
-          organizationId: "",
-          campusId: "",
-          organizationRole: "member",
-          role: "member",
-        });
-      }
+      // Limpa o formulário após sucesso
+      setFormData({
+        name: "",
+        email: "",
+        description: "",
+        avatar: "/logo.svg",
+        active: true,
+        organizationId: "",
+        campusId: "",
+        organizationRole: "member",
+        role: "member",
+      });
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : "Erro desconhecido");
     } finally {

@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { useSmartNavigation } from "@/hooks/use-smart-navigation";
-import { ArrowLeft } from "lucide-react";
+import { useNavigationLoading } from "@/hooks/use-navigation-loading";
+import { ArrowLeft, Loader2 } from "lucide-react";
 
 interface BackButtonProps {
   /** URL personalizada para onde voltar */
@@ -34,10 +35,11 @@ export default function BackButton({
   variant = "outline",
 }: BackButtonProps) {
   const { navigateTo, smartGoBack } = useSmartNavigation();
+  const { navigateWithLoading, isNavigating } = useNavigationLoading();
 
   const handleClick = () => {
     if (customHref) {
-      navigateTo(customHref);
+      navigateWithLoading(customHref, `back-${customHref}`);
     } else if (forceRouterBack) {
       // Forçar router.back() mesmo se não for seguro (uso em casos específicos)
       if (typeof window !== "undefined") {
@@ -51,13 +53,20 @@ export default function BackButton({
     }
   };
 
+  const loadingKey = customHref ? `back-${customHref}` : 'back-navigation';
+
   return (
     <Button
       onClick={handleClick}
       variant={variant}
       className={`flex items-center gap-2 ${className}`}
+      disabled={isNavigating(loadingKey)}
     >
-      <ArrowLeft className="h-4 w-4" />
+      {isNavigating(loadingKey) ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <ArrowLeft className="h-4 w-4" />
+      )}
       {text}
     </Button>
   );

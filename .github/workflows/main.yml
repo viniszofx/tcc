@@ -59,6 +59,7 @@ jobs:
             NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL_PROD }}
             NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PROD }}
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PROD }}
+            SKIP_PREBUILD=true
           # Passa as "super keys" como build-secrets
           secrets: |
             supabase_service_role_key=${{ secrets.SUPABASE_SERVICE_ROLE_KEY_PROD }}

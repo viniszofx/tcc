@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useProfilePageData } from "@/hooks/queries/use-page-data";
-import { useUserPermissions } from "@/hooks/use-user-permissions";
+import { useUserPermissions } from "@/hooks/use-consolidated-user";
 import {
   useCommissionPermissions,
   useOrganizationPermissions,

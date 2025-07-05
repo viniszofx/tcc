@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { useCallback, useState } from "react";
 import Cropper from "react-easy-crop";
+import { toast } from "sonner";
 
 interface Point {
   x: number;
@@ -122,7 +123,7 @@ export function ImageCropper({
       onCropComplete(croppedImage);
     } catch (error) {
       console.error("Erro ao cortar imagem:", error);
-      alert("Erro ao processar imagem. Tente novamente.");
+      toast.error("Erro ao processar imagem. Tente novamente.");
     } finally {
       setIsLoading(false);
     }

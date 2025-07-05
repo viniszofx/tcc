@@ -1,6 +1,6 @@
 "use client";
 
-import type { BemCopia, InventoryMetadata } from "@/lib/interface";
+import type { BemCopia, InventoryMetadata } from '@/types';
 import { getProcessedData, storeProcessedData } from "@/utils/data-storage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";

@@ -11,17 +11,53 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 
 export default function RecoverPasswordPage() {
   const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const { resetPassword } = useAuth();
 
   const handleEmailChange = (e: any) => {
     setEmail(e.target.value);
+    setError("");
+    setMessage("");
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
+    
+    if (!email) {
+      setError("Por favor, digite seu e-mail");
+      return;
+    }
+
+    if (!email.includes("@")) {
+      setError("Por favor, digite um e-mail válido");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const { data, error: resetError } = await resetPassword(email);
+      
+      if (resetError) {
+        setError("Erro ao enviar e-mail de recuperação. Tente novamente.");
+      } else {
+        setMessage("E-mail de recuperação enviado! Verifique sua caixa de entrada.");
+        setEmail("");
+      }
+    } catch (err) {
+      setError("Erro inesperado. Tente novamente mais tarde.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -59,14 +95,30 @@ export default function RecoverPasswordPage() {
               type="email"
               value={email}
               onChange={handleEmailChange}
+              disabled={isLoading}
             />
             </div>
+            
+            {/* Mensagens de erro e sucesso */}
+            {error && (
+              <div className="w-full p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                {error}
+              </div>
+            )}
+            
+            {message && (
+              <div className="w-full p-3 text-sm text-green-600 bg-green-50 border border-green-200 rounded-md">
+                {message}
+              </div>
+            )}
+            
             <Button
               type="submit"
-              className="w-full border-[var(--border-color)] bg-[var(--bg-simple)] cursor-pointer hover:!bg-[var(--hover-color)] hover:!text-white transition-all"
+              disabled={isLoading}
+              className="w-full border-[var(--border-color)] bg-[var(--bg-simple)] cursor-pointer hover:!bg-[var(--hover-color)] hover:!text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               variant={"outline"}
             >
-              Enviar link de redefinição
+              {isLoading ? "Enviando..." : "Enviar link de redefinição"}
             </Button>
           </form>
         </CardContent>

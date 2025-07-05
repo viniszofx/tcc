@@ -4,67 +4,24 @@ import { publicRoutes } from "./utils/rotes-public";
 
 const isDevelopment = process.env.NODE_ENV === "development";
 
-async function skipAuthCheck(request: NextRequest): Promise<boolean> {
-  // Pular verificação de autenticação em desenvolvimento
-  if (isDevelopment) {
-    console.log("Pular verificação de autenticação em desenvolvimento");
-    NextResponse.next();
+// Cache simples para evitar múltiplas verificações
+const authCache = new Map<string, { user: any; timestamp: number }>();
+const CACHE_DURATION = 30000; // 30 segundos
+
+function getCachedAuth(key: string) {
+  const cached = authCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.user;
   }
-
-  // Verificar se o usuário está autenticado via cookie
-  const token = request.cookies.get("sb-access-token")?.value;
-
-  if (!token) {
-    return false;
-  }
-
-  try {
-    const supabase = createSupabaseMiddleware(request, null);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error("Erro ao verificar autenticação:", error);
-    return false;
-  }
+  return null;
 }
 
-// Função para verificar role do usuário e determinar redirecionamento
-async function getUserRoleAndRedirect(
-  userEmail: string,
-  request: NextRequest
-): Promise<{ role: string; redirectPath: string } | null> {
-  try {
-    const getUserRoleUrl = new URL("/api/auth/get-user-role", request.url);
-    const response = await fetch(getUserRoleUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email: userEmail }),
-    });
+function setCachedAuth(key: string, user: any) {
+  authCache.set(key, { user, timestamp: Date.now() });
+}
 
-    if (!response.ok) {
-      console.warn("Erro ao buscar role do usuário:", userEmail);
-      return null;
-    }
-
-    const userData = await response.json();
-    return {
-      role: userData.user?.role || userData.role || "member",
-      redirectPath: userData.user?.redirectPath || "/application",
-    };
-  } catch (error) {
-    console.error("Erro ao buscar role do usuário:", error);
-    return null;
-  }
+function clearAuthCache() {
+  authCache.clear();
 }
 
 export async function middleware(request: NextRequest) {
@@ -85,36 +42,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // REMOVIDO: Pular verificação de autenticação em desenvolvimento
-  // O sistema deve funcionar com autenticação mesmo em desenvolvimento
-  // if (isDevelopment) {
-  //   console.log("Pular verificação de autenticação em desenvolvimento");
-  //   return NextResponse.next();
-  // }
-
   try {
-    // Para a página inicial, verificar se usuário está logado
-    if (pathname === "/") {
-      try {
-        const systemStatusUrl = new URL(
-          "/api/system/check-status",
-          request.url
-        );
-        const statusResponse = await fetch(systemStatusUrl);
-
-        if (statusResponse.ok) {
-          const statusData = await statusResponse.json();
-
-          // Se sistema precisa de setup, redirecionar para setup
-          if (statusData.needsSetup) {
-            return NextResponse.redirect(new URL("/setup", request.url));
-          }
-        }
-      } catch (error) {
-        console.error("Erro ao verificar status do sistema:", error);
-      }
-
-      // Verificar se usuário está logado
+    // Criar chave de cache baseada no token de sessão
+    const sessionToken = request.cookies.get("sb-access-token")?.value || 
+                        request.cookies.get("sb-refresh-token")?.value;
+    const cacheKey = `${pathname}-${sessionToken?.slice(-10) || 'anonymous'}`;
+    
+    // Verificar cache primeiro
+    const cachedUser = getCachedAuth(cacheKey);
+    let user = cachedUser;
+    
+    // Se não há cache, verificar autenticação
+    if (!cachedUser) {
       let response = NextResponse.next({
         request: {
           headers: request.headers,
@@ -123,91 +62,38 @@ export async function middleware(request: NextRequest) {
 
       const supabase = createSupabaseMiddleware(request, response);
       const {
-        data: { user },
+        data: { user: authUser },
         error,
       } = await supabase.auth.getUser();
+      
+      user = error ? null : authUser;
+      
+      // Cache o resultado
+      if (sessionToken) {
+        setCachedAuth(cacheKey, user);
+      }
+    }
 
+    // Para a página inicial
+    if (pathname === "/") {
       // Se usuário está logado, redirecionar para application
-      if (!error && user) {
+      if (user) {
         return NextResponse.redirect(new URL("/application", request.url));
       }
-
       // Se não está logado, permitir acesso à página inicial
       return NextResponse.next();
     }
 
-    // Para todas as outras rotas protegidas, verificar autenticação
-    let response = NextResponse.next({
-      request: {
-        headers: request.headers,
-      },
-    });
-
-    const supabase = createSupabaseMiddleware(request, response);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    // Se não há usuário autenticado, redirecionar para login
-    if (error || !user) {
+    // Para todas as outras rotas protegidas
+    if (!user) {
+      // Limpar cache em caso de logout
+      clearAuthCache();
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    // Verificar se o sistema precisa de configuração inicial para rotas protegidas
-    if (pathname !== "/setup") {
-      try {
-        const systemStatusUrl = new URL(
-          "/api/system/check-status",
-          request.url
-        );
-        const statusResponse = await fetch(systemStatusUrl);
-
-        if (statusResponse.ok) {
-          const statusData = await statusResponse.json();
-
-          if (statusData.needsSetup) {
-            return NextResponse.redirect(new URL("/setup", request.url));
-          }
-        }
-      } catch (error) {
-        console.error("Erro ao verificar status do sistema:", error);
-      }
-    }
-
-    // Redirecionar rotas legacy (/admin e /dashboard antigas) para /application
+    // Redirecionar rotas legacy
     if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) {
       return NextResponse.redirect(new URL("/application", request.url));
-    }
-
-    // Para rotas protegidas /application, verificar se usuário tem acesso
-    if (pathname.startsWith("/application")) {
-      try {
-        const getUserRoleUrl = new URL("/api/auth/get-user-role", request.url);
-        const roleResponse = await fetch(getUserRoleUrl, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Cookie: request.headers.get("cookie") || "",
-          },
-        });
-
-        if (roleResponse.status === 403) {
-          return NextResponse.redirect(new URL("/unauthorized", request.url));
-        } else if (!roleResponse.ok) {
-          return NextResponse.redirect(new URL("/login", request.url));
-        }
-
-        const roleData = await roleResponse.json();
-
-        // Se é primeiro acesso, redirecionar para setup
-        if (roleData.isFirstAccess) {
-          return NextResponse.redirect(new URL("/setup", request.url));
-        }
-      } catch (error) {
-        console.error("Erro ao verificar permissões:", error);
-        return NextResponse.redirect(new URL("/login", request.url));
-      }
     }
 
     return NextResponse.next();

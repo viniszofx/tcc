@@ -1,4 +1,4 @@
-import type { BemCopia } from "@/lib/interface";
+import type { BemCopia } from '@/types';
 import { ESSENTIAL_FIELDS, MAX_CHUNK_SIZE } from "./constants";
 
 export function splitIntoChunks(data: any[]): any[][] {

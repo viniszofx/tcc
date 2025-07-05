@@ -1,7 +1,7 @@
 "use client";
 
 import EmptyInventory from "@/components/dashboard/empty-inventory";
-import InventoryActions from "@/components/inventories/inventory-actions";
+// import InventoryActions from "@/components/inventories/inventory-actions"; // Carregamento dinâmico
 import InventoryCard from "@/components/inventories/inventory-card";
 import InventoryFilters from "@/components/inventories/inventory-filters";
 import InventoryMetadata from "@/components/inventories/inventory-metadata";
@@ -11,11 +11,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useInventorySync } from "@/hooks/use-inventory-sync";
 import { useSmartNavigation } from "@/hooks/use-smart-navigation";
-import type { BemCopia } from "@/lib/interface";
+import type { BemCopia } from '@/types/legacy';
 import { exportToPdfStyled } from "@/utils/pdf-export";
 import { Filter, RefreshCw } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, lazy, Suspense } from "react";
+
+// Carregamento dinâmico do InventoryActions para evitar carregamento desnecessário do CameraModal
+const InventoryActions = lazy(() => import("@/components/inventories/inventory-actions"));
 
 interface InventoryPageBaseProps {
   backRoute: string;
@@ -510,12 +513,20 @@ export default function InventoryPageBase({
 
         <div className="flex flex-col gap-4 lg:flex-row lg:justify-between">
           <div className="flex flex-col gap-2">
-            <InventoryActions
-              onExport={handleExport}
-              onNewItem={handleNewItem}
-              hasData={filteredItems.length > 0}
-              onSearch={handleCameraSearch} // Updated to use new handler
-            />
+            <Suspense fallback={
+              <div className="flex gap-2">
+                <div className="h-10 w-24 bg-[var(--card-color)] rounded animate-pulse"></div>
+                <div className="h-10 w-24 bg-[var(--card-color)] rounded animate-pulse"></div>
+                <div className="h-10 w-24 bg-[var(--card-color)] rounded animate-pulse"></div>
+              </div>
+            }>
+              <InventoryActions
+                onExport={handleExport}
+                onNewItem={handleNewItem}
+                hasData={filteredItems.length > 0}
+                onSearch={handleCameraSearch} // Updated to use new handler
+              />
+            </Suspense>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -570,13 +581,14 @@ export default function InventoryPageBase({
           itemsPerPage={itemsPerPage}
         />
 
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 overflow-hidden">
           {currentItems.map((item) => (
-            <InventoryCard
-              key={item.bem_id || item.NUMERO}
-              item={item}
-              displayFields={displayFields}
-            />
+            <div key={item.bem_id || item.NUMERO} className="min-w-0 overflow-hidden">
+              <InventoryCard
+                item={item}
+                displayFields={displayFields}
+              />
+            </div>
           ))}
         </div>
 

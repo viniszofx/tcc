@@ -3,9 +3,9 @@
 import type {
   BemCopia,
   EstadoConservacao,
-  InventoryMetadata,
   StatusBem,
-} from "@/lib/interface";
+} from '@/types/legacy';
+import type { InventoryMetadata } from '@/types/core';
 import {
   clearProcessedData,
   getProcessedData,

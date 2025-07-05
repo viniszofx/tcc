@@ -1,4 +1,10 @@
-// Enums
+// Tipos legados para compatibilidade
+// Este arquivo mantém as interfaces antigas para garantir compatibilidade durante a migração
+
+// ============================================================================
+// ENUMS LEGADOS
+// ============================================================================
+
 export enum EstadoConservacao {
   NOVO = "NOVO",
   BOM = "BOM",
@@ -14,7 +20,11 @@ export enum StatusBem {
   BAIXADO = "BAIXADO",
 }
 
-// Interfaces
+// ============================================================================
+// INTERFACES LEGADAS DO SISTEMA ANTIGO
+// ============================================================================
+
+// Interface de usuário do sistema antigo
 export interface Usuario {
   usuario_id: string;
   nome: string;
@@ -46,6 +56,7 @@ export interface Usuario {
   bens_copias?: BemCopia[];
 }
 
+// Interface de comissão do sistema antigo
 export interface Comissao {
   comissao_id: string;
   nome: string;
@@ -64,6 +75,7 @@ export interface Comissao {
   membros?: Usuario[];
 }
 
+// Interface de organização do sistema antigo
 export interface Organizacao {
   organizacao_id: string;
   nome: string;
@@ -76,6 +88,7 @@ export interface Organizacao {
   comissoes?: Comissao[];
 }
 
+// Interface de campus do sistema antigo
 export interface Campus {
   campus_id: string;
   nome: string;
@@ -91,6 +104,7 @@ export interface Campus {
   responsavel?: Responsavel;
 }
 
+// Interface de responsável
 export interface Responsavel {
   responsavel_id: string;
   nome: string;
@@ -101,6 +115,11 @@ export interface Responsavel {
   campus?: Campus;
 }
 
+// ============================================================================
+// INTERFACES DE BENS E INVENTÁRIO
+// ============================================================================
+
+// Interface de bem original
 export interface BemOriginal {
   bem_id: string;
   campus_id: string;
@@ -122,6 +141,7 @@ export interface BemOriginal {
   copias?: BemCopia[];
 }
 
+// Interface de bem cópia
 export interface BemCopia {
   comissao_id?: any;
   bem_id: string;
@@ -159,6 +179,7 @@ export interface BemCopia {
   historico?: HistoricoBem[];
 }
 
+// Interface de inventário
 export interface Inventario {
   inventario_id: string;
   comissao_id: string;
@@ -180,6 +201,7 @@ export interface Inventario {
   historico?: HistoricoBem[];
 }
 
+// Interface de histórico de bem
 export interface HistoricoBem {
   evento_id: string;
   bem_id: string;
@@ -195,6 +217,7 @@ export interface HistoricoBem {
   usuario?: Usuario;
 }
 
+// Interface de grupo
 export interface Grupo {
   grupo_id: string;
   nome: string;
@@ -204,6 +227,11 @@ export interface Grupo {
   bens?: BemCopia[];
 }
 
+// ============================================================================
+// INTERFACES DE ROLES E PERMISSÕES LEGADAS
+// ============================================================================
+
+// Interface de role legada
 export interface Role {
   role_id: string;
   role_name: string;
@@ -213,6 +241,7 @@ export interface Role {
   usuarios?: UserRole[];
 }
 
+// Interface de permissão legada
 export interface Permission {
   permission_id: string;
   permission_name: string;
@@ -222,6 +251,7 @@ export interface Permission {
   roles?: RolePermission[];
 }
 
+// Interface de relacionamento role-permission legada
 export interface RolePermission {
   role_id: string;
   permission_id: string;
@@ -231,15 +261,21 @@ export interface RolePermission {
   permission?: Permission;
 }
 
+// Interface de relacionamento user-role legada
 export interface UserRole {
-  usuario_id: string;
+  user_id: string;
   role_id: string;
 
   // Relations
-  usuario?: Usuario;
+  user?: Usuario;
   role?: Role;
 }
 
+// ============================================================================
+// INTERFACES DE CONFIGURAÇÃO LEGADAS
+// ============================================================================
+
+// Interface de configuração legada
 export interface Setting {
   id: string;
   key: string;
@@ -249,30 +285,65 @@ export interface Setting {
   created_at: Date;
 }
 
-// Metadata for the processed inventory file
-export interface InventoryMetadata {
-  fileName: string;
-  timestamp: string;
-  recordCount: number;
-  usedAcceleration: boolean;
-  syncStatus?: "synced" | "pending" | "unknown" | "syncing";
-  lastSyncUpdate?: string;
-  commissionId?: string;
+// ============================================================================
+// TIPOS DE COMPATIBILIDADE
+// ============================================================================
 
-  // Novos campos para sincronização inteligente
-  totalItems?: number;
-  pendingCount?: number;
-  lastSyncInfo?: {
-    serverCount: number;
-    localCount: number;
-    lastServerUpdate?: Date;
-    lastLocalUpdate?: Date;
-    needsSync: boolean;
-    syncReason?:
-      | "count_mismatch"
-      | "newer_server_data"
-      | "no_local_data"
-      | "forced";
+// Mapeamento de tipos antigos para novos
+export type LegacyUser = Usuario;
+export type LegacyOrganization = Organizacao;
+export type LegacyCampus = Campus;
+export type LegacyCommission = Comissao;
+export type LegacyInventoryItem = BemCopia;
+export type LegacyInventory = Inventario;
+
+// ============================================================================
+// FUNÇÕES DE MIGRAÇÃO (para uso futuro)
+// ============================================================================
+
+// Função para converter usuário legado para novo formato
+export function migrateLegacyUser(legacyUser: Usuario): any {
+  return {
+    id: legacyUser.usuario_id,
+    name: legacyUser.nome,
+    email: legacyUser.email,
+    description: legacyUser.perfil?.descricao || '',
+    role: legacyUser.papel as any,
+    avatar: legacyUser.perfil?.imagem_url || null,
+    active: legacyUser.habilitado
   };
-  campusId?: string;
+}
+
+// Função para converter organização legada para novo formato
+export function migrateLegacyOrganization(legacyOrg: Organizacao): any {
+  return {
+    id: legacyOrg.organizacao_id,
+    name: legacyOrg.nome,
+    shortName: legacyOrg.nome_curto || '',
+    active: legacyOrg.ativo ?? true
+  };
+}
+
+// Função para converter campus legado para novo formato
+export function migrateLegacyCampus(legacyCampus: Campus): any {
+  return {
+    id: legacyCampus.campus_id,
+    organizationId: legacyCampus.organizacao_id || '',
+    name: legacyCampus.nome,
+    code: legacyCampus.campus_codigo,
+    active: legacyCampus.campus_ativo
+  };
+}
+
+// Função para converter comissão legada para novo formato
+export function migrateLegacyCommission(legacyCommission: Comissao): any {
+  return {
+    id: legacyCommission.comissao_id,
+    campusId: legacyCommission.campus_id,
+    name: legacyCommission.nome,
+    type: legacyCommission.tipo,
+    description: legacyCommission.descricao,
+    active: legacyCommission.ativo ?? true,
+    year: legacyCommission.ano || new Date().getFullYear()
+  };
 }

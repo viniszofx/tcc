@@ -24,7 +24,7 @@ import {
 } from "@/hooks/mutations/use-mutations";
 import { useCommissionMemberDetailData } from "@/hooks/queries/use-page-data";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
-import { useUserPermissions } from "@/hooks/use-user-permissions-rq";
+import { useUserPermissions } from "@/hooks/use-consolidated-user";
 import {
   ArrowLeft,
   Calendar,
@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function CommissionMemberDetailPage() {
   const {
@@ -115,7 +116,7 @@ export default function CommissionMemberDetailPage() {
       // O refetch acontece automaticamente via invalidateQueries na mutation
     } catch (error) {
       console.error("Erro ao atualizar papel do membro:", error);
-      alert("Erro ao atualizar papel do membro. Tente novamente.");
+      toast.error("Erro ao atualizar papel do membro. Tente novamente.");
     }
   };
 
@@ -135,13 +136,13 @@ export default function CommissionMemberDetailPage() {
         commissionId,
       });
 
-      alert(
+      toast.success(
         `"${member.name || member.email}" foi removido da comissão com sucesso.`
       );
       router.push(`/application/commissions/${commissionId}/members`);
     } catch (error) {
       console.error("Erro ao remover membro:", error);
-      alert("Erro inesperado ao remover membro");
+      toast.error("Erro inesperado ao remover membro");
     }
   };
 

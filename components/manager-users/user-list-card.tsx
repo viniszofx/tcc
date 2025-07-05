@@ -9,8 +9,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useUserPermissions } from "@/hooks/use-user-permissions-rq";
-import type { Campus, CampusMember, UserProfile } from "@/interface";
+import { useUserPermissions } from "@/hooks/use-consolidated-user";
+import type { Campus, CampusMember, UserProfile } from '@/types';
 import { useCan } from "@/lib/permissions/hooks";
 import { Crown, Eye, MoreVertical, Pencil, Trash2, User } from "lucide-react";
 import { useRouter } from "next/navigation";

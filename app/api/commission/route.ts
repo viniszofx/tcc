@@ -18,12 +18,14 @@ export async function GET(request: Request) {
       );
     }
 
+    const { user } = authResult;
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     const campusId = searchParams.get("campusId");
     const year = searchParams.get("year");
 
     console.log("📋 Parâmetros de busca:", { id, campusId, year });
+    console.log("👤 Usuário:", { id: user.id, role: user.role });
 
     if (id) {
       console.log("🔍 Buscando comissão específica:", id);
@@ -64,7 +66,26 @@ export async function GET(request: Request) {
       console.log("📅 Filtrando por ano:", year);
     }
 
-    console.log("🔍 Buscando todas as comissões com filtros:", where);
+    // Verificar se o usuário é admin global/sistema
+    const isGlobalAdmin = user.ability.can("manage", "all");
+    console.log("🔐 É admin global:", isGlobalAdmin);
+
+    if (!isGlobalAdmin) {
+      // Para usuários não-admin, filtrar apenas comissões onde são membros
+      const userCommissionIds = user.commissionMembers?.map(member => member.commissionId) || [];
+      
+      if (userCommissionIds.length === 0) {
+        console.log("❌ Usuário não é membro de nenhuma comissão");
+        return NextResponse.json([]);
+      }
+
+      where.id = {
+        in: userCommissionIds
+      };
+      console.log("🔒 Filtrando por comissões do usuário:", userCommissionIds);
+    }
+
+    console.log("🔍 Buscando comissões com filtros:", where);
 
     const commissions = await prisma.commission.findMany({
       where,

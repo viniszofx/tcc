@@ -13,8 +13,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useProfilePageData } from "@/hooks/queries/use-page-data";
-import { useUserPermissions } from "@/hooks/use-user-permissions";
-import type { UserProfile } from "@/interface";
+import { useUserPermissions } from "@/hooks/use-consolidated-user";
+import type { UserProfile } from '@/types';
 import { Key, Settings } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

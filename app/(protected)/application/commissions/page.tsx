@@ -11,13 +11,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { NavigationButton } from "@/components/ui/navigation-button";
 import { useCampuses } from "@/hooks/queries/use-campus-query";
 import {
   useCommissions,
   useCreateCommission,
 } from "@/hooks/queries/use-commissions-query";
-import { useUserPermissions } from "@/hooks/use-user-permissions";
-import type { CommissionWithRelations } from "@/interface";
+import { useUserPermissions } from "@/hooks/use-consolidated-user";
+import type { CommissionWithRelations } from '@/types';
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -59,40 +60,10 @@ export default function CommissionsPage() {
   // Local state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Filtrar comissões baseado nas permissões do usuário
-  const commissions = useMemo(() => {
-    if (!user) {
-      return [];
-    }
+  // A API já filtra as comissões baseado nas permissões do usuário
+  const commissions = allCommissions || [];
 
-    // Se pode gerenciar comissões (admin global ou admin de org), mostrar todas
-    if (canManageCommissions) {
-      return allCommissions;
-    }
-
-    // Para membros comuns, mostrar apenas comissões onde são membros
-    return allCommissions.filter((commission) => {
-      // Verificar se é membro direto da comissão
-      const isMemberOfCommission =
-        commission.members?.some((member) => member.userId === user.id) ||
-        false;
-
-      // Verificar se é membro do campus onde a comissão está localizada
-      const isMemberOfCampus =
-        user.campuses?.some(
-          (campus: any) => campus.id === commission.campusId
-        ) || false;
-
-      return isMemberOfCommission || isMemberOfCampus;
-    });
-  }, [allCommissions, user, canManageCommissions]);
-
-  // Verificar permissões
-  useEffect(() => {
-    if (!permissionsLoading && !canAccessCommission) {
-      router.push("/application");
-    }
-  }, [permissionsLoading, canAccessCommission, router]);
+  // Removido redirecionamento automático - a API já controla o acesso
 
   // Loading states
   const isLoading =
@@ -104,9 +75,7 @@ export default function CommissionsPage() {
     return <LoadingScreen />;
   }
 
-  if (!canAccessCommission) {
-    return <LoadingScreen />;
-  }
+  // Removido bloqueio de acesso - a API já controla as permissões
 
   if (permissionsError || commissionsError || campusesError) {
     return (
@@ -150,10 +119,6 @@ export default function CommissionsPage() {
     return commission.campus?.name || "Campus não encontrado";
   };
 
-  const pageTitle = canManageCommissions
-    ? "Todas as Comissões"
-    : "Minhas Comissões";
-
   return (
     <>
       <PageTitle title="Comissões - KDÊ" />
@@ -175,7 +140,7 @@ export default function CommissionsPage() {
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6">
           <div>
             <CardTitle className="text-2xl font-bold text-[var(--font-color)] md:text-3xl">
-              {pageTitle}
+              {canManageCommissions ? "Todas as Comissões" : "Minhas Comissões"}
             </CardTitle>
             <CardDescription className="text-[var(--font-color)] opacity-70">
               {commissions.length > 0
@@ -282,25 +247,21 @@ export default function CommissionsPage() {
                       {commission.description || "Nenhuma descrição fornecida"}
                     </p>
                     <div className="flex flex-wrap gap-2 justify-end">
-                      <Link href={`/application/commissions/${commission.id}`}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-color)] hover:text-white"
-                        >
-                          Ver Detalhes
-                        </Button>
-                      </Link>
-                      <Link
-                        href={`/application/commissions/${commission.id}/inventories`}
+                      <NavigationButton
+                        href={`/application/commissions/${commission.id}`}
+                        variant="outline"
+                        size="sm"
+                        className="border-[var(--border-input)] bg-[var(--card-color)] text-[var(--font-color)] hover:bg-[var(--hover-color)] hover:text-white"
                       >
-                        <Button
-                          size="sm"
-                          className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white"
-                        >
-                          Inventário
-                        </Button>
-                      </Link>
+                        Ver Detalhes
+                      </NavigationButton>
+                      <NavigationButton
+                        href={`/application/commissions/${commission.id}/inventories`}
+                        size="sm"
+                        className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-2-color)] hover:text-white"
+                      >
+                        Inventário
+                      </NavigationButton>
                     </div>
                   </CardContent>
                 </Card>

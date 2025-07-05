@@ -1,4 +1,4 @@
-import type { BemCopia } from "@/lib/interface";
+import type { BemCopia } from '@/types';
 import { getProcessedData } from "@/utils/data-storage";
 
 export async function getItemById(id: string, commissionId?: string) {

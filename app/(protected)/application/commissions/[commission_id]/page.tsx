@@ -14,7 +14,7 @@ import {
 import { useDeleteCommission } from "@/hooks/mutations/use-mutations";
 import { useCommissionDetailData } from "@/hooks/queries/use-page-data";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
-import { useUserPermissions } from "@/hooks/use-user-permissions-rq";
+import { useUserPermissions } from "@/hooks/use-consolidated-user";
 import {
   Building2,
   CalendarDays,
@@ -29,6 +29,7 @@ import {
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function CommissionDetailPage() {
   const { user, loading } = useUserPermissions();
@@ -56,11 +57,28 @@ export default function CommissionDetailPage() {
   const deleteCommissionMutation = useDeleteCommission();
 
   useEffect(() => {
+    // Debug logs para entender o problema
+    console.log('Commission Detail Debug:', {
+      loading,
+      permissionsLoading,
+      canAccessCommission,
+      canUploadToCommission,
+      canManageMembers,
+      user: user ? {
+        id: user.id,
+        role: user.role,
+        commissions: user.commissions,
+        organizationMembers: user.organizationMembers
+      } : null,
+      commissionId
+    });
+
     if (!loading && !permissionsLoading && !canAccessCommission) {
+      console.warn('Redirecionando usuário - sem acesso à comissão');
       // Redirecionar para a listagem de comissões com uma mensagem
       router.push("/application/commissions?error=access_denied");
     }
-  }, [loading, permissionsLoading, canAccessCommission, router]);
+  }, [loading, permissionsLoading, canAccessCommission, router, user, canUploadToCommission, canManageMembers, commissionId]);
 
   const handleEditCommission = () => {
     setEditModalOpen(true);
@@ -91,11 +109,11 @@ export default function CommissionDetailPage() {
 
     try {
       await deleteCommissionMutation.mutateAsync(commissionId);
-      alert("Comissão excluída com sucesso!");
+      toast.success("Comissão excluída com sucesso!");
       router.push("/application/commissions");
     } catch (error) {
       console.error("Erro ao excluir comissão:", error);
-      alert("Erro ao excluir comissão. Tente novamente.");
+      toast.error("Erro ao excluir comissão. Tente novamente.");
     }
   };
 

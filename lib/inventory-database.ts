@@ -1,4 +1,4 @@
-import type { BemCopia } from "@/lib/interface";
+import type { BemCopia } from '@/types';
 import { prisma } from "@/lib/prisma";
 import { randomUUID } from "crypto";
 

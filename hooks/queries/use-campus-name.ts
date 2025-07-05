@@ -1,6 +1,6 @@
 "use client";
 
-import type { Campus } from "@/interface";
+import type { Campus } from '@/types';
 import { useQuery } from "@tanstack/react-query";
 
 /**

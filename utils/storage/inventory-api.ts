@@ -1,4 +1,4 @@
-import type { BemCopia, InventoryMetadata } from "@/lib/interface";
+import type { BemCopia, InventoryMetadata } from '@/types';
 import { getProcessedData, storeProcessedData } from "./storage-manager";
 
 export async function addInventoryItem(

@@ -1,5 +1,5 @@
-import type { InventoryItemWithRelations } from "@/interface";
-import type { BemCopia } from "@/lib/interface";
+import type { InventoryItemWithRelations } from '@/types';
+import type { BemCopia } from '@/types';
 import { getProcessedData } from "@/utils/storage";
 
 /**

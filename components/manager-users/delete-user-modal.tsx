@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { UserProfile } from "@/interface";
+import { UserProfile } from '@/types';
 import { AlertTriangle } from "lucide-react";
 
 interface DeleteUserModalProps {

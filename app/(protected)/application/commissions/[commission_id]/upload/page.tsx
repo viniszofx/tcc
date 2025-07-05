@@ -16,10 +16,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useProcessInventoryUpload } from "@/hooks/mutations/use-mutations";
 import { useCommissionDetailData } from "@/hooks/queries/use-page-data";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
+import { useUserPermissions } from "@/hooks/use-consolidated-user";
 import { useInventorySync } from "@/hooks/use-inventory-sync";
-import { useUserPermissions } from "@/hooks/use-user-permissions-rq";
-import type { CommissionWithRelations } from "@/interface";
-import { uploadFileIntelligent } from "@/utils/file-upload";
+import type { CommissionWithRelations } from "@/types";
 import {
   AlertCircle,
   CheckCircle,
@@ -31,6 +30,7 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 // Funções auxiliares para processamento dos dados
 const extractBrandModel = (description: string): string => {
@@ -199,9 +199,8 @@ export default function CommissionUploadPage() {
       return;
     }
 
-    // Validar tamanho (agora mais flexível, pois o arquivo vai direto para Supabase)
+    // Validar tamanho (50MB limite)
     if (file.size > 50 * 1024 * 1024) {
-      // 50MB limite do Supabase
       setUploadError("Arquivo muito grande. O limite é de 50MB.");
       return;
     }
@@ -233,96 +232,49 @@ export default function CommissionUploadPage() {
       });
 
       console.log("💾 Dados salvos localmente (IndexedDB)");
+
       if (isOnline) {
         try {
-          // 3. Tentar fazer backup do arquivo bruto diretamente no Supabase (client-side)
-          console.log("📁 Tentando fazer backup do arquivo original...");
-          let fileUrl = null;
+          // 3. Criar FormData para enviar arquivo + dados via API
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("commissionId", commissionId);
+          formData.append("description", description);
+          formData.append("processedData", JSON.stringify(processedData));
+          formData.append(
+            "metadata",
+            JSON.stringify({
+              fileName: file.name,
+              fileSize: file.size,
+              timestamp: new Date().toISOString(),
+              recordCount: processedData.length,
+              uploadedBy: user?.name || "Sistema",
+            })
+          );
 
-          try {
-            fileUrl = await uploadFileIntelligent(
-              file,
-              "spreadsheets",
-              `commissions/${commissionId}`
-            );
-            if (fileUrl) {
-              console.log("✅ Arquivo salvo no Supabase:", fileUrl);
-            } else {
-              console.warn(
-                "⚠️ Backup de arquivo ignorado - Supabase não configurado"
-              );
-            }
-          } catch (uploadError) {
-            console.warn("⚠️ Falha no upload para Supabase:", uploadError);
-            // Continuar sem o backup do arquivo - os dados processados ainda serão salvos
-          }
-
-          // 4. Enviar dados processados + URL do arquivo (se disponível) para a API
-          const processResponse = await fetch("/api/inventory", {
+          // 4. Enviar tudo via API do servidor (mais seguro para RLS)
+          const uploadResponse = await fetch("/api/inventory/upload", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              commissionId,
-              items: processedData,
-              metadata: {
-                fileName: file.name,
-                fileSize: file.size,
-                fileUrl: fileUrl || null, // Pode ser null se o upload falhou
-                description,
-                timestamp: new Date().toISOString(),
-                recordCount: processedData.length,
-                uploadedBy: user?.name || "Sistema",
-              },
-            }),
+            body: formData,
           });
 
-          if (!processResponse.ok) {
-            const errorData = await processResponse.json();
-            throw new Error(errorData.error || "Erro ao salvar dados no banco");
-          }
-
-          const processResult = await processResponse.json();
-          console.log("✅ Dados salvos no banco:", processResult);
-
-          // 5. Atualizar URL da planilha na comissão (apenas se tiver fileUrl)
-          if (fileUrl) {
-            try {
-              const updateCommissionResponse = await fetch(
-                `/api/commission/${commissionId}`,
-                {
-                  method: "PUT",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    spreadsheetUrl: fileUrl,
-                  }),
-                }
-              );
-
-              if (updateCommissionResponse.ok) {
-                console.log("📊 URL da planilha atualizada na comissão");
-              } else {
-                console.warn(
-                  "⚠️ Não foi possível atualizar a URL da planilha na comissão"
-                );
-              }
-            } catch (updateError) {
-              console.warn(
-                "⚠️ Erro ao atualizar URL da planilha:",
-                updateError
-              );
-              // Continuar mesmo sem atualizar a URL
-            }
-          } else {
-            console.log(
-              "ℹ️ Nenhuma URL de planilha para atualizar (Supabase não configurado ou erro no upload)"
+          if (!uploadResponse.ok) {
+            const errorData = await uploadResponse.json();
+            throw new Error(
+              errorData.error || "Erro ao processar upload no servidor"
             );
           }
 
-          // 6. Atualizar status no IndexedDB para "synced"
+          const uploadResult = await uploadResponse.json();
+          console.log("✅ Upload processado no servidor:", uploadResult);
+
+          // Mostrar mensagem de sucesso
+          toast.success(
+            uploadResult.message ||
+              `Upload concluído! ${processedData.length} itens foram importados com sucesso.`
+          );
+
+          // 5. Atualizar status no IndexedDB para "synced"
           await storeProcessedData(processedData, {
             fileName: file.name,
             timestamp: new Date().toISOString(),
@@ -395,7 +347,13 @@ export default function CommissionUploadPage() {
             rows = text
               .split("\n")
               .map((row) =>
-                row.split(",").map((cell) => cell.trim().replace(/^"|"$/g, ""))
+                row
+                  .split(",")
+                  .map((cell) =>
+                    typeof cell === "string"
+                      ? cell.trim().replace(/^"|"$/g, "")
+                      : String(cell || "").trim()
+                  )
               );
           } else if (file.name.match(/\.(xlsx|xls)$/i)) {
             // Processar Excel
@@ -430,15 +388,29 @@ export default function CommissionUploadPage() {
           const headers = rows[0];
           const dataRows = rows
             .slice(1)
-            .filter((row) => row.some((cell) => cell.trim()));
+            .filter((row) =>
+              row.some((cell) =>
+                typeof cell === "string"
+                  ? cell.trim()
+                  : String(cell || "").trim()
+              )
+            );
 
           const inventoryItems = dataRows.map((row, index) => {
             const item: any = {};
 
             // Mapear cada coluna pela posição/índice (mais confiável para planilhas estruturadas)
             headers.forEach((header, headerIndex) => {
-              const normalizedHeader = header.toLowerCase().trim();
-              const value = row[headerIndex]?.trim() || "";
+              const normalizedHeader = (
+                typeof header === "string" ? header : String(header || "")
+              )
+                .toLowerCase()
+                .trim();
+              const cellValue = row[headerIndex];
+              const value =
+                (typeof cellValue === "string"
+                  ? cellValue.trim()
+                  : String(cellValue || "").trim()) || "";
 
               // Mapeamento baseado na estrutura original da tabela
               switch (normalizedHeader) {
@@ -491,16 +463,16 @@ export default function CommissionUploadPage() {
                 case "valor":
                   item.VALOR_AQUISICAO = value
                     ? parseFloat(
-                      value.replace(/[^\d.,]/g, "").replace(",", ".")
-                    )
+                        value.replace(/[^\d.,]/g, "").replace(",", ".")
+                      )
                     : null;
                   break;
                 case "valor depreciado":
                 case "valor_depreciado":
                   item.VALOR_DEPRECIADO = value
                     ? parseFloat(
-                      value.replace(/[^\d.,]/g, "").replace(",", ".")
-                    )
+                        value.replace(/[^\d.,]/g, "").replace(",", ".")
+                      )
                     : null;
                   break;
                 case "numero nota fiscal":
@@ -764,20 +736,22 @@ export default function CommissionUploadPage() {
                 Selecionar Arquivo
               </Label>
               <div
-                className={`border-2 rounded-lg p-8 text-center transition-colors ${isDragging
+                className={`border-2 rounded-lg p-8 text-center transition-colors ${
+                  isDragging
                     ? "border-[var(--button-color)] bg-[var(--bg-hover)]"
                     : "border-dashed border-[var(--border-color)] hover:border-[var(--button-color)]"
-                  }`}
+                }`}
                 onDragEnter={handleDragEnter}
                 onDragLeave={handleDragLeave}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
               >
                 <Upload
-                  className={`w-12 h-12 mx-auto mb-4 transition-colors ${isDragging
+                  className={`w-12 h-12 mx-auto mb-4 transition-colors ${
+                    isDragging
                       ? "text-[var(--button-color)]"
                       : "text-[var(--font-color)] opacity-50"
-                    }`}
+                  }`}
                 />
                 <Input
                   id="files"
@@ -865,7 +839,8 @@ export default function CommissionUploadPage() {
                     Upload realizado com sucesso!
                   </p>
                   <p className="text-xs text-green-600">
-                    Dados processados e salvos. Redirecionando para inventories...
+                    Dados processados e salvos. Redirecionando para
+                    inventories...
                   </p>
                 </div>
               </div>
@@ -891,8 +866,8 @@ export default function CommissionUploadPage() {
                 {isUploading
                   ? "Enviando..."
                   : isProcessing
-                    ? "Processando..."
-                    : "Fazer Upload"}
+                  ? "Processando..."
+                  : "Fazer Upload"}
               </Button>
               <Button
                 variant="outline"
@@ -942,9 +917,9 @@ export default function CommissionUploadPage() {
             <div className="mt-4 space-y-3">
               <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                 <p className="text-sm text-yellow-700">
-                  <strong>Nota:</strong> O armazenamento de arquivos na nuvem pode
-                  estar indisponível se o Supabase não estiver configurado. Os
-                  dados dos itens ainda serão processados e armazenados
+                  <strong>Nota:</strong> O armazenamento de arquivos na nuvem
+                  pode estar indisponível se o Supabase não estiver configurado.
+                  Os dados dos itens ainda serão processados e armazenados
                   normalmente. Se encontrar erros, verifique se as variáveis de
                   ambiente foram configuradas corretamente no arquivo .env.
                 </p>
@@ -960,9 +935,9 @@ export default function CommissionUploadPage() {
 
               <div className="p-3 bg-[var(--bg-simple)] rounded-lg border border-[var(--border-color)]">
                 <p className="text-sm text-[var(--font-color)] opacity-70">
-                  <strong>Limite:</strong> Máximo 50MB por arquivo. Para arquivos
-                  maiores, considere dividir em partes menores ou usar CSV para
-                  melhor performance.
+                  <strong>Limite:</strong> Máximo 50MB por arquivo. Para
+                  arquivos maiores, considere dividir em partes menores ou usar
+                  CSV para melhor performance.
                 </p>
               </div>
             </div>

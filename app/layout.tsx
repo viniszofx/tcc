@@ -1,7 +1,7 @@
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { SupabaseProvider } from "@/components/providers/supabase-provider";
-import { UserProvider } from "@/contexts/user-context";
+import { ConsolidatedUserProvider } from "@/hooks/use-consolidated-user";
 import { Urbanist } from "next/font/google";
 import "./globals.css";
 
@@ -25,9 +25,9 @@ export default function RootLayout({
       <body className={`${urbanist.variable} font-sans antialiased`}>
         <QueryProvider>
           <SupabaseProvider>
-            <UserProvider>
+            <ConsolidatedUserProvider>
               <ThemeProvider>{children}</ThemeProvider>
-            </UserProvider>
+            </ConsolidatedUserProvider>
           </SupabaseProvider>
         </QueryProvider>
       </body>

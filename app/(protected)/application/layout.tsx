@@ -12,7 +12,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { queryKeys } from "@/hooks/queries/query-keys";
-import { useUserPermissions } from "@/hooks/use-user-permissions";
+import { useConsolidatedUser } from "@/hooks/use-consolidated-user";
 import { AbilityProvider } from "@/lib/permissions/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -23,7 +23,7 @@ interface ApplicationLayoutProps {
 }
 
 function ApplicationContent({ children }: ApplicationLayoutProps) {
-  const { user, loading, error } = useUserPermissions();
+  const { userData: user, loading, error } = useConsolidatedUser();
   const router = useRouter();
   const queryClient = useQueryClient();
 

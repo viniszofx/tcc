@@ -17,6 +17,7 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function Home() {
   const router = useRouter();
@@ -45,7 +46,7 @@ export default function Home() {
 
     // Se há erro de rate limiting, mostrar alerta
     if (statusError?.includes("Muitas tentativas")) {
-      alert("Muitas tentativas. Tente novamente em alguns minutos.");
+      toast.error("Muitas tentativas. Tente novamente em alguns minutos.");
       return;
     }
 
@@ -91,7 +92,7 @@ export default function Home() {
       setCameraModalOpen(true);
     } catch (error) {
       console.error("Erro ao acessar câmera:", error);
-      alert("Por favor, permita o acesso à câmera para usar esta função.");
+      toast.error("Por favor, permita o acesso à câmera para usar esta função.");
     }
   };
 

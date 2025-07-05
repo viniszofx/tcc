@@ -3,7 +3,7 @@ import type {
   CampusMember,
   Organization,
   UserProfileWithRelations,
-} from "@/interface";
+} from '@/types';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { cacheConfig, queryKeys } from "./query-keys";

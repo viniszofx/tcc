@@ -14,16 +14,18 @@ export function QueryProvider({ children }: QueryProviderProps) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Cache por 5 minutos por padrão
-            staleTime: 5 * 60 * 1000,
-            // Manter dados em cache por 10 minutos mesmo quando não usado
-            gcTime: 10 * 60 * 1000,
+            // Cache por 2 minutos para melhor performance
+            staleTime: 2 * 60 * 1000,
+            // Manter dados em cache por 5 minutos
+            gcTime: 5 * 60 * 1000,
             // Tentar novamente em caso de erro
             retry: 1,
-            // Refetch quando a janela volta ao foco
+            // Refetch quando a janela volta ao foco (desabilitado para performance)
             refetchOnWindowFocus: false,
             // Refetch quando a conexão é restaurada
-            refetchOnReconnect: true,
+            refetchOnReconnect: false,
+            // Refetch no mount apenas se dados estão stale
+            refetchOnMount: true,
           },
           mutations: {
             // Tentar novamente em caso de erro nas mutações

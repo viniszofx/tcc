@@ -9,7 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
+// Importação dinâmica do Html5Qrcode para evitar carregamento desnecessário
+// import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import { Camera, Search, SwitchCamera, ZoomIn } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -27,7 +28,7 @@ export function CameraModal({
   onSearch,
 }: CameraModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const qrScannerRef = useRef<Html5Qrcode | null>(null);
+  const qrScannerRef = useRef<any>(null); // Html5Qrcode carregado dinamicamente
   const containerId = "qr-reader-container";
 
   const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>(
@@ -142,68 +143,77 @@ export function CameraModal({
 
     if (!selectedCameraId) return;
 
-    const scanner = new Html5Qrcode(containerId);
-    qrScannerRef.current = scanner;
-
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isMobileDevice = isAndroid || isIOS;
-
-    const cameraConfig = isMobileDevice
-      ? { facingMode: { exact: "environment" } }
-      : { deviceId: { exact: selectedCameraId } };
-
-    const config = {
-      fps: 10,
-      qrbox: isMobile() ? { width: 250, height: 250 } : 250, // Square scanning area for mobile
-      aspectRatio: isMobile() ? 1.0 : 1.77, // 1:1 for mobile, 16:9 for desktop
-      formatsToSupport: [
-        Html5QrcodeSupportedFormats.QR_CODE,
-        Html5QrcodeSupportedFormats.CODE_39,
-        Html5QrcodeSupportedFormats.CODE_128,
-        Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.UPC_E,
-        Html5QrcodeSupportedFormats.CODABAR,
-      ],
-    };
-
     try {
-      await scanner.start(
-        cameraConfig,
-        config,
-        (decodedText) => {
-          setUseScanner(false);
-          setCaptureResult({ type: "qr", data: decodedText });
-        },
-        (error) => {
-          // silencioso
+      // Importação dinâmica para evitar carregamento desnecessário
+      const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode');
+      
+      const scanner = new Html5Qrcode(containerId);
+      qrScannerRef.current = scanner;
+
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isMobileDevice = isAndroid || isIOS;
+
+      const cameraConfig = isMobileDevice
+        ? { facingMode: { exact: "environment" } }
+        : { deviceId: { exact: selectedCameraId } };
+
+      const config = {
+        fps: 10,
+        qrbox: isMobile() ? { width: 250, height: 250 } : 250, // Square scanning area for mobile
+        aspectRatio: isMobile() ? 1.0 : 1.77, // 1:1 for mobile, 16:9 for desktop
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.QR_CODE,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.CODABAR,
+        ],
+      };
+
+      try {
+        await scanner.start(
+          cameraConfig,
+          config,
+          (decodedText) => {
+            setUseScanner(false);
+            setCaptureResult({ type: "qr", data: decodedText });
+          },
+          (error) => {
+            // silencioso
+          }
+        );
+        setScannerRunning(true);
+      } catch (e) {
+        // Se falhar com exact constraint, tenta sem
+        if (isIOS) {
+          try {
+            await scanner.start(
+              { facingMode: "environment" },
+              config,
+              (decodedText) => {
+                setUseScanner(false);
+                setCaptureResult({ type: "qr", data: decodedText });
+              },
+              (error) => {
+                // silencioso
+              }
+            );
+            setScannerRunning(true);
+            return;
+          } catch (fallbackError) {
+            console.error("Scanner error:", fallbackError);
+          }
         }
-      );
-      setScannerRunning(true);
-    } catch (e) {
-      // Se falhar com exact constraint, tenta sem
-      if (isIOS) {
-        try {
-          await scanner.start(
-            { facingMode: "environment" },
-            config,
-            (decodedText) => {
-              setUseScanner(false);
-              setCaptureResult({ type: "qr", data: decodedText });
-            },
-            (error) => {
-              // silencioso
-            }
-          );
-          setScannerRunning(true);
-          return;
-        } catch (fallbackError) {
-          console.error("Scanner error:", fallbackError);
-        }
+        alert("Erro ao iniciar scanner");
+        onClose();
       }
-      alert("Erro ao iniciar scanner");
+    } catch (importError) {
+      console.error("Erro ao carregar biblioteca de QR code:", importError);
+      alert("Erro ao carregar scanner de QR code");
       onClose();
     }
   };

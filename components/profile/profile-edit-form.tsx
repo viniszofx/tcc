@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { UserProfile } from "@/interface";
+import type { UserProfile } from '@/types';
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 

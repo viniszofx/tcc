@@ -10,10 +10,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
-import { useUserPermissions } from "@/hooks/use-user-permissions";
+import { useUserPermissions } from "@/hooks/use-consolidated-user";
 import { useQuery } from "@tanstack/react-query";
 import { LogOut, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export function UserAvatar() {
   const { signOut } = useAuth();
@@ -44,21 +44,21 @@ export function UserAvatar() {
   });
 
   // Escutar mudanças de avatar via eventos personalizados
-  useEffect(() => {
-    const handleAvatarUpdate = () => {
-      setForceRefresh(Date.now());
-      setTimeout(() => {
-        refetch();
-      }, 100);
-    };
+  const handleAvatarUpdate = useCallback(() => {
+    setForceRefresh(Date.now());
+    setTimeout(() => {
+      refetch();
+    }, 100);
+  }, [refetch]);
 
+  useEffect(() => {
     // Escutar evento personalizado de atualização de avatar
     window.addEventListener("avatar-updated", handleAvatarUpdate);
 
     return () => {
       window.removeEventListener("avatar-updated", handleAvatarUpdate);
     };
-  }, [refetch]);
+  }, [handleAvatarUpdate]);
 
   // Gerenciar URL do avatar com cache busting
   useEffect(() => {

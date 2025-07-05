@@ -19,10 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import type { Campus } from "@/interface";
+import type { Campus } from '@/types';
 import { AlertTriangle } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface Organization {
   id: string;
@@ -121,7 +122,7 @@ export default function CampusModal({
 
     // Validar se uma organização foi selecionada
     if (!formData.organizationId) {
-      alert("Por favor, selecione uma organização.");
+      toast.error("Por favor, selecione uma organização.");
       return;
     }
 

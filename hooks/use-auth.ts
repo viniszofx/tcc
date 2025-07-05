@@ -230,6 +230,17 @@ export function useAuth() {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
+      // Limpar todos os caches do React Query
+      if (typeof window !== 'undefined') {
+        // Limpar localStorage e sessionStorage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Forçar reload da página para limpar todos os caches
+        window.location.href = '/login';
+        return { error: null };
+      }
+
       setState({ user: null, loading: false, error: null });
       router.push("/login");
       return { error: null };

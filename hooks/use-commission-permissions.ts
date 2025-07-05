@@ -2,7 +2,7 @@
 
 import { useAbility } from "@/lib/permissions/hooks";
 import { useEffect, useState } from "react";
-import { useUserPermissions } from "./use-user-permissions-rq";
+import { useUserPermissions } from "./use-consolidated-user";
 
 interface CommissionAccessPermissions {
   canAccessCommission: boolean;
@@ -31,6 +31,23 @@ export function useCommissionPermissions(commissionId: string) {
       return;
     }
 
+    // Verificar se é admin global ou admin de organização
+    const isGlobalAdmin = user.role === "admin global";
+    const isOrgAdmin = user.organizationMembers?.some((member) => member.role === "admin") || false;
+    const isAdmin = isGlobalAdmin || isOrgAdmin || user.role === "admin";
+
+    // Verificar se é presidente da comissão específica
+    const isPresidentOfCommission = user.commissions?.some(
+      (commission) => 
+        commission.id === commissionId && 
+        commission.roleInCommission === "Presidente"
+    ) || false;
+
+    // Verificar se é membro da comissão
+    const isMemberOfCommission = user.commissions?.some(
+      (commission) => commission.id === commissionId
+    ) || false;
+
     // Se for admin global pelo CASL, libera tudo
     if (ability && ability.can("manage", "all")) {
       setPermissions({
@@ -44,24 +61,43 @@ export function useCommissionPermissions(commissionId: string) {
       return;
     }
 
-    // Se precisar de permissões específicas por comissão, pode customizar aqui
-    // Exemplo: checar se pode acessar/gerenciar comissão específica
-    // Para simplificação, vamos assumir que o ability já está configurado corretamente
+    // Definir permissões baseadas no papel do usuário
+    const canAccess = isAdmin || isMemberOfCommission;
+    const canManage = isAdmin || isPresidentOfCommission;
+    const canUpload = isAdmin || isPresidentOfCommission;
+    const canManageMembers = isAdmin || isPresidentOfCommission;
+
+    // Debug logs
+    console.log('Commission Permissions Debug:', {
+      commissionId,
+      user: user ? {
+        id: user.id,
+        role: user.role,
+        commissions: user.commissions,
+        organizationMembers: user.organizationMembers
+      } : null,
+      isGlobalAdmin,
+      isOrgAdmin,
+      isAdmin,
+      isPresidentOfCommission,
+      isMemberOfCommission,
+      permissions: {
+        canAccess,
+        canManage,
+        canUpload,
+        canManageMembers
+      }
+    });
+
     setPermissions({
-      canAccessCommission: ability ? ability.can("read", "Commission") : false,
-      canManageCommission: ability
-        ? ability.can("manage", "Commission")
-        : false,
-      canUploadToCommission: ability
-        ? ability.can("upload", "Commission")
-        : false,
-      canManageMembers: ability
-        ? ability.can("update", "CommissionMember")
-        : false,
+      canAccessCommission: canAccess,
+      canManageCommission: canManage,
+      canUploadToCommission: canUpload,
+      canManageMembers: canManageMembers,
       loading: false,
       error: null,
     });
-  }, [user, userLoading, ability]);
+  }, [user, userLoading, ability, commissionId]);
 
   return permissions;
 }

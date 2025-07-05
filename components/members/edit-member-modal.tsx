@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { UserProfile } from "@/interface";
+import type { UserProfile } from '@/types';
 import { Crown, FileText, User } from "lucide-react";
 import { useEffect, useState } from "react";
 

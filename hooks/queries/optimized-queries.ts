@@ -1,6 +1,6 @@
 "use client";
 
-import type { Campus, Organization } from "@/interface";
+import type { Campus, Organization } from '@/types';
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { cacheConfig, invalidationUtils, queryKeys } from "./query-keys";
 

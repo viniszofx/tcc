@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "cross-env NODE_ENV=development next dev --turbopack ",
-    "prebuild": "tsx scripts/setup.ts avatars",
+    "prebuild": "node -e \"if (process.env.SKIP_PREBUILD !== 'true') { require('child_process').execSync('tsx scripts/setup.ts avatars', {stdio: 'inherit'}); } else { console.log('⏭️ Prebuild pulado (SKIP_PREBUILD=true)'); }\"",
     "build": "cross-env NODE_ENV=production next build",
     "start": "cross-env NODE_ENV=production next start -p 8000 -H 0.0.0.0",
     "lint": "next lint",

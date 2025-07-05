@@ -1,11 +1,20 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useCampusName } from "@/hooks/queries/use-campus-name";
-import type { BemCopia } from "@/lib/interface";
 import Link from "next/link";
+import { useCampusName } from "@/hooks/queries/use-campus-name";
+import { useCommission } from "@/hooks/queries/use-commissions-query";
+import type { BemCopia } from "@/types";
+import {
+  downloadFileFromSupabase,
+  extractFileNameFromUrl,
+  isValidFileUrl,
+} from "@/utils/file-download";
+import { Download } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
+import { useState } from "react";
 
 interface InventoryCardProps {
   item: BemCopia;
@@ -19,11 +28,15 @@ export default function InventoryCard({
   const pathname = usePathname();
   const params = useParams();
   const commissionId = params?.commission_id as string;
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Fetch campus name if the campus_id is available
   const { data: campusName, isLoading: isLoadingCampus } = useCampusName(
     item.campus_id
   );
+
+  // Fetch commission data to get spreadsheet_url
+  const { data: commission } = useCommission(commissionId);
 
   // Variável para exibição do campus - usa o nome do campus da API ou o valor já existente no item
   const displayCampusName = isLoadingCampus
@@ -97,60 +110,117 @@ export default function InventoryCard({
     ED: "ED",
   };
 
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!commission?.spreadsheet_url) return;
+
+    setIsDownloading(true);
+    try {
+      const fileName =
+        extractFileNameFromUrl(commission.spreadsheet_url) ||
+        `planilha-${commission.name.replace(/\s+/g, "-").toLowerCase()}`;
+
+      await downloadFileFromSupabase(commission.spreadsheet_url, fileName);
+    } catch (error) {
+      console.error("Erro ao fazer download:", error);
+      // Aqui você pode adicionar uma notificação de erro se tiver um sistema de toast
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // Check if commission has a downloadable spreadsheet
+  const hasCommissionSpreadsheet = commission?.spreadsheet_url && commission.spreadsheet_url.trim() !== '';
+
   return (
-    <Link href={itemDetailRoute}>
-      <Card className="border-[var(--border-input)] bg-[var(--card-color)] transition-all hover:shadow-md cursor-pointer h-full">
+    <Link href={itemDetailRoute} className="block">
+      <Card className="border-[var(--border-input)] bg-[var(--card-color)] transition-all hover:shadow-md overflow-hidden cursor-pointer">
         <CardContent className="p-3 sm:p-4">
-          <div className="flex justify-between items-start mb-2 gap-2">
-            <h3 className="font-semibold text-[var(--font-color)] line-clamp-2 text-sm sm:text-base">
-              {(() => {
-                const descricao = item.DESCRICAO || '';
-                const index = descricao.indexOf('[');
-                if (index > 0) {
-                  return descricao.substring(0, index).trim() + (descricao.length > index ? '...' : '');
-                }
-                return descricao;
-              })()}
-            </h3>
+        {/* Cabeçalho com título e botão de download da planilha */}
+        <div className="flex justify-between items-start gap-2 mb-3">
+          <h3 className="font-semibold text-[var(--font-color)] text-sm flex-1 min-w-0">
+            {(() => {
+              const descricao = item.DESCRICAO || "Sem descrição";
+              const index = descricao.indexOf("[");
+              if (index > 0) {
+                return descricao.substring(0, index).trim();
+              }
+              return descricao;
+            })()}
+          </h3>
+          
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {hasCommissionSpreadsheet && isValidFileUrl(commission?.spreadsheet_url) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownload}
+                disabled={isDownloading}
+                className="h-7 px-2 text-xs bg-green-50 hover:bg-green-100 border-green-300 text-green-800 font-medium"
+              >
+                <Download className={`h-3 w-3 mr-1 ${isDownloading ? "animate-pulse" : ""}`} />
+                Planilha
+              </Button>
+            )}
+            
             <Badge
-              className={`${getStatusColor(item.STATUS)} text-white text-xs`}
+              className={`${getStatusColor(item.STATUS)} text-white text-xs px-2 py-1 font-medium`}
             >
-              {item.STATUS && item.STATUS.length > 10
-                ? `${item.STATUS.substring(0, 8)}...`
+              {item.STATUS && item.STATUS.length > 8
+                ? `${item.STATUS.substring(0, 6)}...`
                 : item.STATUS || "Ativo"}
             </Badge>
           </div>
+        </div>
 
-          <div className="text-xs sm:text-sm text-[var(--font-color)]/70 space-y-1">
-            {displayFields.map((field) => {
-              if (!item[field as keyof BemCopia]) return null;
+        {/* Campos de informação */}
+        <div className="space-y-2">
+          {displayFields.map((field) => {
+            let displayValue: string;
+            let label = fieldLabels[field] || field;
+            
+            // Tratamento especial para campo de campus
+            if (field === "CAMPUS_DA_LOTACAO_DO_BEM") {
+              displayValue = displayCampusName;
+            } else {
+              const fieldValue = item[field as keyof BemCopia];
+              displayValue = fieldValue !== null && fieldValue !== undefined 
+                ? String(fieldValue) 
+                : "N/A";
+            }
 
-              // Special handling for campus field
-              if (field === "CAMPUS_DA_LOTACAO_DO_BEM") {
-                return (
-                  <div key={field} className="flex justify-between gap-1">
-                    <span className="whitespace-nowrap">
-                      {fieldLabels[field]}:
-                    </span>
-                    <span className="font-medium text-[var(--font-color)] truncate max-w-[50%] sm:max-w-[150px]">
-                      {displayCampusName}
-                    </span>
-                  </div>
-                );
-              }
+            // Aplicar cor especial para conservação
+            const isConservacao = field === "ESTADO_DE_CONSERVACAO";
+            const conservacaoColor = isConservacao ? getConservacaoColor(displayValue) : "";
 
-              return (
-                <div key={field} className="flex justify-between gap-1">
-                  <span className="whitespace-nowrap">
-                    {fieldLabels[field]}:
-                  </span>
-                  <span className="font-medium text-[var(--font-color)] truncate max-w-[50%] sm:max-w-[150px]">
-                    {String(item[field as keyof BemCopia] || "")}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+            return (
+              <div key={field} className="flex justify-between items-center gap-2 py-1">
+                <span className="text-xs text-[var(--font-color)]/70 font-medium min-w-0 flex-shrink-0">
+                  {label}:
+                </span>
+                <span 
+                  className={`text-xs font-semibold text-right truncate max-w-[65%] ${
+                    isConservacao 
+                      ? conservacaoColor 
+                      : "text-[var(--font-color)]"
+                  }`}
+                  title={displayValue}
+                >
+                  {displayValue}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        
+        {/* Rodapé com ID do item */}
+        <div className="mt-3 pt-2 border-t border-[var(--border-input)]/20">
+          <span className="text-xs text-[var(--font-color)]/60 font-medium">
+            ID: {item.bem_id || item.NUMERO || "N/A"}
+          </span>
+        </div>
         </CardContent>
       </Card>
     </Link>

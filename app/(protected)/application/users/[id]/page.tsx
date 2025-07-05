@@ -14,8 +14,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useUserDetailData } from "@/hooks/queries/use-page-data";
-import { useUserPermissions } from "@/hooks/use-user-permissions";
-import type { UserProfile } from "@/interface";
+import { useUserPermissions } from "@/hooks/use-consolidated-user";
+import type { UserProfile } from '@/types';
 import { Pencil, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";

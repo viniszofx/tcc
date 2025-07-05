@@ -12,8 +12,9 @@ RUN apk add --no-cache libc6-compat
 # Configurar pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copiar arquivos de configuração de dependências
+# Copiar arquivos de configuração de dependências e schema do Prisma
 COPY package.json pnpm-lock.yaml ./
+COPY prisma ./prisma
 
 # Instalar dependências com melhor tratamento de erros
 RUN pnpm install --frozen-lockfile --network-timeout 100000
@@ -34,6 +35,7 @@ ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 # Configurar ambiente de produção para o build
 ENV NODE_ENV=production
 ENV CI=true
+ENV SKIP_PREBUILD=true
 
 
 # Executa o build do Next.js.

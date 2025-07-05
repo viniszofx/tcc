@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { useCampus } from "@/hooks/queries/use-campus-query";
 import { useUniqueCampusList } from "@/hooks/queries/use-unique-campus-list";
-import { EstadoConservacao, StatusBem, type BemCopia } from "@/lib/interface";
+import { EstadoConservacao, StatusBem, type BemCopia } from '@/types/legacy';
 import { useEffect, useState } from "react";
 
 // Definindo interface para o objeto de campus

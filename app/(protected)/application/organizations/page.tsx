@@ -18,11 +18,12 @@ import {
   useUpdateOrganization,
 } from "@/hooks/mutations/use-mutations";
 import { useOrganizations } from "@/hooks/queries/use-organizations-query";
-import { useUserPermissions } from "@/hooks/use-user-permissions";
-import { Organization } from "@/interface";
+import { useUserPermissions } from "@/hooks/use-consolidated-user";
+import { Organization } from '@/types';
 import { Plus, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function OrganizationsPage() {
   const {
@@ -143,7 +144,7 @@ export default function OrganizationsPage() {
       setIsModalOpen(false);
     } catch (error) {
       console.error("Erro ao criar organização:", error);
-      alert("Erro ao criar organização");
+      toast.error("Erro ao criar organização");
     }
   };
 
@@ -156,7 +157,7 @@ export default function OrganizationsPage() {
       setIsModalOpen(false);
     } catch (error) {
       console.error("Erro ao editar organização:", error);
-      alert("Erro ao editar organização");
+      toast.error("Erro ao editar organização");
     }
   };
 
@@ -186,7 +187,7 @@ export default function OrganizationsPage() {
       await deleteOrganizationMutation.mutateAsync(id);
     } catch (error) {
       console.error("Erro ao deletar organização:", error);
-      alert("Erro ao deletar organização");
+      toast.error("Erro ao deletar organização");
     }
   };
 

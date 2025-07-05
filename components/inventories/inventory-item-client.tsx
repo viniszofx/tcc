@@ -14,11 +14,12 @@ import {
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
 import { useHybridInventoryItem } from "@/hooks/use-hybrid-inventory-item";
 import { useSmartNavigation } from "@/hooks/use-smart-navigation";
-import type { InventoryItemWithRelations } from "@/interface";
+import type { InventoryItemWithRelations } from '@/types';
 import { formatDate } from "@/utils/data-utils";
 import { Edit, Trash2, Wifi, WifiOff } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface InventoryItemClientProps {
   id: string;
@@ -91,7 +92,7 @@ export default function InventoryItemClient({
       setEditModalOpen(false);
     } catch (error) {
       console.error("Error saving item:", error);
-      alert("Erro ao salvar item. Verifique o console para mais detalhes.");
+      toast.error("Erro ao salvar item. Verifique o console para mais detalhes.");
     }
   };
 
@@ -104,7 +105,7 @@ export default function InventoryItemClient({
       navigateTo(getBackUrl());
     } catch (error) {
       console.error("Error deleting item:", error);
-      alert("Erro ao excluir item");
+      toast.error("Erro ao excluir item");
     }
   };
 

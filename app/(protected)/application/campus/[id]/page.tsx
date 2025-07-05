@@ -13,8 +13,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useCampusDetailData } from "@/hooks/queries/use-page-data";
-import { useUserPermissions } from "@/hooks/use-user-permissions";
-import type { Campus } from "@/interface";
+import { useUserPermissions } from "@/hooks/use-consolidated-user";
+import type { Campus } from '@/types';
 import { Building2, Edit, Users } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";

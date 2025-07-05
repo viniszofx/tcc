@@ -3,38 +3,7 @@ import { createSupabaseAdmin } from "@/lib/supabase";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
-// Função de autenticação reutilizável
-async function authenticateUser() {
-  const supabase = await createServerSupabaseClient();
-
-  // Obter o usuário atual autenticado via Supabase
-  const {
-    data: { user: realUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !realUser) {
-    throw new Error("Não autorizado");
-  }
-
-  // Verificar se o usuário existe no banco de dados UserProfile
-  const userProfile = await prisma.userProfile.findUnique({
-    where: { id: realUser.id },
-  });
-
-  // Se não existir no UserProfile, não permitir a operação
-  if (!userProfile) {
-    console.error(
-      "❌ Usuário autenticado não encontrado no UserProfile:",
-      realUser.id
-    );
-    throw new Error(
-      "Usuário autenticado não encontrado no sistema. Por favor, verifique se seu usuário foi configurado corretamente."
-    );
-  }
-
-  return realUser;
-}
+import { authenticateUser } from "@/lib/auth/server";
 
 export async function POST(request: NextRequest) {
   try {

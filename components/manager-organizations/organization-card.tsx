@@ -16,10 +16,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Organization } from "@/interface";
+import type { Organization } from '@/types';
 import { Eye, Pencil, Trash2 } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
+import { NavigationButton } from "@/components/ui/navigation-button";
 
 interface OrganizationCardProps {
   organization: Organization;
@@ -74,17 +74,16 @@ export default function OrganizationCard({
           </CardDescription>
         </CardHeader>
         <CardFooter className="flex items-center justify-end gap-3 pt-0 pb-4 px-6">
-          <Link href={`/application/organizations/${organization.id}`}>
-            <Button
-              className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] hover:text-white"
-              size="icon"
-              variant="default"
-              title="Ver"
-            >
-              <Eye size={18} />
-              <span className="sr-only">Ver</span>
-            </Button>
-          </Link>
+          <NavigationButton
+            href={`/application/organizations/${organization.id}`}
+            className="bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] hover:text-white"
+            size="icon"
+            variant="default"
+            title="Ver"
+          >
+            <Eye size={18} />
+            <span className="sr-only">Ver</span>
+          </NavigationButton>
           <Button
             variant="outline"
             onClick={onEdit}

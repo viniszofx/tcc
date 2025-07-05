@@ -104,20 +104,31 @@ export const createSupabaseAdmin = () => {
 };
 
 // Para compatibilidade com código existente - apenas no servidor
-export const supabaseAdmin = (() => {
+// IMPORTANTE: Não exportar diretamente para evitar execução no cliente
+// Use createSupabaseAdmin() diretamente nos arquivos de API/servidor
+let _supabaseAdminInstance: any = null;
+
+export const getSupabaseAdmin = () => {
   // Só tentar criar o admin client se estivermos no servidor
   if (typeof window !== "undefined") {
-    console.warn("Supabase Admin client should not be used on client-side");
-    return null;
+    throw new Error("Supabase Admin client should not be used on client-side");
   }
 
-  try {
-    return createSupabaseAdmin();
-  } catch (error) {
-    console.warn(
-      "Supabase Admin client not available:",
-      error instanceof Error ? error.message : "Unknown error"
-    );
-    return null;
+  if (!_supabaseAdminInstance) {
+    try {
+      _supabaseAdminInstance = createSupabaseAdmin();
+    } catch (error) {
+      console.warn(
+        "Supabase Admin client not available:",
+        error instanceof Error ? error.message : "Unknown error"
+      );
+      return null;
+    }
   }
-})();
+
+  return _supabaseAdminInstance;
+};
+
+// Deprecated: Use createSupabaseAdmin() ou getSupabaseAdmin() instead
+// Esta exportação será removida em versões futuras
+export const supabaseAdmin = null;

@@ -1,4 +1,4 @@
-import { BemCopia, Campus, Comissao, EstadoConservacao, StatusBem, Usuario } from "@/lib/interface";
+import { BemCopia, Campus, Comissao, EstadoConservacao, StatusBem, Usuario } from '@/types/legacy';
 
 export async function exportToPdfStyled(
   items: BemCopia[],

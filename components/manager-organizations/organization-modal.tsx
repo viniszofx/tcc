@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import type { Organization } from "@/interface";
+import type { Organization } from '@/types';
 import { useEffect, useState } from "react";
 
 interface OrganizationModalProps {

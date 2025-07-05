@@ -1,6 +1,6 @@
 "use client";
 
-import type { Campus, UserProfile } from "@/interface";
+import type { Campus, UserProfile } from '@/types';
 import ProfileForm from "./profile-form";
 
 interface ProfileEditorProps {

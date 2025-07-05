@@ -1,6 +1,6 @@
 "use client";
 
-import type { Organization } from "@/interface";
+import type { Organization } from '@/types';
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 // Hook para buscar todas as organizações

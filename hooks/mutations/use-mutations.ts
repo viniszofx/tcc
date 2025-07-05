@@ -6,7 +6,7 @@ import type {
   Commission,
   InventoryItem,
   Organization,
-} from "@/interface";
+} from '@/types';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 /**
@@ -171,34 +171,7 @@ export function useUpdateCampus() {
   });
 }
 
-/**
- * Hook para criar usuário com invalidação automática de cache
- */
-export function useCreateUser() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (userData: any) => {
-      const response = await fetch("/api/user", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create user");
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      // Invalidar cache para atualizar listas de usuários
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-    },
-  });
-}
+// Hook useCreateUser removido - usar o de use-users-query.ts para evitar duplicação
 
 /**
  * Hook para criar comissão com invalidação automática de cache
@@ -460,6 +433,46 @@ export function useDeleteCommission() {
       // Invalidar dados relacionados que podem ter dependência de comissões
       queryClient.invalidateQueries({ queryKey: queryKeys.campuses.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.organizations.all });
+    },
+  });
+}
+
+/**
+ * Hook para apagar todo o inventário de uma comissão com invalidação automática de cache
+ */
+export function useDeleteCommissionInventory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (commissionId: string) => {
+      const response = await fetch(`/api/commission/${commissionId}/inventory`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete commission inventory");
+      }
+
+      return response.json();
+    },
+    onSuccess: (_, commissionId) => {
+      // Invalidar cache para atualizar inventários
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory", commissionId] });
+      
+      // Invalidar cache da comissão específica
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.commissions.detail(commissionId),
+      });
+      
+      // Invalidar histórico de inventário
+      queryClient.invalidateQueries({
+        queryKey: ["commission-history", commissionId],
+      });
     },
   });
 }

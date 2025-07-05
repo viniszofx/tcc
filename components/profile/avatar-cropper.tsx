@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { useCallback, useState } from "react";
 import Cropper from "react-easy-crop";
+import { toast } from "sonner";
 
 interface Point {
   x: number;
@@ -111,7 +112,7 @@ export function AvatarCropper({
       onClose();
     } catch (error) {
       console.error("Erro ao processar imagem:", error);
-      alert("Erro ao processar a imagem. Tente novamente.");
+      toast.error("Erro ao processar a imagem. Tente novamente.");
     } finally {
       setIsProcessing(false);
     }

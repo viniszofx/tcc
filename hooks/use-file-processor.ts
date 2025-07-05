@@ -1,6 +1,6 @@
 "use client"
 
-import { type BemCopia, EstadoConservacao, StatusBem } from "@/lib/interface"
+import { type BemCopia, EstadoConservacao, StatusBem } from '@/types/legacy'
 import { useState } from "react"
 import * as XLSX from "xlsx"
 

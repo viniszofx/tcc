@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Campus } from "@/interface";
+import type { Campus } from '@/types';
 import { Eye, Pencil, Trash2 } from "lucide-react";
 
 interface CampusCardProps {

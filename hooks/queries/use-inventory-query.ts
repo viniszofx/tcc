@@ -4,7 +4,7 @@ import type {
   InventoryHistoryWithRelations,
   InventoryItem,
   InventoryItemWithRelations,
-} from "@/interface";
+} from '@/types';
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 // Hook para buscar itens de inventário (com filtros opcionais)

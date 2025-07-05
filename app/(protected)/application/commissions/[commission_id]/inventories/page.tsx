@@ -7,28 +7,56 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { useCommission } from "@/hooks/queries/use-commissions-query";
-import { useInventoryItems } from "@/hooks/queries/use-inventory-query";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
 import { useInventoryWithSync } from "@/hooks/use-inventory-query";
-import { useInventorySync } from "@/hooks/use-inventory-sync";
-import { useUserPermissions } from "@/hooks/use-user-permissions-rq";
-import { AlertCircle, Download, Wifi, WifiOff } from "lucide-react";
+import { useUserPermissions } from "@/hooks/use-consolidated-user";
+import { useDeleteCommissionInventory } from "@/hooks/mutations/use-mutations";
+import { AlertCircle, Download, Trash2, Wifi, WifiOff } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { clearLocalStorage } from "@/utils/storage/local-storage";
 
 export default function CommissionInventoriesPage() {
-  const { user, loading } = useUserPermissions();
   const router = useRouter();
   const params = useParams();
   const commissionId = params.commission_id as string;
-  const { canAccessCommission, loading: permissionsLoading } =
+  const queryClient = useQueryClient();
+
+  // Hooks de autenticação e permissões
+  const { user, loading } = useUserPermissions();
+  const { canAccessCommission, canManageCommission, loading: permissionsLoading } =
     useCommissionPermissions(commissionId);
+
+  // Hook para apagar inventário
+  const deleteInventoryMutation = useDeleteCommissionInventory();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Hook principal de dados com sincronização inteligente
+  const {
+    data: syncedInventoryItems,
+    isLoading: syncedLoading,
+    isOnline: syncIsOnline,
+    pendingItemsCount,
+    localData: syncLocalData,
+    serverData: syncServerData,
+    metadata: syncMetadata,
+  } = useInventoryWithSync(commissionId);
+
+  // Hook de dados da comissão
+  const {
+    data: commission,
+    isLoading: commissionLoading,
+    error: commissionError,
+  } = useCommission(commissionId);
 
   // Estado de conectividade
   const [isOnline, setIsOnline] = useState(
     typeof navigator !== "undefined" ? navigator.onLine : true
   );
 
+  // Configurar listeners de conectividade
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -42,65 +70,71 @@ export default function CommissionInventoriesPage() {
     };
   }, []);
 
-  // Hooks de dados - React Query para API e hook customizado para local
-  const {
-    data: commission,
-    isLoading: commissionLoading,
-    error: commissionError,
-  } = useCommission(commissionId);
-
-  const {
-    data: apiInventoryItems = [],
-    isLoading: apiInventoryLoading,
-    error: apiInventoryError,
-  } = useInventoryItems(commissionId);
-
-  // Hook para dados locais (IndexedDB)
-  const {
-    localData: localInventoryItems,
-    metadata: localMetadata,
-    isLoading: localLoading,
-    syncStatus,
-  } = useInventorySync(commissionId);
-
-  // Novo hook com sincronização inteligente
-  const {
-    data: syncedInventoryItems,
-    isLoading: syncedLoading,
-    isOnline: syncIsOnline,
-    pendingItemsCount,
-    localData: syncLocalData,
-    serverData: syncServerData,
-    metadata: syncMetadata,
-  } = useInventoryWithSync(commissionId);
-
-  // Validar se dados locais pertencem à comissão atual
-  const localDataValid =
-    !syncMetadata?.commissionId || syncMetadata.commissionId === commissionId;
-
-  // Combinar dados usando o hook de sincronização inteligente
-  const combinedInventoryItems = syncedInventoryItems || [];
-  const totalItems = combinedInventoryItems.length;
-
-  // Determinar fonte de dados para display
-  const dataSource = (() => {
-    if (syncIsOnline && syncServerData?.length > 0) return "api";
-    if (syncLocalData?.length > 0 && localDataValid) return "local";
-    return "none";
-  })();
-
+  // Redirecionamento para usuários sem acesso
   useEffect(() => {
     if (!loading && !permissionsLoading && !canAccessCommission) {
       router.push("/application");
     }
   }, [loading, permissionsLoading, canAccessCommission, router]);
 
-  // Loading states
-  const isLoading =
-    loading ||
-    permissionsLoading ||
-    commissionLoading ||
-    (localLoading && apiInventoryLoading);
+  // Dados processados
+  const combinedInventoryItems = syncedInventoryItems || [];
+  const totalItems = combinedInventoryItems.length;
+  const localDataValid =
+    !syncMetadata?.commissionId || syncMetadata.commissionId === commissionId;
+
+  // Determinar fonte de dados
+  const dataSource = (() => {
+    if (syncIsOnline && syncServerData?.length > 0) return "api";
+    if (syncLocalData?.length > 0 && localDataValid) return "local";
+    return "none";
+  })();
+
+  // Verificar se o usuário pode apagar inventário (admin global, admin do sistema ou presidente da comissão)
+  const canDeleteInventory = user && (
+    user.role === "admin global" ||
+    user.role === "admin" ||
+    canManageCommission
+  );
+
+  // Função para apagar todo o inventário
+  const handleDeleteInventory = async () => {
+    if (!commission || !canDeleteInventory) return;
+
+    const confirmDelete = confirm(
+      `Tem certeza que deseja apagar TODO o inventário da comissão "${commission.name}"?\n\n` +
+      "Esta ação irá:\n" +
+      "- Excluir permanentemente todos os itens de inventário\n" +
+      "- Remover a planilha associada\n" +
+      "- Limpar todos os dados de inventário desta comissão\n\n" +
+      "Esta ação NÃO PODE ser desfeita!"
+    );
+
+    if (!confirmDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteInventoryMutation.mutateAsync(commissionId);
+      
+      // Limpar dados locais do cache
+      queryClient.invalidateQueries({ queryKey: ["inventory", commissionId] });
+      queryClient.removeQueries({ queryKey: ["inventory", commissionId] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      
+      // Limpar dados do localStorage
+      clearLocalStorage();
+      
+      toast.success("Inventário apagado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao apagar inventário:", error);
+      toast.error("Erro ao apagar inventário. Tente novamente.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Estados de carregamento
+  const isLoading = loading || permissionsLoading || commissionLoading;
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -138,7 +172,7 @@ export default function CommissionInventoriesPage() {
     <>
       <PageTitle title="Inventário - KDÊ" />
       <div className="space-y-6">
-        {/* Status de conectividade e sincronização */}
+        {/* Cabeçalho da comissão */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {commission && (
@@ -165,10 +199,10 @@ export default function CommissionInventoriesPage() {
               </div>
             )}
 
-            {syncStatus === "pending" && (
+            {pendingItemsCount > 0 && (
               <div className="flex items-center gap-1 text-orange-600">
                 <AlertCircle className="w-4 h-4" />
-                <span className="text-sm">Sync Pendente</span>
+                <span className="text-sm">{pendingItemsCount} pendente{pendingItemsCount > 1 ? 's' : ''}</span>
               </div>
             )}
 
@@ -179,6 +213,59 @@ export default function CommissionInventoriesPage() {
             </div>
           </div>
         </div>
+
+        {/* Botão de download da planilha */}
+        {commission?.spreadsheet_url && (
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-800">
+                    Planilha de Inventário Disponível
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    Baixe a planilha original enviada para esta comissão
+                  </p>
+                </div>
+                <Button
+                  variant="default"
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => window.open(commission.spreadsheet_url, "_blank")}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download da Planilha
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Botão de apagar inventário - visível apenas para admins e presidentes */}
+        {canDeleteInventory && totalItems > 0 && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-red-800">
+                    Apagar Todo o Inventário
+                  </p>
+                  <p className="text-xs text-red-700">
+                    Remove permanentemente todos os {totalItems} itens desta comissão
+                  </p>
+                </div>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteInventory}
+                  disabled={isDeleting}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {isDeleting ? "Apagando..." : "Apagar Inventário"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Alerta se dados locais não pertencem à comissão atual */}
         {syncLocalData?.length > 0 && !localDataValid && (
@@ -265,21 +352,7 @@ export default function CommissionInventoriesPage() {
           </Card>
         )}
 
-        {/* Barra de ações */}
-        <div className="flex items-center gap-2 justify-end">
-          {commission?.spreadsheet_url && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                // Abrir o link da planilha em uma nova aba
-                window.open(commission.spreadsheet_url, "_blank");
-              }}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download da Planilha
-            </Button>
-          )}
-        </div>
+
 
         {/* Componente base com todas as funcionalidades */}
         <InventoryPageBase
