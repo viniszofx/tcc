@@ -5,7 +5,6 @@ import { PageTitle } from "@/components/custom/page-title";
 import InventoryPageBase from "@/components/inventories/inventory-page-base";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-
 import { useDeleteCommissionInventory } from "@/hooks/mutations/use-mutations";
 import { useCommission } from "@/hooks/queries/use-commissions-query";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";

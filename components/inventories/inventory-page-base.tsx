@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useInventorySync } from "@/hooks/use-inventory-sync";
 import { useSmartNavigation } from "@/hooks/use-smart-navigation";
+import { useUserPermissions } from "@/hooks/use-user-permissions";
 import type { BemCopia } from '@/types/legacy';
 import { exportToPdfStyled } from "@/utils/pdf-export";
 import { Filter, RefreshCw } from "lucide-react";
@@ -34,6 +35,7 @@ export default function InventoryPageBase({
 }: InventoryPageBaseProps) {
   const router = useRouter();
   const { navigateTo } = useSmartNavigation();
+  const { user } = useUserPermissions();
   const params = useParams();
   const commissionId = propCommissionId || (params?.commission_id as string);
 
@@ -341,7 +343,7 @@ export default function InventoryPageBase({
         pdfData,
         `inventario_${new Date().toISOString().split("T")[0]}`,
         {
-          comissao_id: "0",
+          comissao_id: commissionId || "0",
           nome: "Comissão Desconhecida",
           tipo: "Desconhecida",
           campus_id: "",
@@ -370,7 +372,13 @@ export default function InventoryPageBase({
         },
         new Date(),
         new Date(),
-        displayFields
+        displayFields,
+        commissionId,
+        user ? {
+          id: user.id,
+          name: user.name,
+          email: user.email
+        } : undefined
       );
     }
   };

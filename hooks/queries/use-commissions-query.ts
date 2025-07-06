@@ -143,7 +143,65 @@ export function useUpdateCommission() {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: commissionKeys.lists() });
-      queryClient.setQueryData(commissionKeys.detail(variables.id), data);
+      queryClient.invalidateQueries({
+        queryKey: commissionKeys.detail(variables.id),
+      });
+    },
+  });
+}
+
+export function useActivateCommission() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (commissionId: string) => {
+      const response = await fetch(`/api/commission/${commissionId}/activate`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro ao ativar comissão");
+      }
+
+      return response.json();
+    },
+    onSuccess: (data, commissionId) => {
+      queryClient.invalidateQueries({ queryKey: commissionKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: commissionKeys.detail(commissionId),
+      });
+    },
+  });
+}
+
+export function useFinalizeCommission() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (commissionId: string) => {
+      const response = await fetch(`/api/commission/${commissionId}/finalize`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro ao finalizar comissão");
+      }
+
+      return response.json();
+    },
+    onSuccess: (data, commissionId) => {
+      queryClient.invalidateQueries({ queryKey: commissionKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: commissionKeys.detail(commissionId),
+      });
     },
   });
 }

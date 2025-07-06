@@ -1,6 +1,11 @@
 "use client";
 
-import type { Campus, CampusMember } from '@/types';
+import type { Campus, CampusMember, UserProfile } from '@/types';
+
+// Tipo para membros de campus com relação user incluída
+interface CampusMemberWithUser extends CampusMember {
+  user: UserProfile;
+}
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 // Hook para buscar todos os campus
@@ -39,7 +44,7 @@ export function useCampus(id: string) {
 export function useCampusMembers(campusId?: string) {
   return useQuery({
     queryKey: campusId ? ["campus-members", campusId] : ["campus-members"],
-    queryFn: async (): Promise<CampusMember[]> => {
+    queryFn: async (): Promise<CampusMemberWithUser[]> => {
       const url = campusId
         ? `/api/campus-member?campusId=${campusId}`
         : "/api/campus-member";

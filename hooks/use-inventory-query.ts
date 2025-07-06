@@ -76,26 +76,76 @@ export function useInventoryWithSync(commissionId: string) {
     };
   }, []);
 
-  // Query para buscar dados do servidor
+  // Query para buscar dados do servidor com paginação e timeout
   const {
-    data: serverData = [],
+    data: serverResponse,
     isLoading: isLoadingServer,
     error: serverError,
   } = useQuery({
     queryKey: ["inventory", commissionId],
-    queryFn: async (): Promise<InventoryItem[]> => {
-      const response = await fetch(
-        `/api/inventory?commissionId=${commissionId}`
-      );
-      if (!response.ok) {
-        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+    queryFn: async (): Promise<{ items: InventoryItem[]; pagination: any }> => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+      
+      try {
+        console.log(`🔍 Buscando inventário para comissão: ${commissionId}`);
+        const startTime = Date.now();
+        
+        const response = await fetch(
+          `/api/inventory?commissionId=${commissionId}&limit=1000`,
+          {
+            signal: controller.signal,
+            headers: {
+              'Cache-Control': 'no-cache',
+            },
+          }
+        );
+        
+        const duration = Date.now() - startTime;
+        console.log(`⏱️ Requisição de inventário concluída em ${duration}ms`);
+        
+        if (!response.ok) {
+          throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        // Verificar se a resposta tem o formato esperado (com paginação)
+        if (data.items && Array.isArray(data.items)) {
+          console.log(`✅ Carregados ${data.items.length} itens de inventário`);
+          return data;
+        } else if (Array.isArray(data)) {
+          // Formato antigo (sem paginação)
+          console.log(`✅ Carregados ${data.length} itens de inventário (formato legado)`);
+          return { items: data, pagination: null };
+        } else {
+          throw new Error('Formato de resposta inválido');
+        }
+      } catch (error: any) {
+        if (error.name === 'AbortError') {
+          console.error('🔥 Timeout na requisição de inventário');
+          throw new Error('Timeout: A requisição demorou muito para responder');
+        }
+        console.error('❌ Erro ao buscar inventário:', error.message);
+        throw error;
+      } finally {
+        clearTimeout(timeoutId);
       }
-      return response.json();
     },
     enabled: !!commissionId && isOnline,
     staleTime: 5 * 60 * 1000, // 5 minutos
     gcTime: 10 * 60 * 1000, // 10 minutos
+    retry: (failureCount, error: any) => {
+      // Retry até 2 vezes para erros de rede, mas não para erros 4xx
+      if (failureCount >= 2) return false;
+      if (error?.message?.includes('4')) return false; // Não retry para erros 4xx
+      return true;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
+  
+  // Extrair dados do servidor
+  const serverData = serverResponse?.items || [];
 
   // Query para buscar dados locais
   const { data: localData, isLoading: isLoadingLocal } = useQuery({
@@ -427,6 +477,7 @@ export function useInventoryWithSync(commissionId: string) {
     localData: localData?.data || [],
     serverData: serverData || [],
     metadata: localData?.metadata,
+    pagination: serverResponse?.pagination,
 
     // Actions
     addItem,
@@ -438,5 +489,11 @@ export function useInventoryWithSync(commissionId: string) {
     isCreating: createItemMutation.isPending,
     isUpdating: updateItemMutation.isPending,
     isDeleting: deleteItemMutation.isPending,
+    
+    // Performance info
+    hasTimeout: serverError?.message?.includes('Timeout'),
+    errorType: serverError?.message?.includes('fetch failed') ? 'network' : 
+               serverError?.message?.includes('Timeout') ? 'timeout' : 
+               serverError ? 'server' : null,
   };
 }

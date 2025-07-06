@@ -18,8 +18,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Campus } from '@/types';
-import { useState } from "react";
+import type { Campus, UserProfile } from '@/types';
+import { useState, useEffect } from "react";
+import { useCampusMembers } from '@/hooks/queries/use-campus-query';
 
 export interface AddComissionModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export interface AddComissionModalProps {
     type: string;
     campusId: string;
     year: number;
+    presidentId?: string;
   }) => void;
   campuses: Campus[];
 }
@@ -46,9 +48,30 @@ export function AddComissionModal({
     tipo: "",
     campusId: "",
     ano: new Date().getFullYear(),
+    presidentId: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [campusUsers, setCampusUsers] = useState<UserProfile[]>([]);
+
+  // Buscar usuários do campus selecionado
+  const { data: campusMembers } = useCampusMembers(formData.campusId || undefined);
+
+  // Atualizar lista de usuários quando o campus mudar
+  useEffect(() => {
+    if (campusMembers && campusMembers.length > 0) {
+      const users = campusMembers
+        .filter(member => member.user && member.user.active)
+        .map(member => member.user);
+      setCampusUsers(users);
+    } else {
+      setCampusUsers([]);
+      // Limpar presidente se não há usuários disponíveis
+      if (formData.presidentId) {
+        setFormData(prev => ({ ...prev, presidentId: "" }));
+      }
+    }
+  }, [campusMembers, formData.presidentId]);
 
   const tiposComissao = [
     { value: "Permanente", label: "Permanente" },
@@ -79,6 +102,12 @@ export function AddComissionModal({
 
   const handleCampusChange = (value: string) => {
     handleSelectChange("campusId", value);
+    // Limpar presidente quando campus mudar
+    setFormData(prev => ({ ...prev, presidentId: "" }));
+  };
+
+  const handlePresidentChange = (value: string) => {
+    handleSelectChange("presidentId", value);
   };
 
   const validateForm = () => {
@@ -114,6 +143,7 @@ export function AddComissionModal({
         type: formData.tipo,
         campusId: formData.campusId,
         year: formData.ano,
+        presidentId: formData.presidentId || undefined,
       };
 
       onAddComission(submissionData);
@@ -202,9 +232,9 @@ export function AddComissionModal({
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--bg-simple)] border-[var(--border-input)]">
                   {campuses.length === 0 ? (
-                    <SelectItem value="" disabled className="text-gray-500">
+                    <div className="p-2 text-gray-500 text-sm">
                       Nenhum campus encontrado
-                    </SelectItem>
+                    </div>
                   ) : (
                     campuses.map((campus) => (
                       <SelectItem
@@ -265,6 +295,56 @@ export function AddComissionModal({
                 className="border-[var(--border-input)]"
                 placeholder="Descreva a finalidade da comissão"
               />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="presidentId" className="text-[var(--font-color)]">
+                Presidente (Opcional)
+              </Label>
+              <Select
+                value={formData.presidentId}
+                onValueChange={handlePresidentChange}
+                disabled={!formData.campusId || campusUsers.length === 0}
+              >
+                <SelectTrigger className="border-[var(--border-input)]">
+                  <SelectValue
+                    placeholder={
+                      !formData.campusId
+                        ? "Selecione um campus primeiro"
+                        : campusUsers.length === 0
+                        ? "Nenhum usuário disponível no campus"
+                        : "Selecione o presidente"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-[var(--bg-simple)] border-[var(--border-input)]">
+                  {campusUsers.length === 0 ? (
+                    <div className="p-2 text-gray-500 text-sm">
+                      Nenhum usuário encontrado
+                    </div>
+                  ) : (
+                    campusUsers.map((user) => (
+                      <SelectItem
+                        key={user.id}
+                        value={user.id}
+                        className="hover:bg-[var(--hover-color)]"
+                      >
+                        {user.name} ({user.email})
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              {!formData.campusId && (
+                <p className="text-xs text-yellow-600">
+                  Selecione um campus para ver os usuários disponíveis.
+                </p>
+              )}
+              {formData.campusId && campusUsers.length === 0 && (
+                <p className="text-xs text-yellow-600">
+                  Nenhum usuário ativo encontrado neste campus.
+                </p>
+              )}
             </div>
           </div>
 

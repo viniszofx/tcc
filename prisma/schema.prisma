@@ -121,7 +121,10 @@ model Commission {
   type           String // "Permanente", "Temporária", "Especial"
   description    String?
   spreadsheetUrl String?  @map("spreadsheet_url")
-  active         Boolean  @default(true)
+  active         Boolean  @default(false) // Comissão inativa por padrão
+  activatedAt    DateTime? @map("activated_at") // Data de ativação da comissão
+  finalized      Boolean  @default(false) // Indica se a comissão foi finalizada
+  finalizedAt    DateTime? @map("finalized_at") // Data de finalização da comissão
   year           Int
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

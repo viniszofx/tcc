@@ -144,7 +144,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { campusId, name, type, description, spreadsheet_url, active, year } =
+    const { campusId, name, type, description, spreadsheet_url, active, year, presidentId } =
       body;
 
     if (!campusId || !name || !type || !year) {
@@ -166,25 +166,78 @@ export async function POST(request: Request) {
       );
     }
 
-    const newCommission = await prisma.commission.create({
-      data: {
-        campusId,
-        name,
-        type,
-        description: description || "",
-        spreadsheetUrl: spreadsheet_url || "",
-        active: active !== undefined ? active : true,
-        year,
-      },
-      include: {
-        campus: true,
-        members: {
-          include: {
-            user: true,
+    // Se presidentId foi fornecido, verificar se o usuário existe e é membro do campus
+    if (presidentId) {
+      const user = await prisma.userProfile.findUnique({
+        where: { id: presidentId },
+      });
+
+      if (!user) {
+        return NextResponse.json(
+          { error: "Usuário selecionado para presidente não encontrado" },
+          { status: 404 }
+        );
+      }
+
+      // Verificar se o usuário é membro do campus
+      const campusMember = await prisma.campusMember.findUnique({
+        where: {
+          userId_campusId: {
+            userId: presidentId,
+            campusId,
           },
         },
-      },
+      });
+
+      if (!campusMember) {
+        return NextResponse.json(
+          { error: "O usuário selecionado para presidente não é membro do campus" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Usar transação para criar comissão e presidente
+    const result = await prisma.$transaction(async (tx) => {
+      // Criar a comissão
+      const newCommission = await tx.commission.create({
+        data: {
+          campusId,
+          name,
+          type,
+          description: description || "",
+          spreadsheetUrl: spreadsheet_url || "",
+          active: active !== undefined ? active : false, // Padrão como inativa
+          year,
+        },
+      });
+
+      // Se presidentId foi fornecido, criar o membro da comissão como presidente
+      if (presidentId) {
+        await tx.commissionMember.create({
+          data: {
+            userId: presidentId,
+            commissionId: newCommission.id,
+            roleInCommission: "Presidente",
+          },
+        });
+      }
+
+      // Retornar a comissão com os relacionamentos
+      return await tx.commission.findUnique({
+        where: { id: newCommission.id },
+        include: {
+          campus: true,
+          members: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      });
     });
+
+    const newCommission = result;
 
     return NextResponse.json(newCommission, { status: 201 });
   } catch (error) {

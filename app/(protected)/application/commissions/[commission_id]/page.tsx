@@ -3,6 +3,8 @@
 import LoadingScreen from "@/components/custom/loading";
 import { PageTitle } from "@/components/custom/page-title";
 import { EditComissionModal } from "@/components/manager-comissions/edit-comission-modal";
+import { ActivateCommissionModal } from "@/components/manager-comissions/activate-commission-modal";
+import { FinalizeCommissionModal } from "@/components/manager-comissions/finalize-commission-modal";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -12,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useDeleteCommission } from "@/hooks/mutations/use-mutations";
-import { useUpdateCommission } from "@/hooks/queries/use-commissions-query";
+import { useUpdateCommission, useActivateCommission, useFinalizeCommission } from "@/hooks/queries/use-commissions-query";
 import { useCommissionDetailData } from "@/hooks/queries/use-page-data";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
 import { useUserPermissions } from "@/hooks/use-consolidated-user";
@@ -23,6 +25,8 @@ import {
   FileText,
   History,
   Package,
+  Play,
+  Square,
   Trash2,
   Upload,
   Users,
@@ -38,6 +42,8 @@ export default function CommissionDetailPage() {
   const params = useParams();
   const commissionId = params.commission_id as string;
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [activateModalOpen, setActivateModalOpen] = useState(false);
+  const [finalizeModalOpen, setFinalizeModalOpen] = useState(false);
 
   const {
     canAccessCommission,
@@ -54,9 +60,11 @@ export default function CommissionDetailPage() {
     refetch,
   } = useCommissionDetailData(commissionId);
 
-  // Mutations para deletar e atualizar comissão
+  // Mutations para deletar, atualizar, ativar e finalizar comissão
   const deleteCommissionMutation = useDeleteCommission();
   const updateCommissionMutation = useUpdateCommission();
+  const activateCommissionMutation = useActivateCommission();
+  const finalizeCommissionMutation = useFinalizeCommission();
 
   useEffect(() => {
     // Debug logs para entender o problema
@@ -129,6 +137,30 @@ export default function CommissionDetailPage() {
     }
   };
 
+  const handleActivateCommission = async () => {
+    try {
+      await activateCommissionMutation.mutateAsync(commissionId);
+      toast.success("Comissão ativada com sucesso!");
+      setActivateModalOpen(false);
+      refetch();
+    } catch (error) {
+      console.error("Erro ao ativar comissão:", error);
+      toast.error("Erro ao ativar comissão. Tente novamente.");
+    }
+  };
+
+  const handleFinalizeCommission = async () => {
+    try {
+      await finalizeCommissionMutation.mutateAsync(commissionId);
+      toast.success("Comissão finalizada com sucesso!");
+      setFinalizeModalOpen(false);
+      refetch();
+    } catch (error) {
+      console.error("Erro ao finalizar comissão:", error);
+      toast.error("Erro ao finalizar comissão. Tente novamente.");
+    }
+  };
+
   // Verificar se o usuário pode gerenciar a comissão
   // - Administrador global ("admin global" em qualquer organização)
   // - Administrador da organização que contém a comissão
@@ -137,14 +169,15 @@ export default function CommissionDetailPage() {
   const isGlobalAdmin =
     user?.organizationMembers?.some(
       (member: any) => member.role === "admin global"
-    ) || false;
+    ) || user?.role === "admin global" || false;
 
   const isOrgAdmin =
     user?.organizationMembers?.some((member: any) => member.role === "admin") ||
     false;
 
   // Backward compatibility - verificar role antigo diretamente
-  const isAdmin = user?.role === "admin" || isGlobalAdmin || isOrgAdmin;
+  const isSystemAdmin = user?.role === "admin";
+  const isAdmin = isSystemAdmin || isGlobalAdmin || isOrgAdmin;
 
   const isPresidentOfCommission =
     commission?.members?.some(
@@ -155,6 +188,10 @@ export default function CommissionDetailPage() {
   const canManageCommission =
     isAdmin || // Qualquer tipo de admin
     isPresidentOfCommission; // Presidente da comissão
+
+  // Permissões específicas para ativar e finalizar
+  const canActivateCommission = canManageCommission && !commission?.active && !commission?.finalized;
+  const canFinalizeCommission = (isGlobalAdmin || isSystemAdmin || isPresidentOfCommission) && commission?.active && !commission?.finalized;
 
   if (loading || permissionsLoading || commissionLoading) {
     return <LoadingScreen />;
@@ -222,6 +259,24 @@ export default function CommissionDetailPage() {
           comissao={commission}
         />
       )}
+      {commission && (
+        <ActivateCommissionModal
+          isOpen={activateModalOpen}
+          onClose={() => setActivateModalOpen(false)}
+          onConfirm={handleActivateCommission}
+          commission={commission}
+          isLoading={activateCommissionMutation.isPending}
+        />
+      )}
+      {commission && (
+        <FinalizeCommissionModal
+          isOpen={finalizeModalOpen}
+          onClose={() => setFinalizeModalOpen(false)}
+          onConfirm={handleFinalizeCommission}
+          commission={commission}
+          isLoading={finalizeCommissionMutation.isPending}
+        />
+      )}
       <div className="space-y-6">
         {/* Header da Comissão */}
         <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
@@ -259,31 +314,57 @@ export default function CommissionDetailPage() {
                 </div>
               </div>
               {/* Ações Administrativas */}
-              {canManageCommission && (
-                <div className="flex gap-2 mt-4 flex-wrap">
+              <div className="flex gap-2 mt-4 flex-wrap">
+                {/* Botão de Ativar - visível apenas se a comissão estiver inativa */}
+                {canActivateCommission && (
                   <button
                     type="button"
-                    onClick={handleEditCommission}
-                    className="flex items-center justify-center rounded-md border border-[var(--border-color)] bg-[var(--bg-simple)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] transition-all p-2"
+                    onClick={() => setActivateModalOpen(true)}
+                    className="flex items-center justify-center rounded-md bg-green-600 hover:bg-green-700 text-white transition-all p-2"
                   >
-                    <Edit className="w-5 h-5" />
-                    <span className="hidden sm:inline ml-2">Editar Comissão</span>
+                    <Play className="w-5 h-5" />
+                    <span className="hidden sm:inline ml-2">Ativar Comissão</span>
                   </button>
+                )}
+                
+                {/* Botão de Finalizar - visível apenas para admins e presidentes */}
+                {canFinalizeCommission && (
                   <button
                     type="button"
-                    onClick={handleDeleteCommission}
-                    disabled={deleteCommissionMutation.isPending}
-                    className="flex items-center justify-center rounded-md bg-red-600 hover:bg-red-700 text-white transition-all p-2 disabled:opacity-70"
+                    onClick={() => setFinalizeModalOpen(true)}
+                    className="flex items-center justify-center rounded-md bg-orange-600 hover:bg-orange-700 text-white transition-all p-2"
                   >
-                    <Trash2 className="w-5 h-5" />
-                    <span className="hidden sm:inline ml-2">
-                      {deleteCommissionMutation.isPending
-                        ? "Excluindo..."
-                        : "Excluir Comissão"}
-                    </span>
+                    <Square className="w-5 h-5" />
+                    <span className="hidden sm:inline ml-2">Finalizar Comissão</span>
                   </button>
-                </div>
-              )}
+                )}
+                
+                {canManageCommission && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleEditCommission}
+                      className="flex items-center justify-center rounded-md border border-[var(--border-color)] bg-[var(--bg-simple)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] transition-all p-2"
+                    >
+                      <Edit className="w-5 h-5" />
+                      <span className="hidden sm:inline ml-2">Editar Comissão</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDeleteCommission}
+                      disabled={deleteCommissionMutation.isPending}
+                      className="flex items-center justify-center rounded-md bg-red-600 hover:bg-red-700 text-white transition-all p-2 disabled:opacity-70"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                      <span className="hidden sm:inline ml-2">
+                        {deleteCommissionMutation.isPending
+                          ? "Excluindo..."
+                          : "Excluir Comissão"}
+                      </span>
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </CardHeader>
         </Card>
@@ -381,9 +462,29 @@ export default function CommissionDetailPage() {
                   Status
                 </span>
                 <span className="font-semibold text-[var(--font-color)]">
-                  {commission.active ? "Ativa" : "Inativa"}
+                  {commission.finalized ? "Finalizada" : commission.active ? "Ativa" : "Inativa"}
                 </span>
               </div>
+              {commission.activatedAt && (
+                <div className="flex justify-between">
+                  <span className="text-[var(--font-color)] opacity-70">
+                    Ativada em
+                  </span>
+                  <span className="font-semibold text-[var(--font-color)]">
+                    {new Date(commission.activatedAt).toLocaleDateString('pt-BR')}
+                  </span>
+                </div>
+              )}
+              {commission.finalizedAt && (
+                <div className="flex justify-between">
+                  <span className="text-[var(--font-color)] opacity-70">
+                    Finalizada em
+                  </span>
+                  <span className="font-semibold text-[var(--font-color)]">
+                    {new Date(commission.finalizedAt).toLocaleDateString('pt-BR')}
+                  </span>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

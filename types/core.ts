@@ -85,6 +85,9 @@ export interface Commission {
   description?: string;
   spreadsheet_url?: string;
   active: boolean;
+  activatedAt?: Date | null;
+  finalized: boolean;
+  finalizedAt?: Date | null;
   year: number;
 }
 

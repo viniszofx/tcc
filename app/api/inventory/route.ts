@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { withDatabaseTimeout, OPTIMIZED_QUERY_CONFIG } from "@/lib/database-utils";
+import { OperationTimer } from "@/lib/performance-monitor";
 
 // Função de autenticação reutilizável
 import { authenticateUser } from "@/lib/auth/server";
@@ -20,8 +22,12 @@ const normalizeConservationState = (state?: string) => {
 };
 
 export async function GET(request: Request) {
+  const requestTimer = new OperationTimer('GET /api/inventory');
+  
   try {
+    const authTimer = new OperationTimer('Authentication');
     const user = await authenticateUser();
+    authTimer.finish(`User: ${user.email}`);
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
@@ -29,17 +35,25 @@ export async function GET(request: Request) {
     const campusId = searchParams.get("campusId");
     const sector = searchParams.get("sector");
     const ed = searchParams.get("ed");
+    
+    // Parâmetros de paginação
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = Math.min(parseInt(searchParams.get("limit") || "100"), 1000); // Máximo 1000 itens
+    const skip = (page - 1) * limit;
 
     console.log(commissionId);
 
     if (id) {
-      const item = await prisma.inventoryItem.findUnique({
-        where: { id },
-        include: {
-          commission: true,
-          campus: true,
-        },
-      });
+      const item = await withDatabaseTimeout(
+        () => prisma.inventoryItem.findUnique({
+          where: { id },
+          include: {
+            commission: true,
+            campus: true,
+          },
+        }),
+        OPTIMIZED_QUERY_CONFIG.SIMPLE_QUERY_TIMEOUT
+      );
 
       if (!item) {
         return NextResponse.json(
@@ -50,17 +64,20 @@ export async function GET(request: Request) {
 
       // Verificar se o usuário tem permissão para ver este item
       // Buscar informações da comissão e verificar permissões
-      const commission = await prisma.commission.findUnique({
-        where: { id: item.commissionId },
-        include: {
-          members: true,
-          campus: {
-            include: {
-              organization: true,
+      const commission = await withDatabaseTimeout(
+        () => prisma.commission.findUnique({
+          where: { id: item.commissionId },
+          include: {
+            members: true,
+            campus: {
+              include: {
+                organization: true,
+              },
             },
           },
-        },
-      });
+        }),
+        OPTIMIZED_QUERY_CONFIG.COMPLEX_QUERY_TIMEOUT
+      );
 
       if (!commission) {
         return NextResponse.json(
@@ -81,17 +98,20 @@ export async function GET(request: Request) {
       where.commissionId = commissionId;
 
       // Verificar se o usuário tem acesso à comissão especificada
-      const commission = await prisma.commission.findUnique({
-        where: { id: commissionId },
-        include: {
-          members: true,
-          campus: {
-            include: {
-              organization: true,
+      const commission = await withDatabaseTimeout(
+        () => prisma.commission.findUnique({
+          where: { id: commissionId },
+          include: {
+            members: true,
+            campus: {
+              include: {
+                organization: true,
+              },
             },
           },
-        },
-      });
+        }),
+        OPTIMIZED_QUERY_CONFIG.COMPLEX_QUERY_TIMEOUT
+      );
 
       if (!commission) {
         return NextResponse.json(
@@ -117,19 +137,47 @@ export async function GET(request: Request) {
       where.ed = ed;
     }
 
-    const items = await prisma.inventoryItem.findMany({
-      where,
-      include: {
-        commission: true,
-        campus: true,
-      },
-      orderBy: {
-        createdAt: "desc",
+    // Buscar itens com paginação e contagem total em paralelo
+    const [items, totalCount] = await Promise.all([
+      withDatabaseTimeout(
+        () => prisma.inventoryItem.findMany({
+          where,
+          include: {
+            commission: true,
+            campus: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          skip,
+          take: limit,
+        }),
+        OPTIMIZED_QUERY_CONFIG.COMPLEX_QUERY_TIMEOUT
+      ),
+      withDatabaseTimeout(
+        () => prisma.inventoryItem.count({ where }),
+        OPTIMIZED_QUERY_CONFIG.SIMPLE_QUERY_TIMEOUT
+      )
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    const response = NextResponse.json({
+      items,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
       },
     });
-
-    return NextResponse.json(items);
+    
+    requestTimer.finish(`Returned ${items.length} items (page ${page}/${totalPages})`);
+    return response;
   } catch (error) {
+    requestTimer.finish(`ERROR: ${error instanceof Error ? error.message : 'Unknown error'}`);
     console.error("Erro na API de inventário:", error);
     return NextResponse.json(
       { error: "Erro interno do servidor" },
