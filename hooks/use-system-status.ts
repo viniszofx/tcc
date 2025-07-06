@@ -116,7 +116,7 @@ export function useSystemStatus() {
 
   useEffect(() => {
     checkSystemStatus();
-  }, [checkSystemStatus]);
+  }, []);
 
   const refetch = useCallback(() => {
     checkSystemStatus();

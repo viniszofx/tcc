@@ -264,7 +264,7 @@ export function ConsolidatedUserProvider({ children }: { children: ReactNode }) 
   const { user } = useAuth();
 
   const loadUserData = useCallback(async () => {
-    if (!user?.email || loading) {
+    if (!user?.email) {
       return;
     }
 
@@ -283,13 +283,13 @@ export function ConsolidatedUserProvider({ children }: { children: ReactNode }) 
     } finally {
       setLoading(false);
     }
-  }, [user?.email, loading]);
+  }, [user?.email]);
 
   useEffect(() => {
-    if (user?.email && !userData) {
+    if (user?.email && !userData && !loading) {
       loadUserData();
     }
-  }, [user?.email, loadUserData]);
+  }, [user?.email, userData, loading]);
 
   const refetch = () => {
     // Limpar cache

@@ -27,6 +27,21 @@ function ResetPasswordForm() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    // Verificar se há parâmetros de erro na URL
+    const errorParam = searchParams.get('error');
+    const errorCode = searchParams.get('error_code');
+    const errorDescription = searchParams.get('error_description');
+    
+    if (errorParam === 'access_denied' && errorCode === 'otp_expired') {
+      setError("Link de redefinição expirado ou inválido. Solicite um novo link de redefinição de senha.");
+      return;
+    }
+    
+    if (errorParam) {
+      setError("Erro ao processar link de redefinição. Solicite um novo link.");
+      return;
+    }
+
     // Verificar se há uma sessão válida de reset de senha
     const checkSession = async () => {
       try {
@@ -44,7 +59,7 @@ function ResetPasswordForm() {
     };
 
     checkSession();
-  }, []);
+  }, [searchParams]);
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
@@ -92,7 +107,7 @@ function ResetPasswordForm() {
         
         // Redirecionar para as configurações após 2 segundos
         setTimeout(() => {
-          router.push("/application/settings");
+          router.push("/application/settings?tab=security");
         }, 2000);
       }
     } catch (err) {

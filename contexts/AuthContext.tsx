@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+  }, []);
 
   // Sign in with email and password
   const signIn = async (email: string, password: string) => {
@@ -119,8 +119,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Reset password
   const resetPassword = async (email: string) => {
     try {
+      // Determinar a URL base baseada no ambiente
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://preview.viniccius.com.br' 
+        : window.location.origin;
+      
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/application/settings`,
+        redirectTo: `${baseUrl}/reset-password`,
       });
       if (error) throw error;
       return { data, error: null };

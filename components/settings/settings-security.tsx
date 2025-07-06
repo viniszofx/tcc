@@ -13,37 +13,13 @@ import { toast } from "sonner";
 export function SecuritySettings() {
   const { user } = useUserPermissions();
   const [passwordLastChanged] = useState("12/03/2024");
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
-  const [isPasswordReset, setIsPasswordReset] = useState(false);
 
-  useEffect(() => {
-    // Verificar se o usuário chegou através de um magic link de reset de senha
-    const checkPasswordReset = async () => {
-      try {
-        const { supabase } = await import("@/lib/supabase");
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        // Se há uma sessão e o usuário veio de um reset de senha
-        if (session && session.user?.app_metadata?.provider === 'email') {
-          // Verificar se é um reset de senha baseado nos parâmetros da URL ou metadata
-          const urlParams = new URLSearchParams(window.location.search);
-          const isReset = urlParams.get('type') === 'recovery' || 
-                         session.user?.user_metadata?.email_confirmed_at;
-          
-          setIsPasswordReset(isReset);
-        }
-      } catch (error) {
-        console.error('Erro ao verificar reset de senha:', error);
-      }
-    };
 
-    checkPasswordReset();
-  }, []);
 
   const handleChangePassword = async () => {
     setPasswordError("");
@@ -55,11 +31,7 @@ export function SecuritySettings() {
       return;
     }
 
-    // Se não é um reset de senha e não foi fornecida a senha atual
-    if (!isPasswordReset && !currentPassword.trim()) {
-      toast.error("Senha atual é obrigatória");
-      return;
-    }
+
 
     if (newPassword !== confirmPassword) {
       toast.error("As senhas não coincidem");
@@ -74,15 +46,10 @@ export function SecuritySettings() {
     setIsChangingPassword(true);
 
     try {
-      const requestBody: any = {
+      const requestBody = {
         newPassword,
-        isPasswordReset, // Informar se é um reset de senha
+        isPasswordReset: true, // Sempre tratar como reset de senha no perfil
       };
-
-      // Só incluir currentPassword se não for um reset e foi fornecida
-      if (!isPasswordReset && currentPassword.trim()) {
-        requestBody.currentPassword = currentPassword;
-      }
 
       const response = await fetch("/api/auth/change-password", {
         method: "POST",
@@ -96,7 +63,7 @@ export function SecuritySettings() {
 
       if (response.ok) {
         toast.success("Senha alterada com sucesso!");
-        setCurrentPassword("");
+
         setNewPassword("");
         setConfirmPassword("");
         setPasswordError("");
@@ -140,13 +107,10 @@ export function SecuritySettings() {
       <Alert className="bg-[var(--card-color)] border-[var(--button-color)]">
         <AlertCircle className="h-4 w-4 text-[var(--button-color)]" />
         <AlertTitle className="text-[var(--font-color)]">
-          {isPasswordReset ? "Redefinir Senha" : "Segurança da Conta"}
+          Redefinir Senha
         </AlertTitle>
         <AlertDescription className="text-[var(--font-color)] opacity-70">
-          {isPasswordReset 
-            ? "Defina uma nova senha para sua conta. Você não precisa informar a senha atual."
-            : "Recomendamos alterar sua senha regularmente para manter sua conta segura."
-          }
+          Defina uma nova senha para sua conta. Você não precisa informar a senha atual.
         </AlertDescription>
       </Alert>
 
@@ -189,7 +153,7 @@ export function SecuritySettings() {
                   htmlFor="new-password"
                   className="text-[var(--font-color)]"
                 >
-                  {isPasswordReset ? "Nova Senha" : "Nova Senha"}
+                  Nova Senha
                 </Label>
                 <Input
                   id="new-password"
@@ -197,7 +161,7 @@ export function SecuritySettings() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--header-color)]"
-                  placeholder={isPasswordReset ? "Digite sua nova senha" : "Digite sua nova senha"}
+                  placeholder="Digite sua nova senha"
                 />
               </div>
               <div>
@@ -223,10 +187,7 @@ export function SecuritySettings() {
               disabled={isChangingPassword}
               className="w-full sm:w-auto bg-[var(--button-color)] hover:bg-[var(--hover-2-color)] text-[var(--font-color2)] cursor-pointer disabled:opacity-50"
             >
-              {isChangingPassword 
-                ? (isPasswordReset ? "Definindo..." : "Alterando...") 
-                : (isPasswordReset ? "Definir Nova Senha" : "Alterar Senha")
-              }
+              {isChangingPassword ? "Definindo..." : "Definir Nova Senha"}
             </Button>
           </div>
         </div>
@@ -236,7 +197,6 @@ export function SecuritySettings() {
         <Button
           variant="outline"
           onClick={() => {
-            setCurrentPassword("");
             setNewPassword("");
             setConfirmPassword("");
             setPasswordError("");

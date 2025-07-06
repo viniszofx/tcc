@@ -169,10 +169,6 @@ export function EditUserModal({
     if (!formData.email?.trim()) newErrors.email = "Email é obrigatório";
     else if (!/\S+@\S+\.\S+/.test(formData.email))
       newErrors.email = "Email inválido";
-    if (!formData.organizationRole)
-      newErrors.organizationRole = "Papel na organização é obrigatório";
-    if (!formData.organizationId)
-      newErrors.organizationId = "Organização é obrigatória";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;

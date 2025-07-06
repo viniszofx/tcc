@@ -58,7 +58,7 @@ export function UserAvatar() {
     return () => {
       window.removeEventListener("avatar-updated", handleAvatarUpdate);
     };
-  }, [handleAvatarUpdate]);
+  }, []);
 
   // Gerenciar URL do avatar com cache busting
   useEffect(() => {

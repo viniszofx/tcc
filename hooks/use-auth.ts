@@ -68,7 +68,7 @@ export function useAuth() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [router]);
+  }, []);
 
   const signInWithValidation = async (email: string, password: string) => {
     setState((prev) => ({ ...prev, loading: true, error: null }));
@@ -253,8 +253,13 @@ export function useAuth() {
   // Reset password
   const resetPassword = async (email: string) => {
     try {
+      // Determinar a URL base baseada no ambiente
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://preview.viniccius.com.br' 
+        : window.location.origin;
+      
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/application/settings`,
+        redirectTo: `${baseUrl}/reset-password`,
       });
       if (error) throw error;
       return { data, error: null };

@@ -192,7 +192,13 @@ export function ProfileEditForm({
                 required
                 placeholder="seu@email.com"
                 className="mt-1"
+                disabled={user.role !== "admin global" && user.role !== "admin"}
               />
+              {user.role !== "admin global" && user.role !== "admin" && (
+                <p className="text-xs text-[var(--font-color)] opacity-60 mt-1">
+                  Apenas administradores podem alterar o email
+                </p>
+              )}
             </div>
 
             <div>

@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useDeleteCommission } from "@/hooks/mutations/use-mutations";
+import { useUpdateCommission } from "@/hooks/queries/use-commissions-query";
 import { useCommissionDetailData } from "@/hooks/queries/use-page-data";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
 import { useUserPermissions } from "@/hooks/use-consolidated-user";
@@ -53,8 +54,9 @@ export default function CommissionDetailPage() {
     refetch,
   } = useCommissionDetailData(commissionId);
 
-  // Mutation para deletar comissão
+  // Mutations para deletar e atualizar comissão
   const deleteCommissionMutation = useDeleteCommission();
+  const updateCommissionMutation = useUpdateCommission();
 
   useEffect(() => {
     // Debug logs para entender o problema
@@ -88,9 +90,19 @@ export default function CommissionDetailPage() {
     setEditModalOpen(false);
   };
 
-  const handleSaveEditModal = (updatedCommission: any) => {
-    setEditModalOpen(false);
-    refetch();
+  const handleSaveEditModal = async (updatedCommission: any) => {
+    try {
+      await updateCommissionMutation.mutateAsync({
+        id: commissionId,
+        ...updatedCommission
+      });
+      toast.success("Comissão atualizada com sucesso!");
+      setEditModalOpen(false);
+      refetch();
+    } catch (error) {
+      console.error("Erro ao atualizar comissão:", error);
+      toast.error("Erro ao atualizar comissão. Tente novamente.");
+    }
   };
 
   const handleDeleteCommission = async () => {

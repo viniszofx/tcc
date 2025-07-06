@@ -605,6 +605,15 @@ export async function PUT(request: NextRequest) {
 
     // Se email for fornecido, verificar se não há conflito
     if (email && email !== existingUser.email) {
+      // Verificar se o usuário atual pode alterar email
+      // Apenas admin global e admin do sistema podem alterar email
+      if (currentUser.role !== "admin global" && currentUser.role !== "admin") {
+        return NextResponse.json(
+          { error: "Apenas administradores podem alterar o email" },
+          { status: 403 }
+        );
+      }
+
       const conflictingUser = await prisma.userProfile.findUnique({
         where: { email },
       });
@@ -629,6 +638,23 @@ export async function PUT(request: NextRequest) {
         updatedAt: new Date(),
       },
     });
+
+    // Se o email foi alterado, atualizar também na tabela AllowedUser
+    if (email && email !== existingUser.email) {
+      try {
+        await prisma.allowedUser.update({
+          where: { email: existingUser.email },
+          data: {
+            email: email,
+            name: name || existingUser.name,
+            updatedAt: new Date(),
+          },
+        });
+      } catch (allowedUserError) {
+        // Se não encontrar na tabela AllowedUser, não é um erro crítico
+        console.warn("Usuário não encontrado na tabela AllowedUser:", allowedUserError);
+      }
+    }
 
     // Atualizar relações de organização se fornecidas
     if (organizationId) {

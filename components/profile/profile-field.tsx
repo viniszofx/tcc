@@ -131,6 +131,13 @@ export default function ProfileField({
           Limite máximo de caracteres atingido
         </div>
       )}
+
+      {disabled && id === "email" && (
+        <div className="flex items-center mt-1 text-[var(--font-color)] opacity-60 text-xs">
+          <AlertCircle className="h-3 w-3 mr-1" />
+          Apenas administradores podem alterar o email
+        </div>
+      )}
     </div>
   )
 }
