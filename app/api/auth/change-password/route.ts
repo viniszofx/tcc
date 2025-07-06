@@ -1,5 +1,6 @@
-import { createSupabaseServer } from "@/lib/supabase-server";
+import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,7 +20,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabase = await createSupabaseServer();
+    // Criar cliente Supabase com configuração adequada de cookies
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: any) {
+            try {
+              cookieStore.set({ name, value, ...options });
+            } catch (error) {
+              // Ignore errors in server components
+            }
+          },
+          remove(name: string, options: any) {
+            try {
+              cookieStore.set({ name, value: "", ...options });
+            } catch (error) {
+              // Ignore errors in server components
+            }
+          },
+        },
+      }
+    );
 
     // Verificar se o usuário está autenticado
     const {
@@ -103,9 +130,19 @@ export async function POST(req: NextRequest) {
 
     console.log("Senha alterada com sucesso!");
 
+    // Invalidar a sessão após alterar a senha
+    try {
+      await supabase.auth.signOut();
+      console.log("Sessão invalidada com sucesso");
+    } catch (signOutError) {
+      console.warn("Erro ao invalidar sessão:", signOutError);
+      // Não falhar a operação se não conseguir invalidar a sessão
+    }
+
     return NextResponse.json({
       message: isPasswordReset ? "Nova senha definida com sucesso" : "Senha alterada com sucesso",
       user: updateData.user?.email,
+      sessionInvalidated: true,
     });
   } catch (error) {
     console.error("Erro geral na API de mudança de senha:", error);

@@ -1,5 +1,6 @@
 // useCamera.ts
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 export function useCamera() {
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
@@ -39,7 +40,7 @@ export function useCamera() {
       }
     } catch (error) {
       console.error("Erro ao listar dispositivos:", error);
-      alert("Não foi possível acessar as câmeras. Verifique as permissões.");
+      toast.error("Não foi possível acessar as câmeras. Verifique as permissões.");
     }
   };
 
@@ -74,7 +75,7 @@ export function useCamera() {
       setStream(videoStream);
     } catch (error) {
       console.error("Erro ao acessar a câmera:", error);
-      alert(
+      toast.error(
         "Não foi possível acessar a câmera. Verifique se você concedeu permissões corretamente."
       );
     }

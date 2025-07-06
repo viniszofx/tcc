@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { UserProfile } from '@/types';
 import { Pencil } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface ProfileEditFormProps {
   user: UserProfile;
@@ -73,15 +74,15 @@ export function ProfileEditForm({
         console.log("Perfil atualizado com sucesso:", updatedUser);
         onUpdate(updatedUser);
         setIsEditModalOpen(false);
-        alert("Perfil atualizado com sucesso!");
+        toast.success("Perfil atualizado com sucesso!");
       } else {
         const errorData = await response.json();
         console.error("Erro na API:", errorData);
-        alert(errorData.error || "Erro ao atualizar perfil");
+        toast.error(errorData.error || "Erro ao atualizar perfil");
       }
     } catch (error) {
       console.error("Erro ao atualizar perfil:", error);
-      alert("Erro inesperado ao atualizar perfil");
+      toast.error("Erro inesperado ao atualizar perfil");
     } finally {
       setIsSubmitting(false);
     }

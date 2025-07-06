@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useUserPermissions } from "@/hooks/use-consolidated-user";
 import { AlertCircle, Lock } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export function SecuritySettings() {
   const { user } = useUserPermissions();
@@ -50,23 +51,23 @@ export function SecuritySettings() {
 
     // Validações
     if (!newPassword || !confirmPassword) {
-      setPasswordError("Nova senha e confirmação são obrigatórias");
+      toast.error("Nova senha e confirmação são obrigatórias");
       return;
     }
 
     // Se não é um reset de senha e não foi fornecida a senha atual
     if (!isPasswordReset && !currentPassword.trim()) {
-      setPasswordError("Senha atual é obrigatória");
+      toast.error("Senha atual é obrigatória");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setPasswordError("As senhas não coincidem");
+      toast.error("As senhas não coincidem");
       return;
     }
 
     if (newPassword.length < 6) {
-      setPasswordError("A nova senha deve ter pelo menos 6 caracteres");
+      toast.error("A nova senha deve ter pelo menos 6 caracteres");
       return;
     }
 
@@ -94,22 +95,31 @@ export function SecuritySettings() {
       const data = await response.json();
 
       if (response.ok) {
-        setPasswordSuccess("Senha alterada com sucesso!");
+        toast.success("Senha alterada com sucesso!");
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
+        setPasswordError("");
+        setPasswordSuccess("Senha alterada com sucesso!");
 
         // Mostrar feedback global
         const event = new CustomEvent("settings-saved", {
-          detail: { message: "Senha alterada com sucesso!" },
+          detail: { message: "Senha alterada com sucesso! Redirecionando para login..." },
         });
         window.dispatchEvent(event);
+
+        // Se a sessão foi invalidada, redirecionar para login após um delay
+        if (data.sessionInvalidated) {
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 2000);
+        }
       } else {
-        setPasswordError(data.error || "Erro ao alterar senha");
+        toast.error(data.error || "Erro ao alterar senha");
       }
     } catch (error) {
       console.error("Erro ao alterar senha:", error);
-      setPasswordError("Erro de conexão. Tente novamente.");
+      toast.error("Erro de conexão. Tente novamente.");
     } finally {
       setIsChangingPassword(false);
     }

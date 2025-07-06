@@ -41,7 +41,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (isNaN(chunkIndex) || isNaN(totalChunks) || !fileName || !originalFileName) {
+    if (
+      isNaN(chunkIndex) ||
+      isNaN(totalChunks) ||
+      !fileName ||
+      !originalFileName
+    ) {
       return NextResponse.json(
         { error: "Parâmetros inválidos" },
         { status: 400 }
@@ -67,7 +72,11 @@ export async function POST(request: NextRequest) {
     const maxChunkSize = 800 * 1024; // 800KB para margem de segurança
     if (chunk.size > maxChunkSize) {
       return NextResponse.json(
-        { error: `Chunk muito grande. Tamanho máximo: ${(maxChunkSize / 1024).toFixed(0)}KB` },
+        {
+          error: `Chunk muito grande. Tamanho máximo: ${(
+            maxChunkSize / 1024
+          ).toFixed(0)}KB`,
+        },
         { status: 400 }
       );
     }
@@ -87,10 +96,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Construir nome do chunk
-    const chunkFileName = `${fileName}.chunk.${chunkIndex.toString().padStart(4, '0')}`;
+    const chunkFileName = `${fileName}.chunk.${chunkIndex
+      .toString()
+      .padStart(4, "0")}`;
     const chunkPath = folder ? `${folder}/${chunkFileName}` : chunkFileName;
 
-    console.log(`📁 Fazendo upload do chunk ${chunkIndex + 1}/${totalChunks} para: ${bucket}/${chunkPath}`);
+    console.log(
+      `📁 Fazendo upload do chunk ${
+        chunkIndex + 1
+      }/${totalChunks} para: ${bucket}/${chunkPath}`
+    );
 
     // Fazer upload do chunk com retry
     let uploadError = null;
@@ -107,10 +122,17 @@ export async function POST(request: NextRequest) {
 
         if (error) {
           uploadError = error;
-          console.warn(`⚠️ Tentativa ${attempt + 1} de upload do chunk ${chunkIndex} falhou:`, error);
-          
+          console.warn(
+            `⚠️ Tentativa ${
+              attempt + 1
+            } de upload do chunk ${chunkIndex} falhou:`,
+            error
+          );
+
           if (attempt < MAX_RETRIES - 1) {
-            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (attempt + 1)));
+            await new Promise((resolve) =>
+              setTimeout(resolve, RETRY_DELAY * (attempt + 1))
+            );
           }
         } else {
           uploadSuccess = true;
@@ -118,29 +140,45 @@ export async function POST(request: NextRequest) {
         }
       } catch (e: any) {
         uploadError = e;
-        console.warn(`⚠️ Erro na tentativa ${attempt + 1} de upload do chunk ${chunkIndex}:`, e);
-        
+        console.warn(
+          `⚠️ Erro na tentativa ${
+            attempt + 1
+          } de upload do chunk ${chunkIndex}:`,
+          e
+        );
+
         if (attempt < MAX_RETRIES - 1) {
-          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (attempt + 1)));
+          await new Promise((resolve) =>
+            setTimeout(resolve, RETRY_DELAY * (attempt + 1))
+          );
         }
       }
     }
 
     if (!uploadSuccess) {
-      console.error(`❌ Falha no upload do chunk ${chunkIndex} após ${MAX_RETRIES} tentativas:`, uploadError);
+      console.error(
+        `❌ Falha no upload do chunk ${chunkIndex} após ${MAX_RETRIES} tentativas:`,
+        uploadError
+      );
       return NextResponse.json(
-        { error: `Erro no upload do chunk: ${uploadError?.message || 'Erro desconhecido'}` },
+        {
+          error: `Erro no upload do chunk: ${
+            uploadError?.message || "Erro desconhecido"
+          }`,
+        },
         { status: 500 }
       );
     }
 
-    console.log(`✅ Chunk ${chunkIndex + 1}/${totalChunks} enviado com sucesso`);
+    console.log(
+      `✅ Chunk ${chunkIndex + 1}/${totalChunks} enviado com sucesso`
+    );
 
     // Se este é o último chunk, criar arquivo de metadados
     let metadataUrl = null;
     if (chunkIndex === totalChunks - 1) {
       console.log(`📋 Criando arquivo de metadados para ${originalFileName}`);
-      
+
       const metadata = {
         originalFileName,
         totalChunks,
@@ -151,17 +189,25 @@ export async function POST(request: NextRequest) {
       };
 
       const metadataFileName = `${fileName}.metadata.json`;
-      const metadataPath = folder ? `${folder}/${metadataFileName}` : metadataFileName;
+      const metadataPath = folder
+        ? `${folder}/${metadataFileName}`
+        : metadataFileName;
 
       const { error: metadataError } = await supabaseAdmin.storage
         .from(bucket)
-        .upload(metadataPath, new Blob([JSON.stringify(metadata, null, 2)], { type: 'application/json' }), {
-          cacheControl: "3600",
-          upsert: true,
-        });
+        .upload(
+          metadataPath,
+          new Blob([JSON.stringify(metadata, null, 2)], {
+            type: "application/json",
+          }),
+          {
+            cacheControl: "3600",
+            upsert: true,
+          }
+        );
 
       if (metadataError) {
-        console.error('❌ Erro ao criar arquivo de metadados:', metadataError);
+        console.error("❌ Erro ao criar arquivo de metadados:", metadataError);
         return NextResponse.json(
           { error: `Erro ao criar metadados: ${metadataError.message}` },
           { status: 500 }
@@ -183,9 +229,10 @@ export async function POST(request: NextRequest) {
       totalChunks,
       isComplete: chunkIndex === totalChunks - 1,
       metadataUrl,
-      message: chunkIndex === totalChunks - 1 
-        ? `Upload completo! ${totalChunks} chunks processados.`
-        : `Chunk ${chunkIndex + 1}/${totalChunks} enviado com sucesso`,
+      message:
+        chunkIndex === totalChunks - 1
+          ? `Upload completo! ${totalChunks} chunks processados.`
+          : `Chunk ${chunkIndex + 1}/${totalChunks} enviado com sucesso`,
     });
   } catch (error: any) {
     console.error("❌ Erro na API de upload em chunks:", error);
@@ -204,7 +251,8 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   return NextResponse.json({
-    message: "API de upload de arquivos em chunks. Use POST com FormData contendo os parâmetros necessários.",
+    message:
+      "API de upload de arquivos em chunks. Use POST com FormData contendo os parâmetros necessários.",
     parameters: {
       chunk: "File - O chunk a ser enviado",
       chunkIndex: "number - Índice do chunk (0-based)",

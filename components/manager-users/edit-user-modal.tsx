@@ -211,16 +211,20 @@ export function EditUserModal({
 
       if (response.ok) {
         const result = await response.json();
-        alert(
-          `Nova senha temporária gerada: ${result.tempPassword}\n\nEnvie esta senha para o usuário.`
+        toast.success(
+          `Nova senha temporária gerada: ${result.tempPassword}`,
+          {
+            duration: 10000,
+            description: "Envie esta senha para o usuário."
+          }
         );
       } else {
         const error = await response.json();
-        alert(`Erro ao trocar senha: ${error.error}`);
+        toast.error(`Erro ao trocar senha: ${error.error}`);
       }
     } catch (error) {
       console.error("Erro ao trocar senha:", error);
-      alert("Erro inesperado ao trocar senha");
+      toast.error("Erro inesperado ao trocar senha");
     } finally {
       setIsChangingPassword(false);
     }

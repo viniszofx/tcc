@@ -13,6 +13,7 @@ import {
 // import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import { Camera, Search, SwitchCamera, ZoomIn } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 interface CameraModalProps {
   isOpen: boolean;
@@ -132,7 +133,7 @@ export function CameraModal({
       }
     } catch (e) {
       console.error("Start video error:", e);
-      alert("Não foi possível iniciar a câmera traseira");
+      toast.error("Não foi possível iniciar a câmera traseira");
       onClose();
     }
   };
@@ -208,12 +209,12 @@ export function CameraModal({
             console.error("Scanner error:", fallbackError);
           }
         }
-        alert("Erro ao iniciar scanner");
+        toast.error("Erro ao iniciar scanner");
         onClose();
       }
     } catch (importError) {
       console.error("Erro ao carregar biblioteca de QR code:", importError);
-      alert("Erro ao carregar scanner de QR code");
+      toast.error("Erro ao carregar scanner de QR code");
       onClose();
     }
   };
@@ -264,7 +265,7 @@ export function CameraModal({
     if (isIOS) {
       const hasPermission = await requestIOSPermission();
       if (!hasPermission) {
-        alert(
+        toast.error(
           "Por favor, permita o acesso à câmera nas configurações do Safari."
         );
         onClose();
@@ -273,7 +274,7 @@ export function CameraModal({
     } else if (isAndroid) {
       const hasPermission = await requestAndroidPermission();
       if (!hasPermission) {
-        alert(
+        toast.error(
           "Por favor, permita o acesso à câmera nas configurações do seu navegador."
         );
         onClose();
@@ -289,7 +290,7 @@ export function CameraModal({
       const message = isAndroid
         ? "Verifique as permissões da câmera nas configurações do Chrome"
         : "Erro ao inicializar a câmera. Verifique as permissões.";
-      alert(message);
+      toast.error(message);
       onClose();
       return false;
     }

@@ -1,6 +1,7 @@
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { SupabaseProvider } from "@/components/providers/supabase-provider";
+import { Toaster } from "@/components/ui/sonner";
 import { ConsolidatedUserProvider } from "@/hooks/use-consolidated-user";
 import { Urbanist } from "next/font/google";
 import "./globals.css";
@@ -26,7 +27,10 @@ export default function RootLayout({
         <QueryProvider>
           <SupabaseProvider>
             <ConsolidatedUserProvider>
-              <ThemeProvider>{children}</ThemeProvider>
+              <ThemeProvider>
+                {children}
+                <Toaster />
+              </ThemeProvider>
             </ConsolidatedUserProvider>
           </SupabaseProvider>
         </QueryProvider>

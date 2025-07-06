@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function RootRegisterPage() {
   const [name, setName] = useState("");
@@ -27,7 +28,7 @@ export default function RootRegisterPage() {
     setIsLoading(true);
 
     if (!email || !password || !name) {
-      alert("Preencha todos os campos.");
+      toast.error("Preencha todos os campos.");
       setIsLoading(false);
       return;
     }

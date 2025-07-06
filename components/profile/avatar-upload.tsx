@@ -6,6 +6,7 @@ import { queryKeys } from "@/hooks/queries/query-keys";
 import { useQueryClient } from "@tanstack/react-query";
 import { Camera, Trash2, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { AvatarCropper } from "./avatar-cropper";
 
 interface AvatarUploadProps {
@@ -53,14 +54,14 @@ export function AvatarUpload({
     // Validar tipo de arquivo
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      alert("Tipo de arquivo não suportado. Use JPEG, PNG ou WebP.");
+      toast.error("Tipo de arquivo não suportado. Use JPEG, PNG ou WebP.");
       return;
     }
 
     // Validar tamanho (5MB)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      alert("Arquivo muito grande. Máximo 5MB.");
+      toast.error("Arquivo muito grande. Máximo 5MB.");
       return;
     }
 
@@ -121,14 +122,14 @@ export function AvatarUpload({
           queryClient.invalidateQueries({ queryKey: ["navbar-user-profile"] });
         }, 1000);
 
-        alert("Avatar atualizado com sucesso!");
+        toast.success("Avatar atualizado com sucesso!");
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Erro ao atualizar avatar");
+        toast.error(errorData.error || "Erro ao atualizar avatar");
       }
     } catch (error) {
       console.error("Erro ao fazer upload:", error);
-      alert("Erro inesperado ao atualizar avatar");
+      toast.error("Erro inesperado ao atualizar avatar");
     } finally {
       setIsUploading(false);
       setPreviewImage(null);
@@ -162,14 +163,14 @@ export function AvatarUpload({
         // Invalidar também o cache específico do navbar
         queryClient.invalidateQueries({ queryKey: ["navbar-user-profile"] });
 
-        alert("Avatar removido com sucesso!");
+        toast.success("Avatar removido com sucesso!");
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Erro ao remover avatar");
+        toast.error(errorData.error || "Erro ao remover avatar");
       }
     } catch (error) {
       console.error("Erro ao remover avatar:", error);
-      alert("Erro inesperado ao remover avatar");
+      toast.error("Erro inesperado ao remover avatar");
     } finally {
       setIsUploading(false);
     }
