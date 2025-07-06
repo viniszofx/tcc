@@ -17,10 +17,9 @@ import {
   Edit,
   Eye,
   FileText,
-  History,
   Plus,
   Trash2,
-  User,
+  User
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -242,139 +241,109 @@ export default function CommissionHistoryPage() {
 
   return (
     <>
-    <PageTitle title="Histórico - KDÊ" />
-    <div className="space-y-6">
-      {/* Header */}
-      <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
-            Histórico - {commission.name}
-          </CardTitle>
-          <CardDescription className="text-[var(--font-color)] opacity-70">
-            {history.length}{" "}
-            {history.length === 1 ? "evento registrado" : "eventos registrados"}
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <PageTitle title="Histórico - KDÊ" />
+      <div className="space-y-6">
+        {/* Header */}
+        <Card className="bg-[var(--bg-simple)] shadow-lg border border-[var(--border-color)]">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-[var(--font-color)]">
+              Histórico - {commission.name}
+            </CardTitle>
+            <CardDescription className="text-[var(--font-color)] opacity-70">
+              {history.length}{" "}
+              {history.length === 1 ? "evento registrado" : "eventos registrados"}
+            </CardDescription>
+          </CardHeader>
+        </Card>
 
-      {/* Timeline do Histórico */}
-      {sortedHistory.length > 0 ? (
-        <div className="space-y-4">
-          {sortedHistory.map((event, index) => {
-            const ActionIcon = getActionIcon(event.action);
-            const isLast = index === sortedHistory.length - 1;
+        {/* Timeline do Histórico */}
+        {sortedHistory.map((event, index) => {
+          const ActionIcon = getActionIcon(event.action);
+          const isLast = index === sortedHistory.length - 1;
 
-            return (
-              <div key={event.id} className="relative">
-                {/* Linha conectora */}
-                {!isLast && (
-                  <div className="absolute left-6 top-12 w-0.5 h-16 bg-[var(--border-color)]" />
-                )}
+          return (
+            <div key={event.id} className="relative">
+              {/* Linha conectora */}
+              {!isLast && (
+                <div className="absolute left-6 top-12 w-0.5 h-16 bg-[var(--border-color)]" />
+              )}
 
-                <Card className="bg-[var(--bg-simple)] border-[var(--border-color)] pl-12 relative w-full">
-                  {/* Ícone da ação */}
-                  <div className="absolute -left-12 top-4 w-8 h-8 bg-[var(--bg-simple)] border-2 border-[var(--border-color)] rounded-full flex items-center justify-center">
-                    <ActionIcon className="w-4 h-4 text-[var(--font-color)]" />
-                  </div>
+              <Card className="bg-[var(--bg-simple)] border-[var(--border-color)] pl-12 relative w-full">
+                {/* Ícone da ação */}
+                <div className="absolute -left-12 top-4 w-8 h-8 bg-[var(--bg-simple)] border-2 border-[var(--border-color)] rounded-full flex items-center justify-center">
+                  <ActionIcon className="w-4 h-4 text-[var(--font-color)]" />
+                </div>
 
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge
-                            className={`${getActionColor(
-                              event.action
-                            )} border text-xs`}
-                          >
-                            {getActionText(event.action)}
-                          </Badge>
-                          <span className="text-xs text-[var(--font-color)] opacity-70">
-                            <Calendar className="w-3 h-3 inline mr-1" />
-                            {formatDate(event.timestamp)}
-                          </span>
-                        </div>
-
-                        <h3 className="font-medium text-[var(--font-color)] mb-1 break-words whitespace-pre-line">
-                          {event.inventoryItem?.description ||
-                            "Item de inventário"}
-                        </h3>
-
-                        {event.observation && (
-                          <p className="text-sm text-[var(--font-color)] opacity-70 mb-2">
-                            {event.observation}
-                          </p>
-                        )}
-
-                        {/* Exibir alterações estruturadas */}
-                        {event.changes &&
-                          renderBeforeAfter(parseChanges(event.changes))}
+                <CardContent className="p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <Badge
+                          className={`${getActionColor(event.action)} border text-xs`}
+                        >
+                          {getActionText(event.action)}
+                        </Badge>
+                        <span className="text-xs text-[var(--font-color)] opacity-70 flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {formatDate(event.timestamp)}
+                        </span>
                       </div>
 
-                      <div className="text-right">
-                        <div className="flex items-center gap-1 text-xs text-[var(--font-color)] opacity-70">
-                          <User className="w-3 h-3" />
-                          {event.user?.name ||
-                            event.user?.email ||
-                            "Usuário desconhecido"}
-                        </div>
-                      </div>
+                      <h3 className="font-medium text-[var(--font-color)] mb-1 break-words whitespace-pre-line text-sm sm:text-base">
+                        {event.inventoryItem?.description || "Item de inventário"}
+                      </h3>
+
+                      {event.observation && (
+                        <p className="text-sm text-[var(--font-color)] opacity-70 mb-2">
+                          {event.observation}
+                        </p>
+                      )}
+
+                      {/* Exibir alterações estruturadas */}
+                      {event.changes && renderBeforeAfter(parseChanges(event.changes))}
                     </div>
 
-                    {/* Imagens (se houver) */}
-                    {event.image_url && event.image_url.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-[var(--border-color)]">
-                        <p className="text-xs text-[var(--font-color)] opacity-70 mb-2">
-                          Imagens anexadas:
-                        </p>
-                        <div className="flex gap-2">
-                          {event.image_url
-                            .slice(0, 3)
-                            .map((url: string, idx: number) => (
-                              <div
-                                key={idx}
-                                className="w-12 h-12 bg-[var(--secondary-color)] rounded border border-[var(--border-color)] flex items-center justify-center"
-                              >
-                                <span className="text-xs text-[var(--font-color)] opacity-70">
-                                  IMG
-                                </span>
-                              </div>
-                            ))}
-                          {event.image_url.length > 3 && (
-                            <div className="w-12 h-12 bg-[var(--secondary-color)] rounded border border-[var(--border-color)] flex items-center justify-center">
-                              <span className="text-xs text-[var(--font-color)] opacity-70">
-                                +{event.image_url.length - 3}
-                              </span>
-                            </div>
-                          )}
-                        </div>
+                    <div className="text-left sm:text-right mt-2 sm:mt-0">
+                      <div className="flex items-center gap-1 text-xs text-[var(--font-color)] opacity-70">
+                        <User className="w-3 h-3" />
+                        {event.user?.name || event.user?.email || "Usuário desconhecido"}
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <Card className="bg-[var(--bg-simple)] border-[var(--border-color)]">
-          <CardContent className="p-12 text-center">
-            <div className="space-y-4">
-              <div className="w-16 h-16 bg-[var(--secondary-color)] rounded-full flex items-center justify-center mx-auto">
-                <History className="w-8 h-8 text-[var(--font-color)] opacity-50" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-[var(--font-color)] mb-2">
-                  Nenhum histórico encontrado
-                </h3>
-                <p className="text-[var(--font-color)] opacity-70">
-                  Esta comissão ainda não possui atividades registradas
-                </p>
-              </div>
+                    </div>
+                  </div>
+
+                  {/* Imagens (se houver) */}
+                  {event.image_url && event.image_url.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-[var(--border-color)]">
+                      <p className="text-xs text-[var(--font-color)] opacity-70 mb-2">
+                        Imagens anexadas:
+                      </p>
+                      <div className="flex gap-2 flex-wrap">
+                        {event.image_url.slice(0, 3).map((url: string, idx: number) => (
+                          <div
+                            key={idx}
+                            className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--secondary-color)] rounded border border-[var(--border-color)] flex items-center justify-center"
+                          >
+                            <span className="text-xs text-[var(--font-color)] opacity-70">
+                              IMG
+                            </span>
+                          </div>
+                        ))}
+                        {event.image_url.length > 3 && (
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--secondary-color)] rounded border border-[var(--border-color)] flex items-center justify-center">
+                            <span className="text-xs text-[var(--font-color)] opacity-70">
+                              +{event.image_url.length - 3}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+          );
+        })}
+      </div>
     </>
   );
 }

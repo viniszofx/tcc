@@ -211,7 +211,7 @@ export default function CommissionMemberDetailPage() {
                       <Button
                         variant="outline"
                         onClick={handleStartEdit}
-                        className="bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--border-color)] hover:bg-[var(--hover-color)]"
+                        className="bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--border-color)] hover:bg-[var(--hover-3-color)]"
                       >
                         <Edit className="w-4 h-4 mr-2" />
                         Editar Papel
@@ -236,7 +236,7 @@ export default function CommissionMemberDetailPage() {
                           variant="outline"
                           onClick={handleCancelEdit}
                           disabled={updateMemberMutation.isPending}
-                          className="bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--border-color)] hover:bg-[var(--hover-color)]"
+                          className="bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--border-color)] hover:bg-[var(--hover-3-color)]"
                         >
                           <X className="w-4 h-4 mr-2" />
                           Cancelar

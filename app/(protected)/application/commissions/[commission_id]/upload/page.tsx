@@ -915,16 +915,6 @@ export default function CommissionUploadPage() {
             </div>
 
             <div className="mt-4 space-y-3">
-              <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                <p className="text-sm text-yellow-700">
-                  <strong>Nota:</strong> O armazenamento de arquivos na nuvem
-                  pode estar indisponível se o Supabase não estiver configurado.
-                  Os dados dos itens ainda serão processados e armazenados
-                  normalmente. Se encontrar erros, verifique se as variáveis de
-                  ambiente foram configuradas corretamente no arquivo .env.
-                </p>
-              </div>
-
               <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <p className="text-sm text-blue-700">
                   <strong>Funcionalidade Offline:</strong> Os dados são

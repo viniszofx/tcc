@@ -1,5 +1,6 @@
 "use client";
 
+import { DeleteUserDialog } from "@/components/manager-users/delete-user-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,10 +10,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DeleteUserDialog } from "@/components/manager-users/delete-user-dialog";
 import { useUserPermissions } from "@/hooks/use-consolidated-user";
-import type { Campus, CampusMember, UserProfile } from '@/types';
 import { useCan } from "@/lib/permissions/hooks";
+import type { Campus, CampusMember, UserProfile } from '@/types';
 import { Crown, Eye, MoreVertical, Pencil, Trash2, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

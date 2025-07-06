@@ -282,7 +282,7 @@ export default function CommissionDetailPage() {
             .filter((item) => item.show)
             .map((item, index) => (
               <Link key={index} href={item.href}>
-                <Card className="h-full bg-[var(--bg-simple)] border-[var(--border-color)] hover:bg-[var(--hover-color)] transition-all duration-300 cursor-pointer group">
+                <Card className="h-full bg-[var(--bg-simple)] border-[var(--border-color)] hover:bg-[var(--hover-3-color)] transition-all duration-300 cursor-pointer group">
                   <CardContent className="p-6">
                     <div className="flex items-center space-x-4">
                       <div

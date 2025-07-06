@@ -93,15 +93,20 @@ export default function ApplicationDashboard() {
         {/* Welcome Card */}
         <Card className="bg-[var(--bg-simple)] border border-[var(--border-color)]">
           <CardHeader className="pb-4">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
+            <div className="flex items-center gap-4 overflow-hidden">
+              <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg shrink-0">
                 <WelcomeIcon className="h-8 w-8 text-blue-600 dark:text-blue-300" />
               </div>
-              <div>
-                <CardTitle className="text-2xl text-blue-900 dark:text-blue-100">
+              <div className="flex flex-col overflow-hidden">
+                <CardTitle
+                  className="text-sm sm:text-lg md:text-2xl text-blue-900 dark:text-blue-100 whitespace-nowrap overflow-hidden text-ellipsis"
+                  title={profileInfo.name}
+                >
                   Bem-vindo, {profileInfo.name}!
                 </CardTitle>
-                <CardDescription className="text-blue-700 dark:text-blue-300 text-lg">
+                <CardDescription
+                  className="text-xs sm:text-base md:text-lg text-blue-700 dark:text-blue-300 whitespace-nowrap overflow-hidden text-ellipsis"
+                >
                   {welcome.description}
                 </CardDescription>
               </div>
