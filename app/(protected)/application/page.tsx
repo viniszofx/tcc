@@ -98,7 +98,7 @@ export default function ApplicationDashboard() {
                 <WelcomeIcon className="h-8 w-8 text-blue-600 dark:text-blue-300" />
               </div>
               <div>
-                <CardTitle className="text-2xl text-blue-900 dark:text-blue-100">
+                <CardTitle className="text-2xl text-blue-900 dark:text-blue-100 truncate">
                   Bem-vindo, {profileInfo.name}!
                 </CardTitle>
                 <CardDescription className="text-blue-700 dark:text-blue-300 text-lg">

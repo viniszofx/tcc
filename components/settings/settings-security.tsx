@@ -173,25 +173,6 @@ export function SecuritySettings() {
               </div>
             </div>
 
-            {!isPasswordReset && (
-              <div>
-                <Label
-                  htmlFor="current-password"
-                  className="text-[var(--font-color)]"
-                >
-                  Senha Atual
-                </Label>
-                <Input
-                  id="current-password"
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="bg-[var(--bg-simple)] text-[var(--font-color)] border-[var(--header-color)]"
-                  placeholder="Digite sua senha atual"
-                />
-              </div>
-            )}
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label
