@@ -2,8 +2,8 @@
 
 import LoadingScreen from "@/components/custom/loading";
 import { PageTitle } from "@/components/custom/page-title";
-import { EditComissionModal } from "@/components/manager-comissions/edit-comission-modal";
 import { ActivateCommissionModal } from "@/components/manager-comissions/activate-commission-modal";
+import { EditComissionModal } from "@/components/manager-comissions/edit-comission-modal";
 import { FinalizeCommissionModal } from "@/components/manager-comissions/finalize-commission-modal";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useDeleteCommission } from "@/hooks/mutations/use-mutations";
-import { useUpdateCommission, useActivateCommission, useFinalizeCommission } from "@/hooks/queries/use-commissions-query";
+import { useActivateCommission, useFinalizeCommission, useUpdateCommission } from "@/hooks/queries/use-commissions-query";
 import { useCommissionDetailData } from "@/hooks/queries/use-page-data";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
 import { useUserPermissions } from "@/hooks/use-consolidated-user";
@@ -314,7 +314,7 @@ export default function CommissionDetailPage() {
                 </div>
               </div>
               {/* Ações Administrativas */}
-              <div className="flex gap-2 mt-4 flex-wrap">
+              <div className="flex flex-wrap gap-2 mt-4 justify-end">
                 {/* Botão de Ativar - visível apenas se a comissão estiver inativa */}
                 {canActivateCommission && (
                   <button
@@ -323,7 +323,7 @@ export default function CommissionDetailPage() {
                     className="flex items-center justify-center rounded-md bg-green-600 hover:bg-green-700 text-white transition-all p-2"
                   >
                     <Play className="w-5 h-5" />
-                    <span className="hidden sm:inline ml-2">Ativar Comissão</span>
+                    <span className="hidden sm:inline ml-2 text-sm">Ativar Comissão</span>
                   </button>
                 )}
                 
@@ -335,7 +335,7 @@ export default function CommissionDetailPage() {
                     className="flex items-center justify-center rounded-md bg-orange-600 hover:bg-orange-700 text-white transition-all p-2"
                   >
                     <Square className="w-5 h-5" />
-                    <span className="hidden sm:inline ml-2">Finalizar Comissão</span>
+                    <span className="hidden sm:inline ml-2 text-sm">Finalizar Comissão</span>
                   </button>
                 )}
                 
@@ -347,7 +347,7 @@ export default function CommissionDetailPage() {
                       className="flex items-center justify-center rounded-md border border-[var(--border-color)] bg-[var(--bg-simple)] text-[var(--font-color)] hover:bg-[var(--hover-3-color)] transition-all p-2"
                     >
                       <Edit className="w-5 h-5" />
-                      <span className="hidden sm:inline ml-2">Editar Comissão</span>
+                      <span className="hidden sm:inline ml-2 text-sm">Editar Comissão</span>
                     </button>
                     <button
                       type="button"
@@ -356,7 +356,7 @@ export default function CommissionDetailPage() {
                       className="flex items-center justify-center rounded-md bg-red-600 hover:bg-red-700 text-white transition-all p-2 disabled:opacity-70"
                     >
                       <Trash2 className="w-5 h-5" />
-                      <span className="hidden sm:inline ml-2">
+                      <span className="hidden sm:inline ml-2 text-sm">
                         {deleteCommissionMutation.isPending
                           ? "Excluindo..."
                           : "Excluir Comissão"}
