@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
 import { withPermissions } from "@/lib/permissions/middleware";
 import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const resolvedParams = await params;
   try {
     // Verificar permissões usando CASL
     const authResult = await withPermissions(request as any, [
@@ -19,9 +20,7 @@ export async function PATCH(
       );
     }
 
-    const { user } = authResult;
-
-    const commissionId = params.id;
+    const commissionId = resolvedParams.id;
 
     // Verificar se a comissão existe
     const commission = await prisma.commission.findUnique({
