@@ -139,6 +139,14 @@ export function ProfileEditForm({
           </div>
           <div>
             <Label className="text-sm font-medium text-[var(--font-color)] opacity-70">
+              Papel no Sistema
+            </Label>
+            <p className="text-[var(--font-color)] font-medium">
+              {user.role === "admin global" ? "Admin Global" : user.role === "admin" ? "Admin" : "Membro"}
+            </p>
+          </div>
+          <div>
+            <Label className="text-sm font-medium text-[var(--font-color)] opacity-70">
               Descrição
             </Label>
             <p className="text-[var(--font-color)]">

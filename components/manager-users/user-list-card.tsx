@@ -93,17 +93,17 @@ export function UserListCard({
   return (
     <Card className="border-[var(--border-color)] bg-[var(--bg-simple)]">
       <CardHeader className="p-4 pb-0">
-        <CardTitle className="text-lg font-medium text-[var(--font-color)]">
+        <CardTitle className="text-sm sm:text-base lg:text-lg font-medium text-[var(--font-color)]">
           Lista de Usuários
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4">
         <div className="rounded-md border border-[var(--border-color)]">
-          <div className="hidden sm:grid grid-cols-10 gap-2 bg-[var(--header-color)] p-4 font-medium text-[var(--font-color)]">
+          <div className="hidden sm:grid grid-cols-10 gap-2 bg-[var(--header-color)] p-4 font-medium text-xs sm:text-sm text-[var(--font-color)]">
             <div className="col-span-1 text-center">Foto</div>
-            <div className="col-span-4">Nome</div>
-            <div className="col-span-2">Papel</div>
-            <div className="col-span-2">Status</div>
+            <div className="col-span-4 truncate">Nome</div>
+            <div className="col-span-2 truncate">Papel</div>
+            <div className="col-span-2 truncate">Status</div>
             <div className="col-span-1 text-right">Ações</div>
           </div>
 
@@ -124,19 +124,19 @@ export function UserListCard({
                   </div>
 
                   <div className="hidden sm:block w-full col-span-4 truncate">
-                    <div className="font-medium truncate flex items-center gap-2">
+                    <div className="font-medium text-xs sm:text-sm truncate flex items-center gap-2">
                       {usuario.role === "admin global" ? (
-                        <Crown className="w-4 h-4 text-purple-600" />
+                        <Crown className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 flex-shrink-0" />
                       ) : usuario.role === "admin" ? (
-                        <Crown className="w-4 h-4 text-yellow-600" />
+                        <Crown className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-600 flex-shrink-0" />
                       ) : (
-                        <User className="w-4 h-4 text-blue-600" />
+                        <User className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 flex-shrink-0" />
                       )}
-                      {usuario.name}
+                      <span className="truncate">{usuario.name}</span>
                     </div>
                   </div>
 
-                  <div className="hidden sm:block col-span-2 truncate">
+                  <div className="hidden sm:block col-span-2 truncate text-xs sm:text-sm">
                     {getUserSystemRole(usuario)}
                   </div>
 

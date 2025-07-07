@@ -35,12 +35,12 @@ export default function CampusCard({
       }}
     >
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold text-[var(--font-color)]">
+        <CardTitle className="text-sm sm:text-base lg:text-lg font-semibold text-[var(--font-color)] truncate">
           {campus.name}
         </CardTitle>
-        <CardDescription className="text-[var(--font-color)] opacity-80 space-y-1">
-          <div>Código: {campus.code}</div>
-          <div>ID: {campus.id}</div>
+        <CardDescription className="text-xs sm:text-sm text-[var(--font-color)] opacity-80 space-y-1">
+          <div className="truncate">Código: {campus.code}</div>
+          <div className="truncate">ID: {campus.id}</div>
           <div className="mt-1">
             Status:{" "}
             <span

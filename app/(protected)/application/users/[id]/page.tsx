@@ -215,7 +215,7 @@ export default function UserDetailsPage() {
           <UserProfileCard
             usuario={{
               nome: userData.name,
-              papel: "Usuário",
+              papel: userData.role === "admin global" ? "Admin Global" : userData.role === "admin" ? "Admin" : "Membro",
               descricao: userData.description,
               active: userData.active,
               perfil: {
@@ -244,6 +244,14 @@ export default function UserDetailsPage() {
                   Email
                 </label>
                 <p className="text-[var(--font-color)]">{userData.email}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-[var(--font-color)] opacity-70">
+                  Papel no Sistema
+                </label>
+                <p className="text-[var(--font-color)]">
+                  {userData.role === "admin global" ? "Admin Global" : userData.role === "admin" ? "Admin" : "Membro"}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-[var(--font-color)] opacity-70">

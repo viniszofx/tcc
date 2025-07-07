@@ -9,8 +9,8 @@ export default function MainSection({ title, children }: Props) {
   return (
     <main className="p-6">
       <Card>
-        <CardContent className="p-6 text-xl font-semibold">{title}</CardContent>
-        <div className="p-6">{children}</div>
+        <CardContent className="p-4 sm:p-6 text-lg sm:text-xl lg:text-2xl font-semibold truncate">{title}</CardContent>
+        <div className="p-4 sm:p-6">{children}</div>
       </Card>
     </main>
   );

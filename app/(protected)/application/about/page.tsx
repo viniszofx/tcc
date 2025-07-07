@@ -1,8 +1,8 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Sobre o Sistema - KDÊ",
-  description: "Informações sobre o sistema",
+  description: "Informações sobre o sistema de gestão acadêmica.",
 };
 
 export default function AboutPage() {
@@ -26,11 +26,14 @@ export default function AboutPage() {
               <div>
                 <h3 className="font-medium mb-2">Principais Funcionalidades</h3>
                 <ul className="text-sm text-[var(--font-color)] space-y-1 ml-4">
-                  <li>• Gestão de usuários e permissões baseada em roles</li>
+                  <li>• Gestão de usuários e permissões baseada em roles (CASL)</li>
                   <li>• Administração de organizações e campus</li>
                   <li>• Gerenciamento de comissões e membros</li>
-                  <li>• Sistema de inventário integrado</li>
+                  <li>• Sistema de inventário integrado com QR Code</li>
                   <li>• Interface responsiva e moderna</li>
+                  <li>• Autenticação segura com Supabase</li>
+                  <li>• Geração de relatórios em PDF</li>
+                  <li>• Upload e processamento de arquivos</li>
                 </ul>
               </div>
             </div>
@@ -45,22 +48,45 @@ export default function AboutPage() {
               <div>
                 <h3 className="font-medium mb-2">Frontend</h3>
                 <ul className="text-sm text-[var(--font-color)] space-y-1">
-                  <li>• Next.js 14</li>
-                  <li>• React 18</li>
-                  <li>• TypeScript</li>
-                  <li>• Tailwind CSS</li>
+                  <li>• Next.js 15.2.4</li>
+                  <li>• React 19</li>
+                  <li>• TypeScript 5.8</li>
+                  <li>• Tailwind CSS 4</li>
                   <li>• Shadcn/ui</li>
+                  <li>• React Query (TanStack)</li>
                 </ul>
               </div>
 
               <div>
                 <h3 className="font-medium mb-2">Backend</h3>
                 <ul className="text-sm text-[var(--font-color)] space-y-1">
-                  <li>• Next.js API Routes</li>
-                  <li>• Prisma ORM</li>
+                  <li>• Next.js 15 App Router</li>
+                  <li>• Prisma ORM 6.10</li>
                   <li>• Supabase</li>
                   <li>• PostgreSQL</li>
                   <li>• Middleware de Autenticação</li>
+                  <li>• API Routes com TypeScript</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[var(--bg-simple)] rounded-lg shadow p-6 border border-[var(--border-color)]">
+            <h2 className="text-xl font-semibold mb-4">
+              Recursos do Next.js 15
+            </h2>
+            
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-medium mb-2">Novidades Implementadas</h3>
+                <ul className="text-sm text-[var(--font-color)] space-y-1 ml-4">
+                  <li>• App Router com layouts aninhados</li>
+                  <li>• Server Components para melhor performance</li>
+                  <li>• Streaming e Suspense boundaries</li>
+                  <li>• Middleware otimizado para autenticação</li>
+                  <li>• Turbopack para desenvolvimento mais rápido</li>
+                  <li>• React 19 com novas funcionalidades</li>
+                  <li>• TypeScript 5.8 com melhor inferência</li>
                 </ul>
               </div>
             </div>
@@ -97,6 +123,26 @@ export default function AboutPage() {
           </div>
 
           <div className="bg-[var(--bg-simple)] rounded-lg shadow p-6 border border-[var(--border-color)]">
+            <h2 className="text-xl font-semibold mb-4">
+              Performance e Otimizações
+            </h2>
+            
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-medium mb-2">Melhorias de Performance</h3>
+                <ul className="text-sm text-[var(--font-color)] space-y-1 ml-4">
+                  <li>• Carregamento otimizado com Server Components</li>
+                  <li>• Cache inteligente de dados com React Query</li>
+                  <li>• Lazy loading de componentes e rotas</li>
+                  <li>• Compressão automática de assets</li>
+                  <li>• Otimização de imagens com next/image</li>
+                  <li>• Bundle splitting automático</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[var(--bg-simple)] rounded-lg shadow p-6 border border-[var(--border-color)]">
             <h2 className="text-xl font-semibold mb-4">Suporte</h2>
             <p className="text-[var(--font-color)] mb-4">
               Para dúvidas, sugestões ou reportar problemas, entre em contato:
@@ -110,6 +156,9 @@ export default function AboutPage() {
               <p className="text-sm">
                 <span className="font-medium">Documentação:</span> Disponível no
                 menu principal
+              </p>
+              <p className="text-sm">
+                <span className="font-medium">Repositório:</span> Sistema desenvolvido com Next.js 15
               </p>
             </div>
           </div>

@@ -109,7 +109,7 @@ export default function InventoryCard({
         <CardContent className="p-3 sm:p-4">
           {/* Cabeçalho com título e botão de download da planilha */}
           <div className="flex justify-between items-start gap-2 mb-3">
-            <h3 className="font-semibold text-[var(--font-color)] text-sm flex-1 min-w-0">
+            <h3 className="font-semibold text-[var(--font-color)] text-xs sm:text-sm flex-1 min-w-0 line-clamp-2">
               {(() => {
                 const descricao = item.DESCRICAO || "Sem descrição";
                 const index = descricao.indexOf("[");
@@ -161,11 +161,11 @@ export default function InventoryCard({
                   key={field}
                   className="flex justify-between items-center gap-2 py-1"
                 >
-                  <span className="text-xs text-[var(--font-color)]/70 font-medium min-w-0 flex-shrink-0">
+                  <span className="text-xs text-[var(--font-color)]/70 font-medium min-w-0 flex-shrink-0 truncate">
                     {label}:
                   </span>
                   <span
-                    className={`text-xs font-semibold text-right truncate max-w-[65%] ${
+                    className={`text-xs font-semibold text-right truncate max-w-[60%] ${
                       isConservacao
                         ? conservacaoColor
                         : "text-[var(--font-color)]"
@@ -181,7 +181,7 @@ export default function InventoryCard({
 
           {/* Rodapé com ID do item */}
           <div className="mt-3 pt-2 border-t border-[var(--border-input)]/20">
-            <span className="text-xs text-[var(--font-color)]/60 font-medium">
+            <span className="text-xs text-[var(--font-color)]/60 font-medium truncate">
               ID: {item.bem_id || item.NUMERO || "N/A"}
             </span>
           </div>

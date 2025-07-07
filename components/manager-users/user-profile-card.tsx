@@ -46,7 +46,7 @@ export function UserProfileCard({ usuario }: UserProfileCardProps) {
           </Avatar>
           
           <div className="flex flex-col items-center md:items-start gap-2 w-full min-w-0">
-            <h2 className="text-2xl font-bold text-[var(--font-color)] break-words text-center md:text-left">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-[var(--font-color)] break-words text-center md:text-left truncate">
               {usuario.nome}
             </h2>
             <Badge
@@ -64,7 +64,7 @@ export function UserProfileCard({ usuario }: UserProfileCardProps) {
               {usuario.active ? "Ativo" : "Inativo"}
             </span>
             {usuario.perfil?.descricao && (
-              <p className="text-sm text-[var(--font-color)] opacity-80 mt-2 break-words text-center md:text-left">
+              <p className="text-xs sm:text-sm text-[var(--font-color)] opacity-80 mt-2 break-words text-center md:text-left line-clamp-2">
                 {usuario.perfil.descricao}
               </p>
             )}

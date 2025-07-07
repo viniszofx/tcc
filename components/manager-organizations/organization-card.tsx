@@ -51,27 +51,27 @@ export default function OrganizationCard({
     <>
       <Card className="border border-[var(--border-color)] bg-[var(--bg-simple)] transition-all duration-300 rounded-xl shadow-sm flex flex-col justify-between min-h-[180px]">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold text-[var(--font-color)]">
-            {organization.name}
-          </CardTitle>
-          <CardDescription className="text-[var(--font-color)] opacity-80">
-            Sigla: {organization.shortName}
-          </CardDescription>
-          <CardDescription className="text-[var(--font-color)] opacity-80 space-y-1">
-            <div>ID: {organization.id}</div>
-            <div className="mt-1">
-              Status:{" "}
-              <span
-                className={
-                  organization.active
-                    ? "text-green-600 font-medium"
-                    : "text-gray-500 font-medium"
-                }
-              >
-                {organization.active ? "Ativo" : "Inativo"}
-              </span>
-            </div>
-          </CardDescription>
+          <CardTitle className="text-sm sm:text-base lg:text-lg font-semibold text-[var(--font-color)] truncate">
+          {organization.name}
+        </CardTitle>
+          <CardDescription className="text-xs sm:text-sm text-[var(--font-color)] opacity-80 truncate">
+          Sigla: {organization.shortName}
+        </CardDescription>
+        <CardDescription className="text-xs sm:text-sm text-[var(--font-color)] opacity-80 space-y-1">
+          <div className="truncate">ID: {organization.id}</div>
+          <div className="mt-1">
+            Status:{" "}
+            <span
+              className={
+                organization.active
+                  ? "text-green-600 font-medium"
+                  : "text-gray-500 font-medium"
+              }
+            >
+              {organization.active ? "Ativo" : "Inativo"}
+            </span>
+          </div>
+        </CardDescription>
         </CardHeader>
         <CardFooter className="flex items-center justify-end gap-3 pt-0 pb-4 px-6">
           <NavigationButton
