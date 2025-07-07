@@ -50,8 +50,11 @@ export function useInventorySync(commissionId: string) {
       );
       if (response.ok) {
         const data = await response.json();
-        setApiData(data);
-        return data;
+        // A API retorna um objeto com items e pagination
+        const items = data.items || data; // Fallback para compatibilidade
+        setApiData(items);
+        console.log(`📥 Carregados ${items.length} itens da API para comissão ${commissionId}`);
+        return items;
       } else {
         throw new Error(`API retornou status ${response.status}`);
       }

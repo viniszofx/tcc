@@ -26,7 +26,9 @@ export function useInventoryItems(commissionId?: string, userId?: string) {
       if (!response.ok) {
         throw new Error("Failed to fetch inventory items");
       }
-      return response.json();
+      const data = await response.json();
+      // A API retorna um objeto com items e pagination
+      return data.items || data; // Fallback para compatibilidade
     },
   });
 }
