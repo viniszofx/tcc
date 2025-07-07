@@ -106,7 +106,7 @@ async function resetSystem() {
 
     // 1. Limpar sistema
     console.log("\n🧹 === LIMPEZA COMPLETA ===");
-    const { cleanDatabase } = await import("./clean-database");
+    const { cleanDatabase } = await import("@/scripts/clean-database");
     await cleanDatabase();
 
     // 2. Setup completo
@@ -146,7 +146,7 @@ async function main() {
         console.log("💡 Para executar, use: npm run setup clean --force");
         process.exit(0);
       }
-      const { cleanDatabase } = await import("./clean-database");
+      const { cleanDatabase } = await import("@/scripts/clean-database");
       await cleanDatabase();
       break;
 
