@@ -16,10 +16,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { NavigationButton } from "@/components/ui/navigation-button";
 import type { Organization } from '@/types';
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { NavigationButton } from "@/components/ui/navigation-button";
 
 interface OrganizationCardProps {
   organization: Organization;
@@ -58,7 +58,7 @@ export default function OrganizationCard({
           Sigla: {organization.shortName}
         </CardDescription>
         <CardDescription className="text-xs sm:text-sm text-[var(--font-color)] opacity-80 space-y-1">
-          <div className="truncate">ID: {organization.id}</div>
+          <div className="break-all md:text-sm">ID: {organization.id}</div>
           <div className="mt-1">
             Status:{" "}
             <span
