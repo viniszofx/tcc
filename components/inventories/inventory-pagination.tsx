@@ -39,13 +39,13 @@ export default function InventoryPagination({
         </Button>
 
         {!showAll && (
-          <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
+          <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 flex-1">
             <span className="text-xs sm:text-sm text-[var(--font-color)] whitespace-nowrap">
               Página {currentPage + 1} de {totalPages || 1}
             </span>
             {totalItems && itemsPerPage && (
               <span className="text-xs text-[var(--font-color)]/70 whitespace-nowrap">
-                ({startItem}-{endItem} de {totalItems > 1000 ? `${Math.floor(totalItems/1000)}k` : totalItems})
+                ({startItem}-{endItem} de {totalItems > 1000 ? `${Math.floor(totalItems / 1000)}k` : totalItems})
               </span>
             )}
           </div>

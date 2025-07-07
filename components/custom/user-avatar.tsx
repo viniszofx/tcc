@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useUserPermissions } from "@/hooks/use-consolidated-user";
 import { useQuery } from "@tanstack/react-query";
 import { LogOut, User } from "lucide-react";
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export function UserAvatar() {
   const { signOut } = useAuth();
@@ -123,10 +123,10 @@ export function UserAvatar() {
         className="w-56 bg-[var(--perfil-color)]"
       >
         <DropdownMenuLabel className="flex flex-col">
-          <span className="font-bold text-[var(--font-color2)]">
+          <span className="font-bold text-[var(--font-color2)] truncate">
             {userProfile.name}
           </span>
-          <span className="text-sm text-[var(--font-color2)]">
+          <span className="text-sm text-[var(--font-color2)] truncate">
             {userProfile.email}
           </span>
           <span className="text-xs text-[var(--font-color2)]">

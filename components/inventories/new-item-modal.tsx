@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { useCampus, useCampuses } from "@/hooks/queries/use-campus-query";
 import { EstadoConservacao, StatusBem, type BemCopia } from '@/types/legacy';
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 // Definindo interface para o objeto de campus
@@ -523,7 +523,7 @@ export default function NewItemModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="estado" className="text-[var(--font-color)]">
                 Estado de Conservação

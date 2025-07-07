@@ -165,11 +165,10 @@ export default function InventoryCard({
                     {label}:
                   </span>
                   <span
-                    className={`text-xs font-semibold text-right truncate max-w-[60%] ${
-                      isConservacao
+                    className={`text-xs font-semibold text-right truncate max-w-[60%] ${isConservacao
                         ? conservacaoColor
                         : "text-[var(--font-color)]"
-                    }`}
+                      }`}
                     title={displayValue}
                   >
                     {displayValue}
@@ -180,9 +179,10 @@ export default function InventoryCard({
           </div>
 
           {/* Rodapé com ID do item */}
-          <div className="mt-3 pt-2 border-t border-[var(--border-input)]/20">
-            <span className="text-xs text-[var(--font-color)]/60 font-medium truncate">
-              ID: {item.bem_id || item.NUMERO || "N/A"}
+          <div className="mt-3 pt-2 border-t border-[var(--border-input)]/20 flex gap-1 flex-wrap">
+            <span className="text-xs text-[var(--font-color)]/60 font-medium">ID:</span>
+            <span className="text-xs text-[var(--font-color)]/60 font-medium break-all">
+              {item.bem_id || item.NUMERO || "N/A"}
             </span>
           </div>
         </CardContent>

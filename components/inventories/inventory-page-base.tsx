@@ -16,7 +16,7 @@ import type { BemCopia } from '@/types/legacy';
 import { exportToPdfStyled } from "@/utils/pdf-export";
 import { Filter, RefreshCw } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState, lazy, Suspense } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 // Carregamento dinâmico do InventoryActions para evitar carregamento desnecessário do CameraModal
@@ -580,16 +580,6 @@ export default function InventoryPageBase({
           </div>
         </div>
 
-        <InventoryPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          showAll={showAll}
-          onPageChange={handlePageChange}
-          onShowAllToggle={toggleShowAll}
-          totalItems={filteredItems.length}
-          itemsPerPage={itemsPerPage}
-        />
-
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 overflow-hidden">
           {currentItems.map((item) => (
             <div key={item.bem_id || item.NUMERO} className="min-w-0 overflow-hidden">
@@ -623,15 +613,15 @@ export default function InventoryPageBase({
           </div>
         )}
 
-        <div className="flex justify-end mt-4">
-          <Button
-            variant="outline"
-            className="w-36 flex items-center gap-2 border-[var(--border-input)] bg-[var(--button-color)] text-[var(--font-color2)] hover:bg-[var(--hover-3-color)] hover:text-white"
-            onClick={() => navigateTo(backRoute)}
-          >
-            <span>Voltar</span>
-          </Button>
-        </div>
+        <InventoryPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          showAll={showAll}
+          onPageChange={handlePageChange}
+          onShowAllToggle={toggleShowAll}
+          totalItems={filteredItems.length}
+          itemsPerPage={itemsPerPage}
+        />
 
         <NewItemModal
           isOpen={isNewItemModalOpen}

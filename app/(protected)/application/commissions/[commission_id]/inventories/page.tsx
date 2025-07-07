@@ -105,11 +105,11 @@ export default function CommissionInventoriesPage() {
 
     const confirmDelete = confirm(
       `Tem certeza que deseja apagar TODO o inventário da comissão "${commission.name}"?\n\n` +
-        "Esta ação irá:\n" +
-        "- Excluir permanentemente todos os itens de inventário\n" +
-        "- Remover a planilha associada\n" +
-        "- Limpar todos os dados de inventário desta comissão\n\n" +
-        "Esta ação NÃO PODE ser desfeita!"
+      "Esta ação irá:\n" +
+      "- Excluir permanentemente todos os itens de inventário\n" +
+      "- Remover a planilha associada\n" +
+      "- Limpar todos os dados de inventário desta comissão\n\n" +
+      "Esta ação NÃO PODE ser desfeita!"
     );
 
     if (!confirmDelete) return;
@@ -264,10 +264,12 @@ export default function CommissionInventoriesPage() {
                   variant="destructive"
                   onClick={handleDeleteInventory}
                   disabled={isDeleting}
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-red-600 hover:bg-red-700 ml-2"
                 >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  {isDeleting ? "Apagando..." : "Apagar Inventário"}
+                  <Trash2 className="w-4 h-4" />
+                  <span className="hidden sm:inline ml-2">
+                    {isDeleting ? "Apagando..." : "Apagar Inventário"}
+                  </span>
                 </Button>
               </div>
             </CardContent>
