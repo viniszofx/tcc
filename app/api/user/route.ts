@@ -554,7 +554,7 @@ export async function PUT(request: NextRequest) {
     const {
       id,
       name,
-      email,
+      email, // Email updates allowed only for admin global
       description,
       avatar,
       active,
@@ -603,25 +603,36 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Se email for fornecido, verificar se não há conflito
+    // Admin comum não pode editar perfil de admin global
+    if (existingUser.role === "admin global" && currentUser.role !== "admin global") {
+      return NextResponse.json(
+        { error: "Apenas administradores globais podem editar perfis de outros administradores globais" },
+        { status: 403 }
+      );
+    }
+
+    // Verificar se email está sendo alterado e se o usuário atual é admin global
     if (email && email !== existingUser.email) {
-      // Verificar se o usuário atual pode alterar email
-      // Apenas admin global e admin do sistema podem alterar email
-      if (currentUser.role !== "admin global" && currentUser.role !== "admin") {
+      // Apenas admin global pode alterar email
+      if (currentUser.role !== "admin global") {
         return NextResponse.json(
-          { error: "Apenas administradores podem alterar o email" },
+          { error: "Apenas administradores globais podem alterar emails" },
           { status: 403 }
         );
       }
 
-      const conflictingUser = await prisma.userProfile.findUnique({
-        where: { email },
+      // Verificar se o novo email já existe
+      const emailExists = await prisma.userProfile.findFirst({
+        where: {
+          email,
+          id: { not: id },
+        },
       });
 
-      if (conflictingUser) {
+      if (emailExists) {
         return NextResponse.json(
-          { error: "Já existe um usuário com este email" },
-          { status: 409 }
+          { error: "Este email já está em uso" },
+          { status: 400 }
         );
       }
     }
@@ -631,7 +642,7 @@ export async function PUT(request: NextRequest) {
       where: { id },
       data: {
         ...(name && { name }),
-        ...(email && { email }),
+        ...(email && currentUser.role === "admin global" && { email }),
         ...(description !== undefined && { description }),
         ...(avatar !== undefined && { avatar }),
         ...(active !== undefined && { active }),
@@ -639,21 +650,12 @@ export async function PUT(request: NextRequest) {
       },
     });
 
-    // Se o email foi alterado, atualizar também na tabela AllowedUser
-    if (email && email !== existingUser.email) {
-      try {
-        await prisma.allowedUser.update({
-          where: { email: existingUser.email },
-          data: {
-            email: email,
-            name: name || existingUser.name,
-            updatedAt: new Date(),
-          },
-        });
-      } catch (allowedUserError) {
-        // Se não encontrar na tabela AllowedUser, não é um erro crítico
-        console.warn("Usuário não encontrado na tabela AllowedUser:", allowedUserError);
-      }
+    // Atualizar email na tabela AllowedUser se foi alterado
+    if (email && email !== existingUser.email && currentUser.role === "admin global") {
+      await prisma.allowedUser.updateMany({
+        where: { email: existingUser.email },
+        data: { email },
+      });
     }
 
     // Atualizar relações de organização se fornecidas
@@ -770,6 +772,14 @@ export async function DELETE(request: NextRequest) {
     if (!currentUser.ability.can("delete", "User")) {
       return NextResponse.json(
         { error: "Sem permissão para deletar este usuário" },
+        { status: 403 }
+      );
+    }
+
+    // Admin comum não pode deletar perfil de admin global
+    if (existingUser.role === "admin global" && currentUser.role !== "admin global") {
+      return NextResponse.json(
+        { error: "Apenas administradores globais podem deletar perfis de outros administradores globais" },
         { status: 403 }
       );
     }

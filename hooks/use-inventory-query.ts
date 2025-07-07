@@ -84,17 +84,13 @@ export function useInventoryWithSync(commissionId: string) {
   } = useQuery({
     queryKey: ["inventory", commissionId],
     queryFn: async (): Promise<{ items: InventoryItem[]; pagination: any }> => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
-      
       try {
         console.log(`🔍 Buscando inventário para comissão: ${commissionId}`);
         const startTime = Date.now();
         
         const response = await fetch(
-          `/api/inventory?commissionId=${commissionId}&limit=1000`,
+          `/api/inventory?commissionId=${commissionId}&limit=10000`,
           {
-            signal: controller.signal,
             headers: {
               'Cache-Control': 'no-cache',
             },
@@ -122,26 +118,20 @@ export function useInventoryWithSync(commissionId: string) {
           throw new Error('Formato de resposta inválido');
         }
       } catch (error: any) {
-        if (error.name === 'AbortError') {
-          console.error('🔥 Timeout na requisição de inventário');
-          throw new Error('Timeout: A requisição demorou muito para responder');
-        }
         console.error('❌ Erro ao buscar inventário:', error.message);
         throw error;
-      } finally {
-        clearTimeout(timeoutId);
       }
     },
     enabled: !!commissionId && isOnline,
     staleTime: 5 * 60 * 1000, // 5 minutos
     gcTime: 10 * 60 * 1000, // 10 minutos
     retry: (failureCount, error: any) => {
-      // Retry até 2 vezes para erros de rede, mas não para erros 4xx
-      if (failureCount >= 2) return false;
+      // Retry até 3 vezes para erros de rede, mas não para erros 4xx
+      if (failureCount >= 3) return false;
       if (error?.message?.includes('4')) return false; // Não retry para erros 4xx
       return true;
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Máximo 10s
   });
   
   // Extrair dados do servidor
@@ -491,9 +481,8 @@ export function useInventoryWithSync(commissionId: string) {
     isDeleting: deleteItemMutation.isPending,
     
     // Performance info
-    hasTimeout: serverError?.message?.includes('Timeout'),
+    hasTimeout: false, // Sem timeout
     errorType: serverError?.message?.includes('fetch failed') ? 'network' : 
-               serverError?.message?.includes('Timeout') ? 'timeout' : 
                serverError ? 'server' : null,
   };
 }

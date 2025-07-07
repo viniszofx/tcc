@@ -240,9 +240,7 @@ export async function POST(request: NextRequest) {
       
       console.log(`✅ ${createdItems.length} itens e históricos criados com sucesso`);
       return createdItems;
-    }, {
-      timeout: 30000, // 30 segundos de timeout
-    });
+    }); // Sem timeout
 
     // URL da planilha já foi salva na comissão no início do processo
     console.log(`📊 Processamento concluído. URL da planilha: ${fileUrl || 'não disponível'}`);

@@ -1,6 +1,7 @@
+import { withPermissions } from "@/lib/permissions/middleware";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseAdmin } from "@/lib/supabase";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * @swagger
@@ -46,9 +47,23 @@ import { NextResponse } from "next/server";
  */
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Verificar permissões usando CASL
+  const permissionResult = await withPermissions(request, [
+    { action: "update", subject: "User" },
+  ]);
+
+  if (!permissionResult.success) {
+    return NextResponse.json(
+      { error: permissionResult.error },
+      { status: permissionResult.status }
+    );
+  }
+
+  const { user: currentUser } = permissionResult;
+
   try {
     const { id } = await params;
 
@@ -61,6 +76,22 @@ export async function POST(
       return NextResponse.json(
         { error: "Usuário não encontrado" },
         { status: 404 }
+      );
+    }
+
+    // Admin comum não pode resetar senha de admin global
+    if (user.role === "admin global" && currentUser.role !== "admin global") {
+      return NextResponse.json(
+        { error: "Apenas administradores globais podem resetar senhas de outros administradores globais" },
+        { status: 403 }
+      );
+    }
+
+    // Verificar se pode resetar senha deste usuário específico
+    if (!currentUser.ability.can("update", "User")) {
+      return NextResponse.json(
+        { error: "Sem permissão para resetar senha deste usuário" },
+        { status: 403 }
       );
     }
 

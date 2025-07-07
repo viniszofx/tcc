@@ -1,7 +1,19 @@
+import { withPermissions } from "@/lib/permissions/middleware";
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  // Verificar permissões usando CASL
+  const permissionResult = await withPermissions(request, [
+    { action: "read", subject: "User" },
+  ]);
+
+  if (!permissionResult.success) {
+    return NextResponse.json(
+      { error: permissionResult.error },
+      { status: permissionResult.status }
+    );
+  }
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
@@ -35,7 +47,18 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Verificar permissões usando CASL
+  const permissionResult = await withPermissions(request, [
+    { action: "create", subject: "User" },
+  ]);
+
+  if (!permissionResult.success) {
+    return NextResponse.json(
+      { error: permissionResult.error },
+      { status: permissionResult.status }
+    );
+  }
   try {
     const body = await request.json();
     const { name, email, status } = body;
@@ -76,7 +99,18 @@ export async function POST(request: Request) {
   }
 }
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
+  // Verificar permissões usando CASL
+  const permissionResult = await withPermissions(request, [
+    { action: "update", subject: "User" },
+  ]);
+
+  if (!permissionResult.success) {
+    return NextResponse.json(
+      { error: permissionResult.error },
+      { status: permissionResult.status }
+    );
+  }
   try {
     const body = await request.json();
     const { id, name, email, status } = body;
@@ -130,7 +164,18 @@ export async function PUT(request: Request) {
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
+  // Verificar permissões usando CASL
+  const permissionResult = await withPermissions(request, [
+    { action: "delete", subject: "User" },
+  ]);
+
+  if (!permissionResult.success) {
+    return NextResponse.json(
+      { error: permissionResult.error },
+      { status: permissionResult.status }
+    );
+  }
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");

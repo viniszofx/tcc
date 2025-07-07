@@ -65,7 +65,9 @@ export function ProfileEditForm({
         },
         body: JSON.stringify({
           id: user.id,
-          ...formData,
+          name: formData.name,
+          ...(user.role === "admin global" && { email: formData.email }),
+          description: formData.description,
         }),
       });
 
@@ -190,21 +192,19 @@ export function ProfileEditForm({
             </div>
 
             <div>
-              <Label htmlFor="email">Email *</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-                placeholder="seu@email.com"
-                className="mt-1"
-                disabled={user.role !== "admin global" && user.role !== "admin"}
+                value={formData.email || ""}
+                disabled={user.role !== "admin global"}
+                placeholder={user.role === "admin global" ? "Seu email" : "Email não pode ser alterado"}
+                className={`mt-1 ${user.role !== "admin global" ? "bg-gray-100 cursor-not-allowed" : ""}`}
               />
-              {user.role !== "admin global" && user.role !== "admin" && (
+              {user.role !== "admin global" && (
                 <p className="text-xs text-[var(--font-color)] opacity-60 mt-1">
-                  Apenas administradores podem alterar o email
+                  Apenas administradores globais podem alterar emails
                 </p>
               )}
             </div>

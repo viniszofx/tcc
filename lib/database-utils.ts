@@ -9,30 +9,23 @@ import { PrismaClient } from '@prisma/client';
  */
 export async function withDatabaseTimeout<T>(
   operation: () => Promise<T>,
-  timeoutMs: number = 15000,
+  timeoutMs: number = 0, // Sem timeout
   maxRetries: number = 2
 ): Promise<T> {
   let lastError: any;
   
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const result = await Promise.race([
-        operation(),
-        new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Database operation timeout')), timeoutMs)
-        )
-      ]);
-      
+      // Executar operação sem timeout
+      const result = await operation();
       return result;
     } catch (error: any) {
       lastError = error;
       
-      // Se for timeout ou erro de conexão, tentar novamente
+      // Se for erro de conexão, tentar novamente
       if (
-        (error.message?.includes('timeout') || 
-         error.message?.includes('connection') ||
-         error.code === 'P1001' || // Prisma connection error
-         error.code === 'P1008') && // Prisma timeout error
+        (error.message?.includes('connection') ||
+         error.code === 'P1001') && // Prisma connection error
         attempt < maxRetries
       ) {
         console.warn(`Database operation failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying...`);
@@ -41,7 +34,7 @@ export async function withDatabaseTimeout<T>(
         continue;
       }
       
-      // Se não for erro de timeout/conexão ou esgotaram as tentativas, lançar o erro
+      // Se não for erro de conexão ou esgotaram as tentativas, lançar o erro
       throw error;
     }
   }
@@ -57,28 +50,24 @@ export async function withDatabaseTimeout<T>(
  */
 export async function withParallelDatabaseTimeout<T>(
   operations: (() => Promise<T>)[],
-  timeoutMs: number = 20000
+  timeoutMs: number = 0 // Sem timeout
 ): Promise<T[]> {
-  return Promise.race([
-    Promise.all(operations.map(op => op())),
-    new Promise<never>((_, reject) => 
-      setTimeout(() => reject(new Error('Parallel database operations timeout')), timeoutMs)
-    )
-  ]);
+  // Executar todas as operações sem timeout
+  return Promise.all(operations.map(op => op()));
 }
 
 /**
  * Configurações otimizadas para consultas do Prisma
  */
 export const OPTIMIZED_QUERY_CONFIG = {
-  // Timeout padrão para consultas simples
-  SIMPLE_QUERY_TIMEOUT: 10000, // 10 segundos
+  // Sem timeout para consultas simples
+  SIMPLE_QUERY_TIMEOUT: 0,
   
-  // Timeout para consultas complexas com joins
-  COMPLEX_QUERY_TIMEOUT: 20000, // 20 segundos
+  // Sem timeout para consultas complexas com joins
+  COMPLEX_QUERY_TIMEOUT: 0,
   
-  // Timeout para operações de escrita
-  WRITE_OPERATION_TIMEOUT: 15000, // 15 segundos
+  // Sem timeout para operações de escrita
+  WRITE_OPERATION_TIMEOUT: 0,
   
   // Número máximo de tentativas
   MAX_RETRIES: 2,

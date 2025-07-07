@@ -50,7 +50,7 @@ export async function createServerSupabaseClient() {
         fetch: (url, options = {}) => {
           return fetch(url, {
             ...options,
-            signal: AbortSignal.timeout(30000), // 30 segundos timeout
+            // Sem timeout
           });
         },
       },

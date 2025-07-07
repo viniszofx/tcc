@@ -47,7 +47,7 @@ export default function ProfileForm({
         placeholder="exemplo@dominio.com"
         validator={validateEmail}
         errorMessage="Formato de e-mail inválido"
-        disabled={usuario.role !== "admin global" && usuario.role !== "admin"}
+        disabled={usuario.role !== "admin global"}
       />
 
       <ProfileField

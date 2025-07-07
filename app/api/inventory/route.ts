@@ -38,7 +38,7 @@ export async function GET(request: Request) {
     
     // Parâmetros de paginação
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = Math.min(parseInt(searchParams.get("limit") || "100"), 1000); // Máximo 1000 itens
+    const limit = Math.min(parseInt(searchParams.get("limit") || "100"), 10000); // Máximo 10000 itens
     const skip = (page - 1) * limit;
 
     console.log(commissionId);

@@ -1,26 +1,21 @@
+import { withPermissions } from "@/lib/permissions/middleware";
 import { prisma } from "@/lib/prisma";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  // Verificar permissões usando CASL
+  const permissionResult = await withPermissions(request, [
+    { action: "read", subject: "User" },
+  ]);
+
+  if (!permissionResult.success) {
+    return NextResponse.json(
+      { error: permissionResult.error },
+      { status: permissionResult.status }
+    );
+  }
+
   try {
-    // Verificar autenticação - desenvolvimento vs produção
-    const supabase = await createServerSupabaseClient();
-    let user;
-
-    if (process.env.NODE_ENV === "development") {
-      user = { id: "550e8400-e29b-41d4-a716-446655440000", email: "dev@example.com" };
-    } else {
-      const {
-        data: { user: realUser },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError || !realUser) {
-        return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-      }
-      user = realUser;
-    }
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
@@ -87,26 +82,22 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Verificar permissões usando CASL
+  const permissionResult = await withPermissions(request, [
+    { action: "create", subject: "User" },
+  ]);
+
+  if (!permissionResult.success) {
+    return NextResponse.json(
+      { error: permissionResult.error },
+      { status: permissionResult.status }
+    );
+  }
+
+  const { user: currentUser } = permissionResult;
+
   try {
-    // Verificar autenticação - desenvolvimento vs produção
-    const supabase = await createServerSupabaseClient();
-    let user;
-
-    if (process.env.NODE_ENV === "development") {
-      user = { id: "550e8400-e29b-41d4-a716-446655440000", email: "dev@example.com" };
-    } else {
-      const {
-        data: { user: realUser },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError || !realUser) {
-        return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-      }
-      user = realUser;
-    }
-
     const body = await request.json();
     const { userId, commissionId, roleInCommission } = body;
 
@@ -114,6 +105,21 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "ID do usuário e ID da comissão são obrigatórios" },
         { status: 400 }
+      );
+    }
+
+    // Verificar se o usuário atual pode adicionar membros a esta comissão específica
+    const canAssignToCommission = currentUser.ability.can("assign", "CommissionMember") &&
+      (currentUser.role === "admin global" || 
+       currentUser.role === "admin" ||
+       currentUser.commissionMembers?.some(member => 
+         member.commissionId === commissionId && member.roleInCommission === "Presidente"
+       ));
+
+    if (!canAssignToCommission) {
+      return NextResponse.json(
+        { error: "Apenas administradores ou presidentes da comissão podem adicionar membros" },
+        { status: 403 }
       );
     }
 
@@ -156,26 +162,22 @@ export async function POST(request: Request) {
   }
 }
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
+  // Verificar permissões usando CASL
+  const permissionResult = await withPermissions(request, [
+    { action: "update", subject: "User" },
+  ]);
+
+  if (!permissionResult.success) {
+    return NextResponse.json(
+      { error: permissionResult.error },
+      { status: permissionResult.status }
+    );
+  }
+
+  const { user: currentUser } = permissionResult;
+
   try {
-    // Verificar autenticação - desenvolvimento vs produção
-    const supabase = await createServerSupabaseClient();
-    let user;
-
-    if (process.env.NODE_ENV === "development") {
-      user = { id: "550e8400-e29b-41d4-a716-446655440000", email: "dev@example.com" };
-    } else {
-      const {
-        data: { user: realUser },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError || !realUser) {
-        return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-      }
-      user = realUser;
-    }
-
     const body = await request.json();
     const { userId, commissionId, roleInCommission } = body;
 
@@ -183,6 +185,21 @@ export async function PUT(request: Request) {
       return NextResponse.json(
         { error: "ID do usuário e ID da comissão são obrigatórios" },
         { status: 400 }
+      );
+    }
+
+    // Verificar se o usuário atual pode atualizar membros desta comissão específica
+    const canUpdateCommissionMember = currentUser.ability.can("manage", "Commission") &&
+      (currentUser.role === "admin global" || 
+       currentUser.role === "admin" ||
+       currentUser.commissionMembers?.some(member => 
+         member.commissionId === commissionId && member.roleInCommission === "Presidente"
+       ));
+
+    if (!canUpdateCommissionMember) {
+      return NextResponse.json(
+        { error: "Apenas administradores ou presidentes da comissão podem atualizar membros" },
+        { status: 403 }
       );
     }
 
@@ -218,26 +235,22 @@ export async function PUT(request: Request) {
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
+  // Verificar permissões usando CASL
+  const permissionResult = await withPermissions(request, [
+    { action: "delete", subject: "User" },
+  ]);
+
+  if (!permissionResult.success) {
+    return NextResponse.json(
+      { error: permissionResult.error },
+      { status: permissionResult.status }
+    );
+  }
+
+  const { user: currentUser } = permissionResult;
+
   try {
-    // Verificar autenticação - desenvolvimento vs produção
-    const supabase = await createServerSupabaseClient();
-    let user;
-
-    if (process.env.NODE_ENV === "development") {
-      user = { id: "550e8400-e29b-41d4-a716-446655440000", email: "dev@example.com" };
-    } else {
-      const {
-        data: { user: realUser },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError || !realUser) {
-        return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-      }
-      user = realUser;
-    }
-
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
     const commissionId = searchParams.get("commissionId");
@@ -246,6 +259,21 @@ export async function DELETE(request: Request) {
       return NextResponse.json(
         { error: "ID do usuário e ID da comissão são obrigatórios" },
         { status: 400 }
+      );
+    }
+
+    // Verificar se o usuário atual pode remover membros desta comissão específica
+    const canRemoveFromCommission = currentUser.ability.can("remove", "CommissionMember") &&
+      (currentUser.role === "admin global" || 
+       currentUser.role === "admin" ||
+       currentUser.commissionMembers?.some(member => 
+         member.commissionId === commissionId && member.roleInCommission === "Presidente"
+       ));
+
+    if (!canRemoveFromCommission) {
+      return NextResponse.json(
+        { error: "Apenas administradores ou presidentes da comissão podem remover membros" },
+        { status: 403 }
       );
     }
 

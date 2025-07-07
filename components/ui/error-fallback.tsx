@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./car
 
 interface ErrorFallbackProps {
   error?: Error | null;
-  errorType?: 'network' | 'timeout' | 'server' | null;
+  errorType?: 'network' | 'server' | null;
   isOnline?: boolean;
   onRetry?: () => void;
   title?: string;
@@ -46,18 +46,7 @@ export function ErrorFallback({
           ],
         };
       
-      case 'timeout':
-        return {
-          title: "Tempo Limite Excedido",
-          description: "A operação demorou muito para ser concluída. O servidor pode estar sobrecarregado.",
-          icon: RefreshCw,
-          color: "text-yellow-500",
-          suggestions: [
-            "Tente novamente - o servidor pode estar temporariamente lento",
-            "Aguarde alguns minutos antes de tentar novamente",
-            "Verifique se há muitos dados sendo carregados",
-          ],
-        };
+
       
       case 'server':
         return {

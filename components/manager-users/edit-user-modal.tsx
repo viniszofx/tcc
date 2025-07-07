@@ -166,9 +166,14 @@ export function EditUserModal({
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.name?.trim()) newErrors.name = "Nome é obrigatório";
-    if (!formData.email?.trim()) newErrors.email = "Email é obrigatório";
-    else if (!/\S+@\S+\.\S+/.test(formData.email))
-      newErrors.email = "Email inválido";
+    
+    // Validar email apenas se admin global estiver editando
+    if (currentUserIsGlobalAdmin && formData.email && formData.email !== user?.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        newErrors.email = "Formato de email inválido";
+      }
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -179,7 +184,7 @@ export function EditUserModal({
     if (validateForm()) {
       const updateData = {
         name: formData.name,
-        email: formData.email,
+        ...(currentUserIsGlobalAdmin && formData.email !== user?.email && { email: formData.email }),
         description: formData.description,
         avatar: formData.avatar,
         active: formData.active,
@@ -286,10 +291,18 @@ export function EditUserModal({
                 type="email"
                 value={formData.email || ""}
                 onChange={handleChange}
-                className="border-[var(--border-input)]"
+                disabled={!currentUserIsGlobalAdmin}
+                className={`border-[var(--border-input)] ${
+                  !currentUserIsGlobalAdmin ? "bg-gray-100 cursor-not-allowed" : ""
+                }`}
               />
               {errors.email && (
                 <p className="text-xs text-red-500">{errors.email}</p>
+              )}
+              {!currentUserIsGlobalAdmin && (
+                <p className="text-xs text-[var(--font-color)] opacity-60">
+                  Apenas administradores globais podem alterar emails
+                </p>
               )}
             </div>
 
