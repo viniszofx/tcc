@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 
 export default function EmptyInventory() {
   const params = useParams();
-  const commissionId = params?.commissionId as string;
+  const commissionId = params?.commission_id as string;
 
   return (
     <Card className="border-[var(--border-input)] bg-[var(--card-color)] w-full">
