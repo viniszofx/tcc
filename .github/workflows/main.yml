@@ -8,7 +8,7 @@ on:
 
 env:
   DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-  IMAGE_NAME: osirissouza/kde-ifms # O nome da sua imagem no Docker Hub
+  IMAGE_NAME: osirissouza/kde-ifms
 
 jobs:
   build_and_push:
@@ -54,12 +54,12 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ github.workflow }}
           cache-to: type=gha,mode=max,scope=${{ github.workflow }}
-          # Passa as variáveis NEXT_PUBLIC_ como build-args
           build-args: |
             NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL_PROD }}
             NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PROD }}
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PROD }}
+            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY_PROD }}
+            DATABASE_URL=${{ secrets.DATABASE_URL_PROD }}
             SKIP_PREBUILD=true
-          # Passa as "super keys" como build-secrets
           secrets: |
             supabase_service_role_key=${{ secrets.SUPABASE_SERVICE_ROLE_KEY_PROD }}
