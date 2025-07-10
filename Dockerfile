@@ -41,8 +41,11 @@ ENV NODE_ENV=production
 ENV CI=true
 ENV SKIP_PREBUILD=true
 
-# Executar o build do Next.js
-RUN pnpm build
+# Gerar cliente Prisma antes do build
+RUN pnpm prisma generate
+
+# Executar o build do Next.js com configurações específicas
+RUN SKIP_PREBUILD=true pnpm build
 
 # Remover dependências de desenvolvimento
 RUN pnpm prune --prod
@@ -52,24 +55,26 @@ FROM node:22-alpine AS runner
 
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Criar usuário não-root
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Copiar os arquivos necessários do builder
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/.next ./.next
+# Copiar arquivos necessários do builder
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
-# Definições de ambiente para o contêiner de produção
-ENV NODE_ENV=production
-ENV PORT=8000
-
-EXPOSE 8000
-
-RUN addgroup --system --gid 1001 nodejs && \
-  adduser --system --uid 1001 nextjs && \
-  chown -R nextjs:nodejs /app
+# Definir permissões
 USER nextjs
 
-CMD ["node_modules/.bin/next", "start", "-p", "8000", "-H", "0.0.0.0"]
+# Expor porta
+EXPOSE 3000
+
+# Definir variáveis de ambiente de runtime
+ENV PORT=3000
+ENV NODE_ENV=production
+ENV HOSTNAME="0.0.0.0"
+
+# Comando para iniciar a aplicação
+CMD ["node", "server.js"]
