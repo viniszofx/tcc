@@ -16,6 +16,7 @@ import {
 import { useDeleteCommission } from "@/hooks/mutations/use-mutations";
 import { useActivateCommission, useFinalizeCommission, useUpdateCommission } from "@/hooks/queries/use-commissions-query";
 import { useCommissionDetailData } from "@/hooks/queries/use-page-data";
+import { useInventoryItems } from "@/hooks/queries/use-inventory-query";
 import { useCommissionPermissions } from "@/hooks/use-commission-permissions";
 import { useUserPermissions } from "@/hooks/use-consolidated-user";
 import {
@@ -59,6 +60,12 @@ export default function CommissionDetailPage() {
     error: commissionError,
     refetch,
   } = useCommissionDetailData(commissionId);
+
+  // Buscar itens do inventário para verificar se está vazio
+  const {
+    data: inventoryItems,
+    isLoading: inventoryLoading,
+  } = useInventoryItems(commissionId);
 
   // Mutations para deletar, atualizar, ativar e finalizar comissão
   const deleteCommissionMutation = useDeleteCommission();
@@ -193,7 +200,7 @@ export default function CommissionDetailPage() {
   const canActivateCommission = canManageCommission && !commission?.active && !commission?.finalized;
   const canFinalizeCommission = (isGlobalAdmin || isSystemAdmin || isPresidentOfCommission) && commission?.active && !commission?.finalized;
 
-  if (loading || permissionsLoading || commissionLoading) {
+  if (loading || permissionsLoading || commissionLoading || inventoryLoading) {
     return <LoadingScreen />;
   }
 
@@ -212,6 +219,9 @@ export default function CommissionDetailPage() {
     );
   }
 
+  // Verificar se o inventário está vazio
+  const inventoryIsEmpty = !inventoryItems || inventoryItems.length === 0;
+  
   const menuItems = [
     {
       title: "Inventário",
@@ -235,7 +245,7 @@ export default function CommissionDetailPage() {
       href: `/application/commissions/${commissionId}/upload`,
       icon: Upload,
       color: "bg-purple-500",
-      show: canUploadToCommission, // Apenas quem pode fazer upload
+      show: canUploadToCommission && inventoryIsEmpty, // Apenas quem pode fazer upload E inventário vazio
     },
     {
       title: "Histórico",
@@ -455,7 +465,9 @@ export default function CommissionDetailPage() {
                 <span className="text-[var(--font-color)] opacity-70">
                   Itens no Inventário
                 </span>
-                <span className="font-semibold text-[var(--font-color)]">0</span>
+                <span className="font-semibold text-[var(--font-color)]">
+                  {inventoryItems?.length || 0}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[var(--font-color)] opacity-70">
