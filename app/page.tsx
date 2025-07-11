@@ -185,10 +185,10 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12 md:mb-16">
             <Badge className="mb-3 md:mb-4">Funcionalidades</Badge>
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4 text-[var(--font-color3)]">
               Tudo que você precisa para uma gestão eficiente
             </h2>
-            <p className="text-xs sm:text-sm md:text-base text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xs sm:text-sm md:text-base max-w-2xl mx-auto text-[var(--font-color3)]">
               Nossa plataforma oferece um conjunto completo de ferramentas para
               modernizar e simplificar sua gestão patrimonial
             </p>
@@ -198,15 +198,15 @@ export default function Home() {
             {features.map((feature) => (
               <Card
                 key={feature.title}
-                className="border border-gray-200 hover:shadow-lg transition-shadow h-full">
+                className="border border-[var(--border-color)] bg-[var(--font-color2)]  hover:shadow-lg transition-shadow h-full">
                 <CardHeader>
                   <div className="mb-3 md:mb-4">{feature.icon}</div>
-                  <CardTitle className="text-base sm:text-lg md:text-xl">
+                  <CardTitle className="text-base sm:text-lg md:text-xl text-[var(--font-color3)]">
                     {feature.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-xs sm:text-sm md:text-base text-gray-600">
+                  <p className="text-xs sm:text-sm md:text-base text-[var(--font-color3)]">
                     {feature.description}
                   </p>
                 </CardContent>
@@ -220,10 +220,10 @@ export default function Home() {
       <section className="py-16 md:py-24 px-4 sm:px-6 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12 md:mb-16">
-            <Badge variant="outline" className="mb-3 md:mb-4">
+            <Badge variant="outline" className="mb-3 md:mb-4 text-[var(--font-color3)]">
               Benefícios
             </Badge>
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4 text-[var(--font-color3)]">
               Por que escolher nossa solução?
             </h2>
           </div>
