@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
+import Back from "../custom/back";
 import { Button } from "../ui/button";
 import { CardContent, CardFooter } from "../ui/card";
 import { Input } from "../ui/input";
@@ -59,6 +60,7 @@ export default function AuthForm() {
                 {error}
               </div>
             )}
+            
             <Button
               className="w-full border-[var(--border-color)] bg-[var(--bg-simple)] cursor-pointer hover:!bg-[var(--hover-color)] hover:!text-white transition-all"
               variant={"outline"}
@@ -67,6 +69,7 @@ export default function AuthForm() {
             >
               {loading ? "Entrando..." : "Entrar"}
             </Button>
+            <Back />
             <p className="block w-full text-xs md:text-sm text-end text-[var(--font-color)]">
               <a href="/forget-password" className="hover:underline">
                 Esqueci minha senha

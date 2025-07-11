@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
+import Back from "../custom/back";
 
 export default function RecoverPasswordPage() {
   const [email, setEmail] = useState("");
@@ -140,6 +141,7 @@ export default function RecoverPasswordPage() {
             >
               {isLoading ? "Enviando..." : "Enviar link de redefinição"}
             </Button>
+            <Back />
           </form>
         </CardContent>
         <CardFooter className="flex justify-center text-center mt-6">
