@@ -4,37 +4,12 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
     const inventoryItemId = searchParams.get("inventoryItemId");
     const userId = searchParams.get("userId");
     const action = searchParams.get("action");
     const commissionId = searchParams.get("commissionId");
 
-    if (id) {
-      const history = await prisma.inventoryHistory.findUnique({
-        where: { id },
-        include: {
-          inventoryItem: {
-            include: {
-              commission: true,
-              campus: true,
-            },
-          },
-          user: true,
-        },
-      });
-
-      if (!history) {
-        return NextResponse.json(
-          { error: "Histórico não encontrado" },
-          { status: 404 }
-        );
-      }
-      return NextResponse.json(history);
-    }
-
-    // Construir filtros dinamicamente
-    const where: any = {};
+    let where: any = {};
 
     if (inventoryItemId) {
       where.inventoryItemId = inventoryItemId;
@@ -48,12 +23,60 @@ export async function GET(request: Request) {
       where.action = action;
     }
 
-    // Filtrar por commissionId através do relacionamento com inventoryItem
-    // IMPORTANTE: Garantir que só mostra histórico da comissão especificada
     if (commissionId) {
-      where.inventoryItem = {
-        commissionId: commissionId,
-      };
+      where.OR = [
+        {
+          inventoryItem: {
+            commissionId: commissionId,
+          },
+        },
+        {
+          AND: [
+            { inventoryItemId: null },
+            { action: "delete" },
+            {
+              OR: [
+                {
+                  changes: {
+                    contains: `"commissionId":"${commissionId}"`,
+                  },
+                },
+                {
+                  changes: {
+                    contains: `"commissionId": "${commissionId}"`,
+                  },
+                },
+                {
+                  changes: {
+                    contains: `'commissionId':'${commissionId}'`,
+                  },
+                },
+                {
+                  changes: {
+                    contains: `'commissionId': '${commissionId}'`,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ];
+    }
+
+    // Log de debug para verificar o filtro
+    console.log('🔍 Filtro usado na consulta:', JSON.stringify(where, null, 2));
+    
+    // Verificar se há registros de delete no banco
+    const deleteRecords = await prisma.inventoryHistory.findMany({
+      where: {
+        action: "delete",
+        inventoryItemId: null
+      },
+      take: 5
+    });
+    console.log('🗑️ Registros de delete encontrados:', deleteRecords.length);
+    if (deleteRecords.length > 0) {
+      console.log('📄 Exemplo de changes:', deleteRecords[0].changes);
     }
 
     const histories = await prisma.inventoryHistory.findMany({

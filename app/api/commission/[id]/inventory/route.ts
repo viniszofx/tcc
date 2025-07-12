@@ -71,9 +71,9 @@ export async function DELETE(
     }
 
     // Contar itens antes de deletar
-    const itemCount = commission.inventoryItems.length;
+    const initialItemCount = commission.inventoryItems.length;
 
-    if (itemCount === 0) {
+    if (initialItemCount === 0) {
       return NextResponse.json(
         { message: "Não há itens de inventário para apagar nesta comissão" },
         { status: 200 }
@@ -89,61 +89,89 @@ export async function DELETE(
       },
     });
 
-    // Criar entradas no histórico para cada item antes de deletar
-    const historyPromises = itemsToDelete.map((item) =>
-      prisma.inventoryHistory.create({
-        data: {
-          inventoryItemId: item.id,
-          userId: user.id,
-          action: "delete",
-          changes: JSON.stringify({
-            before: item,
-            after: null,
-          }),
-          observation: `Item removido durante exclusão em lote do inventário da comissão ${commission.name}`,
-          imageUrl: [],
-        },
-      })
-    );
+    // Contar itens antes de deletar
+    const itemCount = itemsToDelete.length;
 
-    try {
-      await Promise.all(historyPromises);
-      console.log(`📝 Criadas ${historyPromises.length} entradas de histórico para exclusão em lote`);
-    } catch (historyError) {
-      console.error("Erro ao criar histórico de exclusão em lote:", historyError);
+    if (itemCount === 0) {
       return NextResponse.json(
-        { error: "Erro ao criar histórico de exclusão" },
-        { status: 500 }
+        { message: "Não há itens de inventário para apagar nesta comissão" },
+        { status: 200 }
       );
     }
 
-    // Deletar todos os itens de inventário da comissão
-    const deleteResult = await prisma.inventoryItem.deleteMany({
-      where: { commissionId },
-    });
+    // Criar histórico primeiro, depois deletar (sem transação para evitar timeout)
+    try {
+      // Preparar dados do histórico
+      const historyData = itemsToDelete.map((item) => ({
+        inventoryItemId: null,
+        userId: user.id,
+        action: "delete" as const,
+        changes: JSON.stringify({
+          before: {
+            id: item.id,
+            number: item.number,
+            description: item.description,
+            brandModel: item.brandModel,
+            currentResponsibility: item.currentResponsibility,
+            conservationState: item.conservationState,
+            location: item.location,
+            commissionId: item.commissionId,
+            campusId: item.campusId,
+          },
+          after: null,
+          deletedItemId: item.id,
+          commissionId: item.commissionId,
+        }),
+        observation: `Item ${item.number} removido durante exclusão em lote do inventário da comissão ${commission.name}`,
+        imageUrl: [],
+      }));
 
-    // Limpar a URL da planilha da comissão
-    await prisma.commission.update({
-      where: { id: commissionId },
-      data: {
-        spreadsheetUrl: null,
-        updatedAt: new Date(),
-      },
-    });
+      // Criar histórico em lotes
+      const batchSize = 100;
+      for (let i = 0; i < historyData.length; i += batchSize) {
+        const batch = historyData.slice(i, i + batchSize);
+        await prisma.inventoryHistory.createMany({
+          data: batch,
+          skipDuplicates: true,
+        });
+      }
 
-    console.log(
-      `🗑️ Inventário da comissão ${commission.name} apagado por ${user.email}. ${deleteResult.count} itens removidos.`
-    );
+      console.log(`📝 Criadas ${historyData.length} entradas de histórico`);
 
-    return NextResponse.json({
-      success: true,
-      message: `Inventário apagado com sucesso. ${deleteResult.count} itens removidos.`,
-      itemsDeleted: deleteResult.count,
-      commission: {
-        id: commission.id,
-        name: commission.name,
-      },
-    });
+      // Deletar todos os itens de inventário da comissão
+      const deleteResult = await prisma.inventoryItem.deleteMany({
+        where: { commissionId },
+      });
+
+      // Limpar a URL da planilha da comissão
+      await prisma.commission.update({
+        where: { id: commissionId },
+        data: {
+          spreadsheetUrl: null,
+          updatedAt: new Date(),
+        },
+      });
+
+      console.log(
+        `🗑️ Inventário da comissão ${commission.name} apagado por ${user.email}. ${deleteResult.count} itens removidos.`
+      );
+
+      return NextResponse.json({
+        success: true,
+        message: `Inventário apagado com sucesso. ${deleteResult.count} itens removidos.`,
+        itemsDeleted: deleteResult.count,
+        commission: {
+          id: commission.id,
+          name: commission.name,
+        },
+      });
+    } catch (error) {
+      console.error("Erro ao apagar inventário da comissão:", error);
+      return NextResponse.json(
+        { error: "Erro interno do servidor" },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error("Erro ao apagar inventário da comissão:", error);
     return NextResponse.json(

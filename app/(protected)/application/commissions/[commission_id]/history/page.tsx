@@ -290,7 +290,19 @@ export default function CommissionHistoryPage() {
                       </div>
 
                       <h3 className="font-medium text-[var(--font-color)] mb-1 break-words whitespace-pre-line text-sm sm:text-base">
-                        {event.inventoryItem?.description || "Item de inventário"}
+                        {event.inventoryItem?.description || 
+                         (event.action === "delete" && event.changes ? 
+                          (() => {
+                            try {
+                              const changes = JSON.parse(event.changes);
+                              return changes.before?.description || "Item removido";
+                            } catch {
+                              return "Item removido";
+                            }
+                          })() : 
+                          "Item de inventário"
+                         )
+                        }
                       </h3>
 
                       {event.observation && (
